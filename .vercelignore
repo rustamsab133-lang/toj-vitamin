@@ -1,0 +1,15 @@
+# Large PDFs
+*.pdf
+
+# Local binaries and node-specific files
+*.node
+node_modules
+.next
+
+# Temporary files and logs
+*.txt
+*.log
+MATCH_REPORT.md
+
+# Database schema/migration files (not needed for frontend build)
+*.sql

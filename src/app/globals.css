@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Core Palette */
+  --apple-bg: #DCD7DB;
+  --apple-text: #0F172A;
+}
+
+body {
+  color: var(--apple-text);
+  background-color: var(--apple-bg);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-feature-settings: "pkna" 1, "palt" 1;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Custom Scroll Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.apple-shelf-scroll {
+  @apply flex overflow-x-auto gap-5 pb-10 no-scrollbar snap-x snap-mandatory px-5;
+  scroll-behavior: smooth;
+}
+
+.apple-shelf-item {
+  @apply snap-start shrink-0;
+}
+
+/* Card Transitions & Premium Effects */
+.apple-card-hover {
+  @apply transition-all duration-700 hover:scale-[1.015] hover:shadow-[0_30px_60px_-15px_rgba(30,64,175,0.15)];
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
