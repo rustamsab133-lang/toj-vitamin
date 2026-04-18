@@ -20,10 +20,6 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
     offset: ["start start", "end start"]
   });
 
-  // PARALLAX OFFSETS
-  const yMain = useTransform(scrollYProgress, [0, 1], [0, 100]);
-  const yFloatingFast = useTransform(scrollYProgress, [0, 1], [0, -150]);
-  const yFloatingMid = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const opacityFade = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   return (
@@ -56,8 +52,8 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
           </motion.div>
 
           <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mb-6"
           >
@@ -67,8 +63,8 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
           </motion.h1>
           
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-[15px] text-[#0f172a]/60 font-medium leading-relaxed mb-8 max-w-[340px]"
           >
@@ -108,14 +104,13 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
 
         {/* VISUAL CENTERPIECE with PARALLAX */}
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="relative w-full mt-12 flex flex-col items-center"
         >
           {/* CINEMATIC PANORAMA CONTAINER with PARALLAX */}
-          <motion.div 
-            style={{ y: yMain }}
+          <div 
             className="relative w-full max-w-[1000px] px-4"
           >
             {/* ADVANCED GRADIENT MASKS - SMARTER BLENDING */}
@@ -136,7 +131,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
               {/* SOFT OVERLAY FOR DEPTH */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
     </section>

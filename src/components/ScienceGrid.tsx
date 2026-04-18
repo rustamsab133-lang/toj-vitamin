@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import Image from 'next/image';
 import { Lang } from '@/lib/types';
@@ -21,77 +21,43 @@ const BentoCard = ({ block, className, isLarge = false }: { block: Block; classN
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["4deg", "-4deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-4deg", "4deg"]);
-
-  const imgX = useTransform(mouseXSpring, [-0.5, 0.5], [15, -15]);
-  const imgY = useTransform(mouseYSpring, [-0.5, 0.5], [15, -15]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const Icon = block.icon;
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-      }}
-      className={`${className} relative group rounded-[40px] overflow-hidden bg-white border border-black/[0.05] shadow-sm hover:shadow-2xl transition-shadow duration-700`}
+      className={`${className} relative group rounded-[40px] overflow-hidden bg-white border border-black/[0.05] shadow-sm hover:shadow-2xl transition-all duration-700 hover:scale-[1.01]`}
     >
-      <div 
-        style={{
-          transform: "translateZ(20px)",
-          transformStyle: "preserve-3d",
-        }}
-        className="absolute inset-0 z-0 overflow-hidden"
-      >
-        <motion.div
-          style={{
-            x: imgX,
-            y: imgY,
-          }}
-          className="absolute inset-0"
-        >
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0">
           <Image 
             src={block.img} 
             fill 
-            className={`${isLarge ? 'object-contain p-12' : 'object-cover'} opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out`} 
+            className={`${isLarge ? 'object-contain p-12' : 'object-cover'} opacity-90 group-hover:scale-110 transition-transform duration-1000 ease-out`} 
             alt="" 
           />
-        </motion.div>
+        </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-10" />
       
-      <div 
-        style={{ transform: "translateZ(40px)" }}
-        className="absolute bottom-10 left-10 right-10 z-20"
-      >
+      <div className="absolute bottom-10 left-10 right-10 z-20">
         <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-lg border border-black/[0.02] group-hover:bg-[#1E40AF] group-hover:text-white transition-colors duration-500">
           <Icon size={isLarge ? 26 : 22} className="transition-colors" />
         </div>
@@ -102,7 +68,7 @@ const BentoCard = ({ block, className, isLarge = false }: { block: Block; classN
           {block.desc}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -193,8 +159,8 @@ export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
             <span className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#1E40AF]">THE SCIENCE</span>
           </motion.div>
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
             className="text-[36px] md:text-[56px] font-bold tracking-tight text-[#1D1D1F] leading-[1.1] mb-8 font-outfit"
@@ -202,8 +168,8 @@ export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
             {t.title}
           </motion.h2>
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="text-[18px] md:text-[22px] text-[#1D1D1F]/60 max-w-2xl font-medium leading-relaxed"
@@ -218,12 +184,14 @@ export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.15 }}
-          className="grid grid-cols-1 md:grid-cols-12 gap-6 md:auto-rows-[340px]"
+          className="grid grid-cols-2 md:grid-cols-12 gap-4 md:gap-6 md:auto-rows-[340px]"
         >
-          <BentoCard block={t.blocks[0]} className="md:col-span-7 md:row-span-2 min-h-[400px] md:min-h-0" isLarge />
-          <BentoCard block={t.blocks[1]} className="md:col-span-5 md:col-start-8 min-h-[300px] md:min-h-0" />
-          <BentoCard block={t.blocks[2]} className="md:col-span-5 md:col-start-8 min-h-[300px] md:min-h-0" />
-
+          {/* LAB CARD - Large/Full width on mobile */}
+          <BentoCard block={t.blocks[0]} className="col-span-2 md:col-span-7 md:row-span-2 min-h-[380px] md:min-h-0" isLarge />
+          
+          {/* SYNERGY & FACTORY - Side by side on mobile */}
+          <BentoCard block={t.blocks[1]} className="col-span-1 md:col-span-5 md:col-start-8 min-h-[260px] md:min-h-0" />
+          <BentoCard block={t.blocks[2]} className="col-span-1 md:col-span-5 md:col-start-8 min-h-[260px] md:min-h-0" />
         </motion.div>
       </div>
     </section>

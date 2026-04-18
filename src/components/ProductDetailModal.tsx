@@ -60,6 +60,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         }
       }
       setLoadingSynergies(false);
+      
+      // Fire FB Pixel ViewContent Event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'ViewContent', {
+          content_ids: [product.id],
+          content_name: product.name,
+          content_type: 'product',
+          value: product.price,
+          currency: 'TJS'
+        });
+      }
     }
     fetchSynergies();
   }, [product, isOpen]);
@@ -106,10 +117,33 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     ? product.description.split('\n').filter(line => line.trim().length > 0)
     : [];
 
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.image_url ? [product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`] : [],
+    "description": product.description || product.name,
+    "brand": {
+      "@type": "Brand",
+      "name": "Green Leaf Sciences"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://www.toj-vitamin.tj",
+      "priceCurrency": "TJS",
+      "price": product.price,
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
           {/* OVERLAY - Deep & Minimal */}
           <motion.div
             initial={{ opacity: 0 }}

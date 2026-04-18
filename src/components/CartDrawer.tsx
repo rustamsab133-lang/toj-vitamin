@@ -5,6 +5,8 @@ import { ShoppingBag, X, Minus, Plus, Trash2, Zap, ShieldCheck, ArrowRight, Arro
 import { useCart } from '@/store/useCart';
 import { Lang, Product } from '@/lib/types';
 import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 
 interface CartItem extends Product {
   quantity: number;
@@ -44,23 +46,53 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
       .slice(0, 3);
   }, [items, allProducts]);
 
-  const handleCheckout = () => {
-    const total = currentTotal;
-    const itemsList = items.map((item, index) =>
-      `${index + 1}. ${item.name} (${item.price} смн) x ${item.quantity}`
-    ).join('\n');
+  const [isVerifying, setIsVerifying] = useState(false);
 
-    const msg = lang === 'ru'
-      ? `Здравствуйте! Я собрал заказ на сайте TOJ-VITAMIN:\n---\n${itemsList}\n---\nИтоговая сумма: ${total} смн\nЖду звонка для подтверждения.`
-      : `Салом! Ман дар сайт фармоиш ҷамъ кардам:\n---\n${itemsList}\n---\nМаблағи умумӣ: ${total} смн\nЗанги шуморо барои тасдиқ интизорам.`;
+  const handleCheckout = async () => {
+    setIsVerifying(true);
+    try {
+      // 🛡️ SECURITY: Verify cart prices against Supabase database
+      const itemIds = items.map(i => i.id);
+      const { data: realProducts, error } = await supabase
+        .from('products')
+        .select('id, name, price')
+        .in('id', itemIds);
 
-    onOrderSuccess?.();
-    setIsOpen(false);
-    clearCart();
+      let verifiedTotal = 0;
+      let finalItemsList = '';
 
-    setTimeout(() => {
-      window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`;
-    }, 2500);
+      if (!error && realProducts) {
+        finalItemsList = items.map((item, index) => {
+          const realProduct = realProducts.find(p => p.id === item.id);
+          const realPrice = realProduct ? realProduct.price : item.price;
+          verifiedTotal += realPrice * item.quantity;
+          return `${index + 1}. ${item.name} (${realPrice} смн) x ${item.quantity}`;
+        }).join('\n');
+      } else {
+        // Fallback to local if DB fails momentarily
+        verifiedTotal = currentTotal;
+        finalItemsList = items.map((item, index) =>
+          `${index + 1}. ${item.name} (${item.price} смн) x ${item.quantity}`
+        ).join('\n');
+      }
+
+      const msg = lang === 'ru'
+        ? `Здравствуйте! Я собрал заказ на сайте TOJ-VITAMIN:\n---\n${finalItemsList}\n---\nИтоговая сумма: ${verifiedTotal} смн\nЖду звонка для подтверждения.`
+        : `Салом! Ман дар сайт фармоиш ҷамъ кардам:\n---\n${finalItemsList}\n---\nМаблағи умумӣ: ${verifiedTotal} смн\nЗанги шуморо барои тасдиқ интизорам.`;
+
+      onOrderSuccess?.();
+      setIsOpen(false);
+      clearCart();
+
+      setTimeout(() => {
+        window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`;
+      }, 800);
+      
+    } catch (err) {
+      console.error("Validation failed", err);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleSingleItemCheckout = (item: CartItem) => {
@@ -89,14 +121,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 32, stiffness: 210 }}
-            className="w-full sm:w-[500px] h-full bg-white/40 backdrop-blur-[50px] shadow-[-30px_0_90px_rgba(0,0,0,0.2)] flex flex-col relative z-10 border-l border-white/20"
+            transition={{ type: 'spring', damping: 40, stiffness: 300, mass: 1 }}
+            className="w-full sm:w-[500px] h-full bg-white/60 backdrop-blur-[12px] shadow-[-20px_0_60px_rgba(0,0,0,0.2)] flex flex-col relative z-10 border-l border-white/20"
           >
-            {/* AMBIENT GLOW */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
-              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/10 blur-[120px]" />
-              <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-500/10 blur-[100px]" />
-            </div>
 
             {/* HEADER */}
             <div className="shrink-0 p-8 flex items-center justify-between relative z-10">
@@ -205,8 +232,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
 
                     return (
                       <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         key={item.id}
                         className="p-5 rounded-[32px] bg-white/60 border border-white/40 shadow-sm hover:shadow-md transition-all duration-500 overflow-hidden group"
                       >
@@ -323,11 +350,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
 
                   <button
                     onClick={handleCheckout}
-                    className="flex-1 h-[64px] bg-[#1D1D1F] text-white rounded-[24px] font-bold text-[16px] shadow-xl hover:bg-[#1E40AF] active:scale-[0.97] transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+                    disabled={isVerifying}
+                    className="flex-1 h-[64px] bg-[#1D1D1F] text-white rounded-[24px] font-bold text-[16px] shadow-xl hover:bg-[#1E40AF] active:scale-[0.97] transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn disabled:opacity-70 disabled:scale-100"
                   >
-                    <Zap size={18} fill="currentColor" />
-                    <span>{lang === 'ru' ? 'Оформить заказ' : 'Фармоиш'}</span>
-                    <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                    <Zap size={18} fill="currentColor" className={isVerifying ? 'animate-pulse' : ''} />
+                    <span>{isVerifying ? (lang === 'ru' ? 'Проверка...' : 'Санҷиш...') : (lang === 'ru' ? 'Оформить заказ' : 'Фармоиш')}</span>
+                    {!isVerifying && <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />}
                   </button>
                 </motion.div>
               </div>

@@ -254,8 +254,8 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
               return (
                 <motion.div
                   variants={{
-                    hidden: { opacity: 0, y: 30 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.2, 0.8, 0.2, 1] } }
+                    hidden: { opacity: 0 },
+                    visible: { opacity: 1, transition: { duration: 0.8, ease: [0.2, 0.8, 0.2, 1] } }
                   }}
                   key={category.id}
                   data-zone={category.id}
@@ -277,7 +277,8 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
 
                   <div className="apple-shelf-scroll px-8 pb-6">
                     {categoryProducts.map((product) => (
-                      <motion.div
+                      <motion.a
+                        href={`/product/${encodeURIComponent((product.name || '').toLowerCase().trim())}`}
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true }}
@@ -292,8 +293,12 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                         }}
                         whileTap={{ scale: 0.96 }}
                         key={product.id}
-                        onClick={() => setSelectedProduct(product)}
-                        className="apple-shelf-item group relative flex flex-col w-[230px] sm:w-[260px] cursor-pointer touch-manipulation"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedProduct(product);
+                          window.history.pushState(null, '', `/product/${encodeURIComponent((product.name || '').toLowerCase().trim())}`);
+                        }}
+                        className="apple-shelf-item group relative flex flex-col w-[230px] sm:w-[260px] cursor-pointer touch-manipulation block"
                         style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
                       >
                         <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_50px_100px_rgba(30,64,175,0.06)] transition-shadow duration-700 overflow-hidden h-full">
@@ -369,7 +374,7 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                             </div>
                           </div>
                         </div>
-                      </motion.div>
+                      </motion.a>
                     ))}
                   </div>
                 </motion.div>
@@ -380,7 +385,10 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
 
         <ProductDetailModal
           isOpen={!!selectedProduct}
-          onClose={() => setSelectedProduct(null)}
+          onClose={() => {
+            setSelectedProduct(null);
+            window.history.pushState(null, '', '/');
+          }}
           product={selectedProduct}
           allProducts={products}
           lang={lang}

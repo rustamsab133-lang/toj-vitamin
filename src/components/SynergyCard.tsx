@@ -42,8 +42,8 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       className="group relative flex flex-col overflow-hidden rounded-[48px] border border-white/20 bg-white/40 p-8 sm:p-10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] backdrop-blur-[40px] transition-all duration-700 hover:shadow-[0_60px_120px_-20px_rgba(0,0,0,0.15)]"
     >
