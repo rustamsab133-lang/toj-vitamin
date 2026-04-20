@@ -158,12 +158,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0.5 }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="w-full sm:w-[580px] max-h-screen sm:max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[44px] shadow-[0_40px_100px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden will-change-transform"
+            className="w-full sm:w-[580px] max-h-[100dvh] sm:max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[44px] shadow-[0_40px_100px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden will-change-transform"
           >
-            {/* STABLE CLOSE ACTION - LOWERED INTO SAFE ZONE */}
+            {/* STABLE CLOSE ACTION - RESPECTING SAFE AREAS */}
             <button 
               onClick={handleSmartClose}
-              className="absolute top-6 right-6 sm:top-8 sm:right-8 w-12 h-12 bg-white/90 backdrop-blur-md border border-black/10 text-[#1D1D1F] rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 shadow-[0_8px_16px_rgba(0,0,0,0.1)]"
+              className="absolute right-6 sm:top-8 sm:right-8 w-12 h-12 bg-white/90 backdrop-blur-md border border-black/10 text-[#1D1D1F] rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 shadow-[0_8px_16px_rgba(0,0,0,0.1)]"
+              style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}
             >
               <X size={24} />
             </button>

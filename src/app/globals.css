@@ -49,3 +49,23 @@ h1, h2, h3, h4 {
 .text-balance {
   text-wrap: balance;
 }
+
+/* Global Button Responsiveness Fix */
+button, 
+[role="button"],
+.apple-shelf-item {
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure images/overlays inside buttons don't block interaction */
+button > *, 
+.apple-shelf-item > * {
+  pointer-events: none;
+}
+
+/* Re-enable pointer events for specific interactive children if needed */
+.interactive-child {
+  pointer-events: auto;
+}

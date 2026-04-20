@@ -15,6 +15,8 @@ interface CartState {
   totalAmount: () => number;
   totalItems: () => number;
   setAllProducts: (products: Product[]) => void;
+  cartAnimationKey: number;
+  triggerAnimation: () => void;
 }
 
 export const useCart = create<CartState>()(
@@ -23,7 +25,9 @@ export const useCart = create<CartState>()(
       items: [],
       allProducts: [],
       isOpen: false,
+      cartAnimationKey: 0,
       setIsOpen: (open) => set({ isOpen: open }),
+      triggerAnimation: () => set((state) => ({ cartAnimationKey: state.cartAnimationKey + 1 })),
       setAllProducts: (products) => set({ allProducts: products }),
       addItem: (product) => {
         const items = get().items;

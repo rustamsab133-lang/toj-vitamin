@@ -97,3 +97,21 @@ export interface QuizSynergy {
   products: QuizSynergyProduct[]; 
   total_price?: number;
 }
+
+// ==== JOURNAL TYPES ====
+
+export interface Article {
+  id: string;
+  slug: string;
+  title_ru: string;
+  title_tj: string;
+  excerpt_ru?: string;
+  excerpt_tj?: string;
+  content_ru: string;
+  content_tj: string;
+  image_url?: string;
+  category: string;
+  author: string;
+  read_time_min: number;
+  published_at: string;
+}

@@ -32,12 +32,21 @@ export const metadata: Metadata = {
     },
   },
   title: {
-    default: "Наука Здоровья: Премиальные Витамины №1 в Таджикистане | toj-vitamin.tj",
-    template: "%s | tojvitamin"
+    default: "Наука Здоровья: Премиальные Витамины №1 в Таджикистане | Купить Витамины в Душанбе",
+    template: "%s | tojvitamin.tj"
   },
-  description: "Экспертный медицинский маркетплейс витаминов и БАДов в Таджикистане. Квалифицированный подбор нутрицевтиков и научный подход Green Leaf Sciences.",
-  keywords: ["купить витамины", "витамины Душанбе", "БАД Таджикистан", "Green Leaf Sciences", "GLS", "tojvitamin", "витаминҳо", "иловаҳои биологӣ"],
-  authors: [{ name: "Green Leaf Sciences" }],
+  description: "Экспертный медицинский маркетплейс витаминов и БАДов в Таджикистане. Квалифицированный подбор нутрицевтиков и научный подход Green Leaf Sciences. Бесплатная консультация и доставка по Душанбе.",
+  keywords: [
+    "купить витамины", "купить витамины в Душанбе", "витамины в Таджикистане", 
+    "лучшие БАДы Душанбе", "Green Leaf Sciences Таджикистан", "GLS Душанбе", 
+    "магазин витаминов Таджикистан", "витаминҳо харидан Душанбе", 
+    "иловаҳои биологӣ Тоҷикистон", "нутрицевтики", "здоровье Душанбе",
+    "спортивное питание Таджикистан", "витамины для женщин Душанбе",
+    "витамины для мужчин Таджикистан",
+    "tojvitamin", "toj vitamin", "toj-vitamin", "тожвитамин", "тож-витамин", "тоджвитамин",
+    "точвитамин", "тачвитамин", "точ-витамин", "тач-витамин", "taj-vitamin", "tajvitamin"
+  ],
+  authors: [{ name: "Green Leaf Sciences", url: "https://www.toj-vitamin.tj" }],
   
   // Open Graph (Instagram, Telegram, WhatsApp)
   openGraph: {
@@ -93,7 +102,7 @@ export default function RootLayout({
       <head>
         <Script
           strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-4FRDH17FRC'}`}
         />
         <Script
           id="google-analytics"
@@ -103,7 +112,7 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || ''}', {
+              gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || 'G-4FRDH17FRC'}', {
                 page_path: window.location.pathname,
               });
             `,
@@ -135,6 +144,7 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": "toj-vitamin",
+                "alternateName": ["tojvitamin", "тожвитамин", "toj vitamin", "точвитамин", "тачвитамин", "tajvitamin", "taj-vitamin"],
                 "url": "https://www.toj-vitamin.tj",
                 "logo": "https://www.toj-vitamin.tj/logo.webp",
                 "contactPoint": {
@@ -160,6 +170,18 @@ export default function RootLayout({
                   },
                   "query-input": "required name=search_term_string"
                 }
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Главная",
+                    "item": "https://www.toj-vitamin.tj"
+                  }
+                ]
               }
             ])
           }}

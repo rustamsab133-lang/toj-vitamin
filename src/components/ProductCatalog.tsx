@@ -16,12 +16,15 @@ import {
   HeartPulse,
   ShieldCheck,
   Wind,
-  Activity
+  Activity,
+  ArrowRight
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
 import enrichedData from '@/data/enriched_gls_products.json';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
+import { slugify } from '@/lib/slugify';
+import { ZONE_THEMES } from '@/lib/theme';
 
 const CATEGORIES = [
   { id: 'all', label: { ru: 'Все', tj: 'Ҳама' }, icon: ShoppingBag },
@@ -60,18 +63,7 @@ const ICON_MAP: Record<string, string> = {
   'tablet': 'vitamins'
 };
 
-const ZONE_THEMES: Record<string, { bg: string; glow: string }> = {
-  'energy': { bg: '#FFF7ED', glow: 'rgba(251, 146, 60, 0.12)' },
-  'sport': { bg: '#FFF7ED', glow: 'rgba(251, 146, 60, 0.12)' },
-  'brain': { bg: '#F5F3FF', glow: 'rgba(139, 92, 246, 0.12)' },
-  'sleep': { bg: '#F5F3FF', glow: 'rgba(139, 92, 246, 0.12)' },
-  'immune': { bg: '#F0FDF4', glow: 'rgba(34, 197, 94, 0.12)' },
-  'detox': { bg: '#F0FDF4', glow: 'rgba(34, 197, 94, 0.12)' },
-  'beauty': { bg: '#FFF1F2', glow: 'rgba(244, 63, 94, 0.12)' },
-  'heart': { bg: '#FFF1F2', glow: 'rgba(244, 63, 94, 0.12)' },
-  'vitamins': { bg: '#F0FDFA', glow: 'rgba(20, 184, 166, 0.12)' },
-  'default': { bg: '#FDFBF7', glow: 'rgba(30, 64, 175, 0.05)' }
-};
+
 
 export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = ({ lang, whatsappNumber }) => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -142,7 +134,11 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
     } else {
       addItem(product);
     }
-    setIsOpen(true);
+    // Trigger "Fly to Cart" animation cue
+    triggerAnimation();
+    
+    // Close modal to reveal the header/cart pulse
+    setSelectedProduct(null);
   };
 
   const shelfCategories = CATEGORIES.filter(c => c.id !== 'all');
@@ -156,8 +152,7 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
   return (
     <section
       id="catalog"
-      className="w-full pb-32 relative transition-colors duration-[1500ms] ease-in-out"
-      style={{ backgroundColor: currentTheme.bg }}
+      className="w-full pb-32 relative"
     >
       <div
         className="fixed inset-0 pointer-events-none z-0 transition-all duration-[1500ms] ease-in-out opacity-40"
@@ -278,7 +273,7 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                   <div className="apple-shelf-scroll px-8 pb-6">
                     {categoryProducts.map((product) => (
                       <motion.a
-                        href={`/product/${encodeURIComponent((product.name || '').toLowerCase().trim())}`}
+                        href={`/product/${slugify(product.name || '')}`}
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true }}
@@ -296,79 +291,107 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                         onClick={(e) => {
                           e.preventDefault();
                           setSelectedProduct(product);
-                          window.history.pushState(null, '', `/product/${encodeURIComponent((product.name || '').toLowerCase().trim())}`);
+                          window.history.pushState(null, '', `/product/${slugify(product.name || '')}`);
                         }}
                         className="apple-shelf-item group relative flex flex-col w-[230px] sm:w-[260px] cursor-pointer touch-manipulation block"
                         style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
                       >
-                        <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_50px_100px_rgba(30,64,175,0.06)] transition-shadow duration-700 overflow-hidden h-full">
+                        <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_60px_120px_rgba(30,64,175,0.08)] transition-all duration-700 overflow-hidden h-full">
 
+                          {/* 1. BACKGROUND EFFECTS */}
                           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent pointer-events-none" />
-
                           <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-30 transition-all duration-1200 bg-gradient-to-r from-transparent via-white to-transparent translate-x-[-200%] group-hover:translate-x-[200%] z-20" />
 
-                          <div className="absolute top-6 left-6 z-20 flex flex-wrap gap-1.5 pointer-events-none">
+                          {/* 2. TOP BADGES */}
+                          <div className="absolute top-7 left-7 z-20 flex flex-wrap gap-1.5 pointer-events-none">
                             {(product as any).tags?.slice(0, 1).map((tag: string, idx: number) => (
-                              <span key={idx} className="px-3 py-1 rounded-full bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.15em] shadow-lg">
+                              <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
                                 {tag}
                               </span>
                             ))}
                           </div>
+                          <div className="absolute top-7 right-7 z-20 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+                             <div className="w-1.5 h-1.5 rounded-full bg-[#1E40AF] animate-pulse" />
+                             <span className="text-[8px] font-bold uppercase tracking-widest text-[#94A3B8]">
+                               {lang === 'ru' ? 'Подробно' : 'Тафсилот'}
+                             </span>
+                          </div>
 
-                          <div className="mb-6 aspect-[4/5] relative bg-gradient-to-b from-[#F8FAFC] to-white rounded-[36px] overflow-hidden flex items-center justify-center p-6 transition-all duration-700 border border-[#EDF2F7] group-hover:border-[#1E40AF]/10">
+                          {/* 3. PRODUCT IMAGE STUDIO */}
+                          <div className="mb-6 aspect-[4/5] relative bg-gradient-to-b from-[#FBFDFF] to-white rounded-[40px] overflow-hidden flex items-center justify-center p-6 transition-all duration-700 border border-[#EDF2F7] group-hover:border-[#1E40AF]/10">
+                            {/* Inner Aura Glow */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(30,64,175,0.03)_0%,transparent_70%)] group-hover:opacity-100 transition-opacity" />
+                            
                             {product.image_url ? (
-                              <Image
-                                src={product.image_url}
-                                alt={product.name}
-                                fill
-                                sizes="(max-width: 640px) 250px, 300px"
-                                className="object-contain p-6 transition-transform duration-1000 ease-out group-hover:scale-105"
-                                style={{ willChange: 'transform' }}
-                              />
+                              <motion.div 
+                                className="relative w-full h-full"
+                                whileHover={{ y: -8 }}
+                                transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
+                              >
+                                <Image
+                                  src={product.image_url}
+                                  alt={product.name}
+                                  fill
+                                  sizes="(max-width: 640px) 250px, 300px"
+                                  className="object-contain p-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.05)]"
+                                />
+                              </motion.div>
                             ) : (
                               <ShoppingBag size={42} strokeWidth={1} className="text-[#E2E8F0]" />
                             )}
 
-                            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-2 group-hover:translate-y-0">
-                              <div className="w-9 h-9 rounded-full bg-white shadow-xl flex items-center justify-center border border-[#EDF2F7] text-[#1E40AF]">
+                            <div className="absolute bottom-6 right-6">
+                              <motion.div 
+                                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                                className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-xl flex items-center justify-center border border-[#EDF2F7] text-[#1E40AF]"
+                              >
                                 <Sparkles size={16} />
-                              </div>
+                              </motion.div>
                             </div>
                           </div>
 
+                          {/* 4. CONTENT & ACTIONS */}
                           <div className="flex-1 flex flex-col relative z-10 px-1 text-[#1D1D1F]">
-                            <h3 className="text-[17px] font-bold leading-[1.3] mb-3 font-outfit line-clamp-2 h-[44px] group-hover:text-[#1E40AF] transition-colors duration-500" style={{ backfaceVisibility: 'hidden' }}>
+                            <h3 className="text-[17px] font-bold leading-[1.3] mb-4 font-outfit line-clamp-2 h-[44px] group-hover:text-[#1E40AF] transition-colors duration-500">
                               {product.name}
                             </h3>
 
-                            {/* STABILIZED ACTION BLOCK */}
-                            <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-14 overflow-hidden">
-                              {/* Price Layer */}
-                              <div className="absolute inset-0 flex items-center justify-between gap-3 transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0 will-change-transform">
+                            <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">
+                              {/* Standard View: Price & Clinical Info */}
+                              <div className="absolute inset-0 flex items-center justify-between gap-3 transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0">
                                 <div className="flex flex-col gap-0.5">
-                                  <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em]">
-                                    {lang === 'ru' ? 'Клиническая формула' : 'Формулаи клиникӣ'}
-                                  </span>
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                     <ShieldCheck size={10} className="text-[#1E40AF]" />
+                                     <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em]">
+                                       {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
+                                     </span>
+                                  </div>
                                   <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
                                     {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
                                   </p>
                                 </div>
-                                <div className="flex items-center justify-center h-11 w-11 rounded-[20px] bg-[#1D1D1F]/5 text-[#1D1D1F] transition-colors group-hover:bg-[#1E40AF]/10">
-                                  <Zap size={18} />
-                                </div>
+                                <motion.div 
+                                  animate={{ x: [0, 3, 0] }}
+                                  transition={{ duration: 2, repeat: Infinity }}
+                                  className="flex items-center gap-1 text-[#1E40AF] text-[10px] font-bold uppercase tracking-wider"
+                                >
+                                   {lang === 'ru' ? 'Инфо' : 'Инфо'}
+                                   <ArrowRight size={12} />
+                                </motion.div>
                               </div>
 
-                              {/* Button Layer */}
-                              <div className="absolute inset-0 flex items-center justify-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] will-change-transform">
+                              {/* Hover View: Add to Cart Button */}
+                              <div className="absolute inset-0 flex items-center justify-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1]">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleBuy(product);
                                   }}
-                                  className="w-full h-11 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#1E40AF] active:scale-95 transition-all duration-300"
+                                  className="w-full h-12 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#1E40AF] active:scale-95 transition-all duration-300"
                                 >
-                                  <Zap size={16} />
-                                  <span className="text-[14px]">{lang === 'ru' ? 'В корзину' : 'Ба сабад'}</span>
+                                  <Zap size={16} fill="currentColor" />
+                                  <span className="text-[14px]">{lang === 'ru' ? 'Добавить в корзину' : 'Ба сабад'}</span>
                                 </button>
                               </div>
                             </div>

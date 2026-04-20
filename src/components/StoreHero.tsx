@@ -47,7 +47,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
           >
             <Sparkles size={12} className="text-[#1D1D1F]/60" />
             <span className="text-[10px] font-bold tracking-[0.2em] text-[#1D1D1F] uppercase">
-              {settings.hero_badge_text || (lang === 'ru' ? 'Ваш гид по витаминам' : 'Роҳнамои шумо дар олами витаминҳо')}
+              {settings.hero_badge_text || (lang === 'ru' ? 'Ваш эксперт по витаминам' : 'Роҳнамои шумо дар олами витаминҳо')}
             </span>
           </motion.div>
 
@@ -58,7 +58,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
             className="mb-6"
           >
             <span className="text-[30px] font-bold tracking-tighter text-[#1D1D1F] leading-[1.1] text-balance font-outfit">
-              {settings.hero_title || (lang === 'ru' ? 'Витамины и БАДы для всей семьи.' : 'Витаминҳо ва БАД-ҳо барои тамоми оила.')}
+              {settings.hero_title || (lang === 'ru' ? 'Здоровье и энергия каждый день' : 'Витаминҳо ва БАД-ҳо барои тамоми оила.')}
             </span>
           </motion.h1>
           
@@ -69,7 +69,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
             className="text-[15px] text-[#0f172a]/60 font-medium leading-relaxed mb-8 max-w-[340px]"
           >
             {settings.hero_subtitle || (lang === 'ru' 
-              ? 'Все нужные витамины и добавки в одном месте. Помогаем выбрать подходящий комплекс и быстро доставляем!'
+              ? 'Простые решения для восстановления сил. Только проверенные составы, созданные природой и подтвержденные наукой.'
               : 'Ҳама витаминҳо ва иловаҳои лозима дар як ҷо. Барои интихоби маҷмӯи мувофиқ кӯмак мекунем ва зуд мерасонем!')}
           </motion.p>
 
@@ -92,7 +92,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[1200ms] ease-in-out" />
                 
                 <span className="text-[14px] font-bold text-white tracking-widest relative z-10 uppercase font-outfit">
-                  {lang === 'ru' ? 'Начать диагностику' : 'Оғози ташхис'}
+                  {lang === 'ru' ? 'Начать диагностику' : 'Начать диагностику'}
                 </span>
                 
                 <div className="relative z-10 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#1E40AF] transition-colors duration-500">
@@ -122,7 +122,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
             <div className="relative aspect-[21/9] md:aspect-[2.4/1] w-full overflow-hidden rounded-[20px] shadow-[0_30px_60px_-15px_rgba(30,64,175,0.15)] border border-white/40">
               <MotionImage 
                 src="/hero-gls.webp" 
-                alt="GLS Premium Wellness" 
+                alt="GLS Премиальное Качество" 
                 fill
                 priority
                 className="object-cover"

@@ -42,6 +42,8 @@ const BentoCard = ({ block, className, isLarge = false }: { block: Block; classN
   return (
     <div
       ref={ref}
+      role="article"
+      aria-label={block.title}
       className={`${className} relative group rounded-[40px] overflow-hidden bg-white border border-black/[0.05] shadow-sm hover:shadow-2xl transition-all duration-700 hover:scale-[1.01]`}
     >
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -178,20 +180,21 @@ export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
           </motion.p>
         </div>
 
-        {/* BENTO GRID */}
+        {/* UNIFORM GRID */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.15 }}
-          className="grid grid-cols-2 md:grid-cols-12 gap-4 md:gap-6 md:auto-rows-[340px]"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
         >
-          {/* LAB CARD - Large/Full width on mobile */}
-          <BentoCard block={t.blocks[0]} className="col-span-2 md:col-span-7 md:row-span-2 min-h-[380px] md:min-h-0" isLarge />
-          
-          {/* SYNERGY & FACTORY - Side by side on mobile */}
-          <BentoCard block={t.blocks[1]} className="col-span-1 md:col-span-5 md:col-start-8 min-h-[260px] md:min-h-0" />
-          <BentoCard block={t.blocks[2]} className="col-span-1 md:col-span-5 md:col-start-8 min-h-[260px] md:min-h-0" />
+          {t.blocks.map((block) => (
+            <BentoCard 
+              key={block.id} 
+              block={block} 
+              className="min-h-[420px] md:h-[500px]" 
+            />
+          ))}
         </motion.div>
       </div>
     </section>

@@ -29,9 +29,9 @@ export const SplashScreen: React.FC = () => {
           className="flex flex-col items-center"
         >
           {/* THE REAL LOGO IMAGE - LARGE & PRESTIGIOUS */}
-          <div className="w-32 h-32 mb-8 rounded-[28px] bg-white shadow-2xl p-0 flex items-center justify-center border border-[#E5E5EA]/50 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#1E40AF]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img src="/logo.webp" alt="TOJ-VITAMIN Brand Logo" className="w-full h-full object-contain relative z-10" />
+          <div className="w-32 h-32 mb-8 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border border-[#E5E5EA]/50 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <img src="/logo.webp" alt="TOJ-VITAMIN Brand Logo" className="w-full h-full object-contain scale-[1.8] relative z-10" />
           </div>
 
           <div className="relative">
@@ -52,7 +52,7 @@ export const SplashScreen: React.FC = () => {
           >
             <div className="h-px w-8 bg-[#1D1D1F]/10" />
             <span className="text-[10px] font-bold tracking-[0.4em] text-[#1D1D1F]/40 uppercase">
-              Bio-Technology
+              Биотехнологии здоровья
             </span>
             <div className="h-px w-8 bg-[#1D1D1F]/10" />
           </motion.div>

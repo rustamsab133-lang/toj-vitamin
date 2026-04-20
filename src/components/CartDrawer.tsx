@@ -122,7 +122,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 40, stiffness: 300, mass: 1 }}
-            className="w-full sm:w-[500px] h-full bg-white/60 backdrop-blur-[12px] shadow-[-20px_0_60px_rgba(0,0,0,0.2)] flex flex-col relative z-10 border-l border-white/20"
+            className="w-full sm:w-[500px] h-full bg-white/70 backdrop-blur-[24px] shadow-[-20px_0_60px_rgba(0,0,0,0.2)] flex flex-col relative z-10 border-l border-white/20"
+            style={{
+              background: 'radial-gradient(circle at 0% 0%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%)'
+            }}
           >
 
             {/* HEADER */}
