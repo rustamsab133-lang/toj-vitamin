@@ -553,15 +553,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                    ? 'Биологическая синергия препаратов, усиливающих действие друг друга по принципу «1+1=3».'
                    : 'Синергияи биологии доруе, ки таъсири якдигарро тақвият медиханд.'}
                </p>
-               {/* Social proof badge */}
-               <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#F0FDF4] border border-[#86EFAC]">
-                 <span className="text-green-600 font-bold text-[13px]">✓</span>
-                 <span className="text-[13px] font-semibold text-[#166534]">
-                   {lang === 'ru'
-                     ? 'Этот тип комплексов выбрали 1 200+ человек в этом месяце'
-                     : '1 200+ нафар ин маҷмӯаро дар ин моҳ интихоб карданд'}
-                 </span>
-               </div>
+               </p>
             </div>
 
             {/* HEALTH PROFILE SCORE BARS */}
