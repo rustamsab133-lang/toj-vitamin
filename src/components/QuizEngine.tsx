@@ -97,7 +97,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
   useEffect(() => {
     // Notify parent about immersive state
     // We are "immersive" when answering questions or loading
-    const isImmersive = step === 'option' || step === 'loading';
+    const isImmersive = step === 'option' || step === 'loading' || step === 'result';
     onImmersiveChange?.(isImmersive);
 
     // Scroll to the quiz section when step changes to focus on questions
@@ -359,12 +359,12 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
               </motion.div>
             )}
             
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 md:px-0 pb-16 w-full">
+        <div className="apple-shelf-scroll px-6 pb-16 w-full -mx-4 md:mx-0 snap-x snap-mandatory overflow-x-auto">
           {categories.map((c) => (
             <button 
               key={c.id} 
               onClick={() => handleSelectCategory(c)}
-              className="w-full h-[480px] group relative rounded-[40px] overflow-hidden bg-[#020617] shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-all duration-700 hover:scale-[1.02] active:scale-[0.98] text-left border border-white/5"
+              className="apple-shelf-item w-[300px] h-[480px] snap-center group relative rounded-[40px] overflow-hidden bg-[#020617] shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-all duration-700 hover:scale-[1.02] active:scale-[0.98] text-left border border-white/5"
             >
               {/* 1. BACKGROUND GLOW & HUD */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -552,7 +552,6 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                  {lang === 'ru'
                    ? 'Биологическая синергия препаратов, усиливающих действие друг друга по принципу «1+1=3».'
                    : 'Синергияи биологии доруе, ки таъсири якдигарро тақвият медиханд.'}
-               </p>
                </p>
             </div>
 

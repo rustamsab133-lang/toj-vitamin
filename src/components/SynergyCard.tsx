@@ -14,26 +14,18 @@ interface SynergyCardProps {
 
 export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumber, lang }) => {
   const total = synergy.total_price || 0;
-  const { addMultiple, triggerAnimation } = useCart();
   
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  const handleAddToCart = () => {
+  const handleBuyInWhatsApp = () => {
     if (synergy.products) {
-      const productsToAdd = synergy.products.map(p => ({
-        id: p.id || `sync-${p.name}`,
-        name: p.name,
-        full_name: p.name,
-        description: p.expert_description || p.properties?.join(', ') || '',
-        price: p.price || 0,
-        icon_type: 'vitamins',
-        image_url: p.image_url || null,
-        tags: p.tags || [],
-        marketing_hooks: p.marketing_hooks || [],
-      } as Product));
+      const productNames = synergy.products.map(p => p.name).join(', ');
+      const message = lang === 'ru' 
+        ? `Здравствуйте! Хочу заказать комплекс: ${productNames}. Итого: ${total} смн. Протокол: ${synergy.dosage}.`
+        : `Салом! Ман мехоҳам маҷмӯаро фармоиш диҳам: ${productNames}. Маблағ: ${total} смн.`;
       
-      addMultiple(productsToAdd);
-      triggerAnimation();
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
     }
   };
 
@@ -60,41 +52,29 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
               {lang === 'ru' ? 'Клиническая синергия' : 'Синергияи клиникӣ'}
             </span>
           </div>
-          {total > 1500 && (
-            <div className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full shadow-lg">
-              <ShieldCheck size={14} className="text-blue-400" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em]">
-                {lang === 'ru' ? 'Премиум' : 'Олӣ'}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 bg-black/[0.03] px-4 py-2 rounded-full border border-black/[0.05]">
+            <Sparkles size={14} className="text-[#94A3B8]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8]">
+              {lang === 'ru' ? 'Формула 1+1=3' : 'Формулаи 1+1=3'}
+            </span>
+          </div>
         </div>
         
-        <h3 className="text-[42px] md:text-[52px] font-bold text-[#1D1D1F] leading-[1.05] tracking-tight font-outfit">
+        <h3 className="text-[32px] sm:text-[44px] font-bold text-[#1D1D1F] leading-[1.1] tracking-tight font-outfit">
           {synergy.type}
         </h3>
       </div>
 
-      {/* 2. PRODUCT LIST: Clean & Full visibility */}
-      <div className="relative z-10 space-y-4 mb-12">
-        <div className="flex items-center gap-2 mb-6 px-1">
-          <Sparkles size={14} className="text-[#1E40AF]" />
-          <p className="text-[12px] font-bold uppercase tracking-[0.25em] text-[#94A3B8]">
-            {lang === 'ru' ? 'Состав комплекса' : 'Таркиби маҷмӯа'}
-          </p>
-        </div>
-
-        <div className="space-y-3">
+      {/* 2. PRODUCT LIST: Smart Stack */}
+      <div className="relative z-10 flex-1 mb-12">
+        <div className="space-y-4">
           {synergy.products?.map((p, idx) => {
-            const isExpanded = expandedId === (p.id || String(idx));
-            const currentId = p.id || String(idx);
-            
+            const isExpanded = expandedId === p.id;
+            const currentId = p.id || `p-${idx}`;
             return (
               <div 
-                key={currentId} 
-                className={`group/item border transition-all duration-500 rounded-[32px] ${
-                  isExpanded ? 'bg-[#F8FAFC] border-[#1E40AF]/20 shadow-sm' : 'bg-white border-black/[0.05] hover:border-black/10'
-                }`}
+                key={currentId}
+                className="rounded-[32px] border border-black/[0.03] bg-black/[0.01] hover:bg-white hover:border-[#1E40AF]/20 hover:shadow-xl hover:shadow-black/5 transition-all duration-500 overflow-hidden group/item"
               >
                 <button 
                   onClick={() => toggleExpand(currentId)}
@@ -142,13 +122,6 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
                          <p className="text-[15px] text-[#475569] leading-relaxed font-medium">{p.expert_description}</p>
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-2">
-                       {p.tags?.slice(0, 3).map((tag, tIdx) => (
-                         <span key={tIdx} className="text-[10px] font-bold text-black/40 uppercase tracking-widest px-3 py-1 bg-black/[0.03] rounded-lg">
-                           {tag}
-                         </span>
-                       ))}
-                    </div>
                   </div>
                 </motion.div>
               </div>
@@ -171,19 +144,12 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
                 {synergy.dosage}
               </h4>
             </div>
-            {synergy.rule && (
-              <div className="pt-4 border-t border-white/10">
-                <p className="text-[14px] text-white/60 italic font-medium">
-                   {lang === 'ru' ? 'Важное условие:' : 'Шарт:'} {synergy.rule}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       {/* 4. FOOTER: Final CTA */}
-      <div className="relative z-10 flex items-center justify-between pt-6 border-t border-black/[0.05]">
+      <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-black/[0.05] gap-6">
         <div className="flex flex-col">
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8] mb-1">К покупке</span>
           <div className="flex items-baseline gap-1">
@@ -193,11 +159,11 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
         </div>
 
         <button 
-          onClick={handleAddToCart}
-          className="group relative h-[72px] px-10 bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center gap-4 hover:bg-[#1E40AF] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 shadow-xl shadow-black/10 overflow-hidden"
+          onClick={handleBuyInWhatsApp}
+          className="w-full sm:w-auto group relative h-[72px] px-10 bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-4 hover:bg-[#1E40AF] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 shadow-xl shadow-black/10 overflow-hidden"
         >
-          <Zap size={20} fill="currentColor" />
-          <span>{lang === 'ru' ? 'Добавить всё' : 'Илова кардан'}</span>
+          <MessageCircle size={20} fill="currentColor" />
+          <span>{lang === 'ru' ? 'Заказать комплекс' : 'Фармоиш додан'}</span>
           <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           
           <motion.div 
