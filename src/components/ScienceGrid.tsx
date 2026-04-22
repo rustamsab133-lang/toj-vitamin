@@ -1,9 +1,9 @@
 "use client";
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Lang } from '@/lib/types';
-import { ShieldCheck, Zap, Microscope, Activity, LucideIcon } from 'lucide-react';
+import { ShieldCheck, Zap, Microscope, Activity, LucideIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ScienceGridProps {
   lang: Lang;
@@ -18,30 +18,10 @@ interface Block {
 }
 
 const BentoCard = ({ block, className, isLarge = false }: { block: Block; className: string; isLarge?: boolean }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   const Icon = block.icon;
 
   return (
     <div
-      ref={ref}
       role="article"
       aria-label={block.title}
       className={`${className} relative group rounded-[40px] overflow-hidden bg-white border border-black/[0.05] shadow-sm hover:shadow-2xl transition-all duration-700 hover:scale-[1.01]`}
@@ -75,6 +55,9 @@ const BentoCard = ({ block, className, isLarge = false }: { block: Block; classN
 };
 
 export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+
   const content = {
     ru: {
       title: "Наука за гранью возможного",
@@ -134,19 +117,37 @@ export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
 
   const t = content[lang] || content.ru;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.1
-      }
-    }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % t.blocks.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [t.blocks.length]);
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0
+    })
   };
 
   return (
     <section className="w-full py-24 md:py-32 bg-[#FDFBF7] relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#1E40AF]/[0.02] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-[radial-gradient(circle_at_bottom_left,_#1E40AF08_0%,_transparent_70%)] pointer-events-none" />
+
       <div className="max-w-6xl mx-auto px-6">
         {/* HEADER */}
         <div className="max-w-3xl mb-16 md:mb-24">
@@ -180,22 +181,71 @@ export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
           </motion.p>
         </div>
 
-        {/* UNIFORM GRID */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
-        >
+        {/* DESKTOP GRID (Hidden on mobile) */}
+        <div className="hidden md:grid grid-cols-3 gap-8">
           {t.blocks.map((block) => (
             <BentoCard 
               key={block.id} 
               block={block} 
-              className="min-h-[420px] md:h-[500px]" 
+              className="h-[500px]" 
             />
           ))}
-        </motion.div>
+        </div>
+
+        {/* MOBILE SLIDER (Hidden on desktop) */}
+        <div className="md:hidden relative min-h-[520px]">
+          <div className="relative h-[500px] w-full">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <motion.div
+                key={currentIndex}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.4 }
+                }}
+                className="absolute inset-0"
+              >
+                <BentoCard 
+                  block={t.blocks[currentIndex]} 
+                  className="h-full w-full" 
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* SLIDER CONTROLS (Pagination Dots) */}
+          <div className="flex justify-center gap-3 mt-8">
+            {t.blocks.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setDirection(idx > currentIndex ? 1 : -1);
+                  setCurrentIndex(idx);
+                }}
+                className={`group relative h-1.5 transition-all duration-500 rounded-full overflow-hidden ${
+                  idx === currentIndex ? 'w-10 bg-[#1E40AF]' : 'w-2 bg-[#1D1D1F]/10 hover:bg-[#1D1D1F]/20'
+                }`}
+              >
+                {idx === currentIndex && (
+                  <motion.div 
+                    layoutId="active-pill"
+                    className="absolute inset-0 bg-[#1E40AF]"
+                    initial={false}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          
+          {/* HINT FOR SWIPE */}
+          <div className="text-center mt-4">
+             <span className="text-[10px] font-bold text-[#1D1D1F]/20 uppercase tracking-[0.2em]">Автоматическое переключение</span>
+          </div>
+        </div>
       </div>
     </section>
   );

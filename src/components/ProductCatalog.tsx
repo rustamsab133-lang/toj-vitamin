@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   Wind,
   Activity,
-  ArrowRight
+  ArrowRight,
+  MessageCircle
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
 import enrichedData from '@/data/enriched_gls_products.json';
@@ -70,7 +71,7 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { activeZone, setActiveZone, search } = useThemeStore();
-  const { addItem, addMultiple, setIsOpen, setAllProducts } = useCart();
+  const { addItem, addMultiple, setIsOpen, setAllProducts, triggerAnimation } = useCart();
 
   useEffect(() => {
     loadProducts();
@@ -129,15 +130,27 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
   };
 
   const handleBuy = (product: Product, synergyProduct?: Product) => {
-    if (synergyProduct) {
-      addMultiple([product, synergyProduct]);
-    } else {
-      addItem(product);
+    // ─── GA4 Tracking ───────────────────────────────────────────────────
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'whatsapp_order_click', {
+        product_id: product.id,
+        product_name: product.name,
+        synergy_id: synergyProduct?.id,
+        price: product.price + (synergyProduct?.price || 0)
+      });
     }
-    // Trigger "Fly to Cart" animation cue
-    triggerAnimation();
+
+    const message = synergyProduct 
+      ? (lang === 'ru' 
+          ? `Здравствуйте! Хочу заказать набор: ${product.name} + ${synergyProduct.name}. Цена: ${product.price + synergyProduct.price} смн.`
+          : `Салом! Ман мехоҳам маҷмӯаро фармоиш диҳам: ${product.name} + ${synergyProduct.name}. Нарх: ${product.price + synergyProduct.price} смн.`)
+      : (lang === 'ru' 
+          ? `Здравствуйте! Хочу заказать: ${product.name}. Цена: ${product.price} смн.`
+          : `Салом! Ман мехоҳам фармоиш диҳам: ${product.name}. Нарх: ${product.price} смн.`);
     
-    // Close modal to reveal the header/cart pulse
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
     setSelectedProduct(null);
   };
 
@@ -388,10 +401,10 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                                     e.stopPropagation();
                                     handleBuy(product);
                                   }}
-                                  className="w-full h-12 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#1E40AF] active:scale-95 transition-all duration-300"
+                                  className="w-full h-12 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#25D366] active:scale-95 transition-all duration-300"
                                 >
-                                  <Zap size={16} fill="currentColor" />
-                                  <span className="text-[14px]">{lang === 'ru' ? 'Добавить в корзину' : 'Ба сабад'}</span>
+                                  <MessageCircle size={16} fill="currentColor" />
+                                  <span className="text-[14px]">{lang === 'ru' ? 'Заказать в WhatsApp' : 'Фармоиш дар WhatsApp'}</span>
                                 </button>
                               </div>
                             </div>

@@ -100,16 +100,9 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
     const isImmersive = step === 'option' || step === 'loading' || step === 'result';
     onImmersiveChange?.(isImmersive);
 
-    // Scroll to the quiz section when step changes to focus on questions
-    const element = document.getElementById('quiz');
-    if (element && step === 'option') {
-      const offset = 80; // Adjust for header
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-      window.scrollTo({
-        top: elementPosition - offset,
-        behavior: 'smooth'
-      });
-    }
+    // The scroll is no longer needed because the primary content unmounts,
+    // automatically bringing the quiz to the top of the viewport.
+    // Animating layout while smoothly scrolling causes browser freezing.
   }, [step, onImmersiveChange]);
 
   const loadCategories = async () => {

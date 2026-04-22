@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { QuizSynergy, Lang, Product } from '@/lib/types';
-import { ChevronDown, Clock, ShieldCheck, ShoppingBag, Dna, Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { ChevronDown, Clock, ShieldCheck, ShoppingBag, Dna, Sparkles, Zap, ArrowRight, MessageCircle } from 'lucide-react';
 import { useCart } from '@/store/useCart';
 import Image from 'next/image';
 
@@ -18,6 +18,15 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
   const handleBuyInWhatsApp = () => {
+    // ─── GA4 Tracking ───────────────────────────────────────────────────
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'whatsapp_order_click', {
+        synergy_type: synergy.type,
+        total_price: synergy.total_price,
+        product_names: synergy.products?.map(p => p.name).join(', ')
+      });
+    }
+
     if (synergy.products) {
       const productNames = synergy.products.map(p => p.name).join(', ');
       const message = lang === 'ru' 

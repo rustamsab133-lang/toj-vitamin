@@ -46,7 +46,7 @@ const article = {
   author_role: "Медицинский консультант",
   is_published: true,
   published_at: new Date().toISOString(),
-  image_url: "https://www.toj-vitamin.tj/og-image-v2.png"
+  image_url: "https://www.toj-vitamin.tj/og-large-logo.png"
 };
 
 async function insertArticle() {

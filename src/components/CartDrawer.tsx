@@ -85,7 +85,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
       clearCart();
 
       setTimeout(() => {
-        window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`;
+        window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
       }, 800);
       
     } catch (err) {
@@ -100,7 +100,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
       ? `Здравствуйте! Хочу заказать:\n---\n1. ${item.name} (${item.price} смн) x ${item.quantity}\n---\nИтого: ${item.price * item.quantity} смн\nЖду звонка для подтверждения.`
       : `Салом! Мехоҳам маҳсулоти зеринро фармоиш диҳам:\n---\n1. ${item.name} (${item.price} смн) x ${item.quantity}\n---\nМаблағ: ${item.price * item.quantity} смн\nЗанги шуморо барои тасдиқ интизорам.`;
 
-    window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (

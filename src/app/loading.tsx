@@ -38,7 +38,7 @@ export default function Loading() {
           <img 
             src="/logo.webp" 
             alt="Loading..." 
-            className="w-6 h-6 object-contain opacity-40"
+            className="w-12 h-12 object-contain opacity-80"
           />
         </div>
       </div>

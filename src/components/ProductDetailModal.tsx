@@ -4,8 +4,10 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Product, Lang } from '@/lib/types';
-import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { ShareButton } from './ShareButton';
+import { slugify } from '@/lib/slugify';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -160,14 +162,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className="w-full sm:w-[580px] max-h-[100dvh] sm:max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[44px] shadow-[0_40px_100px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden will-change-transform"
           >
-            {/* STABLE CLOSE ACTION - RESPECTING SAFE AREAS */}
-            <button 
-              onClick={handleSmartClose}
-              className="absolute right-6 sm:top-8 sm:right-8 w-12 h-12 bg-white/90 backdrop-blur-md border border-black/10 text-[#1D1D1F] rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 shadow-[0_8px_16px_rgba(0,0,0,0.1)]"
-              style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}
-            >
-              <X size={24} />
-            </button>
+            {/* ACTIONS: Share + Close */}
+            <div className="absolute right-6 sm:right-8 flex items-center gap-2 z-50" style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}>
+              <ShareButton
+                url={`/product/${slugify(product.name || '')}`}
+                title={product.name}
+                description={product.description || ''}
+                variant="compact"
+                lang={lang}
+              />
+              <button 
+                onClick={handleSmartClose}
+                className="w-12 h-12 bg-white/90 backdrop-blur-md border border-black/10 text-[#1D1D1F] rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-[0_8px_16px_rgba(0,0,0,0.1)]"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
             {/* PURE IMAGE STUDIO */}
             <div className="shrink-0 w-full h-[360px] bg-white flex items-center justify-center p-12 relative overflow-hidden">
@@ -311,10 +321,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                                       <p className="font-bold text-[#1D1D1F] text-[16px]">{synProd.price} {'смн'}</p>
                                       <button 
                                         onClick={() => onBuy(product, synProd)}
-                                        className="h-10 bg-black text-white px-5 rounded-full text-[12px] font-bold flex items-center gap-2 hover:bg-[#1E40AF] transition-all shadow-md active:scale-95"
+                                        className="h-10 bg-black text-white px-5 rounded-full text-[12px] font-bold flex items-center gap-2 hover:bg-[#25D366] transition-all shadow-md active:scale-95"
                                       >
-                                        {lang === 'ru' ? 'Добавить набор' : 'Илова кардан'}
-                                        <Plus size={14} />
+                                        <MessageCircle size={14} fill="currentColor" />
+                                        {lang === 'ru' ? 'Заказать набор' : 'Фармоиш додани маҷмӯа'}
                                       </button>
                                     </div>
                                   </div>
@@ -335,9 +345,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <div className="shrink-0 p-6 sm:p-10 bg-white/80 backdrop-blur-2xl border-t border-black/[0.05] z-40 relative">
               <button 
                 onClick={() => onBuy(product)}
-                className="w-full h-[68px] bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-3 hover:bg-[#1E40AF] hover:scale-[1.01] active:scale-[0.98] transition-all duration-500 shadow-[0_30px_60px_rgba(0,0,0,0.25)] group"
+                className="w-full h-[68px] bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-3 hover:bg-[#25D366] hover:scale-[1.01] active:scale-[0.98] transition-all duration-500 shadow-[0_30px_60px_rgba(0,0,0,0.25)] group"
               >
-                <span>{lang === 'ru' ? 'Добавить в корзину' : 'Ба сабад илова кардан'}</span>
+                <MessageCircle size={20} fill="currentColor" />
+                <span>{lang === 'ru' ? 'Заказать в WhatsApp' : 'Фармоиш дар WhatsApp'}</span>
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

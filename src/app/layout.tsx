@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   title: {
     default: "Наука Здоровья: Премиальные Витамины №1 в Таджикистане | Купить Витамины в Душанбе",
-    template: "%s | tojvitamin.tj"
+    template: "%s | toj-vitamin.tj"
   },
   description: "Экспертный медицинский маркетплейс витаминов и БАДов в Таджикистане. Квалифицированный подбор нутрицевтиков и научный подход Green Leaf Sciences. Бесплатная консультация и доставка по Душанбе.",
   keywords: [
@@ -52,17 +52,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    alternateLocales: ["tj_TJ"],
+    alternateLocale: ["tj_TJ"],
     url: "https://www.toj-vitamin.tj",
-    siteName: "tojvitamin",
-    title: "tojvitamin.tj | Научный подход к вашему здоровью",
+    siteName: "toj-vitamin",
+    title: "toj-vitamin.tj | Научный подход к вашему здоровью",
     description: "Премиальные витамины и биодобавки с бесплатной консультацией в Таджикистане. Наука за гранью возможного.",
     images: [
       {
-        url: "/og-image-v2.png",
+        url: "/og-large-logo.png",
         width: 1200,
         height: 630,
-        alt: "tojvitamin - Green Leaf Sciences",
+        alt: "toj-vitamin - Green Leaf Sciences",
       },
     ],
   },
@@ -70,9 +70,9 @@ export const metadata: Metadata = {
   // Twitter / Instagram Cards
   twitter: {
     card: "summary_large_image",
-    title: "tojvitamin.tj | Витамины и БАДы №1 в Таджикистане",
+    title: "toj-vitamin.tj | Витамины и БАДы №1 в Таджикистане",
     description: "Научный подход к подбору витаминов. Экспертиза Green Leaf Sciences.",
-    images: ["/og-image-v2.png"],
+    images: ["/og-large-logo.png"],
   },
 
   // Icons

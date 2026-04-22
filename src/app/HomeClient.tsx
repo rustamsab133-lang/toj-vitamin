@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { OrderSuccessOverlay } from '@/components/OrderSuccessOverlay';
 import { useRouter } from 'next/navigation';
 import { ZONE_THEMES } from '@/lib/theme';
+import { ComboBanner } from '@/components/ComboBanner';
 
 
 
@@ -218,48 +219,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                     {lang === 'ru' ? 'RU' : 'TJ'}
                   </button>
  
-                  <div
-                    onClick={() => setIsOpen(true)}
-                    className="relative h-10 w-10 flex items-center justify-center rounded-full bg-white/50 border border-white hover:bg-white hover:shadow-lg transition-all cursor-pointer group active:scale-90"
-                  >
-                    <motion.div
-                      key={cartAnimationKey}
-                      animate={cartAnimationKey > 0 ? {
-                        scale: [1, 1.5, 1],
-                        rotate: [0, -15, 15, -15, 0],
-                      } : {}}
-                      transition={{ duration: 0.5, ease: "backOut" }}
-                      className="relative z-10"
-                    >
-                      <ShoppingBag size={18} className="text-[#1D1D1F] group-hover:text-[#1E40AF] transition-colors" />
-                    </motion.div>
+                  {/* Cart Icon removed as per user request for direct WhatsApp flow */}
 
-                    {/* SUCCESS AURA */}
-                    <AnimatePresence>
-                      {cartAnimationKey > 0 && (
-                        <motion.div
-                          key={`aura-${cartAnimationKey}`}
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 2, opacity: 0 }}
-                          transition={{ duration: 0.8 }}
-                          className="absolute inset-0 rounded-full bg-[#1E40AF]/20 pointer-events-none"
-                        />
-                      )}
-                    </AnimatePresence>
-
-                    <AnimatePresence>
-                      {isMounted && totalItems() > 0 && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                          className="absolute -top-1 -right-1 w-5 h-5 bg-[#1D1D1F] text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xl z-20"
-                        >
-                          {totalItems()}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </div>
                 </div>
               </motion.div>
             )}
@@ -295,30 +256,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
       </AnimatePresence>
  
       {/* FLOATING CART SUMMARY */}
-      <AnimatePresence>
-        {isMounted && totalItems() > 0 && !isOpen && !isImmersiveMode && (
-          <motion.button
-            key={`cart-pill-${totalItems()}`}
-            initial={{ scale: 0.8, x: 20, opacity: 0 }}
-            animate={{ scale: 1, x: 0, opacity: 1 }}
-            exit={{ scale: 0, x: 100 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-[90] flex items-center gap-4 pl-5 pr-2 py-2 bg-white backdrop-blur-2xl text-[#1D1D1F] rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-black/5"
-          >
-            <div className="flex flex-col items-start leading-none pointer-events-none">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#94A3B8] mb-1">
-                {lang === 'ru' ? 'Сумма заказа' : 'Маблағ'}
-              </span>
-              <span className="font-outfit font-bold text-[17px]">{totalAmount()} смн</span>
-            </div>
-            <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center shadow-lg">
-              <ShoppingBag size={18} />
-            </div>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {/* Floating Cart Summary removed as per user request */}
+
  
       <div className="relative z-10 flex flex-col pt-16">
         <AnimatePresence mode="wait">
@@ -326,10 +265,15 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
             <motion.div
               key="primary-content"
               initial={{ opacity: 1 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.5 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
             >
               <StoreHero lang={lang} whatsappNumber={settings.whatsapp_phone} settings={settings} />
+              <ComboBanner 
+                lang={lang} 
+                whatsappNumber={settings.whatsapp_phone} 
+                onOrderSuccess={() => setIsOrderSuccess(true)}
+              />
               <ScienceGrid lang={lang} />
             </motion.div>
           )}
