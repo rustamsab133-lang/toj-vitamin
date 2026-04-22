@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/admin-api';
 import { Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage } from '@/lib/imageUtils';
@@ -111,11 +112,15 @@ export const QuizEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // --- CATEGORY MANAGER ---
 function CategoriesManager({ categories, onSelect, onRefresh }: { categories: QuizCategory[], onSelect: (c: QuizCategory)=>void, onRefresh: ()=>void }) {
   const handleNew = async () => {
-    const { error } = await supabase.from('quiz_categories').insert({
-      id: `cat_${Date.now()}`,
-      title: 'Новая категория',
-      question: 'Вопрос?',
-      sort_order: categories.length + 1
+    const { error } = await adminDbQuery({
+      action: 'insert',
+      table: 'quiz_categories',
+      data: {
+        id: `cat_${Date.now()}`,
+        title: 'Новая категория',
+        question: 'Вопрос?',
+        sort_order: categories.length + 1
+      }
     });
     if (!error) onRefresh();
   };
@@ -155,30 +160,43 @@ function OptionsManager({ category, options, onSelect, onRefresh, categoriesCoun
 
   const saveCategory = async () => {
     setSaving(true);
-    await supabase.from('quiz_categories').update({
-      title: editingCat.title,
-      question: editingCat.question,
-      sort_order: editingCat.sort_order,
-      image_url: editingCat.image_url,
-      title_lang: editingCat.title_lang,
-      question_lang: editingCat.question_lang
-    }).eq('id', editingCat.id);
+    await adminDbQuery({
+      action: 'update',
+      table: 'quiz_categories',
+      id: editingCat.id,
+      data: {
+        title: editingCat.title,
+        question: editingCat.question,
+        sort_order: editingCat.sort_order,
+        image_url: editingCat.image_url,
+        title_lang: editingCat.title_lang,
+        question_lang: editingCat.question_lang
+      }
+    });
     onRefresh();
     setSaving(false);
   };
 
   const deleteCategory = async () => {
     if (!confirm('Удалить категорию?')) return;
-    await supabase.from('quiz_categories').delete().eq('id', editingCat.id);
+    await adminDbQuery({
+      action: 'delete',
+      table: 'quiz_categories',
+      id: editingCat.id
+    });
     onRefresh(); // this will bounce user back because category is gone
   };
 
   const addOption = async () => {
-    await supabase.from('quiz_options').insert({
-      id: `opt_${Date.now()}`,
-      category_id: category.id,
-      text: 'Новый вариант ответа',
-      sort_order: options.length + 1
+    await adminDbQuery({
+      action: 'insert',
+      table: 'quiz_options',
+      data: {
+        id: `opt_${Date.now()}`,
+        category_id: category.id,
+        text: 'Новый вариант ответа',
+        sort_order: options.length + 1
+      }
     });
     onRefresh();
   };
@@ -232,14 +250,23 @@ function SynergiesManager({ option, synergies, products, onRefresh }: any) {
 
   const saveOption = async () => {
     setSavingOpt(true);
-    await supabase.from('quiz_options').update({ text: editingOpt.text }).eq('id', editingOpt.id);
+    await adminDbQuery({
+      action: 'update',
+      table: 'quiz_options',
+      id: editingOpt.id,
+      data: { text: editingOpt.text }
+    });
     onRefresh();
     setSavingOpt(false);
   };
 
   const deleteOption = async () => {
     if (!confirm('Удалить вариант ответа? Все синергии будут удалены.')) return;
-    await supabase.from('quiz_options').delete().eq('id', editingOpt.id);
+    await adminDbQuery({
+      action: 'delete',
+      table: 'quiz_options',
+      id: editingOpt.id
+    });
     onRefresh();
   };
 
@@ -253,7 +280,11 @@ function SynergiesManager({ option, synergies, products, onRefresh }: any) {
       products_data: [],
       sort_order: synergies.length + 1
     };
-    await supabase.from('quiz_synergies').insert(newSyn);
+    await adminDbQuery({
+      action: 'insert',
+      table: 'quiz_synergies',
+      data: newSyn
+    });
     onRefresh();
   };
 
@@ -320,18 +351,27 @@ function SynergyDetailEditor({ syn, products, onClose, onRefresh }: any) {
   const [editing, setEditing] = useState<QuizSynergy>(syn);
   
   const save = async () => {
-    await supabase.from('quiz_synergies').update({
-      type: editing.type,
-      dosage: editing.dosage,
-      rule: editing.rule,
-      products_data: editing.products_data
-    }).eq('id', editing.id);
+    await adminDbQuery({
+      action: 'update',
+      table: 'quiz_synergies',
+      id: editing.id,
+      data: {
+        type: editing.type,
+        dosage: editing.dosage,
+        rule: editing.rule,
+        products_data: editing.products_data
+      }
+    });
     onRefresh();
   };
 
   const remove = async () => {
     if(!confirm('Удалить эту синергию?')) return;
-    await supabase.from('quiz_synergies').delete().eq('id', editing.id);
+    await adminDbQuery({
+      action: 'delete',
+      table: 'quiz_synergies',
+      id: editing.id
+    });
     onRefresh();
   };
 

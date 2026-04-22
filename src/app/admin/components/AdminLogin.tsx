@@ -21,6 +21,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onAuth }) => {
       const adminPass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'toj2024';
       if (password === adminPass) {
         sessionStorage.setItem('toj-admin-auth', 'true');
+        sessionStorage.setItem('toj-admin-password', password);
         onAuth();
       } else {
         setError(true);

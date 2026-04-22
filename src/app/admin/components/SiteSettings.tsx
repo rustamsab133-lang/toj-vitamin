@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/admin-api';
 import { Save, ChevronLeft, Globe } from 'lucide-react';
 
 interface Setting {
@@ -36,7 +37,11 @@ export const SiteSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleSave = async () => {
     setSaving(true);
     for (const s of settings) {
-      await supabase.from('site_settings').upsert({ key: s.key, value: s.value, updated_at: new Date().toISOString() });
+      await adminDbQuery({
+        action: 'upsert',
+        table: 'site_settings',
+        data: { key: s.key, value: s.value, updated_at: new Date().toISOString() }
+      });
     }
     setMsg('Настройки сохранены!');
     setTimeout(() => setMsg(''), 2000);

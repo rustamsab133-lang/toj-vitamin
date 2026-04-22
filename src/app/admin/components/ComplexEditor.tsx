@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/admin-api';
 import { Save, Plus, Trash2, ChevronLeft, Eye, EyeOff, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -31,7 +32,11 @@ export const ComplexEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleSave = async () => {
     if (!editing) return;
     setSaving(true);
-    const { error } = await supabase.from('complexes').upsert(editing);
+    const { error } = await adminDbQuery({
+      action: 'upsert',
+      table: 'complexes',
+      data: editing
+    });
     if (!error) {
       setMsg('Сохранено!');
       setTimeout(() => setMsg(''), 2000);
@@ -40,9 +45,13 @@ export const ComplexEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSaving(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить этот комплекс?')) return;
-    await supabase.from('complexes').delete().eq('id', id);
+  const handleDelete = async (id: number) => {
+    if (!confirm('Удалить?')) return;
+    await adminDbQuery({
+      action: 'delete',
+      table: 'complexes',
+      id: id
+    });
     setEditing(null);
     loadAll();
   };
@@ -61,8 +70,13 @@ export const ComplexEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   };
 
-  const toggleActive = async (c: Complex) => {
-    await supabase.from('complexes').update({ is_active: !c.is_active }).eq('id', c.id);
+  const toggleActive = async (c: any) => {
+    await adminDbQuery({
+      action: 'update',
+      table: 'complexes',
+      id: c.id,
+      data: { is_active: !c.is_active }
+    });
     loadAll();
   };
 

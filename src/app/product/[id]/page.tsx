@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import { ProductBuyButton } from '@/components/ProductBuyButton';
+import { ShareButton } from '@/components/ShareButton';
 
 interface Props {
   params: { id: string };
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с бесплатной доставкой от Green Leaf Sciences.`;
   const imageUrl = product.image_url ? 
     (product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`) : 
-    'https://www.toj-vitamin.tj/og-image-v2.png';
+    'https://www.toj-vitamin.tj/og-large-logo.png';
 
   return {
     title,
@@ -58,7 +59,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      type: 'website',
+      type: 'article',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: product.name,
+        },
+      ],
+      siteName: 'toj-vitamin.tj',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
       images: [imageUrl],
     },
     alternates: {
@@ -80,6 +95,8 @@ export default async function ProductPage({ params }: Props) {
       </div>
     );
   }
+
+  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с бесплатной доставкой от Green Leaf Sciences.`;
 
   const jsonLd = [
     {
@@ -222,8 +239,15 @@ export default async function ProductPage({ params }: Props) {
           </div>
         )}
         
-        <div className="w-full flex justify-center pt-8">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
            <ProductBuyButton product={product} lang="ru" />
+           <ShareButton
+             url={`/product/${params.id}`}
+             title={product.name}
+             description={description}
+             variant="primary"
+             lang="ru"
+           />
         </div>
 
       </main>

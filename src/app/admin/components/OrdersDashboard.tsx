@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/admin-api';
 import { ChevronLeft, Clock, Package, CheckCircle, Truck, ChevronRight } from 'lucide-react';
 
 import { Order, OrderItem } from '@/lib/types';
@@ -19,12 +20,25 @@ export const OrdersDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) =>
   useEffect(() => { loadOrders(); }, []);
 
   const loadOrders = async () => {
-    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-    if (data) setOrders(data);
+    try {
+      const { data } = await adminDbQuery({
+        action: 'select',
+        table: 'orders',
+        data: { order: { column: 'created_at', ascending: false } }
+      });
+      if (data) setOrders(data);
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+    }
   };
 
   const updateStatus = async (orderId: number, newStatus: string) => {
-    await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+    await adminDbQuery({
+      action: 'update',
+      table: 'orders',
+      data: { status: newStatus },
+      id: orderId
+    });
     loadOrders();
     if (selectedOrder?.id === orderId) {
       setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);

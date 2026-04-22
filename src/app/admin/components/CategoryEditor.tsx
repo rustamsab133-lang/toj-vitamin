@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/admin-api';
 import { Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage } from '@/lib/imageUtils';
@@ -28,15 +29,15 @@ export const CategoryEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => 
   const handleSave = async () => {
     if (!editing) return;
     setSaving(true);
-    const { error } = await supabase.from('quiz_categories').upsert({
-      id: editing.id,
-      title: editing.title,
-      question: editing.question,
-      sort_order: editing.sort_order,
-      image_url: editing.image_url,
-      // Сохраняем пустые объекты для языков, если их нет
-      title_lang: editing.title_lang || { ru: editing.title, tj: '' },
-      question_lang: editing.question_lang || { ru: editing.question, tj: '' },
+    const { error } = await adminDbQuery({
+      action: 'upsert',
+      table: 'quiz_categories',
+      data: {
+        ...editing,
+        title_lang: editing.title_lang || { ru: editing.title, tj: '' },
+        question_lang: editing.question_lang || { ru: editing.question, tj: '' },
+        updated_at: new Date().toISOString()
+      }
     });
     
     if (!error) {
@@ -50,8 +51,12 @@ export const CategoryEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => 
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Удалить эту категорию? Все связанные вопросы могут сломаться.')) return;
-    await supabase.from('quiz_categories').delete().eq('id', id);
+    if (!confirm('Удалить?')) return;
+    await adminDbQuery({
+      action: 'delete',
+      table: 'quiz_categories',
+      id: id
+    });
     setEditing(null);
     loadCategories();
   };

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/admin-api';
 import { Search, Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage } from '@/lib/imageUtils';
@@ -46,14 +47,13 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleSave = async () => {
     if (!editing) return;
     setSaving(true);
-    const { error } = await supabase.from('products').upsert({
-      id: editing.id,
-      name: editing.name,
-      full_name: editing.full_name,
-      description: editing.description,
-      price: editing.price,
-      icon_type: editing.icon_type,
-      image_url: editing.image_url,
+    const { error } = await adminDbQuery({
+      action: 'upsert',
+      table: 'products',
+      data: {
+        ...editing,
+        updated_at: new Date().toISOString()
+      }
     });
     if (!error) {
       setMsg('Сохранено!');
@@ -69,7 +69,11 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setMsg('Удаление...');
     
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
+      const { error } = await adminDbQuery({
+        action: 'delete',
+        table: 'products',
+        id: id
+      });
       
       if (error) {
         console.error('Delete error:', error);
