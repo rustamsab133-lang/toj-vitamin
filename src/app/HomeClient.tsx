@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useEffect, useState, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 import { StoreHero } from '@/components/StoreHero';
 import { QuizEngine } from '@/components/QuizEngine';
 import { ProductCatalog } from '@/components/ProductCatalog';
@@ -15,8 +16,11 @@ import Link from 'next/link';
 import { OrderSuccessOverlay } from '@/components/OrderSuccessOverlay';
 import { useRouter } from 'next/navigation';
 import { ZONE_THEMES } from '@/lib/theme';
-import { ComboBanner } from '@/components/ComboBanner';
 
+import { ComboBanner } from '@/components/ComboBanner';
+import { MainBackground } from '@/components/MainBackground';
+import { Header } from '@/components/Header';
+import { SearchOverlay } from '@/components/SearchOverlay';
 
 
 interface HomeClientProps {
@@ -28,7 +32,10 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const [lang, setLang] = React.useState<Lang>('ru');
   const [isSplashVisible, setIsSplashVisible] = React.useState(true);
   const { totalItems, setIsOpen, isOpen, totalAmount, cartAnimationKey } = useCart();
-  const { activeZone, search, setSearch, isSearchOpen, setIsSearchOpen } = useThemeStore();
+  const search = useThemeStore(state => state.search);
+  const setSearch = useThemeStore(state => state.setSearch);
+  const isSearchOpen = useThemeStore(state => state.isSearchOpen);
+  const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
   const [isQuizPassed, setIsQuizPassed] = useState(false);
   
   // Use settings from server, but allow local override if needed
@@ -46,8 +53,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const isSearchActive = search.trim().length > 0;
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const currentTheme = useMemo(() => ZONE_THEMES[activeZone] || ZONE_THEMES.default, [activeZone]);
 
+  // Splash screen timer + quiz scroll observer (stable, runs once)
   useEffect(() => {
     setIsMounted(true);
     
@@ -64,6 +71,25 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
     const quizEl = document.getElementById('quiz');
     if (quizEl) quizObserver.observe(quizEl);
 
+    // URL search param handling (runs once on mount)
+    const params = new URLSearchParams(window.location.search);
+    const urlSearch = params.get('search');
+    if (urlSearch) {
+      setSearch(urlSearch);
+      setIsSearchOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      quizObserver.disconnect();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty — one-time setup
+
+  // Keyboard shortcuts (separate effect to properly track isSearchOpen)
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '/' && !isSearchOpen && !(e.target instanceof HTMLInputElement)) {
         e.preventDefault();
@@ -76,12 +102,37 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
-      quizObserver.disconnect();
-    };
-  }, [isSearchOpen, setIsSearchOpen, setSearch, lang]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen, setIsSearchOpen, setSearch]);
+
+  // Global Product Loading — single source of truth
+  const setAllProducts = useCart(state => state.setAllProducts);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGlobalProducts() {
+      try {
+        // Use static import for enrichment data (already in bundle via ProductCatalog)
+        const enrichedData = (await import('@/data/enriched_gls_products.json')).default;
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('id');
+        
+        if (!error && data && !cancelled) {
+          const enrichedMap = enrichedData as Record<string, any>;
+          const enriched = data.map(p => ({
+            ...p,
+            ...(enrichedMap[p.id] || {})
+          }));
+          setAllProducts(enriched);
+        }
+      } catch (e) {
+        console.error('Failed to load products globally', e);
+      }
+    }
+    loadGlobalProducts();
+    return () => { cancelled = true; };
+  }, [setAllProducts]);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -97,11 +148,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   return (
     <main 
       className="flex-1 flex flex-col relative text-[#1D1D1F] selection:bg-[#1E40AF] selection:text-white font-sans antialiased"
-      style={{ 
-        backgroundColor: currentTheme.bg,
-        transition: 'background-color 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)'
-      }}
     >
+      <MainBackground />
 
       <AnimatePresence>
         {isSplashVisible && <SplashScreen />}
@@ -119,114 +167,12 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         lang={lang} 
       />
 
-      {/* AMBIENT FLOATING HEADER (The Living Island V2) */}
-      <div className={`fixed top-0 left-0 w-full z-[100] flex justify-center px-3 pt-3 sm:px-4 sm:pt-4 pointer-events-none transition-all duration-1000 ${isImmersiveMode ? 'opacity-0 -translate-y-12' : 'opacity-100 translate-y-0'}`}>
-        <motion.header
-          animate={{
-            backgroundColor: currentTheme.glow,
-          }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="pointer-events-auto h-14 md:h-16 w-full max-w-5xl rounded-[28px] backdrop-blur-3xl border border-white/20 shadow-[0_15px_40px_rgba(0,0,0,0.05)] flex items-center justify-between px-4 sm:px-6 transition-all duration-700"
-        >
-          <AnimatePresence mode="wait">
-            {isSearchOpen ? (
-              /* INLINE SEARCH MODE */
-              <motion.div
-                key="search-mode"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center gap-3 w-full"
-              >
-                <Search size={20} className="text-[#1D1D1F]/40 shrink-0" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder={lang === 'ru' ? 'Поиск витаминов...' : 'Ҷустуҷӯи витаминҳо...'}
-                  className="flex-1 bg-transparent text-[16px] sm:text-[18px] font-bold text-[#1D1D1F] outline-none font-outfit placeholder:text-[#1D1D1F]/20 min-w-0"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && search.trim()) {
-                      router.push(`/search?q=${encodeURIComponent(search.trim())}`);
-                    }
-                  }}
-                />
-                {search && (
-                  <span className="shrink-0 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider hidden sm:block">
-                    {lang === 'ru' ? 'Результаты ниже ↓' : 'Натиҷа дар поён ↓'}
-                  </span>
-                )}
-                <button
-                  onClick={handleCloseSearch}
-                  className="shrink-0 w-9 h-9 rounded-full bg-black/[0.06] hover:bg-black hover:text-white text-[#1D1D1F] flex items-center justify-center transition-all active:scale-90"
-                >
-                  <X size={16} />
-                </button>
-              </motion.div>
-            ) : (
-              /* NORMAL NAVIGATION MODE */
-              <motion.div
-                key="nav-mode"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center justify-between w-full"
-              >
-                 {/* Logo & Brand Section */}
-                 <div
-                   className="flex items-center gap-4 cursor-pointer group shrink-0"
-                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                 >
-                    <div className="w-12 h-12 md:w-13 md:h-13 rounded-2xl bg-white shadow-sm border border-black/[0.03] flex items-center justify-center p-0 transition-all group-hover:scale-110 group-active:scale-95 duration-500 overflow-hidden shrink-0">
-                      <img src="/logo.webp" alt={`${settings.brand_name} Logo`} className="w-full h-full object-contain scale-[3.4]" />
-                    </div>
-                   <div className="flex flex-col gap-0">
-                     <span className="text-[18px] md:text-[20px] font-bold tracking-tight text-[#1D1D1F] font-outfit leading-tight">
-                       {settings.brand_name}
-                     </span>
-                      <span className="text-[8px] md:text-[9px] font-bold tracking-[0.2em] text-[#1D1D1F]/30 uppercase leading-tight font-outfit">
-                        ЗДОРОВЬЕ И ЭНЕРГИЯ
-                      </span>
-                   </div>
-                 </div>
- 
-                {/* KILLER FEATURE CTA: Quiz Link */}
-                <button
-                  onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="hidden md:flex items-center gap-2 h-10 px-5 rounded-full bg-[#1D1D1F] text-white hover:bg-[#1E40AF] transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97]"
-                >
-                  <Dna size={14} />
-                  <span>{settings.hero_cta_text || (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин')}</span>
-                </button>
- 
-                {/* Action Area */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setIsSearchOpen(true)}
-                    className="h-10 w-10 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm group active:scale-90"
-                  >
-                    <Search size={18} className="group-hover:scale-110 transition-transform" />
-                  </button>
- 
-                  <button
-                    onClick={() => setLang(lang === 'ru' ? 'tj' : 'ru')}
-                    className="flex h-10 px-3 rounded-full bg-white/40 hover:bg-white/60 transition-colors text-[10px] font-bold text-[#1D1D1F] items-center gap-1.5 border border-white/50 backdrop-blur-sm"
-                  >
-                    <Globe size={13} className="text-[#86868B]" />
-                    {lang === 'ru' ? 'RU' : 'TJ'}
-                  </button>
- 
-                  {/* Cart Icon removed as per user request for direct WhatsApp flow */}
-
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.header>
-      </div>
+      <Header 
+        lang={lang} 
+        setLang={setLang} 
+        settings={settings} 
+        isImmersiveMode={isImmersiveMode} 
+      />
  
       {/* FLOATING QUIZ REMINDER (appears when user scrolled past quiz section) */}
       <AnimatePresence>
@@ -260,55 +206,38 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
 
  
       <div className="relative z-10 flex flex-col pt-16">
-        <AnimatePresence mode="wait">
-          {!isImmersiveMode && !isSearchActive && (
-            <motion.div
-              key="primary-content"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <StoreHero lang={lang} whatsappNumber={settings.whatsapp_phone} settings={settings} />
-              <ComboBanner 
-                lang={lang} 
-                whatsappNumber={settings.whatsapp_phone} 
-                onOrderSuccess={() => setIsOrderSuccess(true)}
-              />
-              <ScienceGrid lang={lang} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <StoreHero lang={lang} whatsappNumber={settings.whatsapp_phone} settings={settings} />
+        <ComboBanner 
+          lang={lang} 
+          whatsappNumber={settings.whatsapp_phone} 
+          onOrderSuccess={() => setIsOrderSuccess(true)}
+        />
+        <ScienceGrid lang={lang} />
  
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key="quiz-section"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div id="quiz" className={`${isImmersiveMode ? 'min-h-[90vh] flex items-center pt-0' : 'pb-24 pt-10'}`}>
-              <QuizEngine 
-                whatsappNumber={settings.whatsapp_phone} 
-                lang={lang} 
-                onImmersiveChange={setIsImmersiveMode} 
-              />
-            </div>
-          </motion.div>
-        </AnimatePresence>
- 
+        <div id="quiz" className={`${isImmersiveMode ? 'min-h-[90vh] flex items-center pt-0' : 'pb-24 pt-10'}`}>
+          <QuizEngine 
+            whatsappNumber={settings.whatsapp_phone} 
+            lang={lang} 
+            onImmersiveChange={setIsImmersiveMode} 
+          />
+        </div>
+
+        {/* CATALOG CONTENT */}
         <AnimatePresence mode="wait">
           {!isImmersiveMode && (
             <motion.div
               key="catalog-content"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
               <ProductCatalog lang={lang} whatsappNumber={settings.whatsapp_phone} />
-              
-              {/* SITE FOOTER */}
-              <footer className="w-full bg-[#1D1D1F] text-white/60 relative z-20">
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <footer className="w-full bg-[#1D1D1F] text-white/60 relative z-20">
           <div className="max-w-5xl mx-auto px-8 py-20">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
               {/* Brand */}
@@ -392,23 +321,27 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
               </div>
             </div>
  
+            {/* Brand Aliases for SEO / Склейка бренда */}
+            <div className="border-t border-white/5 pt-8 pb-4">
+               <p className="text-[9px] text-white/10 text-center leading-relaxed">
+                 {lang === 'ru' ? 'Поиск бренда:' : 'Ҷустуҷӯи бренд:'} tojvitamin, тожвитамин, тож-витамин, тоджвитамин, точвитамин, точ-витамин, тачвитамин, таджвитамин, тадж-витамин, тодж-витамин, taj-vitamin, tajvitamin, vitamin tj, vitamin.tj, витамин тч
+               </p>
+            </div>
+
             <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[12px] text-white/30">
-                © {new Date().getFullYear()} {settings.brand_name}. {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
-              </p>
-              <p className="text-[11px] text-white/20 max-w-md text-center sm:text-right">
-                {lang === 'ru'
-                  ? 'Продукция не является лекарственным средством. Перед применением проконсультируйтесь с врачом.'
-                  : 'Маҳсулот доруворӣ нест. Пеш аз истифода бо духтур маслиҳат намоед.'}
-              </p>
+               <p className="text-[12px] text-white/30">
+                 © {new Date().getFullYear()} {settings.brand_name}. {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
+               </p>
+               <p className="text-[11px] text-white/20 max-w-md text-center sm:text-right">
+                 {lang === 'ru'
+                   ? 'Продукция не является лекарственным средством. Перед применением проконсультируйтесь с врачом.'
+                   : 'Маҳсулот доруворӣ нест. Пеш аз истифода бо духтур маслиҳат намоед.'}
+               </p>
             </div>
           </div>
         </footer>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
- 
+  
+      <SearchOverlay lang={lang} whatsappNumber={settings.whatsapp_phone} />
     </main>
   );
 }

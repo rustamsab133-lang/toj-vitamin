@@ -173,10 +173,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className={`h-full relative overflow-hidden ${currentTotal >= FREE_DELIVERY_LIMIT ? 'bg-green-500' : 'bg-[#1E40AF]'}`}
                     >
-                      <motion.div 
-                        animate={{ x: ['-100%', '100%'] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      <div 
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_linear_infinite]"
+                        style={{ backgroundSize: '200% 100%' }}
                       />
                     </motion.div>
                   </div>

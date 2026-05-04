@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import HomeClient from './HomeClient';
 
-// Enable ISR or dynamic rendering depending on needs. 
-// For site settings, we can revalidate every hour or keep it dynamic.
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate settings every hour. Avoids full server re-renders on every visit
+// which was causing spontaneous page reloads.
+export const revalidate = 3600;
 
 export default async function Home() {
   let initialSettings: Record<string, string> = {

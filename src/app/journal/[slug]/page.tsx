@@ -48,6 +48,29 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": `Как принимать ${article.title_ru}?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `Рекомендуемую дозировку и протокол приема вы найдете в нашей статье или можете получить бесплатную консультацию эксперта Green Leaf Sciences в WhatsApp.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Есть ли доставка по Душанбе?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Да, мы осуществляем бесплатную доставку витаминов и БАДов по Душанбе при заказе от определенной суммы. Возможна доставка в Худжанд и другие регионы Таджикистана."
+        }
+      }
+    ]
+  };
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -67,6 +90,10 @@ export default async function ArticlePage({ params }: Props) {
       <script 
         type="application/ld+json" 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} 
+      />
+      <script 
+        type="application/ld+json" 
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} 
       />
       <ArticleRenderer article={article} lang="ru" />
     </>

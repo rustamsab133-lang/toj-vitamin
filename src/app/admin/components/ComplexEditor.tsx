@@ -45,7 +45,7 @@ export const ComplexEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSaving(false);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Удалить?')) return;
     await adminDbQuery({
       action: 'delete',

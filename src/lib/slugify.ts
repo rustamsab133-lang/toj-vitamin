@@ -8,8 +8,10 @@ export function slugify(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    // Remove illegal Windows filename characters: < > : " / \ | ? *
-    .replace(/[<>:"/\\|?*]/g, '')
-    // Replace multiple spaces with single space
-    .replace(/\s+/g, ' ');
+    // Remove characters that break URLs: < > : " / \ | ? * # % & ( ) [ ]
+    .replace(/[<>:"/\\|?*#%&()[\]]/g, '')
+    // Replace multiple spaces or dashes with a single dash
+    .replace(/[\s-]+/g, '-')
+    // Final trim of dashes from start/end
+    .replace(/^-+|-+$/g, '');
 }

@@ -60,11 +60,8 @@ export const SplashScreen: React.FC = () => {
 
         {/* LOADING PROGRESS LINE - MINIMALIST */}
         <div className="absolute bottom-16 w-32 h-[1px] bg-[#1D1D1F]/5 overflow-hidden">
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-full h-full bg-gradient-to-r from-transparent via-[#1E40AF]/40 to-transparent"
+          <div
+            className="w-full h-full bg-gradient-to-r from-transparent via-[#1E40AF]/40 to-transparent animate-[shimmer_2s_linear_infinite]"
           />
         </div>
       </div>

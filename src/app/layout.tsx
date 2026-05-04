@@ -44,7 +44,8 @@ export const metadata: Metadata = {
     "спортивное питание Таджикистан", "витамины для женщин Душанбе",
     "витамины для мужчин Таджикистан",
     "tojvitamin", "toj vitamin", "toj-vitamin", "тожвитамин", "тож-витамин", "тоджвитамин",
-    "точвитамин", "тачвитамин", "точ-витамин", "тач-витамин", "taj-vitamin", "tajvitamin"
+    "точвитамин", "тачвитамин", "точ-витамин", "тач-витамин", "taj-vitamin", "tajvitamin",
+    "таджвитамин", "тадж-витамин", "тодж-витамин", "vitamin tj", "vitamin.tj", "витамин тч", "витамин.тч"
   ],
   authors: [{ name: "Green Leaf Sciences", url: "https://www.toj-vitamin.tj" }],
   
@@ -144,7 +145,24 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": "toj-vitamin",
-                "alternateName": ["tojvitamin", "тожвитамин", "toj vitamin", "точвитамин", "тачвитамин", "tajvitamin", "taj-vitamin"],
+                "alternateName": [
+                  "tojvitamin", 
+                  "тожвитамин", 
+                  "тож-витамин", 
+                  "toj vitamin", 
+                  "точвитамин", 
+                  "точ-витамин", 
+                  "тачвитамин", 
+                  "таджвитамин", 
+                  "тадж-витамин", 
+                  "тоджвитамин", 
+                  "tajvitamin", 
+                  "taj-vitamin", 
+                  "vitamin tj", 
+                  "vitamin.tj", 
+                  "витамин тч",
+                  "витамин.тч"
+                ],
                 "url": "https://www.toj-vitamin.tj",
                 "logo": "https://www.toj-vitamin.tj/logo.webp",
                 "contactPoint": {
@@ -157,6 +175,40 @@ export default function RootLayout({
                 "sameAs": [
                   "https://www.instagram.com/toj_vitamin",
                 ]
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "MedicalBusiness",
+                "name": "Green Leaf Sciences (toj-vitamin.tj)",
+                "image": "https://www.toj-vitamin.tj/og-image.png",
+                "@id": "https://www.toj-vitamin.tj",
+                "url": "https://www.toj-vitamin.tj",
+                "telephone": "+992176660707",
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": "Душанбе",
+                  "addressLocality": "Душанбе",
+                  "postalCode": "734000",
+                  "addressCountry": "TJ"
+                },
+                "geo": {
+                  "@type": "GeoCoordinates",
+                  "latitude": 38.57,
+                  "longitude": 68.78
+                },
+                "openingHoursSpecification": {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday"
+                  ],
+                  "opens": "09:00",
+                  "closes": "21:00"
+                }
               },
               {
                 "@context": "https://schema.org",

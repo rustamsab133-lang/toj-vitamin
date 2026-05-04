@@ -29,8 +29,14 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
     >
       {/* GLOBAL BACKGROUND ELEMENTS - MORE SUBTLE */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#1E40AF]/5 blur-[80px] rounded-full" />
-        <div className="absolute top-1/2 -left-20 w-48 h-48 bg-[#38BDF8]/5 blur-[60px] rounded-full" />
+        <div 
+          className="absolute -top-24 -right-24 w-64 h-64 pointer-events-none" 
+          style={{ background: 'radial-gradient(circle at center, rgba(30,64,175,0.08) 0%, transparent 70%)' }}
+        />
+        <div 
+          className="absolute top-1/2 -left-20 w-48 h-48 pointer-events-none" 
+          style={{ background: 'radial-gradient(circle at center, rgba(56,189,248,0.08) 0%, transparent 70%)' }}
+        />
       </div>
 
       <div className="w-full relative z-10 flex flex-col items-center">

@@ -1,11 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Product, Lang } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import {
-  Search,
   Brain,
   Zap,
   Shield,
@@ -17,15 +15,13 @@ import {
   ShieldCheck,
   Wind,
   Activity,
-  ArrowRight,
-  MessageCircle
+  ArrowRight
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
-import enrichedData from '@/data/enriched_gls_products.json';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { slugify } from '@/lib/slugify';
-import { ZONE_THEMES } from '@/lib/theme';
+import { BackgroundGlow } from './BackgroundGlow';
 
 const CATEGORIES = [
   { id: 'all', label: { ru: 'Все', tj: 'Ҳама' }, icon: ShoppingBag },
@@ -67,15 +63,15 @@ const ICON_MAP: Record<string, string> = {
 
 
 export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = ({ lang, whatsappNumber }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const allProducts = useCart(state => state.allProducts);
+  const products = allProducts;
+  const loading = allProducts.length === 0;
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const { activeZone, setActiveZone, search } = useThemeStore();
-  const { addItem, addMultiple, setIsOpen, setAllProducts, triggerAnimation } = useCart();
+  const setActiveZone = useThemeStore(state => state.setActiveZone);
+  const { addItem, addMultiple, setIsOpen, triggerAnimation } = useCart();
 
+  // Zone theme observer — created once, cleaned up on unmount
   useEffect(() => {
-    loadProducts();
-    
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -93,52 +89,23 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, []);
+  }, [setActiveZone]);
 
-  const loadProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('name');
-    
-    if (data) {
-      // Optimized lookup using the new Record structure (O(1) instead of O(n))
-      const enrichedMap = enrichedData as Record<string, any>;
+  // Product loading is handled centrally by HomeClient via useCart().setAllProducts.
+  // No duplicate data fetching needed here.
 
-      const enrichedProducts = data.map(product => {
-        const key = product.name?.toLowerCase().trim() || '';
-        const enriched = enrichedMap[key];
-        
-        if (enriched) {
-          return {
-            ...product,
-            description: enriched.description || product.description,
-            marketing_hooks: enriched.marketing_hooks || product.marketing_hooks,
-            tags: enriched.tags || product.tags,
-            med_interactions: enriched.med_interactions || product.med_interactions,
-            synergy_product_id: enriched.synergy_product_id || product.synergy_product_id,
-            synergy_reason: enriched.synergy_reason || product.synergy_reason,
-          };
-        }
-        return product;
-      });
-      
-      setProducts(enrichedProducts);
-      setAllProducts(enrichedProducts);
-    }
-    setLoading(false);
-  };
-
-  const handleBuy = (product: Product, synergyProduct?: Product) => {
-    // ─── GA4 Tracking ───────────────────────────────────────────────────
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'whatsapp_order_click', {
+  const handleBuy = async (product: Product, synergyProduct?: Product) => {
+    // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
+    const { trackEvent } = await import('@/lib/analytics');
+    await trackEvent({
+      event_name: 'whatsapp_order_click',
+      data: {
         product_id: product.id,
         product_name: product.name,
         synergy_id: synergyProduct?.id,
         price: product.price + (synergyProduct?.price || 0)
-      });
-    }
+      }
+    });
 
     const message = synergyProduct 
       ? (lang === 'ru' 
@@ -155,24 +122,13 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
   };
 
   const shelfCategories = CATEGORIES.filter(c => c.id !== 'all');
-  const currentTheme = ZONE_THEMES[activeZone] || ZONE_THEMES.default;
-
-  const filteredProducts = products.filter(p => 
-    search === '' || p.name?.toLowerCase().includes(search.toLowerCase())
-  );
-  const totalFound = filteredProducts.length;
 
   return (
     <section
       id="catalog"
       className="w-full pb-32 relative"
     >
-      <div
-        className="fixed inset-0 pointer-events-none z-0 transition-all duration-[1500ms] ease-in-out opacity-40"
-        style={{
-          boxShadow: `inset 0 0 150px ${currentTheme.glow}`
-        }}
-      />
+      <BackgroundGlow />
 
       <div className="relative z-10">
         {loading ? (
@@ -181,16 +137,9 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
               {Array(4).fill(0).map((_, i) => (
                 <div key={i} className="flex flex-col space-y-4">
                   <div className="relative w-full aspect-[4/5] bg-white border border-[#1D1D1F]/5 rounded-[48px] overflow-hidden">
-                    <motion.div
-                      animate={{
-                        x: ['-100%', '100%'],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-[#1D1D1F]/[0.02] to-transparent"
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-[#1D1D1F]/[0.03] to-transparent animate-[shimmer_1.5s_linear_infinite]"
+                      style={{ backgroundSize: '200% 100%' }}
                     />
                   </div>
                   <div className="h-6 w-3/4 bg-[#1D1D1F]/5 rounded-full" />
@@ -212,49 +161,11 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
             }}
             className="space-y-4"
           >
-            {search !== '' && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-6xl mx-auto px-6 mb-8 mt-4"
-              >
-                <div className="flex items-baseline gap-4">
-                  <h2 className="text-[32px] md:text-[42px] font-bold tracking-tight text-[#1D1D1F] font-outfit">
-                    {lang === 'ru' ? 'Результаты поиска' : 'Натиҷаҳои ҷустуҷӯ'}
-                  </h2>
-                  <span className="text-[18px] md:text-[22px] font-bold text-[#1E40AF]/40 font-outfit">
-                    {totalFound}
-                  </span>
-                </div>
-                <div className="h-px w-full bg-[#1D1D1F]/5 mt-4" />
-              </motion.div>
-            )}
-
-            {totalFound === 0 && search !== '' && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="max-w-6xl mx-auto px-6 py-20 text-center"
-              >
-                <div className="w-20 h-20 bg-[#1D1D1F]/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Search size={32} className="text-[#1D1D1F]/20" />
-                </div>
-                <h3 className="text-[20px] font-bold text-[#1D1D1F] mb-2 font-outfit">
-                  {lang === 'ru' ? 'Ничего не найдено' : 'Ҳеҷ чиз ёфт нашуд'}
-                </h3>
-                <p className="text-[#1D1D1F]/40 max-w-sm mx-auto">
-                  {lang === 'ru' 
-                    ? 'Попробуйте изменить запрос или поискать в других категориях.' 
-                    : 'Кӯшиш кунед, ки дархостро иваз кунед ё дар категорияҳои дигар ҷустуҷӯ кунед.'}
-                </p>
-              </motion.div>
-            )}
 
             {shelfCategories.map((category) => {
               const categoryProducts = products.filter(p => {
                 const mappedCat = ICON_MAP[p.icon_type] || 'all';
-                const matchesSearch = search === '' || p.name?.toLowerCase().includes(search.toLowerCase());
-                return mappedCat === category.id && matchesSearch;
+                return mappedCat === category.id;
               });
 
               if (categoryProducts.length === 0) return null;
@@ -287,27 +198,18 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                     {categoryProducts.map((product) => (
                       <motion.a
                         href={`/product/${slugify(product.name || '')}`}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        variants={{
-                          hidden: { opacity: 0, scale: 0.98 },
-                          visible: { opacity: 1, scale: 1, transition: { duration: 0.6 } }
-                        }}
+                        key={`${category.id}-${product.id}`}
                         whileHover={{
                           y: -12,
                           scale: 1.02,
                           transition: { duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }
                         }}
                         whileTap={{ scale: 0.96 }}
-                        key={product.id}
                         onClick={(e) => {
                           e.preventDefault();
                           setSelectedProduct(product);
-                          window.history.pushState(null, '', `/product/${slugify(product.name || '')}`);
                         }}
                         className="apple-shelf-item group relative flex flex-col w-[230px] sm:w-[260px] cursor-pointer touch-manipulation block"
-                        style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
                       >
                         <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_60px_120px_rgba(30,64,175,0.08)] transition-all duration-700 overflow-hidden h-full">
 
@@ -346,7 +248,7 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                                   alt={product.name}
                                   fill
                                   sizes="(max-width: 640px) 250px, 300px"
-                                  className="object-contain p-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.05)]"
+                                  className="object-contain p-4"
                                 />
                               </motion.div>
                             ) : (
@@ -354,13 +256,11 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                             )}
 
                             <div className="absolute bottom-6 right-6">
-                              <motion.div 
-                                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                                transition={{ duration: 3, repeat: Infinity }}
-                                className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-xl flex items-center justify-center border border-[#EDF2F7] text-[#1E40AF]"
+                              <div 
+                                className="w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center border border-[#EDF2F7] text-[#1E40AF]"
                               >
                                 <Sparkles size={16} />
-                              </motion.div>
+                              </div>
                             </div>
                           </div>
 
@@ -384,28 +284,24 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                                     {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
                                   </p>
                                 </div>
-                                <motion.div 
-                                  animate={{ x: [0, 3, 0] }}
-                                  transition={{ duration: 2, repeat: Infinity }}
-                                  className="flex items-center gap-1 text-[#1E40AF] text-[10px] font-bold uppercase tracking-wider"
-                                >
+                                <div className="flex items-center gap-1 text-[#1E40AF] text-[10px] font-bold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
                                    {lang === 'ru' ? 'Инфо' : 'Инфо'}
                                    <ArrowRight size={12} />
-                                </motion.div>
+                                </div>
                               </div>
 
                               {/* Hover View: Add to Cart Button */}
                               <div className="absolute inset-0 flex items-center justify-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1]">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleBuy(product);
-                                  }}
-                                  className="w-full h-12 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#25D366] active:scale-95 transition-all duration-300"
-                                >
-                                  <MessageCircle size={16} fill="currentColor" />
-                                  <span className="text-[14px]">{lang === 'ru' ? 'Заказать в WhatsApp' : 'Фармоиш дар WhatsApp'}</span>
-                                </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedProduct(product);
+                                    }}
+                                    className="w-full h-12 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#1E40AF] active:scale-95 transition-all duration-300"
+                                  >
+                                    <ArrowRight size={16} />
+                                    <span className="text-[14px]">{lang === 'ru' ? 'Подробнее' : 'Маълумоти бештар'}</span>
+                                  </button>
                               </div>
                             </div>
                           </div>
@@ -423,7 +319,6 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
           isOpen={!!selectedProduct}
           onClose={() => {
             setSelectedProduct(null);
-            window.history.pushState(null, '', '/');
           }}
           product={selectedProduct}
           allProducts={products}

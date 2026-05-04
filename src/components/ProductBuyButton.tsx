@@ -4,25 +4,21 @@ import { ShoppingBag, Check, MessageCircle } from 'lucide-react';
 import { Product, Lang } from '@/lib/types';
 import { useCart } from '@/store/useCart';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackWhatsAppClick } from '@/lib/analytics';
 
 export const ProductBuyButton = ({ product, lang, whatsappNumber = "992176660707" }: { product: Product, lang: Lang, whatsappNumber?: string }) => {
-  const handleBuy = (e: React.MouseEvent) => {
+  const handleBuy = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // ─── GA4 Tracking ───────────────────────────────────────────────────
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'whatsapp_order_click', {
-        product_id: product.id,
-        product_name: product.name,
-        price: product.price
-      });
-    }
+    // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
+    await trackWhatsAppClick(product);
 
     const message = lang === 'ru' 
       ? `Здравствуйте! Хочу заказать: ${product.name}. Цена: ${product.price} смн.`
       : `Салом! Ман мехоҳам фармоиш диҳам: ${product.name}. Нарх: ${product.price} смн.`;
     
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    
     window.open(whatsappUrl, '_blank');
   };
 
@@ -41,10 +37,8 @@ export const ProductBuyButton = ({ product, lang, whatsappNumber = "992176660707
       </div>
       
       {/* Subtle shine effect */}
-      <motion.div 
-        animate={{ x: ['-100%', '200%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+      <div 
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 animate-[shimmer_3s_linear_infinite]"
       />
     </motion.button>
   );

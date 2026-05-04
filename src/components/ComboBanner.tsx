@@ -27,7 +27,10 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, whatsappNumber, 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 relative">
       {/* Premium Floating Glow */}
-      <div className="absolute inset-0 bg-[#2563EB]/5 blur-[80px] rounded-[40px] pointer-events-none -z-10" />
+      <div 
+        className="absolute inset-0 pointer-events-none -z-10" 
+        style={{ background: 'radial-gradient(circle at center, rgba(37,99,235,0.06) 0%, transparent 60%)' }}
+      />
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}

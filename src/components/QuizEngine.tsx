@@ -21,6 +21,7 @@ import {
   Dna
 } from 'lucide-react';
 import { MedicalDisclaimer } from './MedicalDisclaimer';
+import { trackEvent } from '@/lib/analytics';
 
 interface QuizEngineProps {
   whatsappNumber: string;
@@ -64,12 +65,7 @@ const STEP_DISPLAY_LABELS = [
   { ru: 'Результат', tj: 'Натиҷа' },
 ];
 
-// ─── GA4 Analytics Helper ───────────────────────────────────────────────────
-const trackEvent = (event: string, params?: Record<string, string | number>) => {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', event, params || {});
-  }
-};
+
 
 export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, onImmersiveChange }) => {
   const [step, setStep] = useState<Step>('category');
@@ -129,7 +125,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
 
   const handleSelectCategory = async (cat: QuizCategory) => {
     setSelectedCat(cat);
-    trackEvent('quiz_category_selected', { category_id: cat.id, category_title: cat.title });
+    trackEvent({ event_name: 'quiz_category_selected', data: { category_id: cat.id, category_title: cat.title } });
     // Haptic feedback
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
       window.navigator.vibrate(10);
@@ -153,7 +149,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
 
   const handleSelectOption = async (opt: QuizOption) => {
     setSelectedOpt(opt);
-    trackEvent('quiz_option_selected', { option_id: opt.id, category_id: selectedCat?.id || '' });
+    trackEvent({ event_name: 'quiz_option_selected', data: { option_id: opt.id, category_id: selectedCat?.id || '' } });
     setStep('loading');
     // Haptic feedback
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
@@ -213,7 +209,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
       try {
         localStorage.setItem('toj_quiz_last', JSON.stringify({ catTitle: selectedCat?.title, catId: selectedCat?.id }));
       } catch {}
-      trackEvent('quiz_result_shown', { category_id: selectedCat?.id || '', synergy_count: fullSynergies.length });
+      trackEvent({ event_name: 'quiz_result_shown', data: { category_id: selectedCat?.id || '', synergy_count: fullSynergies.length } });
     }
 
     setTimeout(() => {
@@ -364,15 +360,8 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                 {/* Radial Glow */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(30,64,175,0.15)_0%,transparent_70%)] group-hover:bg-[radial-gradient(circle_at_50%_40%,rgba(30,64,175,0.25)_0%,transparent_70%)] transition-colors duration-700" />
                 
-                {/* CLINICAL GRID OVERLAY */}
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.1] mix-blend-overlay" />
-                
-                {/* SCANNING LINE ANIMATION */}
-                <motion.div 
-                  animate={{ top: ['0%', '100%', '0%'] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                  className="absolute inset-x-0 h-px bg-[#1E40AF]/50 shadow-[0_0_15px_rgba(30,64,175,0.8)] z-10"
-                />
+                {/* SUBTLE GRID PATTERN (local CSS, no external URL) */}
+                <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(255,255,255,0.1) 24px, rgba(255,255,255,0.1) 25px), repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(255,255,255,0.1) 24px, rgba(255,255,255,0.1) 25px)' }} />
                 
                 {/* Crosshairs HUD */}
                 <div className="absolute top-6 left-6 w-4 h-4 border-t border-l border-[#1E40AF]/40" />
@@ -381,16 +370,11 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                 <div className="absolute bottom-6 right-6 w-4 h-4 border-b border-r border-[#1E40AF]/40" />
               </div>
 
-              {/* 2. HOLOGRAM CENTERPIECE (Placeholder for 3D WebP) */}
+              {/* 2. HOLOGRAM CENTERPIECE */}
               <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none mb-32">
-                <motion.div
-                  animate={{ y: [-8, 8, -8] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative flex items-center justify-center w-40 h-40"
-                >
-                  {/* Outer glowing rings */}
+                <div className="relative flex items-center justify-center w-40 h-40">
+                  {/* Outer ring (CSS animation instead of JS) */}
                   <div className="absolute inset-0 rounded-full border border-[#1E40AF]/20 animate-[spin_10s_linear_infinite]" />
-                  <div className="absolute inset-2 rounded-full border border-[#1E40AF]/10 animate-[spin_15s_linear_infinite_reverse]" />
                   
                   {/* Hologram Subject */}
                   <div className="relative text-[#3B82F6] opacity-90 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:drop-shadow-[0_0_25px_rgba(59,130,246,0.8)] transition-all duration-500 group-hover:scale-110">
@@ -399,7 +383,6 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                       alt={c.title} 
                       className="w-40 h-40 object-contain mix-blend-screen opacity-90 group-hover:opacity-100 transition-opacity duration-500"
                       onError={(e) => {
-                        // Fallback icon logic if image is missing
                         (e.target as HTMLImageElement).style.display = 'none';
                         const fallbackIcon = e.currentTarget.nextElementSibling;
                         if (fallbackIcon) (fallbackIcon as HTMLElement).style.display = 'block';
@@ -416,7 +399,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </div>
 
               {/* 3. TOP DATA BAR: Clinical Code */}
@@ -442,36 +425,15 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                   </h3>
                   
                   <div className="mt-8 flex items-center justify-between group/cta relative">
-                    {/* Shimmer Text */}
-                    <div className="relative">
-                       <span className="text-[12px] font-bold text-white/30 uppercase tracking-[0.25em]">
-                         {lang === 'ru' ? 'Пройти анализ' : 'Гузаштан аз таҳлил'}
-                       </span>
-                       <motion.div 
-                         animate={{ x: ['-100%', '300%'] }}
-                         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
-                         className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-80"
-                         style={{ width: '40%' }}
-                       />
-                       <span className="absolute inset-0 text-[12px] font-bold text-white uppercase tracking-[0.25em] pointer-events-none">
+                    {/* Shimmer Text (CSS-only, no framer-motion) */}
+                    <div className="relative overflow-hidden">
+                       <span className="text-[12px] font-bold text-white/50 uppercase tracking-[0.25em]">
                          {lang === 'ru' ? 'Пройти анализ' : 'Гузаштан аз таҳлил'}
                        </span>
                     </div>
 
-                    {/* Sonar Pulsing Arrow */}
+                    {/* Static Arrow (no more sonar ripple animations) */}
                     <div className="relative">
-                      {/* Ripples */}
-                      <motion.div 
-                        animate={{ scale: [1, 2.5], opacity: [0.6, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-                        className="absolute inset-0 rounded-full border-2 border-[#3B82F6]/50 z-0"
-                      />
-                      <motion.div 
-                        animate={{ scale: [1, 1.8], opacity: [0.4, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
-                        className="absolute inset-0 rounded-full border border-[#3B82F6]/30 z-0"
-                      />
-                      
                       <div className="relative z-10 w-11 h-11 rounded-full bg-[#3B82F6] flex items-center justify-center text-white shadow-[0_0_20px_rgba(59,130,246,0.6)] group-hover/cta:scale-110 group-hover/cta:shadow-[0_0_35px_rgba(59,130,246,0.9)] transition-all duration-300">
                         <ArrowRight size={20} className="group-hover/cta:translate-x-0.5 transition-transform" />
                       </div>

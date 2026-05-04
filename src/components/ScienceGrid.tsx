@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Lang } from '@/lib/types';
-import { ShieldCheck, Zap, Microscope, Activity, LucideIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Zap, Microscope, Activity, LucideIcon } from 'lucide-react';
 
 interface ScienceGridProps {
   lang: Lang;
@@ -30,9 +30,11 @@ const BentoCard = ({ block, className, isLarge = false }: { block: Block; classN
         <div className="absolute inset-0">
           <Image 
             src={block.img} 
-            fill 
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            loading="lazy"
             className={`${isLarge ? 'object-contain p-12' : 'object-cover'} opacity-90 group-hover:scale-110 transition-transform duration-1000 ease-out`} 
-            alt="" 
+            alt={block.title} 
           />
         </div>
       </div>

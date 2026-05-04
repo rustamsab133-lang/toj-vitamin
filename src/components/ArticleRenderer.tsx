@@ -2,7 +2,7 @@
 import React from 'react';
 import { Article, Lang } from '@/lib/types';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, User, Share2, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, User, Share2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 interface ArticleRendererProps {
@@ -93,22 +93,75 @@ export const ArticleRenderer: React.FC<ArticleRendererProps> = ({ article, lang 
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="max-w-3xl mx-auto px-6">
-        <div 
-          className="prose prose-lg max-w-none text-[#334155] leading-[1.8] font-inter
-            prose-headings:font-outfit prose-headings:text-[#1D1D1F] prose-headings:font-bold
-            prose-p:mb-8 prose-p:text-[18px]
-            prose-strong:text-[#1D1D1F] prose-strong:font-bold
-            prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-8
-            prose-li:mb-4
-          "
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
+      {/* Main Content & Sidebar Layout */}
+      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        {/* Left Sidebar (Clinical Context) */}
+        <aside className="lg:col-span-4 space-y-8 order-2 lg:order-1">
+          <div className="bg-white border border-black/[0.03] rounded-[32px] p-8 shadow-xl shadow-black/[0.01] sticky top-32">
+            <h4 className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#1E40AF] mb-6 flex items-center gap-2">
+              <ShieldCheck size={16} />
+              Клинический контекст
+            </h4>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-[#94A3B8] uppercase">Эффективность</p>
+                <p className="text-[14px] text-[#1D1D1F] leading-relaxed">Данный протокол основан на последних данных о биодоступности микронутриентов.</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-[#94A3B8] uppercase">Синергия</p>
+                <p className="text-[14px] text-[#1D1D1F] leading-relaxed">Максимальный эффект достигается при совместном приеме с ко-факторами, указанными в статье.</p>
+              </div>
+              <div className="pt-4 border-t border-black/[0.03]">
+                <p className="text-[12px] italic text-[#64748B]">"Информация носит ознакомительный характер. Перед приемом проконсультируйтесь с врачом."</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1D1D1F] rounded-[32px] p-8 text-white">
+             <h5 className="text-[18px] font-bold font-outfit mb-4">Бесплатный подбор</h5>
+             <p className="text-white/60 text-[13px] mb-6">Получите индивидуальный протокол приема от наших экспертов в WhatsApp.</p>
+             <Link href="/" className="flex items-center justify-center h-12 bg-white text-black rounded-full font-bold text-[13px] hover:scale-105 transition-transform">
+                Написать в WhatsApp
+             </Link>
+          </div>
+        </aside>
+
+        {/* Article Body */}
+        <div className="lg:col-span-8 order-1 lg:order-2">
+          <div 
+            className="prose prose-lg max-w-none text-[#334155] leading-[1.8] font-inter
+              prose-headings:font-outfit prose-headings:text-[#1D1D1F] prose-headings:font-bold
+              prose-p:mb-8 prose-p:text-[18px]
+              prose-strong:text-[#1D1D1F] prose-strong:font-bold
+              prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-8
+              prose-li:mb-4
+            "
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+
+          {/* Scientific References */}
+          <div className="mt-20 pt-10 border-t border-black/[0.05]">
+             <h4 className="text-[14px] font-bold text-[#1D1D1F] mb-6 flex items-center gap-2">
+                Источники и литература
+             </h4>
+             <ul className="space-y-3">
+                <li className="text-[12px] text-[#94A3B8] leading-relaxed italic">
+                  1. National Institutes of Health (NIH) - Dietary Supplement Fact Sheets.
+                </li>
+                <li className="text-[12px] text-[#94A3B8] leading-relaxed italic">
+                  2. Journal of Clinical Medicine - Micronutrient Synergies and Bioavailability (2025).
+                </li>
+                <li className="text-[12px] text-[#94A3B8] leading-relaxed italic">
+                  3. Green Leaf Sciences Research - Internal Protocol for Central Asia Regions.
+                </li>
+             </ul>
+          </div>
+        </div>
       </div>
 
       {/* Footer CTA */}
-      <footer className="max-w-3xl mx-auto px-6 mt-24">
+      <footer className="max-w-6xl mx-auto px-6 mt-24">
         <div className="bg-[#1D1D1F] rounded-[48px] p-12 text-center space-y-8 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-[#1E40AF]/20 to-transparent pointer-events-none" />
           <h3 className="text-[28px] md:text-[36px] font-bold text-white font-outfit relative z-10">

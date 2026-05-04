@@ -11,15 +11,18 @@ interface ShareButtonProps {
   lang?: 'ru' | 'tj';
 }
 
-// ─── GA4 Analytics Helper ───────────────────────────────────────────────────
+import { trackEvent } from '@/lib/analytics';
+
+// ─── Unified Analytics Helper ───────────────────────────────────────────────────
 const trackShare = (method: string, productUrl: string) => {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', 'share', {
+  trackEvent({
+    event_name: 'share',
+    data: {
       method,
       content_type: 'product',
       item_id: productUrl,
-    });
-  }
+    }
+  });
 };
 
 export const ShareButton: React.FC<ShareButtonProps> = ({

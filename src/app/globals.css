@@ -69,3 +69,39 @@ button > *,
 .interactive-child {
   pointer-events: auto;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CSS Shimmer Animation (replaces framer-motion Infinity animations)
+   Used in: skeleton loaders, progress bars
+   ═══════════════════════════════════════════════════════════════════ */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Mobile GPU Performance Optimizations
+   backdrop-blur is extremely GPU-intensive. On low-end mobile devices
+   it can cause GPU thrashing → browser kills the tab.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) and (hover: none) {
+  /* Reduce heavy blur on mobile touch devices */
+  .backdrop-blur-3xl {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  .backdrop-blur-2xl {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+  .backdrop-blur-xl {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+}
+
+/* Hint to browser that off-screen catalog can be deferred */
+#catalog {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 2000px;
+}

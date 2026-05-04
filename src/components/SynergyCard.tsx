@@ -17,15 +17,17 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
   
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  const handleBuyInWhatsApp = () => {
-    // ─── GA4 Tracking ───────────────────────────────────────────────────
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'whatsapp_order_click', {
+  const handleBuyInWhatsApp = async () => {
+    // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
+    const { trackEvent } = await import('@/lib/analytics');
+    await trackEvent({
+      event_name: 'whatsapp_order_click',
+      data: {
         synergy_type: synergy.type,
         total_price: synergy.total_price,
         product_names: synergy.products?.map(p => p.name).join(', ')
-      });
-    }
+      }
+    });
 
     if (synergy.products) {
       const productNames = synergy.products.map(p => p.name).join(', ');
@@ -50,7 +52,10 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
       className="group relative flex flex-col rounded-[48px] bg-white border border-black/[0.05] p-8 sm:p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.08)] overflow-hidden"
     >
       {/* BACKGROUND ELEMENTS */}
-      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#1E40AF]/[0.02] blur-[100px] -mr-32 -mt-32" />
+      <div 
+        className="absolute top-0 right-0 w-[300px] h-[300px] -mr-32 -mt-32 pointer-events-none" 
+        style={{ background: 'radial-gradient(circle at center, rgba(30,64,175,0.04) 0%, transparent 70%)' }}
+      />
       
       {/* 1. HEADER: Authority & Title */}
       <div className="relative z-10 mb-12">
@@ -141,7 +146,10 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
 
       {/* 3. EXPERT PROTOCOL: Combined Dosage & Rules */}
       <div className="relative z-10 mb-12 p-8 rounded-[40px] bg-[#1D1D1F] text-white overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-[40px] -mr-16 -mt-16" />
+        <div 
+          className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 pointer-events-none" 
+          style={{ background: 'radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%)' }}
+        />
         <div className="flex items-start gap-6 relative z-10">
           <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
             <Clock size={22} className="text-white" />
@@ -175,10 +183,8 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
           <span>{lang === 'ru' ? 'Заказать комплекс' : 'Фармоиш додан'}</span>
           <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           
-          <motion.div 
-            animate={{ x: ['-200%', '200%'] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none animate-[shimmer_3s_linear_infinite]"
           />
         </button>
       </div>

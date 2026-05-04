@@ -9,15 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "clsx": "^2.1.0",
-    "dotenv": "^16.4.5",
+    "@google-analytics/data": "^5.2.2",
+    "@supabase/supabase-js": "^2.105.1",
+    "dotenv": "^17.4.2",
+    "facebook-nodejs-business-sdk": "^24.0.1",
     "framer-motion": "^11.0.8",
+    "google-auth-library": "^10.6.2",
+    "googleapis": "^171.4.0",
     "lucide-react": "^0.344.0",
     "next": "14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "zustand": "^5.0.12"
   },
