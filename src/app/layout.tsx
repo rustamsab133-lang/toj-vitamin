@@ -137,6 +137,15 @@ export default function RootLayout({
             `,
           }}
         />
+        <noscript>
+          <img 
+            height="1" 
+            width="1" 
+            style={{ display: 'none' }}
+            src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_FB_PIXEL_ID || '2488163141696637'}&ev=PageView&noscript=1`}
+            alt=""
+          />
+        </noscript>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
