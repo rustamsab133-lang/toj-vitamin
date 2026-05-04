@@ -14,19 +14,19 @@ export async function GET() {
 
     const baseUrl = 'https://www.toj-vitamin.tj';
 
-    // Google Merchant Center XML (Google Content API / RSS 2.0)
+    // Generate XML in RSS 2.0 format (Standard for Meta/Facebook Catalog)
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
   <channel>
-    <title>toj-vitamin.tj Google Product Feed</title>
+    <title>toj-vitamin.tj Product Feed</title>
     <link>${baseUrl}</link>
-    <description>Premium Vitamins and Supplements in Tajikistan from Green Leaf Sciences</description>
+    <description>Premium Vitamins and Supplements in Tajikistan</description>
 ${products?.map((product) => {
       const productUrl = `${baseUrl}/product/${slugify(product.name)}`;
-      const description = product.description || `Купить ${product.name} в Таджикистане. Премиальное качество от Green Leaf Sciences. Бесплатная доставка по Душанбе.`;
+      const description = product.description || `Купить ${product.name} в Таджикистане. Высокое качество от Green Leaf Sciences.`;
       
       return `    <item>
-      <g:id>${product.id}</g:id>
+      <g:id>prod_${product.id}</g:id>
       <g:title><![CDATA[${product.name}]]></g:title>
       <g:description><![CDATA[${description.substring(0, 5000)}]]></g:description>
       <g:link>${productUrl}</g:link>
@@ -36,7 +36,6 @@ ${products?.map((product) => {
       <g:availability>${product.stock_quantity > 0 ? 'in stock' : 'out of stock'}</g:availability>
       <g:price>${product.price} TJS</g:price>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Fitness &amp; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
-      <g:identifier_exists>no</g:identifier_exists>
     </item>`;
     }).join('\n')}
   </channel>
