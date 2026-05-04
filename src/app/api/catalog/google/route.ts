@@ -33,7 +33,7 @@ ${products?.map((product) => {
       <g:image_link>${product.image_url}</g:image_link>
       <g:brand>Green Leaf Sciences</g:brand>
       <g:condition>new</g:condition>
-      <g:availability>${product.stock_quantity > 0 ? 'in stock' : 'out of stock'}</g:availability>
+      <g:availability>in stock</g:availability>
       <g:price>${product.price} TJS</g:price>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Fitness &amp; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
