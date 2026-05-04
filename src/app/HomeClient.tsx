@@ -321,13 +321,6 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
               </div>
             </div>
  
-            {/* Brand Aliases for SEO / Склейка бренда */}
-            <div className="border-t border-white/5 pt-8 pb-4">
-               <p className="text-[9px] text-white/10 text-center leading-relaxed">
-                 {lang === 'ru' ? 'Поиск бренда:' : 'Ҷустуҷӯи бренд:'} tojvitamin, тожвитамин, тож-витамин, тоджвитамин, точвитамин, точ-витамин, тачвитамин, таджвитамин, тадж-витамин, тодж-витамин, taj-vitamin, tajvitamin, vitamin tj, vitamin.tj, витамин тч
-               </p>
-            </div>
-
             <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                <p className="text-[12px] text-white/30">
                  © {new Date().getFullYear()} {settings.brand_name}. {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
