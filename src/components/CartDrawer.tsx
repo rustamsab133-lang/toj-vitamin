@@ -299,7 +299,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
                               </div>
                               {item.synergy_reason && (
                                 <p className="mt-2 text-[11px] text-[#64748B] italic leading-relaxed">
-                                  "{item.synergy_reason}"
+                                  &quot;{item.synergy_reason}&quot;
                                 </p>
                               )}
                             </div>

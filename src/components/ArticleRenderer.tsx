@@ -113,7 +113,7 @@ export const ArticleRenderer: React.FC<ArticleRendererProps> = ({ article, lang 
                 <p className="text-[14px] text-[#1D1D1F] leading-relaxed">Максимальный эффект достигается при совместном приеме с ко-факторами, указанными в статье.</p>
               </div>
               <div className="pt-4 border-t border-black/[0.03]">
-                <p className="text-[12px] italic text-[#64748B]">"Информация носит ознакомительный характер. Перед приемом проконсультируйтесь с врачом."</p>
+                <p className="text-[12px] italic text-[#64748B]">&quot;Информация носит ознакомительный характер. Перед приемом проконсультируйтесь с врачом.&quot;</p>
               </div>
             </div>
           </div>

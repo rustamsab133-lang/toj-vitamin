@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { QuizCategory, QuizOption, QuizSynergy, Lang } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -81,27 +81,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
   // Quick Start — last result from localStorage
   const [lastResult, setLastResult] = useState<{ catTitle: string; catId: string } | null>(null);
 
-  useEffect(() => {
-    loadCategories();
-    // Load last result for Quick Start
-    try {
-      const saved = localStorage.getItem('toj_quiz_last');
-      if (saved) setLastResult(JSON.parse(saved));
-    } catch {}
-  }, [lang]);
-
-  useEffect(() => {
-    // Notify parent about immersive state
-    // We are "immersive" when answering questions or loading
-    const isImmersive = step === 'option' || step === 'loading' || step === 'result';
-    onImmersiveChange?.(isImmersive);
-
-    // The scroll is no longer needed because the primary content unmounts,
-    // automatically bringing the quiz to the top of the viewport.
-    // Animating layout while smoothly scrolling causes browser freezing.
-  }, [step, onImmersiveChange]);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     setError(null);
     const { data: catData, error: catError } = await supabase
       .from('quiz_categories')
@@ -121,7 +101,29 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
       }));
       setCategories(localizedCats);
     }
-  };
+  }, [lang]);
+
+  useEffect(() => {
+    loadCategories();
+    // Load last result for Quick Start
+    try {
+      const saved = localStorage.getItem('toj_quiz_last');
+      if (saved) setLastResult(JSON.parse(saved));
+    } catch {}
+  }, [lang, loadCategories]);
+
+  useEffect(() => {
+    // Notify parent about immersive state
+    // We are "immersive" when answering questions or loading
+    const isImmersive = step === 'option' || step === 'loading' || step === 'result';
+    onImmersiveChange?.(isImmersive);
+
+    // The scroll is no longer needed because the primary content unmounts,
+    // automatically bringing the quiz to the top of the viewport.
+    // Animating layout while smoothly scrolling causes browser freezing.
+  }, [step, onImmersiveChange]);
+
+
 
   const handleSelectCategory = async (cat: QuizCategory) => {
     setSelectedCat(cat);

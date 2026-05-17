@@ -6,14 +6,16 @@ import { QuizEditor } from './components/QuizEditor';
 import { ComplexEditor } from './components/ComplexEditor';
 import { OrdersDashboard } from './components/OrdersDashboard';
 import { SiteSettings } from './components/SiteSettings';
+import { SeoAgent } from './components/SeoAgent';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3 } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent';
 
 const MODULES = [
-  { id: 'products' as AdminView, title: 'Товары', desc: 'Каталог, цены, фото', icon: <Package size={24} />, color: '#F8FAFC' }, // Более светлый Apple-style
+  { id: 'seo-agent' as AdminView, title: 'SEO-Агент', desc: 'ИИ генерация статей', icon: <Bot size={24} />, color: '#EFF6FF' },
+  { id: 'products' as AdminView, title: 'Товары', desc: 'Каталог, цены, фото', icon: <Package size={24} />, color: '#F8FAFC' },
   { id: 'categories' as AdminView, title: 'Умные комплексы', desc: 'Управление подбором', icon: <Layers size={24} />, color: '#F8FAFC' },
   { id: 'complexes' as AdminView, title: 'Синергия', desc: 'Клинические связки', icon: <BarChart3 size={24} />, color: '#F8FAFC' },
   { id: 'orders' as AdminView, title: 'Заказы', desc: 'Лента, статусы', icon: <ShoppingBag size={24} />, color: '#F8FAFC' },
@@ -149,6 +151,12 @@ export default function AdminPage() {
           {view === 'settings' && (
             <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <SiteSettings onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'seo-agent' && (
+            <motion.div key="seo-agent" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <SeoAgent onBack={() => setView('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -122,7 +122,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
           const enrichedMap = enrichedData as Record<string, any>;
           const enriched = data.map(p => ({
             ...p,
-            ...(enrichedMap[p.id] || {})
+            ...(enrichedMap[p.name?.toLowerCase().trim() || ''] || {})
           }));
           setAllProducts(enriched);
         }
@@ -248,11 +248,18 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                   </div>
                   <span className="font-bold text-[16px] text-white font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
                 </div>
-                <p className="text-[14px] leading-relaxed">
-                  {lang === 'ru'
-                    ? 'Официальный интернет-магазин качественных витаминов и инновационных решений для здоровья.'
-                    : 'Мағозаи расмии интернетии витаминҳои босифат ва қарорҳои инноватсионӣ барои саломатӣ.'}
-                </p>
+                <div className="space-y-3">
+                  <p className="text-[14px] leading-relaxed">
+                    {lang === 'ru'
+                      ? 'TOJ-VITAMIN (Точвитамин) — официальный интернет-магазин качественных витаминов и инновационных решений для здоровья.'
+                      : 'TOJ-VITAMIN (Тоҷвитамин) — мағозаи расмии интернетии витаминҳои босифат ва қарорҳои инноватсионӣ барои саломатӣ.'}
+                  </p>
+                  <p className="text-[12px] text-white/40 leading-relaxed">
+                    {lang === 'ru'
+                      ? 'Ищете ли вы нас как TOJ-VITAMIN, Точвитамин, Тоджвитамин или Таджвитамин — наш маркетплейс гарантирует 100% оригинальность продукции Green Leaf Sciences и быструю доставку по всему Таджикистану.'
+                      : 'Новобаста аз он ки шумо моро ҳамчун TOJ-VITAMIN ё Тоҷвитамин меҷӯед — маркетплейси мо сифати маҳсулот ва интиқоли зудро дар тамоми Тоҷикистон кафолат медиҳад.'}
+                  </p>
+                </div>
               </div>
  
               {/* Contact */}
@@ -323,7 +330,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
  
             <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                <p className="text-[12px] text-white/30">
-                 © {new Date().getFullYear()} {settings.brand_name}. {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
+                 © {new Date().getFullYear()} {settings.brand_name} (Точвитамин). {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
                </p>
                <p className="text-[11px] text-white/20 max-w-md text-center sm:text-right">
                  {lang === 'ru'

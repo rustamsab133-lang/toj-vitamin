@@ -219,12 +219,12 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
 
                           {/* 2. TOP BADGES */}
                           <div className="absolute top-7 left-7 z-20 flex flex-wrap gap-1.5 pointer-events-none">
-                            {(product as any).tags?.slice(0, 1).map((tag: string, idx: number) => (
-                              <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
+                             {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag: string, idx: number) => (
+                               <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
+                                 {tag}
+                               </span>
+                             ))}
+                           </div>
                           <div className="absolute top-7 right-7 z-20 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
                              <div className="w-1.5 h-1.5 rounded-full bg-[#1E40AF] animate-pulse" />
                              <span className="text-[8px] font-bold uppercase tracking-widest text-[#94A3B8]">

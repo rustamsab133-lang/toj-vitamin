@@ -40,7 +40,9 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
     return allProducts.filter(p => {
       const name = (p.name || '').toLowerCase();
       const fullName = (p.full_name || '').toLowerCase();
-      const tags = (p.tags || []).map(t => t.toLowerCase());
+      const tags = Array.isArray(p.tags) 
+        ? p.tags.map(t => typeof t === 'string' ? t.toLowerCase() : '') 
+        : [];
       const description = (p.description || '').toLowerCase();
       
       return name.includes(query) || 
@@ -129,7 +131,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
                             <ShoppingBag size={48} className="text-[#E2E8F0]" />
                           )}
                           <div className="absolute top-6 left-6 flex flex-wrap gap-1.5">
-                            {product.tags?.slice(0, 1).map((tag, i) => (
+                            {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag, i) => (
                               <span key={i} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-wider">
                                 {tag}
                               </span>

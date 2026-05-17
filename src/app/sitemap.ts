@@ -13,7 +13,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base routes
   const baseRoutes = [
     '',
-    '/quiz',
     '/journal',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
@@ -25,13 +24,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic Product routes
   let { data: products } = await supabase
     .from('products')
-    .select('name, image_url, updated_at')
+    .select('name, image_url, created_at')
     .order('name');
 
   // Dynamic Journal/Articles routes
   const { data: articles } = await supabase
     .from('journal_articles')
     .select('slug, published_at, image_url, title_ru')
+    .eq('is_published', true)
     .order('published_at', { ascending: false });
 
   // Fallback products...
@@ -48,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const slug = slugify(product.name);
     const item: any = {
       url: `${baseUrl}/product/${slug}`,
-      lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
+      lastModified: product.created_at ? new Date(product.created_at) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     };

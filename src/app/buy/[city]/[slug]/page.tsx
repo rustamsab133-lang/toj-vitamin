@@ -102,7 +102,7 @@ export default async function PSEOPage({ params }: Props) {
     <main className="min-h-screen bg-[#FDFBF7] relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <MainBackground />
-      <Header lang="ru" settings={{ brand_name: "TOJ-VITAMIN", whatsapp_phone: "992176660707" }} setLang={() => {}} />
+      <Header lang="ru" settings={{ brand_name: "TOJ-VITAMIN", whatsapp_phone: "992176660707" }} setLang={() => {}} isImmersiveMode={false} />
       
       <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto">
         {/* Breadcrumbs */}
@@ -191,7 +191,7 @@ export default async function PSEOPage({ params }: Props) {
                 <h2 className="text-[32px] font-bold font-outfit">Заказать {product.name} сейчас</h2>
                 <p className="text-[#64748B]">Выберите дозировку и оформите заказ через WhatsApp</p>
               </div>
-              <ProductCatalog lang="ru" whatsappNumber="992176660707" initialCategory="all" />
+              <ProductCatalog lang="ru" whatsappNumber="992176660707" />
            </div>
         </div>
 
