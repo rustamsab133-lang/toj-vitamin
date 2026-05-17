@@ -14,6 +14,52 @@ interface SearchOverlayProps {
   whatsappNumber: string;
 }
 
+// --- Levenshtein Distance & Fuzzy Search Helpers ---
+function getLevenshteinDistance(a: string, b: string): number {
+  const tmp: number[][] = [];
+  let i, j;
+  for (i = 0; i <= a.length; i++) {
+    tmp[i] = [i];
+  }
+  for (j = 0; j <= b.length; j++) {
+    tmp[0][j] = j;
+  }
+  for (i = 1; i <= a.length; i++) {
+    for (j = 1; j <= b.length; j++) {
+      tmp[i][j] = Math.min(
+        tmp[i - 1][j] + 1, // Deletion
+        tmp[i][j - 1] + 1, // Insertion
+        tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1) // Substitution
+      );
+    }
+  }
+  return tmp[a.length][b.length];
+}
+
+function isFuzzyMatch(query: string, target: string): boolean {
+  const cleanTarget = target.toLowerCase().trim();
+  if (cleanTarget.includes(query)) return true;
+  
+  if (query.length < 4) return false;
+  
+  const words = cleanTarget.split(/[^a-zа-яё0-9+]+/i).filter(w => w.length >= 3);
+  const maxDistance = query.length >= 7 ? 2 : 1;
+  
+  return words.some(word => {
+    if (word.includes(query) || query.includes(word)) return true;
+    
+    if (Math.abs(word.length - query.length) > maxDistance) {
+      if (word.length > query.length) {
+        const wordPrefix = word.slice(0, query.length);
+        if (getLevenshteinDistance(query, wordPrefix) <= maxDistance) return true;
+      }
+      return false;
+    }
+    
+    return getLevenshteinDistance(query, word) <= maxDistance;
+  });
+}
+
 import { trackSearch, trackWhatsAppClick } from '@/lib/analytics';
 
 export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumber }) => {
@@ -38,34 +84,45 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
     if (!search.trim() || allProducts.length === 0) return [];
     const query = search.toLowerCase().trim();
     
-    // 1. Filter products
+    // 1. Filter products using typo-tolerant fuzzy matching
     const matches = allProducts.filter(p => {
-      const name = (p.name || '').toLowerCase();
-      const fullName = (p.full_name || '').toLowerCase();
+      const name = p.name || '';
+      const fullName = p.full_name || '';
       const tags = Array.isArray(p.tags) 
-        ? p.tags.map(t => typeof t === 'string' ? t.toLowerCase() : '') 
+        ? p.tags.map(t => typeof t === 'string' ? t : '') 
         : [];
-      const description = (p.description || '').toLowerCase();
+      const description = p.description || '';
       
-      return name.includes(query) || 
-             fullName.includes(query) || 
-             description.includes(query) ||
-             tags.some(t => t.includes(query));
+      return isFuzzyMatch(query, name) || 
+             isFuzzyMatch(query, fullName) || 
+             isFuzzyMatch(query, description) ||
+             tags.some(t => isFuzzyMatch(query, t));
     });
 
-    // 2. Sort: prioritizing direct matches in title/name
+    // 2. Sort: prioritizing direct matches (3), then fuzzy name matches (2), then description matches (1)
     return matches.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
       const aFullName = (a.full_name || '').toLowerCase();
       const bName = (b.name || '').toLowerCase();
       const bFullName = (b.full_name || '').toLowerCase();
 
-      const aHasNameMatch = aName.includes(query) || aFullName.includes(query);
-      const bHasNameMatch = bName.includes(query) || bFullName.includes(query);
+      // Priority scores for A
+      let aScore = 1;
+      if (aName.includes(query) || aFullName.includes(query)) {
+        aScore = 3;
+      } else if (isFuzzyMatch(query, aName) || isFuzzyMatch(query, aFullName)) {
+        aScore = 2;
+      }
 
-      if (aHasNameMatch && !bHasNameMatch) return -1;
-      if (!aHasNameMatch && bHasNameMatch) return 1;
-      return 0;
+      // Priority scores for B
+      let bScore = 1;
+      if (bName.includes(query) || bFullName.includes(query)) {
+        bScore = 3;
+      } else if (isFuzzyMatch(query, bName) || isFuzzyMatch(query, bFullName)) {
+        bScore = 2;
+      }
+
+      return bScore - aScore; // Descending order
     });
   }, [search, allProducts]);
 
