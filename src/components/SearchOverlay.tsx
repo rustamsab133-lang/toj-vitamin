@@ -37,7 +37,9 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
   const filteredProducts = useMemo(() => {
     if (!search.trim() || allProducts.length === 0) return [];
     const query = search.toLowerCase().trim();
-    return allProducts.filter(p => {
+    
+    // 1. Filter products
+    const matches = allProducts.filter(p => {
       const name = (p.name || '').toLowerCase();
       const fullName = (p.full_name || '').toLowerCase();
       const tags = Array.isArray(p.tags) 
@@ -49,6 +51,21 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
              fullName.includes(query) || 
              description.includes(query) ||
              tags.some(t => t.includes(query));
+    });
+
+    // 2. Sort: prioritizing direct matches in title/name
+    return matches.sort((a, b) => {
+      const aName = (a.name || '').toLowerCase();
+      const aFullName = (a.full_name || '').toLowerCase();
+      const bName = (b.name || '').toLowerCase();
+      const bFullName = (b.full_name || '').toLowerCase();
+
+      const aHasNameMatch = aName.includes(query) || aFullName.includes(query);
+      const bHasNameMatch = bName.includes(query) || bFullName.includes(query);
+
+      if (aHasNameMatch && !bHasNameMatch) return -1;
+      if (!aHasNameMatch && bHasNameMatch) return 1;
+      return 0;
     });
   }, [search, allProducts]);
 
