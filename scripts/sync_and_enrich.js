@@ -5,7 +5,10 @@ const puppeteer = require('puppeteer-core');
 
 // 1. Load Env variables from .env.local
 function loadEnv() {
-  const envPath = path.join(process.cwd(), '.env.local');
+  let envPath = path.join(__dirname, '../.env.local');
+  if (!fs.existsSync(envPath)) {
+    envPath = path.join(process.cwd(), '.env.local');
+  }
   if (fs.existsSync(envPath)) {
     const lines = fs.readFileSync(envPath, 'utf8').split('\n');
     for (const line of lines) {
@@ -244,10 +247,39 @@ async function run() {
 
   // 6. UPSERT target products to Supabase products table
   console.log("📤 Syncing 107 products to Supabase...");
+  
+  // Load products_db.json for fallback image recovery
+  let backupProducts = [];
+  try {
+    let backupPath = path.join(__dirname, '../src/data/products_db.json');
+    if (!fs.existsSync(backupPath)) {
+      backupPath = path.join(process.cwd(), 'src/data/products_db.json');
+    }
+    if (fs.existsSync(backupPath)) {
+      backupProducts = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+      console.log(`📥 Loaded backup products from: ${backupPath}`);
+    } else {
+      console.warn("⚠️ products_db.json backup file not found in either relative or CWD paths!");
+    }
+  } catch (e) {
+    console.warn("⚠️ Could not load backup products for images:", e.message);
+  }
+
   for (const target of targetProducts) {
     // Check if we can match an existing product in the DB to keep its metadata (like image_url, description, price)
     const existing = currentDbProducts.find(dbProd => getNormalizedKey(dbProd.name) === getNormalizedKey(target.name));
     
+    // Find matching product in backup JSON for fallback image
+    let backupUrl = null;
+    const targetNorm = getNormalizedKey(target.name);
+    const matchedBackup = backupProducts.find(bp => {
+      const bpNorm = getNormalizedKey(bp.name);
+      return bpNorm === targetNorm || bpNorm.includes(targetNorm) || targetNorm.includes(bpNorm);
+    });
+    if (matchedBackup) {
+      backupUrl = matchedBackup.image_url;
+    }
+
     const productData = {
       id: existing ? existing.id : target.id, // Keep existing ID to preserve foreign keys
       name: target.name,
@@ -255,7 +287,7 @@ async function run() {
       description: existing ? (existing.description || "Премиальный продукт бренда TOJ-VITAMIN для укрепления здоровья.") : "Премиальный продукт бренда TOJ-VITAMIN для укрепления здоровья.",
       price: existing && existing.price > 0 ? existing.price : 150, // Keep price or set default 150 smn
       icon_type: existing ? existing.icon_type : 'pill',
-      image_url: existing ? existing.image_url : null
+      image_url: existing && existing.image_url ? existing.image_url : (backupUrl || null)
     };
 
     const { error: upsertErr } = await supabase
@@ -270,7 +302,10 @@ async function run() {
 
   // 7. Load current rich properties from enriched_gls_products.json
   console.log("📖 Loading existing enriched knowledge base...");
-  const jsonPath = path.join(process.cwd(), 'src/data/enriched_gls_products.json');
+  let jsonPath = path.join(__dirname, '../src/data/enriched_gls_products.json');
+  if (!fs.existsSync(jsonPath)) {
+    jsonPath = path.join(process.cwd(), 'src/data/enriched_gls_products.json');
+  }
   let currentEnrichments = {};
   if (fs.existsSync(jsonPath)) {
     try {

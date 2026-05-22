@@ -1,4 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import dns from 'dns';
+
+// Force Node.js to prefer IPv4 over IPv6 when resolving addresses.
+// This is critical on Windows systems to prevent "TypeError: fetch failed" for external API hosts.
+if (dns && dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 const apiKey = process.env.GEMINI_API_KEY;
 

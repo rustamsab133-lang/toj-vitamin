@@ -138,8 +138,8 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
         setEnrichedCatalog(JSON.parse(enrichedSetting.value));
       } else {
         // Fallback на API/Файл
-        const res = await fetch('/api/webhooks/instagram'); // webhook GET does nothing but we can load file or local fallback
-        // Попытка взять обогащенный каталог напрямую из site_settings
+        await fetch('/api/webhooks/instagram').catch(() => {}); // webhook GET does nothing but we can load file or local fallback
+      }
 
       // 4. Загрузка промптов
       const { data: promptsData } = await supabase.from('agent_prompts').select('*').order('created_at', { ascending: false });
@@ -148,8 +148,6 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
       // 5. Загрузка последних чатов
       const { data: chatsData } = await supabase.from('agent_chats').select('*').order('updated_at', { ascending: false }).limit(20);
       if (chatsData) setRecentChats(chatsData);
-
-      }
 
     } catch (err) {
       console.error('Ошибка при загрузке настроек ИИ:', err);

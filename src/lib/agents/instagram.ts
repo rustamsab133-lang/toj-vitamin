@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { geminiModel } from '@/lib/gemini';
+import { genAI } from '@/lib/gemini';
 import { Product } from '@/lib/types';
 import fs from 'fs';
 import path from 'path';
@@ -129,16 +129,54 @@ ${JSON.stringify(productsCatalog, null, 2)}
 
   // 5. Вызываем модель Gemini с обработкой ошибок и фоллбэком на реальные товары из базы
   try {
-    const response = await geminiModel.generateContent(prompt);
-    const text = response.response.text().trim();
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            selectedProducts: {
+              type: 'ARRAY',
+              description: 'От 1 до 3 продуктов, которые идеально дополняют друг друга для решения указанной проблемы. Выбирай только из предоставленного каталога!',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  id: { type: 'STRING', description: 'ID продукта (строка) из каталога.' },
+                  name: { type: 'STRING', description: 'Точное название продукта из каталога.' },
+                  image_url: { type: 'STRING', description: 'URL изображения продукта из каталога.' },
+                  synergy_reason: { type: 'STRING', description: 'Объяснение на 1-2 предложения на выбранном языке, почему продукт выбран.' }
+                },
+                required: ['id', 'name', 'image_url', 'synergy_reason']
+              }
+            },
+            headline: { type: 'STRING', description: 'Заголовок для баннера (СТРОГО МАКСИМУМ 4-5 СЛОВ, емкий и сильный).' },
+            caption: { type: 'STRING', description: 'Полный текст поста для Instagram с эмодзи и хештегами согласно тональности и языку.' },
+            reasoning: { type: 'STRING', description: 'Пояснение для администратора, почему выбрана эта связка.' }
+          },
+          required: ['selectedProducts', 'headline', 'caption', 'reasoning']
+        }
+      }
+    });
 
-    // 6. Парсим результат
-    const cleanedText = text
-      .replace(/^```json/i, '')
-      .replace(/```$/, '')
-      .trim();
+    const response = await model.generateContent(prompt);
+    const text = response.response.text().trim();
     
-    const postData: InstagramPostResponse = JSON.parse(cleanedText);
+    const postData: InstagramPostResponse = JSON.parse(text);
+
+    // Дополнительная сверка с БД: гарантируем, что картинки и ID абсолютно точные и свежие
+    for (const item of postData.selectedProducts) {
+      const realProd = dbProducts.find((p: any) => 
+        p.id.toString() === item.id.toString() || 
+        p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+      );
+      if (realProd) {
+        item.id = realProd.id.toString();
+        item.name = realProd.name;
+        item.image_url = realProd.image_url || '';
+      }
+    }
+
     return postData;
   } catch (err: any) {
     console.warn('⚠️ Ошибка вызова Gemini или парсинга, используем качественный офлайн-фоллбэк с баночками из базы:', err);
