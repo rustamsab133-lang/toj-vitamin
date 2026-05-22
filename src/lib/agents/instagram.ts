@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { genAI } from '@/lib/gemini';
+import { SchemaType } from '@google/generative-ai';
 import { Product } from '@/lib/types';
 import fs from 'fs';
 import path from 'path';
@@ -134,25 +135,25 @@ ${JSON.stringify(productsCatalog, null, 2)}
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
-          type: 'OBJECT',
+          type: SchemaType.OBJECT,
           properties: {
             selectedProducts: {
-              type: 'ARRAY',
+              type: SchemaType.ARRAY,
               description: 'От 1 до 3 продуктов, которые идеально дополняют друг друга для решения указанной проблемы. Выбирай только из предоставленного каталога!',
               items: {
-                type: 'OBJECT',
+                type: SchemaType.OBJECT,
                 properties: {
-                  id: { type: 'STRING', description: 'ID продукта (строка) из каталога.' },
-                  name: { type: 'STRING', description: 'Точное название продукта из каталога.' },
-                  image_url: { type: 'STRING', description: 'URL изображения продукта из каталога.' },
-                  synergy_reason: { type: 'STRING', description: 'Объяснение на 1-2 предложения на выбранном языке, почему продукт выбран.' }
+                  id: { type: SchemaType.STRING, description: 'ID продукта (строка) из каталога.' },
+                  name: { type: SchemaType.STRING, description: 'Точное название продукта из каталога.' },
+                  image_url: { type: SchemaType.STRING, description: 'URL изображения продукта из каталога.' },
+                  synergy_reason: { type: SchemaType.STRING, description: 'Объяснение на 1-2 предложения на выбранном языке, почему продукт выбран.' }
                 },
                 required: ['id', 'name', 'image_url', 'synergy_reason']
               }
             },
-            headline: { type: 'STRING', description: 'Заголовок для баннера (СТРОГО МАКСИМУМ 4-5 СЛОВ, емкий и сильный).' },
-            caption: { type: 'STRING', description: 'Полный текст поста для Instagram с эмодзи и хештегами согласно тональности и языку.' },
-            reasoning: { type: 'STRING', description: 'Пояснение для администратора, почему выбрана эта связка.' }
+            headline: { type: SchemaType.STRING, description: 'Заголовок для баннера (СТРОГО МАКСИМУМ 4-5 СЛОВ, емкий и сильный).' },
+            caption: { type: SchemaType.STRING, description: 'Полный текст поста для Instagram с эмодзи и хештегами согласно тональности и языку.' },
+            reasoning: { type: SchemaType.STRING, description: 'Пояснение для администратора, почему выбрана эта связка.' }
           },
           required: ['selectedProducts', 'headline', 'caption', 'reasoning']
         }
