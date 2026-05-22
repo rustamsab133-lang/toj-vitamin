@@ -102,7 +102,7 @@ export default async function PSEOPage({ params }: Props) {
     <main className="min-h-screen bg-[#FDFBF7] relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <MainBackground />
-      <Header lang="ru" settings={{ brand_name: "TOJ-VITAMIN", whatsapp_phone: "992176660707" }} setLang={() => {}} isImmersiveMode={false} />
+      <Header lang="ru" settings={{ brand_name: "TOJ-VITAMIN", whatsapp_phone: "992176660707" }} isImmersiveMode={false} />
       
       <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto">
         {/* Breadcrumbs */}

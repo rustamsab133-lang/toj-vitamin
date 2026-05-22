@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   lang: Lang;
-  setLang: (lang: Lang) => void;
+  setLang?: (lang: Lang) => void;
   settings: Record<string, string>;
   isImmersiveMode: boolean;
 }
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 </button>
 
                 <button
-                  onClick={() => setLang(lang === 'ru' ? 'tj' : 'ru')}
+                  onClick={() => setLang && setLang(lang === 'ru' ? 'tj' : 'ru')}
                   className="flex h-10 px-3 rounded-full bg-white/40 hover:bg-white/60 transition-colors text-[10px] font-bold text-[#1D1D1F] items-center gap-1.5 border border-white/50 backdrop-blur-sm"
                 >
                   <Globe size={13} className="text-[#86868B]" />

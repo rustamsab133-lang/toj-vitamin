@@ -7,13 +7,15 @@ import { ComplexEditor } from './components/ComplexEditor';
 import { OrdersDashboard } from './components/OrdersDashboard';
 import { SiteSettings } from './components/SiteSettings';
 import { SeoAgent } from './components/SeoAgent';
+import { InstagramAgent } from './components/InstagramAgent';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent';
 
 const MODULES = [
+  { id: 'instagram-agent' as AdminView, title: 'Instagram ИИ', desc: 'Авто-генерация постов', icon: <Instagram size={24} />, color: '#FDF4FF' },
   { id: 'seo-agent' as AdminView, title: 'SEO-Агент', desc: 'ИИ генерация статей', icon: <Bot size={24} />, color: '#EFF6FF' },
   { id: 'products' as AdminView, title: 'Товары', desc: 'Каталог, цены, фото', icon: <Package size={24} />, color: '#F8FAFC' },
   { id: 'categories' as AdminView, title: 'Умные комплексы', desc: 'Управление подбором', icon: <Layers size={24} />, color: '#F8FAFC' },
@@ -154,9 +156,15 @@ export default function AdminPage() {
             </motion.div>
           )}
 
-          {view === 'seo-agent' && (
+          { view === 'seo-agent' && (
             <motion.div key="seo-agent" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <SeoAgent onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'instagram-agent' && (
+            <motion.div key="instagram-agent" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <InstagramAgent onBack={() => setView('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>
