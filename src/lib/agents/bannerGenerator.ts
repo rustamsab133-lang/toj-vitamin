@@ -6,127 +6,249 @@ interface ProductImage {
 }
 
 /**
- * Программный генератор баннеров с градиентным фоном и карточками товаров.
+ * Премиальный программный генератор баннеров в стиле Warm Organic Editorial 2026.
+ * Поддерживает 4 роскошные современные темы, перекрывающиеся 3D композиции продуктов и реалистичные тени.
  */
 export async function generateBanner(
   headline: string, 
   products: ProductImage[],
-  style = 'dark_purple'
+  style = 'warm_editorial'
 ): Promise<string> {
   const width = 1080;
   const height = 1080;
 
-  // Определение цветов градиента в зависимости от стиля баннера
-  let stop1 = '#0F0C20';
-  let stop2 = '#15102A';
-  let stop3 = '#06040A';
-  let glowColor = '#6366f1';
-  let brandingColor = '#6366f1';
+  // 1. Определение параметров темы в стиле Warm Organic Editorial 2026
+  let bgColor = '#F5EFEB';             // Песочный фон по умолчанию
+  let shadowColor = '#2D2722';         // Цвет тени от листьев
+  let textColorPrimary = '#251E18';    // Темно-шоколадный
+  let textColorSecondary = '#75695C';  // Кофейный
+  let accentColor = '#8D7B68';         // Каменный/оливковый акцент
+  let fontTitle = 'Georgia, serif';    // Журнальный шрифт по умолчанию
+  let styleSubtitle = 'СВЯЗКА ДЛЯ ЗДОРОВЬЯ';
+  
+  // Дополнительные настройки для разных стилей
+  let podiumTopColor = '#EAE0D2';
+  let podiumEdgeColor = '#D2C7B7';
+  let isGlassPodium = false;
+  let shadowOpacity = 0.06;
+  let isWindowsGrid = false; // Тень в виде окна вместо пальмы (для бетона)
+  let isNoShadow = false;
 
-  if (style === 'electric_blue') {
-    stop1 = '#030712';
-    stop2 = '#0B132B';
-    stop3 = '#1C2541';
-    glowColor = '#3b82f6';
-    brandingColor = '#60a5fa';
-  } else if (style === 'emerald_mint') {
-    stop1 = '#022c22';
-    stop2 = '#064e3b';
-    stop3 = '#022c22';
-    glowColor = '#10b981';
-    brandingColor = '#34d399';
-  } else if (style === 'warm_sunset') {
-    stop1 = '#180808';
-    stop2 = '#2D120F';
-    stop3 = '#0A0302';
-    glowColor = '#f97316';
-    brandingColor = '#fb923c';
+  // Инициализация стилей
+  if (style === 'emerald_mint') {
+    // Мятный Дзен / Спа-стиль
+    bgColor = '#E6ECE6';
+    shadowColor = '#1A231D';
+    textColorPrimary = '#1A2D20';
+    textColorSecondary = '#5C7060';
+    accentColor = '#4A6B56';
+    fontTitle = 'Georgia, serif';
+    podiumTopColor = '#FAF8F5'; // Каррарский белый мрамор
+    podiumEdgeColor = '#E3DDD0';
+    styleSubtitle = 'НАТУРАЛЬНЫЙ ОРГАНИК КОМПЛЕКС';
+    shadowOpacity = 0.05;
+  } else if (style === 'matte_slate') {
+    // Бетон и Графит / Спортивный активный стиль
+    bgColor = '#E2E4E6';
+    shadowColor = '#1A1D20';
+    textColorPrimary = '#1A1D20';
+    textColorSecondary = '#636A70';
+    accentColor = '#47535E';
+    fontTitle = 'system-ui, -apple-system, sans-serif'; // Строгий гротеск
+    podiumTopColor = '#32373C'; // Темный сланец
+    podiumEdgeColor = '#1F2225';
+    styleSubtitle = 'АТЛЕТИЧЕСКАЯ ФОРМУЛА АКТИВНОСТИ';
+    shadowOpacity = 0.05;
+    isWindowsGrid = true; // Вместо пальмы - тень от окна
+  } else if (style === 'glass_minimal') {
+    // Сверхлегкий минимализм со стекломорфизмом
+    bgColor = '#F4F5F7';
+    shadowColor = '#2F3440';
+    textColorPrimary = '#1E2229';
+    textColorSecondary = '#7E8594';
+    accentColor = '#5C6479';
+    fontTitle = 'system-ui, -apple-system, sans-serif';
+    isGlassPodium = true; // Стеклянный подиум
+    styleSubtitle = 'НАУЧНЫЙ БИОХАКИНГ И КЛЕТОЧНЫЙ БАЛАНС';
+    isNoShadow = true; // Без пальмовых листьев, чистый свет
   }
 
-  // 1. Создаем премиальный градиент в формате SVG
+  // 2. Создаем фоновую SVG композицию
+  
+  // Рендерим пальмовую тень (Warm/Mint) или тень от окна (Slate) или пустой свет (Glass)
+  let shadowLayer = '';
+  if (isWindowsGrid) {
+    // Тень в виде индустриальной оконной рамы для бетонного стиля
+    shadowLayer = `
+      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="0.04" transform="rotate(10, 540, 540)">
+        <rect x="100" y="-100" width="80" height="1200" />
+        <rect x="400" y="-100" width="80" height="1200" />
+        <rect x="700" y="-100" width="80" height="1200" />
+        <rect x="-100" y="300" width="1200" height="80" />
+        <rect x="-100" y="600" width="1200" height="80" />
+      </g>
+    `;
+  } else if (!isNoShadow) {
+    // Мягкая, эстетичная тень от пальмовых листьев (без толстого ствола по центру)
+    shadowLayer = `
+      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="${shadowOpacity}">
+        <path d="M-100,-100 C150,150 450,350 700,600" stroke="${shadowColor}" stroke-width="8" fill="none" opacity="0.5" />
+        <path d="M20,30 C120,80 280,200 320,300 C260,260 140,120 20,30 Z" />
+        <path d="M80,90 C200,150 350,300 400,420 C330,370 210,210 80,90 Z" />
+        <path d="M140,150 C280,220 420,400 480,530 C400,470 280,300 140,150 Z" />
+        <path d="M200,210 C350,290 500,500 550,650 C480,580 350,380 200,210 Z" />
+      </g>
+    `;
+  }
+
+  // Рендерим подиум (Каменный или Стеклянный)
+  let podiumLayer = '';
+  if (isGlassPodium) {
+    // Сверхсовременный матовый стеклянный круг
+    podiumLayer = `
+      <!-- Мягкая тень под парящим стеклом -->
+      <ellipse cx="680" cy="855" rx="330" ry="40" fill="url(#podium-shadow)" opacity="0.4" />
+      
+      <!-- Боковое свечение матового ребра стекла -->
+      <ellipse cx="680" cy="832" rx="320" ry="50" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3" />
+      
+      <!-- Тело стеклянной плиты (Glassmorphism) -->
+      <ellipse cx="680" cy="830" rx="320" ry="50" fill="#ffffff" fill-opacity="0.2" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6" />
+    `;
+  } else {
+    // Премиальный круглый подиум из камня/песчаника
+    podiumLayer = `
+      <!-- Мягкая тень под подиумом -->
+      <ellipse cx="680" cy="855" rx="340" ry="45" fill="url(#podium-shadow)" />
+      
+      <!-- Боковая грань подиума (объем) -->
+      <path d="M360,830 A320,50 0 0,0 1000,830 L1000,855 A320,50 0 0,1 360,855 Z" fill="${podiumEdgeColor}" />
+      
+      <!-- Верхняя плоскость подиума -->
+      <ellipse cx="680" cy="830" rx="320" ry="50" fill="${podiumTopColor}" stroke="#FAF6F0" stroke-width="1.5" stroke-opacity="0.8" />
+    `;
+  }
+
+  // Рассчитываем тени под бутылочками в зависимости от их количества
+  let productShadows = '';
+  const count = products.length;
+  if (count === 1) {
+    productShadows = `<ellipse cx="680" cy="820" rx="120" ry="25" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />`;
+  } else if (count === 2) {
+    productShadows = `
+      <ellipse cx="560" cy="820" rx="90" ry="25" fill="#000000" opacity="0.22" filter="url(#shadow-blur)" />
+      <ellipse cx="780" cy="820" rx="100" ry="25" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />
+    `;
+  } else {
+    // 3 продукта
+    productShadows = `
+      <ellipse cx="490" cy="815" rx="75" ry="20" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
+      <ellipse cx="850" cy="815" rx="75" ry="20" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
+      <ellipse cx="670" cy="825" rx="90" ry="22" fill="#000000" opacity="0.28" filter="url(#shadow-blur)" />
+    `;
+  }
+
   const bgSvg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${stop1};stop-opacity:1" />
-          <stop offset="50%" style="stop-color:${stop2};stop-opacity:1" />
-          <stop offset="100%" style="stop-color:${stop3};stop-opacity:1" />
-        </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" style="stop-color:${glowColor};stop-opacity:0.25" />
-          <stop offset="100%" style="stop-color:${glowColor};stop-opacity:0" />
-        </radialGradient>
-        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#000000" flood-opacity="0.3"/>
+        <!-- Фильтр роскошной текстуры штукатурки -->
+        <filter id="plaster-texture" x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
+          <feDiffuseLighting in="noise" lighting-color="#ffffff" surfaceScale="1.2" result="light">
+            <feDistantLight azimuth="45" elevation="65" />
+          </feDiffuseLighting>
+          <feBlend mode="multiply" in="SourceGraphic" in2="light" />
         </filter>
+
+        <!-- Размытие для теней -->
+        <filter id="leaf-blur" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="18" />
+        </filter>
+        <filter id="shadow-blur">
+          <feGaussianBlur stdDeviation="8" />
+        </filter>
+        
+        <!-- Мягкая радиальная тень под подиумом -->
+        <radialGradient id="podium-shadow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#000000;stop-opacity:0.25" />
+          <stop offset="70%" style="stop-color:#000000;stop-opacity:0.08" />
+          <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
+        </radialGradient>
       </defs>
-      <!-- Задний фон -->
-      <rect width="1080" height="1080" fill="url(#bg-grad)" />
-      
-      <!-- Светящаяся аура за продуктами -->
-      <circle cx="540" cy="580" r="450" fill="url(#glow)" />
 
-      <!-- Брендинг сверху -->
-      <text x="540" y="100" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="${brandingColor}" letter-spacing="6" text-anchor="middle">TOJ-VITAMIN</text>
+      <!-- 1. Фоновая матовая стена с штукатуркой -->
+      <rect width="${width}" height="${height}" fill="${bgColor}" filter="url(#plaster-texture)" />
 
-      <!-- Главный заголовок -->
-      <text x="540" y="170" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="44" fill="#ffffff" text-anchor="middle">${escapeHtml(headline)}</text>
-      
-      <!-- Сноска внизу -->
-      <text x="540" y="980" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="#ffffff" opacity="0.4" letter-spacing="1" text-anchor="middle">Подбор сделан искусственным интеллектом • Заказ в Директ</text>
+      <!-- 2. Световой блик от окна (солнечный зайчик) -->
+      <radialGradient id="sunlight" cx="20%" cy="20%" r="80%">
+        <stop offset="0%" style="stop-color:#FFFDF9;stop-opacity:0.5" />
+        <stop offset="60%" style="stop-color:#FFFDF9;stop-opacity:0.15" />
+        <stop offset="100%" style="stop-color:#FFFDF9;stop-opacity:0" />
+      </radialGradient>
+      <rect width="${width}" height="${height}" fill="url(#sunlight)" />
+
+      <!-- 3. Накладываем мягкие растительные или оконные тени -->
+      ${shadowLayer}
+
+      <!-- 4. Рисуем премиальный подиум -->
+      ${podiumLayer}
+
+      <!-- 5. Мягкие контактные тени непосредственно под баночками -->
+      ${productShadows}
+
+      <!-- 6. ЭЛЕГАНТНАЯ ЖУРНАЛЬНАЯ ТИПОГРАФИКА (Асимметричная верстка влево) -->
+      <g transform="translate(80, 0)">
+        <!-- Бренд-заголовок -->
+        <text x="0" y="120" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="${textColorSecondary}" letter-spacing="8">TOJ-VITAMIN</text>
+        
+        <!-- Главный оффер (макс 2-3 слова на строке) -->
+        ${renderHeadline(headline, textColorPrimary, fontTitle)}
+        
+        <!-- Изысканная разделительная линия -->
+        <line x1="0" y1="360" x2="280" y2="360" stroke="${textColorSecondary}" stroke-width="1" opacity="0.25" />
+
+        <!-- Категорийный подзаголовок -->
+        <text x="0" y="395" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="10" fill="${textColorSecondary}" letter-spacing="2">${styleSubtitle}</text>
+        
+        <!-- Поддерживающий текст о синергии -->
+        <text x="0" y="430" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="14" fill="${textColorPrimary}" opacity="0.75">Сбалансированная связка</text>
+        <text x="0" y="453" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="14" fill="${textColorPrimary}" opacity="0.75">натуральных витаминов для</text>
+        <text x="0" y="476" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="14" fill="${textColorPrimary}" opacity="0.75">здоровья и жизненной силы.</text>
+
+        <!-- Элегантный бейдж качества -->
+        <rect x="0" y="515" width="120" height="26" rx="13" fill="${accentColor}" opacity="0.1" />
+        <text x="60" y="531" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="${accentColor}" letter-spacing="1.5" text-anchor="middle">PREMIUM GRADE</text>
+      </g>
     </svg>
   `;
 
-  // 2. Рассчитываем координаты карточек продуктов
-  const cardY = 280;
-  let cards: { x: number; y: number; w: number; h: number; imgSize: number }[] = [];
-
-  const count = products.length;
+  // 3. Рассчитываем координаты и размеры наложения баночек
+  let cards: { w: number; h: number; left: number; top: number }[] = [];
+  const cardY = 820; // Уровень земли подиума
+  
   if (count === 1) {
-    cards = [{ x: 320, y: cardY, w: 440, h: 580, imgSize: 360 }];
+    // 1 баночка по центру
+    const w = 380;
+    cards = [{ w, h: w, left: 680 - w/2, top: 440 }];
   } else if (count === 2) {
+    // 2 баночки с легким перекрытием
     cards = [
-      { x: 130, y: cardY + 30, w: 380, h: 520, imgSize: 300 },
-      { x: 570, y: cardY + 30, w: 380, h: 520, imgSize: 300 }
+      { w: 300, h: 300, left: 410, top: 520 }, // Левая (чуть сзади)
+      { w: 340, h: 340, left: 610, top: 480 }  // Правая (спереди, перекрывает левую)
     ];
   } else {
-    // 3 продукта
+    // 3 баночки в 3D пирамидке
     cards = [
-      { x: 70, y: cardY + 60, w: 290, h: 460, imgSize: 230 },
-      { x: 395, y: cardY + 60, w: 290, h: 460, imgSize: 230 },
-      { x: 720, y: cardY + 60, w: 290, h: 460, imgSize: 230 }
+      { w: 260, h: 260, left: 360, top: 540 }, // Левая сзади
+      { w: 260, h: 260, left: 720, top: 540 }, // Правая сзади
+      { w: 300, h: 300, left: 520, top: 490 }  // Центр спереди (самая большая)
     ];
   }
 
-  // 3. Генерируем SVG с карточками и их названиями
-  let cardsSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
-  cards.forEach((card, index) => {
-    const product = products[index];
-    const textX = card.x + card.w / 2;
-    const textY = card.y + card.h - 45;
-    const shortName = product.name.toUpperCase();
-
-    cardsSvg += `
-      <!-- Белая карточка с тенью -->
-      <rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" rx="32" fill="#ffffff" filter="url(#shadow)" />
-      
-      <!-- Название продукта на карточке -->
-      <text x="${textX}" y="${textY}" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="15" fill="#111827" text-anchor="middle">${escapeHtml(shortName)}</text>
-      <text x="${textX}" y="${textY + 20}" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="11" fill="#6B7280" text-anchor="middle">GREEN LEAF SCIENCES</text>
-    `;
-  });
-  cardsSvg += `</svg>`;
-
-  // 4. Загружаем изображения бутылочек и готовим их к наложению
+  // 4. Скачиваем прозрачные PNG баночки и готовим их к наложению
   const compositions: any[] = [];
-
-  // Добавляем фоновый градиент первым слоем
   let baseImage = sharp(Buffer.from(bgSvg));
 
-  // Накладываем белые карточки
-  baseImage = baseImage.composite([{ input: Buffer.from(cardsSvg), top: 0, left: 0 }]);
-
-  // Готовим наложение самих картинок продуктов
   for (let i = 0; i < products.length; i++) {
     const product = products[i];
     const card = cards[i];
@@ -134,40 +256,61 @@ export async function generateBanner(
     if (!product.image_url) continue;
 
     try {
-      // Скачиваем изображение продукта
+      // Скачиваем прозрачный PNG
       const response = await fetch(product.image_url);
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
       const imageBuffer = Buffer.from(arrayBuffer);
 
-      // Масштабируем картинку продукта под размер карточки
+      // Масштабируем с абсолютно ПРОЗРАЧНЫМ фоном (никаких черных полей!)
       const resizedProductImg = await sharp(imageBuffer)
-        .resize(card.imgSize, card.imgSize, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(card.w, card.h, { 
+          fit: 'contain', 
+          background: { r: 0, g: 0, b: 0, alpha: 0 } 
+        })
         .toBuffer();
-
-      // Центрируем картинку внутри карточки по горизонтали и вертикали
-      const left = Math.round(card.x + (card.w - card.imgSize) / 2);
-      const top = Math.round(card.y + 40);
 
       compositions.push({
         input: resizedProductImg,
-        top,
-        left
+        top: card.top,
+        left: card.left
       });
     } catch (err) {
-      console.error(`Не удалось обработать изображение для ${product.name}:`, err);
+      console.error(`Не удалось наложить изображение для ${product.name}:`, err);
     }
   }
 
-  // Накладываем картинки продуктов поверх карточек
+  // Накладываем картинки продуктов поверх подиума и фона
   if (compositions.length > 0) {
     baseImage = baseImage.composite(compositions);
   }
 
   // Рендерим финальный JPEG
-  const finalBuffer = await baseImage.jpeg({ quality: 90 }).toBuffer();
+  const finalBuffer = await baseImage.jpeg({ quality: 93 }).toBuffer();
   
   return `data:image/jpeg;base64,${finalBuffer.toString('base64')}`;
+}
+
+/**
+ * Вспомогательная функция для красивого переноса строк заголовка
+ */
+function renderHeadline(headline: string, color: string, font: string): string {
+  const words = headline.trim().toUpperCase().split(/\s+/);
+  
+  // Если заголовок короткий (1-2 слова)
+  if (words.length <= 2) {
+    return `<text x="0" y="240" font-family="${font}" font-weight="bold" font-size="52" fill="${color}" letter-spacing="1">${escapeHtml(headline.toUpperCase())}</text>`;
+  }
+
+  // Разбиваем на две логические строки
+  const midIndex = Math.ceil(words.length / 2);
+  const line1 = words.slice(0, midIndex).join(' ');
+  const line2 = words.slice(midIndex).join(' ');
+
+  return `
+    <text x="0" y="240" font-family="${font}" font-weight="bold" font-size="52" fill="${color}" letter-spacing="1">${escapeHtml(line1)}</text>
+    <text x="0" y="300" font-family="${font}" font-weight="bold" font-size="52" fill="${color}" letter-spacing="1">${escapeHtml(line2)}</text>
+  `;
 }
 
 function escapeHtml(text: string): string {

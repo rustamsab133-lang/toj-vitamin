@@ -23,9 +23,40 @@ export async function POST(request: NextRequest) {
     const postContent = await generateInstagramPostContent(painPoint, lang, tone);
     console.log(`🧠 Gemini выбрал связку из ${postContent.selectedProducts.length} продуктов.`);
 
+    // Определяем стиль баннера с автоопределением по продуктам
+    let style = bannerStyle || 'auto';
+    if (style === 'auto' || style === 'dark_purple') {
+      const productNames = postContent.selectedProducts.map(p => p.name.toLowerCase());
+      
+      const isSports = productNames.some(name => 
+        name.includes('креатин') || name.includes('карнитин') || name.includes('протеин') || 
+        name.includes('в-комплекс') || name.includes('тестобустер') || name.includes('аминокислот')
+      );
+      
+      const isDetox = productNames.some(name => 
+        name.includes('хлорофилл') || name.includes('алоэ') || name.includes('цинк') || 
+        name.includes('хитозан') || name.includes('липотропный') || name.includes('селен')
+      );
+      
+      const isBrain = productNames.some(name => 
+        name.includes('ноофит') || name.includes('гинкго') || name.includes('pqq') || 
+        name.includes('лецитин') || name.includes('готу кола')
+      );
+
+      if (isSports) {
+        style = 'matte_slate'; // Бетон и графит
+      } else if (isDetox) {
+        style = 'emerald_mint'; // Мятный спа-дзен
+      } else if (isBrain) {
+        style = 'glass_minimal'; // Стеклянный минимализм
+      } else {
+        style = 'warm_editorial'; // Теплый травертин
+      }
+    }
+
     // 2. Запускаем "дизайнера" - верстку баннера
-    console.log(`🎨 Sharp начинает генерацию баннера с заголовком: "${postContent.headline}"`);
-    const bannerBase64 = await generateBanner(postContent.headline, postContent.selectedProducts, bannerStyle);
+    console.log(`🎨 Sharp начинает генерацию баннера в стиле "${style}" с заголовком: "${postContent.headline}"`);
+    const bannerBase64 = await generateBanner(postContent.headline, postContent.selectedProducts, style);
     console.log('✅ Баннер успешно сгенерирован.');
 
     // 3. Возвращаем результат для превью
@@ -61,7 +92,36 @@ export async function GET(request: NextRequest) {
     console.log(`🤖 GET-Тест Instagram Agent: Начинаю генерацию для боли: "${painPoint}"`);
 
     const postContent = await generateInstagramPostContent(painPoint);
-    const bannerBase64 = await generateBanner(postContent.headline, postContent.selectedProducts);
+    
+    let style = 'auto';
+    const productNames = postContent.selectedProducts.map(p => p.name.toLowerCase());
+    
+    const isSports = productNames.some(name => 
+      name.includes('креатин') || name.includes('карнитин') || name.includes('протеин') || 
+      name.includes('в-комплекс') || name.includes('тестобустер') || name.includes('аминокислот')
+    );
+    
+    const isDetox = productNames.some(name => 
+      name.includes('хлорофилл') || name.includes('алоэ') || name.includes('цинк') || 
+      name.includes('хитозан') || name.includes('липотропный') || name.includes('селен')
+    );
+    
+    const isBrain = productNames.some(name => 
+      name.includes('ноофит') || name.includes('гинкго') || name.includes('pqq') || 
+      name.includes('лецитин') || name.includes('готу кола')
+    );
+
+    if (isSports) {
+      style = 'matte_slate';
+    } else if (isDetox) {
+      style = 'emerald_mint';
+    } else if (isBrain) {
+      style = 'glass_minimal';
+    } else {
+      style = 'warm_editorial';
+    }
+
+    const bannerBase64 = await generateBanner(postContent.headline, postContent.selectedProducts, style);
 
     // Возвращаем HTML-страницу для красивого превью прямо в браузере!
     const htmlPreview = `
