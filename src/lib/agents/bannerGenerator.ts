@@ -15,7 +15,7 @@ export async function generateBanner(
   style = 'warm_editorial'
 ): Promise<string> {
   const width = 1080;
-  const height = 1080;
+  const height = 1920;
 
   // 1. Определение параметров темы в стиле Warm Organic Editorial 2026
   let bgColor = '#F5EFEB';             // Песочный фон по умолчанию
@@ -80,18 +80,19 @@ export async function generateBanner(
   if (isWindowsGrid) {
     // Тень в виде индустриальной оконной рамы для бетонного стиля
     shadowLayer = `
-      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="0.04" transform="rotate(10, 540, 540)">
-        <rect x="100" y="-100" width="80" height="1200" />
-        <rect x="400" y="-100" width="80" height="1200" />
-        <rect x="700" y="-100" width="80" height="1200" />
-        <rect x="-100" y="300" width="1200" height="80" />
-        <rect x="-100" y="600" width="1200" height="80" />
+      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="0.04" transform="rotate(10, 540, 960)">
+        <rect x="100" y="-100" width="80" height="2100" />
+        <rect x="400" y="-100" width="80" height="2100" />
+        <rect x="700" y="-100" width="80" height="2100" />
+        <rect x="-100" y="400" width="2100" height="80" />
+        <rect x="-100" y="800" width="2100" height="80" />
+        <rect x="-100" y="1200" width="2100" height="80" />
       </g>
     `;
   } else if (!isNoShadow) {
-    // Мягкая, эстетичная тень от пальмовых листьев (без толстого ствола по центру)
+    // Мягкая, эстетичная тень от пальмовых листьев (масштабированная под 9:16)
     shadowLayer = `
-      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="${shadowOpacity}">
+      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="${shadowOpacity}" transform="scale(1.5) translate(-100, -100)">
         <path d="M-100,-100 C150,150 450,350 700,600" stroke="${shadowColor}" stroke-width="8" fill="none" opacity="0.5" />
         <path d="M20,30 C120,80 280,200 320,300 C260,260 140,120 20,30 Z" />
         <path d="M80,90 C200,150 350,300 400,420 C330,370 210,210 80,90 Z" />
@@ -101,31 +102,31 @@ export async function generateBanner(
     `;
   }
 
-  // Рендерим подиум (Каменный или Стеклянный)
+  // Рендерим подиум (Каменный или Стеклянный) - центрированный по горизонтали
   let podiumLayer = '';
   if (isGlassPodium) {
     // Сверхсовременный матовый стеклянный круг
     podiumLayer = `
       <!-- Мягкая тень под парящим стеклом -->
-      <ellipse cx="680" cy="855" rx="330" ry="40" fill="url(#podium-shadow)" opacity="0.4" />
+      <ellipse cx="540" cy="1380" rx="360" ry="50" fill="url(#podium-shadow)" opacity="0.4" />
       
       <!-- Боковое свечение матового ребра стекла -->
-      <ellipse cx="680" cy="832" rx="320" ry="50" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3" />
+      <ellipse cx="540" cy="1352" rx="340" ry="60" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3" />
       
       <!-- Тело стеклянной плиты (Glassmorphism) -->
-      <ellipse cx="680" cy="830" rx="320" ry="50" fill="#ffffff" fill-opacity="0.2" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6" />
+      <ellipse cx="540" cy="1350" rx="340" ry="60" fill="#ffffff" fill-opacity="0.2" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6" />
     `;
   } else {
     // Премиальный круглый подиум из камня/песчаника
     podiumLayer = `
       <!-- Мягкая тень под подиумом -->
-      <ellipse cx="680" cy="855" rx="340" ry="45" fill="url(#podium-shadow)" />
+      <ellipse cx="540" cy="1380" rx="370" ry="55" fill="url(#podium-shadow)" />
       
       <!-- Боковая грань подиума (объем) -->
-      <path d="M360,830 A320,50 0 0,0 1000,830 L1000,855 A320,50 0 0,1 360,855 Z" fill="${podiumEdgeColor}" />
+      <path d="M200,1350 A340,60 0 0,0 880,1350 L880,1380 A340,60 0 0,1 200,1380 Z" fill="${podiumEdgeColor}" />
       
       <!-- Верхняя плоскость подиума -->
-      <ellipse cx="680" cy="830" rx="320" ry="50" fill="${podiumTopColor}" stroke="#FAF6F0" stroke-width="1.5" stroke-opacity="0.8" />
+      <ellipse cx="540" cy="1350" rx="340" ry="60" fill="${podiumTopColor}" stroke="#FAF6F0" stroke-width="1.5" stroke-opacity="0.8" />
     `;
   }
 
@@ -133,18 +134,18 @@ export async function generateBanner(
   let productShadows = '';
   const count = products.length;
   if (count === 1) {
-    productShadows = `<ellipse cx="680" cy="820" rx="120" ry="25" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />`;
+    productShadows = `<ellipse cx="540" cy="1340" rx="140" ry="30" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />`;
   } else if (count === 2) {
     productShadows = `
-      <ellipse cx="560" cy="820" rx="90" ry="25" fill="#000000" opacity="0.22" filter="url(#shadow-blur)" />
-      <ellipse cx="780" cy="820" rx="100" ry="25" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />
+      <ellipse cx="410" cy="1335" rx="110" ry="28" fill="#000000" opacity="0.22" filter="url(#shadow-blur)" />
+      <ellipse cx="650" cy="1345" rx="120" ry="30" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />
     `;
   } else {
     // 3 продукта
     productShadows = `
-      <ellipse cx="490" cy="815" rx="75" ry="20" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
-      <ellipse cx="850" cy="815" rx="75" ry="20" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
-      <ellipse cx="670" cy="825" rx="90" ry="22" fill="#000000" opacity="0.28" filter="url(#shadow-blur)" />
+      <ellipse cx="330" cy="1330" rx="90" ry="25" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
+      <ellipse cx="750" cy="1330" rx="90" ry="25" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
+      <ellipse cx="540" cy="1345" rx="110" ry="28" fill="#000000" opacity="0.28" filter="url(#shadow-blur)" />
     `;
   }
 
@@ -180,7 +181,7 @@ export async function generateBanner(
       <rect width="${width}" height="${height}" fill="${bgColor}" filter="url(#plaster-texture)" />
 
       <!-- 2. Световой блик от окна (солнечный зайчик) -->
-      <radialGradient id="sunlight" cx="20%" cy="20%" r="80%">
+      <radialGradient id="sunlight" cx="50%" cy="30%" r="70%">
         <stop offset="0%" style="stop-color:#FFFDF9;stop-opacity:0.5" />
         <stop offset="60%" style="stop-color:#FFFDF9;stop-opacity:0.15" />
         <stop offset="100%" style="stop-color:#FFFDF9;stop-opacity:0" />
@@ -196,52 +197,50 @@ export async function generateBanner(
       <!-- 5. Мягкие контактные тени непосредственно под баночками -->
       ${productShadows}
 
-      <!-- 6. ЭЛЕГАНТНАЯ ЖУРНАЛЬНАЯ ТИПОГРАФИКА (Асимметричная верстка влево) -->
-      <g transform="translate(80, 0)">
+      <!-- 6. ЭЛЕГАНТНАЯ ЖУРНАЛЬНАЯ ТИПОГРАФИКА (Центрированная вертикальная верстка) -->
+      <g>
         <!-- Бренд-заголовок -->
-        <text x="0" y="120" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="${textColorSecondary}" letter-spacing="8">TOJ-VITAMIN</text>
+        <text x="540" y="160" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="${textColorSecondary}" letter-spacing="8" text-anchor="middle">TOJ-VITAMIN</text>
         
         <!-- Главный оффер (макс 2-3 слова на строке) -->
         ${renderHeadline(headline, textColorPrimary, fontTitle)}
         
         <!-- Изысканная разделительная линия -->
-        <line x1="0" y1="360" x2="280" y2="360" stroke="${textColorSecondary}" stroke-width="1" opacity="0.25" />
+        <line x1="440" y1="450" x2="640" y2="450" stroke="${textColorSecondary}" stroke-width="1.5" opacity="0.3" />
 
         <!-- Категорийный подзаголовок -->
-        <text x="0" y="395" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="10" fill="${textColorSecondary}" letter-spacing="2">${styleSubtitle}</text>
+        <text x="540" y="495" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="11" fill="${textColorSecondary}" letter-spacing="3" text-anchor="middle">${styleSubtitle}</text>
         
         <!-- Поддерживающий текст о синергии -->
-        <text x="0" y="430" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="14" fill="${textColorPrimary}" opacity="0.75">Сбалансированная связка</text>
-        <text x="0" y="453" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="14" fill="${textColorPrimary}" opacity="0.75">натуральных витаминов для</text>
-        <text x="0" y="476" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="14" fill="${textColorPrimary}" opacity="0.75">здоровья и жизненной силы.</text>
+        <text x="540" y="540" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="15" fill="${textColorPrimary}" opacity="0.8" text-anchor="middle">Сбалансированная связка натуральных витаминов</text>
+        <text x="540" y="568" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="15" fill="${textColorPrimary}" opacity="0.8" text-anchor="middle">для здоровья и жизненной силы.</text>
 
         <!-- Элегантный бейдж качества -->
-        <rect x="0" y="515" width="120" height="26" rx="13" fill="${accentColor}" opacity="0.1" />
-        <text x="60" y="531" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="${accentColor}" letter-spacing="1.5" text-anchor="middle">PREMIUM GRADE</text>
+        <rect x="470" y="615" width="140" height="30" rx="15" fill="${accentColor}" opacity="0.1" />
+        <text x="540" y="634" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="10" fill="${accentColor}" letter-spacing="2" text-anchor="middle">PREMIUM GRADE</text>
       </g>
     </svg>
   `;
 
-  // 3. Рассчитываем координаты и размеры наложения баночек
+  // 3. Рассчитываем координаты и размеры наложения баночек (центрированные, 9:16)
   let cards: { w: number; h: number; left: number; top: number }[] = [];
-  const cardY = 820; // Уровень земли подиума
   
   if (count === 1) {
     // 1 баночка по центру
-    const w = 380;
-    cards = [{ w, h: w, left: 680 - w/2, top: 440 }];
+    const w = 520;
+    cards = [{ w, h: w, left: 540 - w/2, top: 850 }];
   } else if (count === 2) {
-    // 2 баночки с легким перекрытием
+    // 2 баночки с красивым 3D-перекрытием
     cards = [
-      { w: 300, h: 300, left: 410, top: 520 }, // Левая (чуть сзади)
-      { w: 340, h: 340, left: 610, top: 480 }  // Правая (спереди, перекрывает левую)
+      { w: 420, h: 420, left: 170, top: 920 }, // Левая (чуть сзади)
+      { w: 470, h: 470, left: 425, top: 880 }  // Правая (спереди, перекрывает левую)
     ];
   } else {
     // 3 баночки в 3D пирамидке
     cards = [
-      { w: 260, h: 260, left: 360, top: 540 }, // Левая сзади
-      { w: 260, h: 260, left: 720, top: 540 }, // Правая сзади
-      { w: 300, h: 300, left: 520, top: 490 }  // Центр спереди (самая большая)
+      { w: 360, h: 360, left: 100, top: 980 }, // Левая сзади
+      { w: 360, h: 360, left: 620, top: 980 }, // Правая сзади
+      { w: 440, h: 440, left: 320, top: 920 }  // Центр спереди (самая большая)
     ];
   }
 
@@ -292,14 +291,14 @@ export async function generateBanner(
 }
 
 /**
- * Вспомогательная функция для красивого переноса строк заголовка
+ * Вспомогательная функция для красивого переноса строк заголовка (центрированная для 9:16)
  */
 function renderHeadline(headline: string, color: string, font: string): string {
   const words = headline.trim().toUpperCase().split(/\s+/);
   
   // Если заголовок короткий (1-2 слова)
   if (words.length <= 2) {
-    return `<text x="0" y="240" font-family="${font}" font-weight="bold" font-size="52" fill="${color}" letter-spacing="1">${escapeHtml(headline.toUpperCase())}</text>`;
+    return `<text x="540" y="270" font-family="${font}" font-weight="bold" font-size="56" fill="${color}" letter-spacing="1" text-anchor="middle">${escapeHtml(headline.toUpperCase())}</text>`;
   }
 
   // Разбиваем на две логические строки
@@ -308,8 +307,8 @@ function renderHeadline(headline: string, color: string, font: string): string {
   const line2 = words.slice(midIndex).join(' ');
 
   return `
-    <text x="0" y="240" font-family="${font}" font-weight="bold" font-size="52" fill="${color}" letter-spacing="1">${escapeHtml(line1)}</text>
-    <text x="0" y="300" font-family="${font}" font-weight="bold" font-size="52" fill="${color}" letter-spacing="1">${escapeHtml(line2)}</text>
+    <text x="540" y="270" font-family="${font}" font-weight="bold" font-size="56" fill="${color}" letter-spacing="1" text-anchor="middle">${escapeHtml(line1)}</text>
+    <text x="540" y="340" font-family="${font}" font-weight="bold" font-size="56" fill="${color}" letter-spacing="1" text-anchor="middle">${escapeHtml(line2)}</text>
   `;
 }
 
