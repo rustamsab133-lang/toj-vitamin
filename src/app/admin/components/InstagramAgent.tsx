@@ -41,7 +41,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
   const [painPoint, setPainPoint] = useState('');
   const [selectedLang, setSelectedLang] = useState('ru');
   const [selectedTone, setSelectedTone] = useState('marketing');
-  const [selectedStyle, setSelectedStyle] = useState('dark_purple');
+  const [selectedStyle, setSelectedStyle] = useState('auto');
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
   const [agentChatLang, setAgentChatLang] = useState('auto');
   
   const [autoPostSchedule, setAutoPostSchedule] = useState('off');
-  const [autoBannerStyle, setAutoBannerStyle] = useState('dark_purple');
+  const [autoBannerStyle, setAutoBannerStyle] = useState('auto');
   const [autoPostTopics, setAutoPostTopics] = useState<string[]>([]);
   const [newTopic, setNewTopic] = useState('');
 
@@ -111,11 +111,11 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
 
       setAgentActive(getSetting('instagram_agent_active', 'true') === 'true');
       setAgentChatLang(getSetting('instagram_agent_chat_lang', 'auto'));
-            setAutoPostSchedule(getSetting('instagram_auto_post_schedule', 'off'));
-      setAutoBannerStyle(getSetting('instagram_auto_banner_style', 'dark_purple'));
+      setAutoPostSchedule(getSetting('instagram_autopost_schedule', 'off'));
+      setAutoBannerStyle(getSetting('instagram_auto_banner_style', 'auto'));
       
       try {
-        const topicsJson = getSetting('instagram_auto_post_topics', '[]');
+        const topicsJson = getSetting('instagram_autopost_topics', '[]');
         setAutoPostTopics(JSON.parse(topicsJson));
       } catch (e) {
         setAutoPostTopics(['усталость и апатия', 'выпадение волос', 'здоровье суставов']);
@@ -467,10 +467,11 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
                     onChange={(e) => setSelectedStyle(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-fuchsia-500"
                   >
-                    <option value="dark_purple">Темный Аметист (Dark Purple)</option>
-                    <option value="electric_blue">Электрический Синий (Blue)</option>
-                    <option value="emerald_mint">Изумрудная Мята (Emerald Green)</option>
-                    <option value="warm_sunset">Теплый Закат (Warm Orange)</option>
+                    <option value="auto">🤖 Автоопределение ИИ (Smart)</option>
+                    <option value="warm_editorial">🏛️ Теплый Травертин (Warm Editorial)</option>
+                    <option value="emerald_mint">🌿 Мятный Спа-Дзен (Emerald Mint)</option>
+                    <option value="matte_slate">🛡️ Графит и Бетон (Matte Slate)</option>
+                    <option value="glass_minimal">💎 Стеклянный Минимализм (Glass Minimal)</option>
                   </select>
                 </div>
               </div>
@@ -595,10 +596,11 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
                   onChange={(e) => setAutoBannerStyle(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-fuchsia-500"
                 >
-                  <option value="dark_purple">Темный Аметист (Dark Purple)</option>
-                  <option value="electric_blue">Электрический Синий (Blue)</option>
-                  <option value="emerald_mint">Изумрудная Мята (Green)</option>
-                  <option value="warm_sunset">Теплый Закат (Orange)</option>
+                  <option value="auto">🤖 Автоопределение ИИ (Smart)</option>
+                  <option value="warm_editorial">🏛️ Теплый Травертин (Warm Editorial)</option>
+                  <option value="emerald_mint">🌿 Мятный Спа-Дзен (Emerald Mint)</option>
+                  <option value="matte_slate">🛡️ Графит и Бетон (Matte Slate)</option>
+                  <option value="glass_minimal">💎 Стеклянный Минимализм (Glass Minimal)</option>
                 </select>
               </div>
             </div>
