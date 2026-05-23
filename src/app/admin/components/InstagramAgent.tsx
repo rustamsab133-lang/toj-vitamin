@@ -505,7 +505,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                    <ImageIcon size={18} className="text-slate-400" /> Готовый баннер (1080x1080)
+                    <ImageIcon size={18} className="text-slate-400" /> Готовый баннер (1080x1920)
                   </h3>
                   <a
                     href={result.bannerUrl}
@@ -516,7 +516,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
                   </a>
                 </div>
                 
-                <div className="bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative aspect-square">
+                <div className="bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative aspect-[9/16] max-h-[700px] flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={result.bannerUrl} alt="Generated Banner" className="w-full h-full object-cover" />
                 </div>
