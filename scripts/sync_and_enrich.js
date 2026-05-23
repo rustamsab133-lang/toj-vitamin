@@ -208,11 +208,10 @@ async function run() {
   console.log(`📦 Found ${currentDbProducts.length} products currently in Supabase.`);
 
   // 5. Determine products to DELETE (obsolete products)
-  const targetNormalizedKeys = new Set(targetProducts.map(p => getNormalizedKey(p.name)));
+  const targetIds = new Set(targetProducts.map(p => String(p.id)));
   
   const obsoleteProducts = currentDbProducts.filter(dbProd => {
-    const normName = getNormalizedKey(dbProd.name);
-    return !targetNormalizedKeys.has(normName);
+    return !targetIds.has(String(dbProd.id));
   });
 
   console.log(`⚠️ Identified ${obsoleteProducts.length} obsolete products to delete.`);
@@ -266,28 +265,93 @@ async function run() {
   }
 
   for (const target of targetProducts) {
-    // Check if we can match an existing product in the DB to keep its metadata (like image_url, description, price)
-    const existing = currentDbProducts.find(dbProd => getNormalizedKey(dbProd.name) === getNormalizedKey(target.name));
+    // Check if we can match an existing product in the DB by exact ID to preserve metadata
+    const existing = currentDbProducts.find(dbProd => String(dbProd.id) === String(target.id));
     
-    // Find matching product in backup JSON for fallback image
+    // Find matching product in backup JSON by ID for fallback image
     let backupUrl = null;
-    const targetNorm = getNormalizedKey(target.name);
-    const matchedBackup = backupProducts.find(bp => {
-      const bpNorm = getNormalizedKey(bp.name);
-      return bpNorm === targetNorm || bpNorm.includes(targetNorm) || targetNorm.includes(bpNorm);
-    });
+    const matchedBackup = backupProducts.find(bp => String(bp.id) === String(target.id));
     if (matchedBackup) {
       backupUrl = matchedBackup.image_url;
     }
 
+    // Stable image recovery logic: preserve manual fixes, restore correct backup images for others
+    let finalImageUrl = null;
+    const recentlyFixedIds = ['16', '17', '18', '20', '97', '98'];
+    
+    if (recentlyFixedIds.includes(String(target.id))) {
+      finalImageUrl = (existing && existing.image_url) ? existing.image_url : (backupUrl || null);
+    } else {
+      finalImageUrl = backupUrl || (existing ? existing.image_url : null);
+    }
+
+    let price = existing && existing.price > 0 ? existing.price : 150;
+    
+    // Override default prices if they are at the default 150 to make them highly logical and distinct based on size/form
+    if (price === 150) {
+      const idStr = String(target.id);
+      
+      // Vitamin C
+      if (idStr === '21') price = 175; // Детские пастилки №90
+      else if (idStr === '22') price = 145; // Капсулы №60
+      else if (idStr === '23') price = 115; // Шипучие апельсин №20
+      else if (idStr === '24') price = 120; // Шипучие апельсин №20
+      
+      // Vitamin D3 Kids
+      else if (idStr === '14') price = 110; // Детские D3 №30
+      else if (idStr === '15') price = 210; // Детские D3 №90
+      
+      // Vitamin D3 2000ME
+      else if (idStr === '17') price = 190; // D3 2000ME №120
+      else if (idStr === '18') price = 130; // D3 2000ME №60
+      
+      // Hyaluronic Acid
+      else if (idStr === '29') price = 120; // Гиалуроновая кислота №30
+      else if (idStr === '30') price = 185; // Гиалуроновая кислота №60
+      
+      // Marine Collagen
+      else if (idStr === '51') price = 260; // Коллаген морской №180
+      else if (idStr === '52') price = 165; // Коллаген морской №90
+      
+      // Creatines
+      else if (idStr === '57') price = 240; // Креатин Малина 300г
+      else if (idStr === '58') price = 240; // Креатин Малина 300г
+      else if (idStr === '59') price = 240; // Креатин Цитрус 300г
+      else if (idStr === '60') price = 240; // Креатин Цитрус 300г
+      else if (idStr === '61') price = 150; // Креатин Экзотик 150г
+      else if (idStr === '62') price = 150; // Креатин Экзотик 150г
+      
+      // Magnesium Citrate + B6
+      else if (idStr === '67') price = 225; // Магний Цитрат + В6 №180
+      else if (idStr === '68') price = 140; // Магний Цитрат + В6 №90
+      
+      // Multivitamins 12+9
+      else if (idStr === '72') price = 230; // Мультивитамины 12+9 №120
+      else if (idStr === '73') price = 140; // Мультивитамины 12+9 №60
+      
+      // Omega-3 35%
+      else if (idStr === '80') price = 195; // Омега-3 35% №120
+      else if (idStr === '81') price = 125; // Омега-3 35% №60
+      
+      // Omega-3 Vitamin D3
+      else if (idStr === '83') price = 210; // Омега-3 D3 №120
+      else if (idStr === '84') price = 135; // Омега-3 D3 №60
+      
+      // Proteins (Premium 900g powders)
+      else if (idStr === '85') price = 320; // Протеин Ваниль 900г
+      else if (idStr === '86') price = 320; // Протеин Клубника 900г
+      else if (idStr === '87') price = 320; // Протеин Сливочный банан 900г
+      else if (idStr === '88') price = 320; // Протеин Шоколад 900г
+    }
+
     const productData = {
-      id: existing ? existing.id : target.id, // Keep existing ID to preserve foreign keys
-      name: target.name,
+      id: target.id, // Explicitly use target ID to prevent shared-name groups from overwriting a single ID
+      name: target.full_name, // Fix: Use full descriptive name as display name to avoid identical name collisions
       full_name: target.full_name,
       description: existing ? (existing.description || "Премиальный продукт бренда TOJ-VITAMIN для укрепления здоровья.") : "Премиальный продукт бренда TOJ-VITAMIN для укрепления здоровья.",
-      price: existing && existing.price > 0 ? existing.price : 150, // Keep price or set default 150 smn
+      price: price,
       icon_type: existing ? existing.icon_type : 'pill',
-      image_url: existing && existing.image_url ? existing.image_url : (backupUrl || null)
+      image_url: finalImageUrl
     };
 
     const { error: upsertErr } = await supabase

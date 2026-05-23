@@ -180,9 +180,24 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
                       {lang === 'ru' ? 'Загрузка данных...' : 'Дар ҳоли боргирӣ...'}
                     </p>
                   </div>
+                ) : search.trim().length < 2 ? (
+                  /* PROMPT FOR MORE CHARACTERS (Prevents rendering 100+ animated items on mobile and crashing browser memory) */
+                  <div className="py-20 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 bg-[#1D1D1F]/5 rounded-full flex items-center justify-center mb-6">
+                      <Search size={32} className="text-[#1D1D1F]/30" />
+                    </div>
+                    <h3 className="text-[20px] md:text-[24px] font-bold text-[#1D1D1F] mb-2 font-outfit">
+                      {lang === 'ru' ? 'Введите еще символы' : 'Рамзҳои бештарро ворид кунед'}
+                    </h3>
+                    <p className="text-[#1D1D1F]/40 max-w-sm">
+                      {lang === 'ru' 
+                        ? 'Пожалуйста, введите не менее 2 символов для точного поиска по каталогу.' 
+                        : 'Лутфан, на камтар аз 2 аломатро барои ҷустуҷӯи дақиқ ворид кунед.'}
+                    </p>
+                  </div>
                 ) : filteredProducts.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                    {filteredProducts.map((product) => (
+                    {filteredProducts.slice(0, 16).map((product) => (
                       <motion.div
                         key={product.id}
                         initial={{ opacity: 0, y: 20 }}

@@ -71,6 +71,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 </span>
               )}
               <button
+                type="button"
                 onClick={handleCloseSearch}
                 className="shrink-0 w-9 h-9 rounded-full bg-black/[0.06] hover:bg-black hover:text-white text-[#1D1D1F] flex items-center justify-center transition-all active:scale-90"
               >

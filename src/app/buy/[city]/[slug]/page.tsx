@@ -2,6 +2,7 @@ import React from 'react';
 import { supabase } from '@/lib/supabase';
 import { ProductCatalog } from '@/components/ProductCatalog';
 import { Header } from '@/components/Header';
+import { SearchOverlay } from '@/components/SearchOverlay';
 import { MainBackground } from '@/components/MainBackground';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -103,6 +104,7 @@ export default async function PSEOPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <MainBackground />
       <Header lang="ru" settings={{ brand_name: "TOJ-VITAMIN", whatsapp_phone: "992176660707" }} isImmersiveMode={false} />
+      <SearchOverlay lang="ru" whatsappNumber="992176660707" />
       
       <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto">
         {/* Breadcrumbs */}
