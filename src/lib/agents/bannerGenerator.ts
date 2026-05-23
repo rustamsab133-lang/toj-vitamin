@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 
 interface ProductImage {
+  id?: string;
   name: string;
   image_url: string;
 }
@@ -8,11 +9,14 @@ interface ProductImage {
 /**
  * Премиальный программный генератор баннеров в стиле Warm Organic Editorial 2026.
  * Поддерживает 4 роскошные современные темы, перекрывающиеся 3D композиции продуктов и реалистичные тени.
+ * Также поддерживает динамическую схему дизайна от ИИ-агента и внешние фотореалистичные фоны.
  */
 export async function generateBanner(
   headline: string, 
   products: ProductImage[],
-  style = 'warm_editorial'
+  style = 'warm_editorial',
+  designConfig?: any,
+  backgroundImageBuffer?: Buffer
 ): Promise<string> {
   const width = 1080;
   const height = 1920;
@@ -77,6 +81,38 @@ export async function generateBanner(
     isNoShadow = true;                 // Без теней листьев, чистая эстетика
     shadowOpacity = 0;
   }
+
+  // Применяем динамические переопределения от ИИ (если переданы)
+  if (designConfig) {
+    if (designConfig.bgColor) bgColor = designConfig.bgColor;
+    if (designConfig.textColorPrimary) textColorPrimary = designConfig.textColorPrimary;
+    if (designConfig.textColorSecondary) textColorSecondary = designConfig.textColorSecondary;
+    if (designConfig.accentColor) accentColor = designConfig.accentColor;
+    if (designConfig.fontTitle) fontTitle = designConfig.fontTitle;
+    if (designConfig.fontBody) fontBody = designConfig.fontBody;
+    if (designConfig.styleSubtitle) styleSubtitle = designConfig.styleSubtitle;
+    if (designConfig.shadowOpacity !== undefined) shadowOpacity = designConfig.shadowOpacity;
+    
+    if (designConfig.shadowType === 'window') {
+      isWindowsGrid = true;
+      isNoShadow = false;
+    } else if (designConfig.shadowType === 'none') {
+      isNoShadow = true;
+    } else if (designConfig.shadowType === 'palm') {
+      isWindowsGrid = false;
+      isNoShadow = false;
+    }
+
+    if (designConfig.podiumType === 'glass') {
+      isGlassPodium = true;
+    } else if (designConfig.podiumType === 'none') {
+      // Игнорируем подиум
+    } else if (designConfig.podiumType === 'stone') {
+      isGlassPodium = false;
+    }
+  }
+
+  const hasBgImage = !!backgroundImageBuffer;
 
   // 2. Создаем фоновую SVG композицию
   
@@ -183,8 +219,8 @@ export async function generateBanner(
         </radialGradient>
       </defs>
 
-      <!-- 1. Фоновая матовая стена с штукатуркой (текстуру не накладываем на чистый темный режим для идеального глянца) -->
-      <rect width="${width}" height="${height}" fill="${bgColor}" ${style === 'glass_minimal' ? '' : 'filter="url(#plaster-texture)"'} />
+      <!-- 1. Фоновая матовая стена с штукатуркой (только если нет сгенерированного ИИ фона) -->
+      ${hasBgImage ? '' : `<rect width="${width}" height="${height}" fill="${bgColor}" ${style === 'glass_minimal' ? '' : 'filter="url(#plaster-texture)"'} />`}
 
       <!-- 2. Световой блик от окна (солнечный зайчик) -->
       <radialGradient id="sunlight" cx="50%" cy="30%" r="70%">
@@ -197,8 +233,8 @@ export async function generateBanner(
       <!-- 3. Накладываем мягкие растительные или оконные тени -->
       ${shadowLayer}
 
-      <!-- 4. Рисуем премиальный подиум -->
-      ${podiumLayer}
+      <!-- 4. Рисуем премиальный подиум (если не скрыт ИИ) -->
+      ${designConfig?.podiumType === 'none' ? '' : podiumLayer}
 
       <!-- 5. Мягкие контактные тени непосредственно под баночками -->
       ${productShadows}
@@ -229,36 +265,55 @@ export async function generateBanner(
   `;
 
   // 3. Рассчитываем координаты и размеры наложения баночек (центрированные, 9:16)
-  let cards: { w: number; h: number; left: number; top: number }[] = [];
+  let cards: { w: number; h: number; left: number; top: number; rotation?: number; layerIndex?: number; id?: string }[] = [];
   
-  if (count === 1) {
-    // 1 баночка по центру
-    const w = 520;
-    cards = [{ w, h: w, left: 540 - w/2, top: 850 }];
-  } else if (count === 2) {
-    // 2 баночки с красивым 3D-перекрытием
-    cards = [
-      { w: 420, h: 420, left: 170, top: 920 }, // Левая (чуть сзади)
-      { w: 470, h: 470, left: 425, top: 880 }  // Правая (спереди, перекрывает левую)
-    ];
+  if (designConfig && designConfig.productArrangements && Array.isArray(designConfig.productArrangements) && designConfig.productArrangements.length > 0) {
+    // Использовать точные координаты от арт-директора ИИ!
+    cards = designConfig.productArrangements.map((arr: any) => ({
+      id: String(arr.id),
+      w: arr.width || 420,
+      h: arr.height || 420,
+      left: arr.x || 310,
+      top: arr.y || 920,
+      rotation: arr.rotation || 0,
+      layerIndex: arr.layerIndex || 0
+    }));
   } else {
-    // 3 баночки в 3D пирамидке
-    cards = [
-      { w: 360, h: 360, left: 100, top: 980 }, // Левая сзади
-      { w: 360, h: 360, left: 620, top: 980 }, // Правая сзади
-      { w: 440, h: 440, left: 320, top: 920 }  // Центр спереди (самая большая)
-    ];
+    // Дефолтные 3D-пирамидки
+    if (count === 1) {
+      const w = 520;
+      cards = [{ w, h: w, left: 540 - w/2, top: 850, rotation: 0, layerIndex: 0 }];
+    } else if (count === 2) {
+      cards = [
+        { w: 420, h: 420, left: 170, top: 920, rotation: -5, layerIndex: 0 },
+        { w: 470, h: 470, left: 425, top: 880, rotation: 5, layerIndex: 1 }
+      ];
+    } else {
+      cards = [
+        { w: 360, h: 360, left: 100, top: 980, rotation: -8, layerIndex: 0 },
+        { w: 360, h: 360, left: 620, top: 980, rotation: 8, layerIndex: 1 },
+        { w: 440, h: 440, left: 320, top: 920, rotation: 0, layerIndex: 2 }
+      ];
+    }
   }
 
   // 4. Скачиваем прозрачные PNG баночки и готовим их к наложению
   const compositions: any[] = [];
-  let baseImage = sharp(Buffer.from(bgSvg));
+  let baseImage = hasBgImage ? sharp(backgroundImageBuffer) : sharp(Buffer.from(bgSvg));
 
   for (let i = 0; i < products.length; i++) {
     const product = products[i];
-    const card = cards[i];
+    
+    // Ищем соответствующий card по id или индексу
+    let card = cards[i];
+    if (designConfig && designConfig.productArrangements) {
+      const matchedCard = cards.find(c => c.id === String(product.id));
+      if (matchedCard) {
+        card = matchedCard;
+      }
+    }
 
-    if (!product.image_url) continue;
+    if (!product.image_url || !card) continue;
 
     try {
       // Скачиваем прозрачный PNG
@@ -267,8 +322,16 @@ export async function generateBanner(
       const arrayBuffer = await response.arrayBuffer();
       const imageBuffer = Buffer.from(arrayBuffer);
 
+      // Применяем 3D-наклон (вращение) к баночке перед ее масштабированием
+      let productSharp = sharp(imageBuffer);
+      if (card.rotation) {
+        productSharp = productSharp.rotate(card.rotation, {
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        });
+      }
+
       // Масштабируем с абсолютно ПРОЗРАЧНЫМ фоном (никаких черных полей!)
-      const resizedProductImg = await sharp(imageBuffer)
+      const resizedProductImg = await productSharp
         .resize(card.w, card.h, { 
           fit: 'contain', 
           background: { r: 0, g: 0, b: 0, alpha: 0 } 
@@ -278,16 +341,41 @@ export async function generateBanner(
       compositions.push({
         input: resizedProductImg,
         top: card.top,
-        left: card.left
+        left: card.left,
+        layerIndex: card.layerIndex || 0
       });
     } catch (err) {
       console.error(`Не удалось наложить изображение для ${product.name}:`, err);
     }
   }
 
-  // Накладываем картинки продуктов поверх подиума и фона
-  if (compositions.length > 0) {
-    baseImage = baseImage.composite(compositions);
+  // Сортируем композиции по layerIndex (чтобы баночки накладывались друг на друга в правильном 3D-порядке)
+  compositions.sort((a, b) => a.layerIndex - b.layerIndex);
+
+  // Убираем свойство layerIndex перед передачей в sharp.composite
+  const cleanCompositions = compositions.map(c => ({
+    input: c.input,
+    top: c.top,
+    left: c.left
+  }));
+
+  // Если мы используем внешнюю ИИ картинку в качестве основы, то сначала накладываем SVG-слой с текстами и подиумом, а затем поверх - баночки
+  if (hasBgImage) {
+    const svgOverlayBuffer = Buffer.from(bgSvg);
+    baseImage = baseImage.composite([{
+      input: svgOverlayBuffer,
+      top: 0,
+      left: 0
+    }]);
+
+    if (cleanCompositions.length > 0) {
+      baseImage = baseImage.composite(cleanCompositions);
+    }
+  } else {
+    // Обычная векторная сборка: баночки накладываются поверх готового SVG
+    if (cleanCompositions.length > 0) {
+      baseImage = baseImage.composite(cleanCompositions);
+    }
   }
 
   // Рендерим финальный JPEG

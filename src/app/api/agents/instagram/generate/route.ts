@@ -54,9 +54,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Запускаем "дизайнера" - верстку баннера
+    // 2. Запускаем "дизайнера" - верстку баннера с ИИ-фоном и кастомным дизайном
+    let backgroundImageBuffer: Buffer | undefined = undefined;
+    const bgPrompt = (postContent as any).backgroundPrompt;
+    const designConfig = (postContent as any).designConfig;
+
+    if (bgPrompt) {
+      try {
+        const seed = Math.floor(Math.random() * 1000000);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(bgPrompt)}?width=1080&height=1920&nologo=true&seed=${seed}`;
+        console.log(`🌌 ИИ-Дизайнер: Запрашиваю генерацию фона по промпту: "${bgPrompt}"`);
+        
+        const imgResponse = await fetch(imageUrl);
+        if (imgResponse.ok) {
+          const arrayBuffer = await imgResponse.arrayBuffer();
+          backgroundImageBuffer = Buffer.from(arrayBuffer);
+          console.log('✅ ИИ-Дизайнер: Фотореалистичный фон успешно загружен.');
+        } else {
+          console.warn(`⚠️ ИИ-Дизайнер: Ошибка загрузки фона (код ${imgResponse.status}), используем стандартный цвет.`);
+        }
+      } catch (bgErr) {
+        console.error('❌ ИИ-Дизайнер: Ошибка генерации фона:', bgErr);
+      }
+    }
+
     console.log(`🎨 Sharp начинает генерацию баннера в стиле "${style}" с заголовком: "${postContent.headline}"`);
-    const bannerBase64 = await generateBanner(postContent.headline, postContent.selectedProducts, style);
+    const bannerBase64 = await generateBanner(
+      postContent.headline, 
+      postContent.selectedProducts, 
+      style, 
+      designConfig, 
+      backgroundImageBuffer
+    );
     console.log('✅ Баннер успешно сгенерирован.');
 
     // 3. Возвращаем результат для превью

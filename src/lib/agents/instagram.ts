@@ -15,6 +15,28 @@ interface InstagramPostResponse {
   headline: string;
   caption: string;
   reasoning: string;
+  backgroundPrompt?: string;
+  designConfig?: {
+    bgColor?: string;
+    textColorPrimary?: string;
+    textColorSecondary?: string;
+    accentColor?: string;
+    fontTitle?: string;
+    fontBody?: string;
+    styleSubtitle?: string;
+    shadowType?: 'palm' | 'window' | 'none';
+    shadowOpacity?: number;
+    podiumType?: 'stone' | 'glass' | 'none';
+    productArrangements?: {
+      id: string;
+      width: number;
+      height: number;
+      x: number;
+      y: number;
+      rotation: number;
+      layerIndex: number;
+    }[];
+  };
 }
 
 /**
@@ -95,8 +117,14 @@ export async function generateInstagramPostContent(
 
   // 4. Готовим промпт для Gemini
   const prompt = `
-Ты — опытный ИИ-маркетолог и эксперт по нутрициологии бренда "TOJ-VITAMIN" (Точвитамин) в Таджикистане.
-Твоя задача — проанализировать указанную "боль" или проблему человека, подобрать из каталога продуктов наиболее эффективную синергетическую связку (от 1 до 3 продуктов, которые идеально дополняют друг друга) и написать вовлекающий пост для Instagram.
+Ты — опытный ИИ-маркетолог и эксперт по нутрициологии бренда "TOJ-VITAMIN" (Точвитамин) в Таджикистане, а также ГЕНИАЛЬНЫЙ ЦИФРОВОЙ АРТ-ДИРЕКТОР.
+Твоя задача — проанализировать указанную "боль" или проблему человека, подобрать из каталога продуктов наиболее эффективную синергетическую связку (от 1 до 3 продуктов, которые идеально дополняют друг друга), написать вовлекающий пост для Instagram и спроектировать ПОЛНЫЙ ДИЗАЙН-КОНФИГ ДЛЯ БАННЕРА 1080x1920 (9:16).
+
+Мы используем наш фирменный Гибридный ИИ-Конвейер Дизайна (Hybrid AI Design Engine) уровня мая 2026 года!
+Это дает тебе ПОЛНУЮ СВОБОДУ ТВОРЧЕСТВА:
+1. Ты можешь сгенерировать детальное описание фона (backgroundPrompt) на английском языке для ИИ-диффузии (FLUX.1). Будь креативным и пиши кинематографичные промпты для дорогой фотосессии! Например: "A luxury minimalist spa vanity table, warm travertine textures, beautiful shadows of palm leaves cast by morning sun, volumetric lighting, photorealistic, 8k" или "Breathtaking peak of Pamir mountains covered in white snow, cold ice textures, bright dramatic sun ray, epic, high-end photography".
+2. Ты можешь настраивать общую цветовую палитру (bgColor, textColorPrimary, textColorSecondary, accentColor) и шрифты, чтобы они идеально подходили под настроение поста и цвета продуктов!
+3. Ты можешь управлять размером, позицией по осям X и Y, углом наклона (rotation от -20 до +20 градусов!) и слоем наложения (layerIndex) для КАЖДОЙ баночки на баннере. Создавай объемные, динамичные 3D композиции, где баночки наклоняются и перекрывают друг друга в пространстве!
 
 Каталог продуктов:
 ${JSON.stringify(productsCatalog, null, 2)}
@@ -108,23 +136,41 @@ ${JSON.stringify(productsCatalog, null, 2)}
 1. Выбери от 1 до 3 продуктов, которые вместе решают эту боль лучше всего. Обязательно бери продукты с корректным "image_url".
 2. Напиши пост для Instagram, следуя формуле AIDA (Внимание, Интерес, Желание, Действие).
 3. Добавь 5-8 релевантных хештегов (включая брендовые: #tojvitamin #витаминытаджикистан).
+4. Разработай шедевральный дизайн-конфиг! Не ленись рассчитывать координаты X (от 100 до 850) и Y (от 800 до 1400) и масштабы баночек так, чтобы они стояли гармонично и устойчиво.
 
 Требования к языку и тональности:${langInstruction}${toneInstruction}
 
 Формат ответа:
-Верни строго валидный JSON-объект с четырьмя полями. Не пиши никаких дополнительных пояснений или markdown-разметки (никаких \`\`\`json). Ответ должен содержать только JSON-объект следующей структуры:
+Верни строго валидный JSON-объект согласно JSON Schema. Никаких дополнительных комментариев. Никакой разметки \`\`\`json. Только JSON-объект следующей структуры:
 {
-  "selectedProducts": [
-    {
-      "id": "ID продукта из базы",
-      "name": "Название продукта",
-      "image_url": "URL изображения продукта",
-      "synergy_reason": "Краткое объяснение на 1 предложение, почему этот продукт выбран в связку"
-    }
-  ],
+  "selectedProducts": [...],
   "headline": "Заголовок для баннера",
-  "caption": "Полный текст поста для Instagram с эмодзи и хештегами",
-  "reasoning": "Пояснение для нас (админов), почему ты выбрал эту связку"
+  "caption": "Текст поста",
+  "reasoning": "Пояснение для админов",
+  "backgroundPrompt": "A highly detailed backdrop prompt in English...",
+  "designConfig": {
+    "bgColor": "#HexColor",
+    "textColorPrimary": "#HexColor",
+    "textColorSecondary": "#HexColor",
+    "accentColor": "#HexColor",
+    "fontTitle": "Georgia, serif OR system-ui, -apple-system, sans-serif",
+    "fontBody": "Georgia, serif OR system-ui, -apple-system, sans-serif",
+    "styleSubtitle": "СЛОГАН НА БАННЕРЕ",
+    "shadowType": "palm OR window OR none",
+    "shadowOpacity": 0.15,
+    "podiumType": "stone OR glass OR none",
+    "productArrangements": [
+      {
+        "id": "ID продукта из базы",
+        "width": 420,
+        "height": 420,
+        "x": 310,
+        "y": 920,
+        "rotation": -8,
+        "layerIndex": 0
+      }
+    ]
+  }
 }
 `;
 
@@ -139,23 +185,56 @@ ${JSON.stringify(productsCatalog, null, 2)}
           properties: {
             selectedProducts: {
               type: SchemaType.ARRAY,
-              description: 'От 1 до 3 продуктов, которые идеально дополняют друг друга для решения указанной проблемы. Выбирай только из предоставленного каталога!',
+              description: 'От 1 до 3 продуктов из каталога.',
               items: {
                 type: SchemaType.OBJECT,
                 properties: {
-                  id: { type: SchemaType.STRING, description: 'ID продукта (строка) из каталога.' },
-                  name: { type: SchemaType.STRING, description: 'Точное название продукта из каталога.' },
-                  image_url: { type: SchemaType.STRING, description: 'URL изображения продукта из каталога.' },
-                  synergy_reason: { type: SchemaType.STRING, description: 'Объяснение на 1-2 предложения на выбранном языке, почему продукт выбран.' }
+                  id: { type: SchemaType.STRING },
+                  name: { type: SchemaType.STRING },
+                  image_url: { type: SchemaType.STRING },
+                  synergy_reason: { type: SchemaType.STRING }
                 },
                 required: ['id', 'name', 'image_url', 'synergy_reason']
               }
             },
-            headline: { type: SchemaType.STRING, description: 'Заголовок для баннера (СТРОГО МАКСИМУМ 4-5 СЛОВ, емкий и сильный).' },
-            caption: { type: SchemaType.STRING, description: 'Полный текст поста для Instagram с эмодзи и хештегами согласно тональности и языку.' },
-            reasoning: { type: SchemaType.STRING, description: 'Пояснение для администратора, почему выбрана эта связка.' }
+            headline: { type: SchemaType.STRING, description: 'Заголовок баннера (СТРОГО МАКСИМУМ 4-5 СЛОВ).' },
+            caption: { type: SchemaType.STRING },
+            reasoning: { type: SchemaType.STRING },
+            backgroundPrompt: { type: SchemaType.STRING, description: 'Промпт на английском языке для генерации ИИ-фона на основе темы поста.' },
+            designConfig: {
+              type: SchemaType.OBJECT,
+              properties: {
+                bgColor: { type: SchemaType.STRING },
+                textColorPrimary: { type: SchemaType.STRING },
+                textColorSecondary: { type: SchemaType.STRING },
+                accentColor: { type: SchemaType.STRING },
+                fontTitle: { type: SchemaType.STRING, description: 'Шрифт заголовка: Georgia, serif или system-ui, -apple-system, sans-serif' },
+                fontBody: { type: SchemaType.STRING, description: 'Шрифт текста: Georgia, serif или system-ui, -apple-system, sans-serif' },
+                styleSubtitle: { type: SchemaType.STRING },
+                shadowType: { type: SchemaType.STRING, description: 'Тип тени: palm, window или none' },
+                shadowOpacity: { type: SchemaType.NUMBER },
+                podiumType: { type: SchemaType.STRING, description: 'Тип подиума: stone, glass или none' },
+                productArrangements: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      id: { type: SchemaType.STRING },
+                      width: { type: SchemaType.NUMBER },
+                      height: { type: SchemaType.NUMBER },
+                      x: { type: SchemaType.NUMBER },
+                      y: { type: SchemaType.NUMBER },
+                      rotation: { type: SchemaType.NUMBER, description: 'Угол поворота в градусах от -20 до 20.' },
+                      layerIndex: { type: SchemaType.NUMBER, description: 'Слой отрисовки от 0 до 3.' }
+                    },
+                    required: ['id', 'width', 'height', 'x', 'y', 'rotation', 'layerIndex']
+                  }
+                }
+              },
+              required: ['bgColor', 'textColorPrimary', 'textColorSecondary', 'accentColor', 'fontTitle', 'fontBody', 'styleSubtitle', 'shadowType', 'shadowOpacity', 'podiumType', 'productArrangements']
+            }
           },
-          required: ['selectedProducts', 'headline', 'caption', 'reasoning']
+          required: ['selectedProducts', 'headline', 'caption', 'reasoning', 'backgroundPrompt', 'designConfig']
         }
       }
     });
