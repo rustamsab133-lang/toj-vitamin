@@ -359,18 +359,18 @@ export async function generateBanner(
     left: c.left
   }));
 
-  // Если мы используем внешнюю ИИ картинку в качестве основы, то сначала накладываем SVG-слой с текстами и подиумом, а затем поверх - баночки
+  // Если мы используем внешнюю ИИ картинку в качестве основы, то накладываем SVG-слой с текстами/подиумом и баночки в ЕДИНОМ вызове composite() (поскольку Sharp не поддерживает множественные вызовы composite в одном конвейере)
   if (hasBgImage) {
     const svgOverlayBuffer = Buffer.from(bgSvg);
-    baseImage = baseImage.composite([{
-      input: svgOverlayBuffer,
-      top: 0,
-      left: 0
-    }]);
-
-    if (cleanCompositions.length > 0) {
-      baseImage = baseImage.composite(cleanCompositions);
-    }
+    const allCompositions = [
+      {
+        input: svgOverlayBuffer,
+        top: 0,
+        left: 0
+      },
+      ...cleanCompositions
+    ];
+    baseImage = baseImage.composite(allCompositions);
   } else {
     // Обычная векторная сборка: баночки накладываются поверх готового SVG
     if (cleanCompositions.length > 0) {

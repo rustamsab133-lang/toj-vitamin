@@ -56,14 +56,18 @@ export async function POST(request: NextRequest) {
 
     // 2. Запускаем "дизайнера" - верстку баннера с ИИ-фоном и кастомным дизайном
     let backgroundImageBuffer: Buffer | undefined = undefined;
-    const bgPrompt = (postContent as any).backgroundPrompt;
-    const designConfig = (postContent as any).designConfig;
+    
+    // Получаем промпты от ИИ и кастомную верстку только в режиме 'auto' (Smart ИИ)
+    const isSmartMode = bannerStyle === 'auto' || bannerStyle === 'dark_purple';
+    
+    const bgPrompt = isSmartMode ? (postContent as any).backgroundPrompt : undefined;
+    const designConfig = isSmartMode ? (postContent as any).designConfig : undefined;
 
-    if (bgPrompt) {
+    if (isSmartMode && bgPrompt) {
       try {
         const seed = Math.floor(Math.random() * 1000000);
         const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(bgPrompt)}?width=1080&height=1920&nologo=true&seed=${seed}`;
-        console.log(`🌌 ИИ-Дизайнер: Запрашиваю генерацию фона по промпту: "${bgPrompt}"`);
+        console.log(`🌌 ИИ-Дизайнер (Smart): Запрашиваю генерацию фона по промпту: "${bgPrompt}"`);
         
         const imgResponse = await fetch(imageUrl);
         if (imgResponse.ok) {
