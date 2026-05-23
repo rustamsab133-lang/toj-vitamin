@@ -18,59 +18,64 @@ export async function generateBanner(
   const height = 1920;
 
   // 1. Определение параметров темы в стиле Warm Organic Editorial 2026
-  let bgColor = '#F5EFEB';             // Песочный фон по умолчанию
+  let bgColor = '#EFEAE2';             // Благородный теплый кремовый беж по умолчанию
   let shadowColor = '#2D2722';         // Цвет тени от листьев
   let textColorPrimary = '#251E18';    // Темно-шоколадный
   let textColorSecondary = '#75695C';  // Кофейный
-  let accentColor = '#8D7B68';         // Каменный/оливковый акцент
+  let accentColor = '#B88E6F';         // Теплый терракотово-золотой акцент
   let fontTitle = 'Georgia, serif';    // Журнальный шрифт по умолчанию
+  let fontBody = 'Georgia, serif';     // Журнальный шрифт для текста по умолчанию
   let styleSubtitle = 'СВЯЗКА ДЛЯ ЗДОРОВЬЯ';
   
   // Дополнительные настройки для разных стилей
   let podiumTopColor = '#EAE0D2';
   let podiumEdgeColor = '#D2C7B7';
   let isGlassPodium = false;
-  let shadowOpacity = 0.06;
-  let isWindowsGrid = false; // Тень в виде окна вместо пальмы (для бетона)
+  let shadowOpacity = 0.15;            // Отчетливо видимая тень по умолчанию
+  let isWindowsGrid = false;           // Тень в виде окна вместо пальмы (для бетона)
   let isNoShadow = false;
 
   // Инициализация стилей
   if (style === 'emerald_mint') {
-    // Мятный Дзен / Спа-стиль
-    bgColor = '#E6ECE6';
-    shadowColor = '#1A231D';
+    // Мятный Дзен / Спа-стиль (Насыщенный благородный шалфейный)
+    bgColor = '#CEDACF';
+    shadowColor = '#1A2D20';
     textColorPrimary = '#1A2D20';
-    textColorSecondary = '#5C7060';
-    accentColor = '#4A6B56';
+    textColorSecondary = '#5B7F61';
+    accentColor = '#5B7F61';
     fontTitle = 'Georgia, serif';
+    fontBody = 'system-ui, -apple-system, sans-serif';
     podiumTopColor = '#FAF8F5'; // Каррарский белый мрамор
     podiumEdgeColor = '#E3DDD0';
     styleSubtitle = 'НАТУРАЛЬНЫЙ ОРГАНИК КОМПЛЕКС';
-    shadowOpacity = 0.05;
+    shadowOpacity = 0.14;
   } else if (style === 'matte_slate') {
-    // Бетон и Графит / Спортивный активный стиль
-    bgColor = '#E2E4E6';
+    // Бетон и Графит / Спортивный активный стиль (Плотный индустриальный серый)
+    bgColor = '#C8CFD3';
     shadowColor = '#1A1D20';
     textColorPrimary = '#1A1D20';
-    textColorSecondary = '#636A70';
-    accentColor = '#47535E';
+    textColorSecondary = '#4F575E';
+    accentColor = '#2B3138';
     fontTitle = 'system-ui, -apple-system, sans-serif'; // Строгий гротеск
+    fontBody = 'system-ui, -apple-system, sans-serif';
     podiumTopColor = '#32373C'; // Темный сланец
     podiumEdgeColor = '#1F2225';
     styleSubtitle = 'АТЛЕТИЧЕСКАЯ ФОРМУЛА АКТИВНОСТИ';
-    shadowOpacity = 0.05;
+    shadowOpacity = 0.15;
     isWindowsGrid = true; // Вместо пальмы - тень от окна
   } else if (style === 'glass_minimal') {
-    // Сверхлегкий минимализм со стекломорфизмом
-    bgColor = '#F4F5F7';
-    shadowColor = '#2F3440';
-    textColorPrimary = '#1E2229';
-    textColorSecondary = '#7E8594';
-    accentColor = '#5C6479';
+    // Сверхлегкий минимализм со стекломорфизмом в Luxury Dark Mode
+    bgColor = '#0D111A';               // Глубокий роскошный темный космос
+    shadowColor = '#000000';
+    textColorPrimary = '#FFFFFF';      // Белоснежный контрастный
+    textColorSecondary = '#94A3B8';    // Серебристо-серый
+    accentColor = '#38BDF8';           // Светящийся голубой
     fontTitle = 'system-ui, -apple-system, sans-serif';
-    isGlassPodium = true; // Стеклянный подиум
+    fontBody = 'system-ui, -apple-system, sans-serif';
+    isGlassPodium = true;              // Стеклянный подиум
     styleSubtitle = 'НАУЧНЫЙ БИОХАКИНГ И КЛЕТОЧНЫЙ БАЛАНС';
-    isNoShadow = true; // Без пальмовых листьев, чистый свет
+    isNoShadow = true;                 // Без теней листьев, чистая эстетика
+    shadowOpacity = 0;
   }
 
   // 2. Создаем фоновую SVG композицию
@@ -80,7 +85,7 @@ export async function generateBanner(
   if (isWindowsGrid) {
     // Тень в виде индустриальной оконной рамы для бетонного стиля
     shadowLayer = `
-      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="0.04" transform="rotate(10, 540, 960)">
+      <g filter="url(#leaf-blur)" fill="${shadowColor}" opacity="${shadowOpacity}" transform="rotate(10, 540, 960)">
         <rect x="100" y="-100" width="80" height="2100" />
         <rect x="400" y="-100" width="80" height="2100" />
         <rect x="700" y="-100" width="80" height="2100" />
@@ -105,16 +110,16 @@ export async function generateBanner(
   // Рендерим подиум (Каменный или Стеклянный) - центрированный по горизонтали
   let podiumLayer = '';
   if (isGlassPodium) {
-    // Сверхсовременный матовый стеклянный круг
+    // Сверхсовременный матовый стеклянный круг (особый контраст в Dark Mode)
     podiumLayer = `
-      <!-- Мягкая тень под парящим стеклом -->
-      <ellipse cx="540" cy="1380" rx="360" ry="50" fill="url(#podium-shadow)" opacity="0.4" />
+      <!-- Мягкая светящаяся тень-аура под парящим стеклом -->
+      <ellipse cx="540" cy="1380" rx="360" ry="60" fill="url(#podium-shadow)" opacity="0.6" />
       
       <!-- Боковое свечение матового ребра стекла -->
-      <ellipse cx="540" cy="1352" rx="340" ry="60" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3" />
+      <ellipse cx="540" cy="1352" rx="340" ry="60" fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.4" />
       
       <!-- Тело стеклянной плиты (Glassmorphism) -->
-      <ellipse cx="540" cy="1350" rx="340" ry="60" fill="#ffffff" fill-opacity="0.2" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6" />
+      <ellipse cx="540" cy="1350" rx="340" ry="60" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6" />
     `;
   } else {
     // Премиальный круглый подиум из камня/песчаника
@@ -133,19 +138,20 @@ export async function generateBanner(
   // Рассчитываем тени под бутылочками в зависимости от их количества
   let productShadows = '';
   const count = products.length;
+  const bottleShadowOpacity = isGlassPodium ? '0.35' : '0.25';
   if (count === 1) {
-    productShadows = `<ellipse cx="540" cy="1340" rx="140" ry="30" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />`;
+    productShadows = `<ellipse cx="540" cy="1340" rx="140" ry="30" fill="#000000" opacity="${bottleShadowOpacity}" filter="url(#shadow-blur)" />`;
   } else if (count === 2) {
     productShadows = `
-      <ellipse cx="410" cy="1335" rx="110" ry="28" fill="#000000" opacity="0.22" filter="url(#shadow-blur)" />
-      <ellipse cx="650" cy="1345" rx="120" ry="30" fill="#000000" opacity="0.25" filter="url(#shadow-blur)" />
+      <ellipse cx="410" cy="1335" rx="110" ry="28" fill="#000000" opacity="${parseFloat(bottleShadowOpacity) - 0.03}" filter="url(#shadow-blur)" />
+      <ellipse cx="650" cy="1345" rx="120" ry="30" fill="#000000" opacity="${bottleShadowOpacity}" filter="url(#shadow-blur)" />
     `;
   } else {
     // 3 продукта
     productShadows = `
-      <ellipse cx="330" cy="1330" rx="90" ry="25" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
-      <ellipse cx="750" cy="1330" rx="90" ry="25" fill="#000000" opacity="0.18" filter="url(#shadow-blur)" />
-      <ellipse cx="540" cy="1345" rx="110" ry="28" fill="#000000" opacity="0.28" filter="url(#shadow-blur)" />
+      <ellipse cx="330" cy="1330" rx="90" ry="25" fill="#000000" opacity="${parseFloat(bottleShadowOpacity) - 0.07}" filter="url(#shadow-blur)" />
+      <ellipse cx="750" cy="1330" rx="90" ry="25" fill="#000000" opacity="${parseFloat(bottleShadowOpacity) - 0.07}" filter="url(#shadow-blur)" />
+      <ellipse cx="540" cy="1345" rx="110" ry="28" fill="#000000" opacity="${parseFloat(bottleShadowOpacity) + 0.03}" filter="url(#shadow-blur)" />
     `;
   }
 
@@ -171,20 +177,20 @@ export async function generateBanner(
         
         <!-- Мягкая радиальная тень под подиумом -->
         <radialGradient id="podium-shadow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" style="stop-color:#000000;stop-opacity:0.25" />
-          <stop offset="70%" style="stop-color:#000000;stop-opacity:0.08" />
+          <stop offset="0%" style="stop-color:#000000;stop-opacity:${isGlassPodium ? '0.45' : '0.25'}" />
+          <stop offset="70%" style="stop-color:#000000;stop-opacity:${isGlassPodium ? '0.15' : '0.08'}" />
           <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
         </radialGradient>
       </defs>
 
-      <!-- 1. Фоновая матовая стена с штукатуркой -->
-      <rect width="${width}" height="${height}" fill="${bgColor}" filter="url(#plaster-texture)" />
+      <!-- 1. Фоновая матовая стена с штукатуркой (текстуру не накладываем на чистый темный режим для идеального глянца) -->
+      <rect width="${width}" height="${height}" fill="${bgColor}" ${style === 'glass_minimal' ? '' : 'filter="url(#plaster-texture)"'} />
 
       <!-- 2. Световой блик от окна (солнечный зайчик) -->
       <radialGradient id="sunlight" cx="50%" cy="30%" r="70%">
-        <stop offset="0%" style="stop-color:#FFFDF9;stop-opacity:0.5" />
-        <stop offset="60%" style="stop-color:#FFFDF9;stop-opacity:0.15" />
-        <stop offset="100%" style="stop-color:#FFFDF9;stop-opacity:0" />
+        <stop offset="0%" style="stop-color:${style === 'glass_minimal' ? '#38BDF8' : '#FFFDF9'};stop-opacity:${style === 'glass_minimal' ? '0.15' : '0.5'}" />
+        <stop offset="60%" style="stop-color:${style === 'glass_minimal' ? '#38BDF8' : '#FFFDF9'};stop-opacity:${style === 'glass_minimal' ? '0.02' : '0.15'}" />
+        <stop offset="100%" style="stop-color:${style === 'glass_minimal' ? '#38BDF8' : '#FFFDF9'};stop-opacity:0" />
       </radialGradient>
       <rect width="${width}" height="${height}" fill="url(#sunlight)" />
 
@@ -197,10 +203,10 @@ export async function generateBanner(
       <!-- 5. Мягкие контактные тени непосредственно под баночками -->
       ${productShadows}
 
-      <!-- 6. ЭЛЕГАНТНАЯ ЖУРНАЛЬНАЯ ТИПОГРАФИКА (Центрированная вертикальная верстка) -->
+      <!-- 6. ЭЛЕГАНТНАЯ ЖУРНАЛЬНАЯ ТИПОГРАФИКА (Центрированная вертикальная верстка с динамическими шрифтами) -->
       <g>
         <!-- Бренд-заголовок -->
-        <text x="540" y="160" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="${textColorSecondary}" letter-spacing="8" text-anchor="middle">TOJ-VITAMIN</text>
+        <text x="540" y="160" font-family="${fontBody}" font-weight="600" font-size="16" fill="${textColorSecondary}" letter-spacing="8" text-anchor="middle">TOJ-VITAMIN</text>
         
         <!-- Главный оффер (макс 2-3 слова на строке) -->
         ${renderHeadline(headline, textColorPrimary, fontTitle)}
@@ -209,15 +215,15 @@ export async function generateBanner(
         <line x1="440" y1="450" x2="640" y2="450" stroke="${textColorSecondary}" stroke-width="1.5" opacity="0.3" />
 
         <!-- Категорийный подзаголовок -->
-        <text x="540" y="495" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="11" fill="${textColorSecondary}" letter-spacing="3" text-anchor="middle">${styleSubtitle}</text>
+        <text x="540" y="495" font-family="${fontBody}" font-weight="800" font-size="11" fill="${textColorSecondary}" letter-spacing="3" text-anchor="middle">${styleSubtitle}</text>
         
         <!-- Поддерживающий текст о синергии -->
-        <text x="540" y="540" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="15" fill="${textColorPrimary}" opacity="0.8" text-anchor="middle">Сбалансированная связка натуральных витаминов</text>
-        <text x="540" y="568" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="15" fill="${textColorPrimary}" opacity="0.8" text-anchor="middle">для здоровья и жизненной силы.</text>
+        <text x="540" y="540" font-family="${fontBody}" font-weight="500" font-size="15" fill="${textColorPrimary}" opacity="0.8" text-anchor="middle">Сбалансированная связка натуральных витаминов</text>
+        <text x="540" y="568" font-family="${fontBody}" font-weight="500" font-size="15" fill="${textColorPrimary}" opacity="0.8" text-anchor="middle">для здоровья и жизненной силы.</text>
 
         <!-- Элегантный бейдж качества -->
-        <rect x="470" y="615" width="140" height="30" rx="15" fill="${accentColor}" opacity="0.1" />
-        <text x="540" y="634" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="10" fill="${accentColor}" letter-spacing="2" text-anchor="middle">PREMIUM GRADE</text>
+        <rect x="470" y="615" width="140" height="30" rx="15" fill="${accentColor}" opacity="${style === 'glass_minimal' ? '0.2' : '0.1'}" />
+        <text x="540" y="634" font-family="${fontBody}" font-weight="700" font-size="10" fill="${style === 'glass_minimal' ? '#FFFFFF' : accentColor}" letter-spacing="2" text-anchor="middle">PREMIUM GRADE</text>
       </g>
     </svg>
   `;
