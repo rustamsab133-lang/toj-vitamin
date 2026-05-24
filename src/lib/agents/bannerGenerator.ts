@@ -1,3 +1,10 @@
+import path from 'path';
+
+// Configure Fontconfig for Vercel Serverless and local development
+const fontconfigPath = path.join(process.cwd(), 'public/fonts/fonts.conf');
+process.env.FONTCONFIG_FILE = fontconfigPath;
+process.env.FONTCONFIG_PATH = path.join(process.cwd(), 'public/fonts');
+
 import sharp from 'sharp';
 
 interface ProductImage {
@@ -73,7 +80,7 @@ export async function generateBanner(
         font-style: normal;
       }
     `;
-    customFontFamily = "'MontserratCustom', ";
+    customFontFamily = "Montserrat, 'MontserratCustom', ";
   }
 
   // 1. Определение параметров темы в стиле Warm Organic Editorial 2026
@@ -143,8 +150,8 @@ export async function generateBanner(
     if (designConfig.textColorPrimary) textColorPrimary = designConfig.textColorPrimary;
     if (designConfig.textColorSecondary) textColorSecondary = designConfig.textColorSecondary;
     if (designConfig.accentColor) accentColor = designConfig.accentColor;
-    if (designConfig.fontTitle) fontTitle = designConfig.fontTitle;
-    if (designConfig.fontBody) fontBody = designConfig.fontBody;
+    if (designConfig.fontTitle) fontTitle = "Montserrat, " + designConfig.fontTitle;
+    if (designConfig.fontBody) fontBody = "Montserrat, " + designConfig.fontBody;
     if (designConfig.styleSubtitle) styleSubtitle = designConfig.styleSubtitle;
     if (designConfig.shadowOpacity !== undefined) shadowOpacity = designConfig.shadowOpacity;
     
