@@ -299,7 +299,16 @@ export async function generateBanner(
 
   // 4. Скачиваем прозрачные PNG баночки и готовим их к наложению
   const compositions: any[] = [];
-  let baseImage = hasBgImage ? sharp(backgroundImageBuffer) : sharp(Buffer.from(bgSvg));
+  let baseImage;
+  if (hasBgImage) {
+    // Явно масштабируем фоновое изображение от ИИ до стандартных 1080x1920 (9:16), чтобы все координаты наложения сошлись идеально!
+    baseImage = sharp(backgroundImageBuffer).resize(width, height, {
+      fit: 'cover',
+      position: 'center'
+    });
+  } else {
+    baseImage = sharp(Buffer.from(bgSvg));
+  }
 
   for (let i = 0; i < products.length; i++) {
     const product = products[i];
