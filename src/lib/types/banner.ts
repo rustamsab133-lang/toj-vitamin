@@ -34,6 +34,10 @@ export interface BannerProduct {
   name: string;
   image_url: string;
   synergy_reason?: string;
+  x?: number;        // X координата в процентах (0-100)
+  y?: number;        // Y координата в процентах (0-100)
+  scale?: number;     // Масштаб (например, 0.5 - 2.0)
+  rotation?: number;  // Угол наклона в градусах (-180 до 180)
 }
 
 export interface ChatMessage {

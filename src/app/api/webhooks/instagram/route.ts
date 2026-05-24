@@ -111,7 +111,7 @@ async function sendInstagramImage(recipientId: string, imageUrl: string) {
 }
 
 // Функция для автоматического сопоставления названий товаров в ответе ИИ и отправки их фото
-async function detectAndSendProductPhotos(recipientId: string, aiReplyText: string) {
+async function detectAndSendProductPhotos(recipientId: string, aiReplyText: string, userMessageText?: string) {
   try {
     // 1. Получаем список всех активных товаров из Supabase
     const { data: dbProducts } = await supabase
@@ -125,42 +125,87 @@ async function detectAndSendProductPhotos(recipientId: string, aiReplyText: stri
     }
 
     const matchedProducts: Array<{ name: string; imageUrl: string }> = [];
-    const lowerText = aiReplyText.toLowerCase();
 
     // Функция для безопасного экранирования спецсимволов для RegExp
     const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    for (const p of dbProducts) {
-      if (!p.image_url) continue;
+    // Функция для поиска совпадений товаров в конкретном тексте
+    const scanTextForProducts = (targetText: string) => {
+      const lower = targetText.toLowerCase();
+      for (const p of dbProducts) {
+        if (!p.image_url) continue;
 
-      // Получаем названия в нижнем регистре
-      const shortName = p.name.toLowerCase().trim();
-      const fullName = p.full_name ? p.full_name.toLowerCase().trim() : '';
+        const shortName = p.name.toLowerCase().trim();
+        const fullName = p.full_name ? p.full_name.toLowerCase().trim() : '';
 
-      // Избегаем ложных совпадений для слишком коротких аббревиатур (менее 3 символов)
-      if (shortName.length < 3) continue;
+        if (shortName.length < 3) continue;
 
-      // Создаем регулярное выражение для поиска целого слова/фразы с границами для кириллицы и латиницы
-      const escapedShortName = escapeRegExp(shortName);
-      const pattern = new RegExp(`(?:^|[^a-zA-Zа-яА-Я0-9_])${escapedShortName}(?:$|[^a-zA-Zа-яА-Я0-9_])`, 'i');
+        const escapedShortName = escapeRegExp(shortName);
+        const pattern = new RegExp(`(?:^|[^a-zA-Zа-яА-Я0-9_])${escapedShortName}(?:$|[^a-zA-Zа-яА-Я0-9_])`, 'i');
 
-      const isShortNameMentioned = pattern.test(lowerText);
-      const isFullNameMentioned = fullName && lowerText.includes(fullName);
+        const isShortNameMentioned = pattern.test(lower);
+        const isFullNameMentioned = fullName && lower.includes(fullName);
 
-      if (isShortNameMentioned || isFullNameMentioned) {
-        // Проверяем, не добавили ли мы уже это же изображение
-        if (!matchedProducts.some(mp => mp.imageUrl === p.image_url)) {
-          matchedProducts.push({
-            name: p.name,
-            imageUrl: p.image_url
-          });
+        if (isShortNameMentioned || isFullNameMentioned) {
+          if (!matchedProducts.some(mp => mp.imageUrl === p.image_url)) {
+            matchedProducts.push({
+              name: p.name,
+              imageUrl: p.image_url
+            });
+          }
+        }
+      }
+    };
+
+    // 1. Сначала сканируем текущий ответ ИИ
+    scanTextForProducts(aiReplyText);
+
+    // 2. Если в текущем ответе ИИ нет названий товаров, НО пользователь явно просит показать/прислать фото:
+    if (matchedProducts.length === 0 && userMessageText) {
+      const userLower = userMessageText.toLowerCase();
+      const isPhotoRequest = userLower.includes('фото') || 
+                             userLower.includes('картинк') || 
+                             userLower.includes('покажи') || 
+                             userLower.includes('скинь') || 
+                             userLower.includes('пришли') || 
+                             userLower.includes('отправ') || 
+                             userLower.includes('изображен') ||
+                             userLower.includes('выглядит');
+
+      if (isPhotoRequest) {
+        console.log('🔍 Клиент явно запросил фото, но в текущем ответе ИИ названий нет. Сканируем недавнюю историю диалога...');
+        
+        // Получаем чат
+        const { data: chat } = await supabase
+          .from('agent_chats')
+          .select('id')
+          .eq('instagram_user_id', recipientId)
+          .single();
+
+        if (chat) {
+          // Подтягиваем последние 6 сообщений диалога
+          const { data: history } = await supabase
+            .from('agent_messages')
+            .select('message_text')
+            .eq('chat_id', chat.id)
+            .order('created_at', { ascending: false })
+            .limit(6);
+
+          if (history && history.length > 0) {
+            // Сканируем сообщения в хронологическом порядке (от старых к новым)
+            const chronologicalHistory = [...history].reverse();
+            for (const msg of chronologicalHistory) {
+              scanTextForProducts(msg.message_text);
+              if (matchedProducts.length >= 3) break; // Ограничиваемся 3 товарами
+            }
+          }
         }
       }
     }
 
     // Если найдены совпадения, отправляем картинки (ограничиваем 3 товарами)
     if (matchedProducts.length > 0) {
-      console.log(`🔍 Авто-сопоставление нашло ${matchedProducts.length} продуктов в ответе ИИ.`);
+      console.log(`🔍 Авто-сопоставление нашло ${matchedProducts.length} продуктов для отправки.`);
       const limitList = matchedProducts.slice(0, 3);
       
       for (const prod of limitList) {
@@ -275,7 +320,7 @@ async function generateAIResponse(senderId: string, userMessage: string): Promis
 
     // 3. Выбираем промпт (A/B тест)
     const { data: prompts } = await supabase.from('agent_prompts').select('*').eq('is_active', true);
-    const fallbackPromptText = 'Ты — консультант "TOJ-VITAMIN". Отвечай кратко, предлагай витамины из предоставленного каталога в наличии, подбирай синергию.';
+    const fallbackPromptText = 'Ты — консультант "TOJ-VITAMIN". Отвечай кратко, предлагай витамины из предоставленного каталога в наличии, подбирай синергию. Если клиент просит показать, прислать или скинуть фото/картинки, обязательно перечисли точные названия обсуждаемых товаров в своем ответе (например: "Конечно, вот фото Магний В6 и Коллаген:").';
     let selectedPrompt = prompts && prompts.length > 0 ? prompts[Math.floor(Math.random() * prompts.length)] : null;
     
     // 4. Достаем золотые примеры
@@ -367,7 +412,7 @@ async function processWebhookInBackground(body: any) {
             if (aiReply) {
               await sendInstagramMessage(senderId, aiReply);
               // Авто-сопоставление по тексту: отправляем фото продуктов
-              await detectAndSendProductPhotos(senderId, aiReply);
+              await detectAndSendProductPhotos(senderId, aiReply, text);
             } else {
               console.log('🔇 Агент отключен, сообщение проигнорировано.');
             }
