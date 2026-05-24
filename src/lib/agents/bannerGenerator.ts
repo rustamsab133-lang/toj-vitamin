@@ -301,11 +301,15 @@ export async function generateBanner(
   const compositions: any[] = [];
   let baseImage;
   if (hasBgImage) {
-    // Явно масштабируем фоновое изображение от ИИ до стандартных 1080x1920 (9:16), чтобы все координаты наложения сошлись идеально!
-    baseImage = sharp(backgroundImageBuffer).resize(width, height, {
-      fit: 'cover',
-      position: 'center'
-    });
+    // Сначала физически рендерим фоновое ИИ-изображение в точные размеры 1080x1920 (9:16) во временный буфер,
+    // чтобы создать физический холст нужного размера. Это гарантирует, что координаты наложения не обрежутся!
+    const resizedBgBuffer = await sharp(backgroundImageBuffer)
+      .resize(width, height, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .toBuffer();
+    baseImage = sharp(resizedBgBuffer);
   } else {
     baseImage = sharp(Buffer.from(bgSvg));
   }
