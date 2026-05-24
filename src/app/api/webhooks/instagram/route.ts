@@ -12,6 +12,46 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN || 'my_super_secret_verify_token_123';
 const PAGE_ACCESS_TOKEN = process.env.INSTAGRAM_PAGE_TOKEN || '';
 
+// Функция для умной нормализации и нечеткого сопоставления продуктов RAG
+function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>) {
+  if (!pName) return {};
+  const name = pName.toLowerCase().trim();
+  
+  // 1. Точное совпадение
+  if (enrichedData[name]) return enrichedData[name];
+
+  // 2. Очистка суффиксов лекарственных форм, дозировок и упаковки
+  let cleaned = name
+    .replace(/\([^)]+\)/g, ' ') // Удаляем содержимое круглых скобок
+    .replace(/капс\.*|таб\.*|порошок|экстракт|комплекс|сироп/gi, ' ') // Удаляем формы выпуска
+    .replace(/gls|pharm|№\d+|\d+\s*мг|\d+\s*г|\d+\s*ие|\d+\s*ме/gi, ' ') // Удаляем дозировки, упаковки и бренды
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (enrichedData[cleaned]) return enrichedData[cleaned];
+
+  // 3. Сопоставление по подстроке (с приоритетом более специфичных длинных ключей)
+  const keys = Object.keys(enrichedData).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (cleaned.includes(key) || key.includes(cleaned)) {
+      return enrichedData[key];
+    }
+  }
+
+  // 4. Пословный поиск по первому слову/словосочетанию
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length >= 1) {
+    const firstWord = words[0];
+    if (enrichedData[firstWord]) return enrichedData[firstWord];
+    if (words.length >= 2) {
+      const firstTwo = `${words[0]} ${words[1]}`;
+      if (enrichedData[firstTwo]) return enrichedData[firstTwo];
+    }
+  }
+
+  return {};
+}
+
 // Функция для отправки ответа клиенту обратно в Директ
 async function sendInstagramMessage(recipientId: string, text: string) {
   const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`;
@@ -34,6 +74,104 @@ async function sendInstagramMessage(recipientId: string, text: string) {
     }
   } catch (error) {
     console.error('❌ Ошибка сети при отправке в Instagram:', error);
+  }
+}
+
+// Функция для отправки картинки в Директ
+async function sendInstagramImage(recipientId: string, imageUrl: string) {
+  const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: {
+          attachment: {
+            type: 'image',
+            payload: {
+              url: imageUrl,
+              is_reusable: true
+            }
+          }
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ Ошибка отправки изображения в Instagram:', errorData);
+    } else {
+      console.log(`✅ Изображение успешно отправлено клиенту ${recipientId}!`);
+    }
+  } catch (error) {
+    console.error('❌ Ошибка сети при отправке изображения в Instagram:', error);
+  }
+}
+
+// Функция для автоматического сопоставления названий товаров в ответе ИИ и отправки их фото
+async function detectAndSendProductPhotos(recipientId: string, aiReplyText: string) {
+  try {
+    // 1. Получаем список всех активных товаров из Supabase
+    const { data: dbProducts } = await supabase
+      .from('products')
+      .select('name, full_name, image_url')
+      .gt('price', 0);
+
+    if (!dbProducts || dbProducts.length === 0) {
+      console.log('ℹ️ Авто-сопоставление: товары в БД не найдены.');
+      return;
+    }
+
+    const matchedProducts: Array<{ name: string; imageUrl: string }> = [];
+    const lowerText = aiReplyText.toLowerCase();
+
+    // Функция для безопасного экранирования спецсимволов для RegExp
+    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    for (const p of dbProducts) {
+      if (!p.image_url) continue;
+
+      // Получаем названия в нижнем регистре
+      const shortName = p.name.toLowerCase().trim();
+      const fullName = p.full_name ? p.full_name.toLowerCase().trim() : '';
+
+      // Избегаем ложных совпадений для слишком коротких аббревиатур (менее 3 символов)
+      if (shortName.length < 3) continue;
+
+      // Создаем регулярное выражение для поиска целого слова/фразы с границами для кириллицы и латиницы
+      const escapedShortName = escapeRegExp(shortName);
+      const pattern = new RegExp(`(?:^|[^a-zA-Zа-яА-Я0-9_])${escapedShortName}(?:$|[^a-zA-Zа-яА-Я0-9_])`, 'i');
+
+      const isShortNameMentioned = pattern.test(lowerText);
+      const isFullNameMentioned = fullName && lowerText.includes(fullName);
+
+      if (isShortNameMentioned || isFullNameMentioned) {
+        // Проверяем, не добавили ли мы уже это же изображение
+        if (!matchedProducts.some(mp => mp.imageUrl === p.image_url)) {
+          matchedProducts.push({
+            name: p.name,
+            imageUrl: p.image_url
+          });
+        }
+      }
+    }
+
+    // Если найдены совпадения, отправляем картинки (ограничиваем 3 товарами)
+    if (matchedProducts.length > 0) {
+      console.log(`🔍 Авто-сопоставление нашло ${matchedProducts.length} продуктов в ответе ИИ.`);
+      const limitList = matchedProducts.slice(0, 3);
+      
+      for (const prod of limitList) {
+        console.log(`📸 Отправка фото в Instagram Direct: "${prod.name}" -> ${prod.imageUrl}`);
+        await sendInstagramImage(recipientId, prod.imageUrl);
+        // Небольшая задержка 600 мс между картинками для соблюдения порядка
+        await new Promise(resolve => setTimeout(resolve, 600));
+      }
+    }
+  } catch (error) {
+    console.error('❌ Ошибка автоматического сопоставления и отправки фото:', error);
   }
 }
 
@@ -83,7 +221,7 @@ async function loadEnrichedCatalog(): Promise<string> {
     const catalogString = dbProducts
       .filter((p: any) => p.price > 0 && !p.name.includes('[УДАЛЕН]'))
       .map((p: any) => {
-        const enrich = enrichedData[p.name.toLowerCase().trim()] || {};
+        const enrich = findEnrichmentForProduct(p.name, enrichedData);
         const props = enrich.properties ? enrich.properties.join(', ') : 'Общее оздоровление';
         const tags = enrich.tags ? enrich.tags.join(', ') : 'Иммунитет';
         const synergies = enrich.synergies ? enrich.synergies.join('; ') : 'Отсутствует';
@@ -228,6 +366,8 @@ async function processWebhookInBackground(body: any) {
             // Шаг 2: Отвечаем клиенту в Директ (только если ответ получен и агент активен)
             if (aiReply) {
               await sendInstagramMessage(senderId, aiReply);
+              // Авто-сопоставление по тексту: отправляем фото продуктов
+              await detectAndSendProductPhotos(senderId, aiReply);
             } else {
               console.log('🔇 Агент отключен, сообщение проигнорировано.');
             }

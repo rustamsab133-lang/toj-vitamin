@@ -5,6 +5,48 @@ import { Product } from '@/lib/types';
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * Умная нормализация и нечеткое сопоставление продуктов из базы данных к ключам RAG-файла
+ */
+export function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>) {
+  if (!pName) return {};
+  const name = pName.toLowerCase().trim();
+  
+  // 1. Точное совпадение
+  if (enrichedData[name]) return enrichedData[name];
+
+  // 2. Очистка суффиксов лекарственных форм, дозировок и упаковки
+  let cleaned = name
+    .replace(/\([^)]+\)/g, ' ') // Удаляем содержимое круглых скобок
+    .replace(/капс\.*|таб\.*|порошок|экстракт|комплекс|сироп/gi, ' ') // Удаляем формы выпуска
+    .replace(/gls|pharm|№\d+|\d+\s*мг|\d+\s*г|\d+\s*ие|\d+\s*ме/gi, ' ') // Удаляем дозировки, упаковки и бренды
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (enrichedData[cleaned]) return enrichedData[cleaned];
+
+  // 3. Сопоставление по подстроке (с приоритетом более специфичных длинных ключей)
+  const keys = Object.keys(enrichedData).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (cleaned.includes(key) || key.includes(cleaned)) {
+      return enrichedData[key];
+    }
+  }
+
+  // 4. Пословный поиск по первому слову/словосочетанию
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length >= 1) {
+    const firstWord = words[0];
+    if (enrichedData[firstWord]) return enrichedData[firstWord];
+    if (words.length >= 2) {
+      const firstTwo = `${words[0]} ${words[1]}`;
+      if (enrichedData[firstTwo]) return enrichedData[firstTwo];
+    }
+  }
+
+  return {};
+}
+
 interface InstagramPostResponse {
   selectedProducts: {
     id: string;
@@ -69,7 +111,7 @@ export async function generateInstagramPostContent(
 
   // 3. Формируем единый каталог для ИИ
   const productsCatalog = dbProducts.map((p: any) => {
-    const enrichment = enrichedData[p.name?.toLowerCase().trim() || ''] || {};
+    const enrichment = findEnrichmentForProduct(p.name, enrichedData);
     return {
       id: p.id,
       name: p.name,

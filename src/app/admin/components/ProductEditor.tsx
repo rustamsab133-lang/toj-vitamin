@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { adminDbQuery } from '@/lib/admin-api';
-import { Search, Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, Loader2 } from 'lucide-react';
+import { getMarkupSettings, applyMarkupToPrice, MarkupSettings } from '@/lib/markup';
+import { Search, Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, Loader2, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage } from '@/lib/imageUtils';
 
@@ -20,9 +21,13 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [glsResults, setGlsResults] = useState<any[]>([]);
   const [isGlsSearching, setIsGlsSearching] = useState(false);
   const [showGlsPicker, setShowGlsPicker] = useState(false);
+  const [markupSettings, setMarkupSettings] = useState<MarkupSettings>({ percent: 0, flat: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => {
+    loadProducts();
+    getMarkupSettings().then(setMarkupSettings);
+  }, []);
 
   const loadProducts = async () => {
     const { data } = await supabase.from('products').select('*').order('name');
@@ -260,7 +265,9 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`font-bold text-sm truncate ${editing?.id === p.id ? 'text-white' : 'text-slate-700'}`}>{p.name}</p>
-                <p className={`text-xs mt-0.5 ${editing?.id === p.id ? 'text-white/50' : 'text-slate-400'}`}>ID: {p.id} · {p.price} смн</p>
+                <p className={`text-xs mt-0.5 ${editing?.id === p.id ? 'text-white/50' : 'text-slate-400'}`}>
+                  ID: {p.id} · <span className="line-through">{p.price}</span> → <span className="font-bold">{applyMarkupToPrice(p.price, markupSettings)} смн</span>
+                </p>
               </div>
             </div>
           ))}
@@ -388,7 +395,20 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <Field label="Полное название" value={editing.full_name} onChange={(v) => setEditing({...editing, full_name: v})} />
                 <Field label="Описание" value={editing.description || ''} onChange={(v) => setEditing({...editing, description: v})} multiline />
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Цена (смн)" value={String(editing.price)} onChange={(v) => setEditing({...editing, price: Number(v) || 0})} type="number" />
+                  <div>
+                    <Field label="Закупочная цена (смн)" value={String(editing.price)} onChange={(v) => setEditing({...editing, price: Number(v) || 0})} type="number" />
+                    {(markupSettings.percent > 0 || markupSettings.flat > 0) && (
+                      <div className="mt-2 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <TrendingUp size={12} className="text-emerald-500 shrink-0" />
+                        <p className="text-xs text-emerald-700 font-semibold">
+                          Розничная: <span className="text-emerald-800">{applyMarkupToPrice(editing.price, markupSettings)} смн</span>
+                          <span className="text-emerald-500 font-normal ml-1">
+                            ({markupSettings.percent > 0 ? `+${markupSettings.percent}%` : ''}{markupSettings.flat > 0 ? ` +${markupSettings.flat}` : ''})
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   <div>
                     <label className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5 block">Иконка</label>
                     <select

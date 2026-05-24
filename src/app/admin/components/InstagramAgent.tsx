@@ -8,6 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { applyMarkupToProduct } from '@/lib/markup';
 
+import { ChatPanel } from './instagram/ChatPanel';
+import { BannerPreview } from './instagram/BannerPreview';
+import { BannerControls } from './instagram/BannerControls';
+import { ChatMessage, BannerConfig, DEFAULT_BANNER_CONFIG } from '@/lib/types/banner';
+
 interface InstagramAgentProps {
   onBack: () => void;
 }
@@ -34,18 +39,56 @@ interface Product {
   image_url: string | null;
 }
 
+// Умная нормализация и нечеткое сопоставление продуктов из базы данных к ключам RAG-файла
+function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>) {
+  if (!pName || !enrichedData) return null;
+  const name = pName.toLowerCase().trim();
+  
+  // 1. Точное совпадение
+  if (enrichedData[name]) return enrichedData[name];
+
+  // 2. Очистка суффиксов лекарственных форм, дозировок и упаковки
+  let cleaned = name
+    .replace(/\([^)]+\)/g, ' ') // Удаляем содержимое круглых скобок
+    .replace(/капс\.*|таб\.*|порошок|экстракт|комплекс|сироп/gi, ' ') // Удаляем формы выпуска
+    .replace(/gls|pharm|№\d+|\d+\s*мг|\d+\s*г|\d+\s*ие|\d+\s*ме/gi, ' ') // Удаляем дозировки, упаковки и бренды
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (enrichedData[cleaned]) return enrichedData[cleaned];
+
+  // 3. Сопоставление по подстроке (с приоритетом более специфичных длинных ключей)
+  const keys = Object.keys(enrichedData).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (cleaned.includes(key) || key.includes(cleaned)) {
+      return enrichedData[key];
+    }
+  }
+
+  // 4. Пословный поиск по первому слову/словосочетанию
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length >= 1) {
+    const firstWord = words[0];
+    if (enrichedData[firstWord]) return enrichedData[firstWord];
+    if (words.length >= 2) {
+      const firstTwo = `${words[0]} ${words[1]}`;
+      if (enrichedData[firstTwo]) return enrichedData[firstTwo];
+    }
+  }
+
+  return null;
+}
+
 export function InstagramAgent({ onBack }: InstagramAgentProps) {
   // Навигация по табам
   const [activeTab, setActiveTab] = useState<'generator' | 'autopost' | 'settings' | 'knowledge' | 'ab_tests' | 'audit'>('generator');
 
-  // --- Таб 1: Генератор постов ---
-  const [painPoint, setPainPoint] = useState('');
-  const [selectedLang, setSelectedLang] = useState('ru');
-  const [selectedTone, setSelectedTone] = useState('marketing');
-  const [selectedStyle, setSelectedStyle] = useState('auto');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<GenerationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // --- Таб 1: Генератор постов (Agent) ---
+  const [agentMessages, setAgentMessages] = useState<ChatMessage[]>([]);
+  const [bannerConfig, setBannerConfig] = useState<BannerConfig>(DEFAULT_BANNER_CONFIG);
+  const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [isAgentLoading, setIsAgentLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // --- Таб 2, 3: Настройки Агента и авто-постинга ---
@@ -195,8 +238,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
   // Выбор продукта в базе знаний
   const handleSelectProduct = (prod: Product) => {
     setSelectedProduct(prod);
-    const key = prod.name.toLowerCase().trim();
-    const enriched = enrichedCatalog[key] || {};
+    const enriched = findEnrichmentForProduct(prod.name, enrichedCatalog) || {};
     
     setEditingProperties(enriched.properties || []);
     setEditingTags(enriched.tags || ['Иммунитет']);
@@ -303,43 +345,68 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
     }
   };
 
-  // Генерация поста в Табе 1
-  const handleGenerate = async () => {
-    if (!painPoint.trim()) return;
+  // --- Chat Agent API ---
+  const handleSendMessage = async (text: string) => {
+    const newUserMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: text,
+      timestamp: new Date().toISOString(),
+    };
     
-    setIsGenerating(true);
-    setError(null);
-    setResult(null);
+    const updatedMessages = [...agentMessages, newUserMsg];
+    setAgentMessages(updatedMessages);
+    setIsAgentLoading(true);
 
     try {
-      const response = await fetch('/api/agents/instagram/generate', {
+      const response = await fetch('/api/agents/instagram/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          painPoint: painPoint.trim(),
-          lang: selectedLang,
-          tone: selectedTone,
-          bannerStyle: selectedStyle
+        body: JSON.stringify({
+          messages: updatedMessages,
+          bannerConfig,
+          sessionId
         }),
       });
-
+      
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Произошла ошибка при генерации. Попробуйте еще раз.');
+      if (data.success) {
+        setAgentMessages([...updatedMessages, data.agentMessage]);
+        if (data.bannerConfig) setBannerConfig(data.bannerConfig);
+        if (data.bannerUrl) setBannerUrl(data.bannerUrl);
+      } else {
+        alert(data.error || 'Ошибка ИИ агента');
       }
-
-      setResult(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка соединения с сервером');
     } finally {
-      setIsGenerating(false);
+      setIsAgentLoading(false);
+    }
+  };
+
+  const handleManualRender = async (newConfig: BannerConfig) => {
+    setBannerConfig(newConfig);
+    if (!newConfig.headline || newConfig.products.length === 0) return;
+    
+    try {
+      const response = await fetch('/api/agents/instagram/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig),
+      });
+      const data = await response.json();
+      if (data.success && data.bannerUrl) {
+        setBannerUrl(data.bannerUrl);
+      }
+    } catch (err) {
+      console.error('Render error:', err);
     }
   };
 
   const handleCopyCaption = () => {
-    if (result) {
-      navigator.clipboard.writeText(result.caption);
+    if (bannerConfig.caption) {
+      navigator.clipboard.writeText(bannerConfig.caption);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -356,11 +423,13 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
     setAutoPostTopics(autoPostTopics.filter((_, i) => i !== index));
   };
 
-  // Поиск продуктов в базе знаний
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Поиск продуктов в базе знаний (сортировка по алфавиту)
+  const filteredProducts = products
+    .filter(p =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
   return (
     <div className="space-y-6 pb-24 text-slate-800">
@@ -424,151 +493,36 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
         </div>
       </div>
 
-      {/* --- ТАБ 1: ГЕНЕРАТОР ПОСТОВ --- */}
+      {/* --- ТАБ 1: ГЕНЕРАТОР ПОСТОВ (ЧАТ-АГЕНТ) --- */}
       {activeTab === 'generator' && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Какую &quot;боль&quot; мы решаем сегодня?</label>
-              <input
-                type="text"
-                value={painPoint}
-                onChange={(e) => setPainPoint(e.target.value)}
-                placeholder="Например: плохой сон и тревожность, выпадение волос, сосуды..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all mb-4"
-                onKeyDown={(e) => { if (e.key === 'Enter') handleGenerate(); }}
-              />
-
-              {/* Настройки тональности, языка и стиля */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Язык поста</label>
-                  <select
-                    value={selectedLang}
-                    onChange={(e) => setSelectedLang(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-fuchsia-500"
-                  >
-                    <option value="ru">Русский</option>
-                    <option value="tj">Таджикский</option>
-                    <option value="tj_ru">Двуязычный (TJ / RU)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Тональность текста</label>
-                  <select
-                    value={selectedTone}
-                    onChange={(e) => setSelectedTone(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-fuchsia-500"
-                  >
-                    <option value="marketing">Маркетинговый / Продающий</option>
-                    <option value="expert">Экспертный / Нутрициология</option>
-                    <option value="friendly">Эмпатичный / Дружелюбный</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Стиль баннера</label>
-                  <select
-                    value={selectedStyle}
-                    onChange={(e) => setSelectedStyle(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-fuchsia-500"
-                  >
-                    <option value="auto">🤖 Автоопределение ИИ (Smart)</option>
-                    <option value="warm_editorial">🏛️ Теплый Травертин (Warm Editorial)</option>
-                    <option value="emerald_mint">🌿 Мятный Спа-Дзен (Emerald Mint)</option>
-                    <option value="matte_slate">🛡️ Графит и Бетон (Matte Slate)</option>
-                    <option value="glass_minimal">💎 Стеклянный Минимализм (Glass Minimal)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !painPoint.trim()}
-                className="px-6 py-3 bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl shadow-md shadow-fuchsia-500/20 transition-all flex items-center gap-2"
-              >
-                {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                {isGenerating ? 'Создаем шедевр...' : 'Сгенерировать'}
-              </button>
-            </div>
-
-            {error && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
-                <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                <p>{error}</p>
-              </div>
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px] min-h-0">
+          {/* Чат (Левая колонка) */}
+          <div className="lg:col-span-4 h-[500px] lg:h-full min-h-0 flex flex-col">
+            <ChatPanel 
+              messages={agentMessages} 
+              onSendMessage={handleSendMessage} 
+              isLoading={isAgentLoading} 
+            />
           </div>
-
-          {result && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-            >
-              {/* Левая колонка - Баннер */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                    <ImageIcon size={18} className="text-slate-400" /> Готовый баннер (1080x1920)
-                  </h3>
-                  <a
-                    href={result.bannerUrl}
-                    download="instagram-banner.jpg"
-                    className="flex items-center gap-2 text-xs font-bold text-fuchsia-600 bg-fuchsia-50 hover:bg-fuchsia-100 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    <Download size={14} /> Скачать
-                  </a>
-                </div>
-                
-                <div className="bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative aspect-[9/16] max-h-[700px] flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={result.bannerUrl} alt="Generated Banner" className="w-full h-full object-cover" />
-                </div>
-
-                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">💡 Логика ИИ (Связка):</p>
-                  <p className="text-sm text-slate-600">{result.reasoning}</p>
-                </div>
-              </div>
-
-              {/* Правая колонка - Текст */}
-              <div className="space-y-4 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                    <span className="text-xl">✍️</span> Текст для Instagram
-                  </h3>
-                  <button
-                    onClick={handleCopyCaption}
-                    className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    {copied ? 'Скопировано!' : 'Копировать текст'}
-                  </button>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex-1">
-                  <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                    {result.caption}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Выбранные витамины в связке:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {result.selectedProducts.map(p => (
-                      <div key={p.id} className="bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm text-xs font-bold text-fuchsia-600">
-                        💊 {p.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
+          
+          {/* Превью (Центр) */}
+          <div className="lg:col-span-5 h-[650px] lg:h-full min-h-0 flex flex-col">
+            <BannerPreview 
+              bannerUrl={bannerUrl} 
+              config={bannerConfig} 
+              onCopyCaption={handleCopyCaption} 
+              copied={copied} 
+            />
+          </div>
+          
+          {/* Управление (Правая колонка) */}
+          <div className="lg:col-span-3 h-[450px] lg:h-full min-h-0 overflow-y-auto pr-2 custom-scrollbar">
+            <BannerControls 
+              config={bannerConfig} 
+              onChange={handleManualRender} 
+              disabled={isAgentLoading} 
+            />
+          </div>
         </div>
       )}
 
@@ -760,22 +714,28 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-                {filteredProducts.map(prod => {
-                  const key = prod.name.toLowerCase().trim();
-                  const enriched = enrichedCatalog[key];
+                {filteredProducts.map((prod, index) => {
+                  const enriched = findEnrichmentForProduct(prod.name, enrichedCatalog);
                   const isSelected = selectedProduct?.id === prod.id;
                   
                   return (
                     <button
                       key={prod.id}
                       onClick={() => handleSelectProduct(prod)}
-                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center justify-between border ${
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-2 border ${
                         isSelected 
                           ? 'bg-fuchsia-50/50 border-fuchsia-200 text-fuchsia-700 font-bold' 
                           : 'border-transparent text-slate-600 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="truncate pr-2">
+                      {/* Номер */}
+                      <span className={`text-[10px] font-extrabold flex-shrink-0 w-6 text-right ${
+                        isSelected ? 'text-fuchsia-400' : 'text-slate-300'
+                      }`}>
+                        {index + 1}
+                      </span>
+
+                      <div className="flex-1 truncate">
                         <p className="text-xs uppercase font-extrabold truncate">{prod.name}</p>
                         <p className="text-[10px] text-slate-400 truncate">{prod.full_name}</p>
                       </div>
