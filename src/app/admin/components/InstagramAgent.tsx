@@ -88,6 +88,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
   const [bannerConfig, setBannerConfig] = useState<BannerConfig>(DEFAULT_BANNER_CONFIG);
   const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isAgentLoading, setIsAgentLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -385,23 +386,8 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
     }
   };
 
-  const handleManualRender = async (newConfig: BannerConfig) => {
+  const handleManualRender = (newConfig: BannerConfig) => {
     setBannerConfig(newConfig);
-    if (!newConfig.headline || newConfig.products.length === 0) return;
-    
-    try {
-      const response = await fetch('/api/agents/instagram/render', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newConfig),
-      });
-      const data = await response.json();
-      if (data.success && data.bannerUrl) {
-        setBannerUrl(data.bannerUrl);
-      }
-    } catch (err) {
-      console.error('Render error:', err);
-    }
   };
 
   const handleCopyCaption = () => {
@@ -512,6 +498,9 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
               config={bannerConfig} 
               onCopyCaption={handleCopyCaption} 
               copied={copied} 
+              onChange={setBannerConfig}
+              selectedProductId={selectedProductId}
+              onSelectProductId={setSelectedProductId}
             />
           </div>
           
@@ -521,6 +510,8 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
               config={bannerConfig} 
               onChange={handleManualRender} 
               disabled={isAgentLoading} 
+              selectedProductId={selectedProductId}
+              onSelectProductId={setSelectedProductId}
             />
           </div>
         </div>
