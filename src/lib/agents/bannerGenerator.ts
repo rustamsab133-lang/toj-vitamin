@@ -6,6 +6,38 @@ interface ProductImage {
   image_url: string;
 }
 
+let cachedMontserratBold = '';
+let cachedMontserratRegular = '';
+
+async function loadFonts(): Promise<{ bold: string; regular: string }> {
+  if (cachedMontserratBold && cachedMontserratRegular) {
+    return { bold: cachedMontserratBold, regular: cachedMontserratRegular };
+  }
+
+  try {
+    console.log('📥 Loading high-end Cyrillic fonts for cloud SMM generator...');
+    const [boldRes, regRes] = await Promise.all([
+      fetch('https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Bold.ttf'),
+      fetch('https://raw.githubusercontent.com/JulietaUla/Montserrat/master/fonts/ttf/Montserrat-Regular.ttf')
+    ]);
+
+    if (!boldRes.ok || !regRes.ok) throw new Error(`Fonts download HTTP Error (bold: ${boldRes.status}, reg: ${regRes.status})`);
+
+    const [boldBuf, regBuf] = await Promise.all([
+      boldRes.arrayBuffer(),
+      regRes.arrayBuffer()
+    ]);
+
+    cachedMontserratBold = Buffer.from(boldBuf).toString('base64');
+    cachedMontserratRegular = Buffer.from(regBuf).toString('base64');
+    console.log('✅ Cyrillic fonts successfully cached in memory!');
+  } catch (err) {
+    console.error('⚠️ Ошибка загрузки шрифтов, используем системные шрифты:', err);
+  }
+
+  return { bold: cachedMontserratBold, regular: cachedMontserratRegular };
+}
+
 /**
  * Премиальный программный генератор баннеров в стиле Warm Organic Editorial 2026.
  * Поддерживает 4 роскошные современные темы, перекрывающиеся 3D композиции продуктов и реалистичные тени.
@@ -21,14 +53,37 @@ export async function generateBanner(
   const width = 1080;
   const height = 1920;
 
+  // Загружаем и встраиваем шрифты для полноценного отображения кириллицы в облаке
+  const { bold: base64Bold, regular: base64Reg } = await loadFonts();
+  
+  let fontStyles = '';
+  let customFontFamily = '';
+  if (base64Bold && base64Reg) {
+    fontStyles = `
+      @font-face {
+        font-family: 'MontserratCustom';
+        src: url(data:font/truetype;charset=utf-8;base64,${base64Reg}) format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'MontserratCustom';
+        src: url(data:font/truetype;charset=utf-8;base64,${base64Bold}) format('truetype');
+        font-weight: bold;
+        font-style: normal;
+      }
+    `;
+    customFontFamily = "'MontserratCustom', ";
+  }
+
   // 1. Определение параметров темы в стиле Warm Organic Editorial 2026
   let bgColor = '#EFEAE2';             // Благородный теплый кремовый беж по умолчанию
   let shadowColor = '#2D2722';         // Цвет тени от листьев
   let textColorPrimary = '#251E18';    // Темно-шоколадный
   let textColorSecondary = '#75695C';  // Кофейный
   let accentColor = '#B88E6F';         // Теплый терракотово-золотой акцент
-  let fontTitle = 'Georgia, serif';    // Журнальный шрифт по умолчанию
-  let fontBody = 'Georgia, serif';     // Журнальный шрифт для текста по умолчанию
+  let fontTitle = customFontFamily + 'Georgia, serif';    // Журнальный шрифт по умолчанию
+  let fontBody = customFontFamily + 'Georgia, serif';     // Журнальный шрифт для текста по умолчанию
   let styleSubtitle = 'СВЯЗКА ДЛЯ ЗДОРОВЬЯ';
   
   // Дополнительные настройки для разных стилей
@@ -47,8 +102,8 @@ export async function generateBanner(
     textColorPrimary = '#1A2D20';
     textColorSecondary = '#5B7F61';
     accentColor = '#5B7F61';
-    fontTitle = 'Georgia, serif';
-    fontBody = 'system-ui, -apple-system, sans-serif';
+    fontTitle = customFontFamily + 'Georgia, serif';
+    fontBody = customFontFamily + 'system-ui, -apple-system, sans-serif';
     podiumTopColor = '#FAF8F5'; // Каррарский белый мрамор
     podiumEdgeColor = '#E3DDD0';
     styleSubtitle = 'НАТУРАЛЬНЫЙ ОРГАНИК КОМПЛЕКС';
@@ -60,8 +115,8 @@ export async function generateBanner(
     textColorPrimary = '#1A1D20';
     textColorSecondary = '#4F575E';
     accentColor = '#2B3138';
-    fontTitle = 'system-ui, -apple-system, sans-serif'; // Строгий гротеск
-    fontBody = 'system-ui, -apple-system, sans-serif';
+    fontTitle = customFontFamily + 'system-ui, -apple-system, sans-serif'; // Строгий гротеск
+    fontBody = customFontFamily + 'system-ui, -apple-system, sans-serif';
     podiumTopColor = '#32373C'; // Темный сланец
     podiumEdgeColor = '#1F2225';
     styleSubtitle = 'АТЛЕТИЧЕСКАЯ ФОРМУЛА АКТИВНОСТИ';
@@ -74,8 +129,8 @@ export async function generateBanner(
     textColorPrimary = '#FFFFFF';      // Белоснежный контрастный
     textColorSecondary = '#94A3B8';    // Серебристо-серый
     accentColor = '#38BDF8';           // Светящийся голубой
-    fontTitle = 'system-ui, -apple-system, sans-serif';
-    fontBody = 'system-ui, -apple-system, sans-serif';
+    fontTitle = customFontFamily + 'system-ui, -apple-system, sans-serif';
+    fontBody = customFontFamily + 'system-ui, -apple-system, sans-serif';
     isGlassPodium = true;              // Стеклянный подиум
     styleSubtitle = 'НАУЧНЫЙ БИОХАКИНГ И КЛЕТОЧНЫЙ БАЛАНС';
     isNoShadow = true;                 // Без теней листьев, чистая эстетика
@@ -194,6 +249,11 @@ export async function generateBanner(
   const bgSvg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <!-- Встраивание кириллических шрифтов для поддержки Vercel Cloud -->
+        <style>
+          ${fontStyles}
+        </style>
+
         <!-- Фильтр роскошной текстуры штукатурки -->
         <filter id="plaster-texture" x="0%" y="0%" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
