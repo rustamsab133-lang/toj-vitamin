@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { geminiModel } from '@/lib/gemini';
 import { createClient } from '@supabase/supabase-js';
+import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
 
 // Use service role key for full DB access (server-side only)
 const supabase = createClient(
@@ -79,9 +80,13 @@ async function getProductContext(targetQuery: string): Promise<string> {
   const relevant = scored.filter(p => p.score > 0).sort((a, b) => b.score - a.score).slice(0, 5);
   const productList = (relevant.length > 0 ? relevant : products.slice(0, 5));
 
-  return productList.map(p =>
-    `- ${p.name} (${p.full_name || ''}): ${p.description?.slice(0, 200)}. Цена: ${p.price} сомони. Теги: ${(p.tags || []).join(', ')}. Маркетинг: ${(p.marketing_hooks || []).join('; ')}`
-  ).join('\n');
+  // Get pricing markup
+  const markupSettings = await getMarkupSettings();
+
+  return productList.map(p => {
+    const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
+    return `- ${p.name} (${p.full_name || ''}): ${p.description?.slice(0, 200)}. Цена: ${markedPrice} сомони. Теги: ${(p.tags || []).join(', ')}. Маркетинг: ${(p.marketing_hooks || []).join('; ')}`;
+  }).join('\n');
 }
 
 // ─── Generate Article with Gemini ────────────────────────────────────────────

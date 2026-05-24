@@ -12,6 +12,8 @@ interface Props {
   params: { id: string };
 }
 
+import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
+
 async function getProduct(id: string): Promise<Product | null> {
   // 1. Fetch only id and name to find the match efficiently without pulling the whole DB
   const { data: nameList } = await supabase.from('products').select('id, name');
@@ -29,7 +31,11 @@ async function getProduct(id: string): Promise<Product | null> {
     .eq('id', match.id)
     .single();
 
-  return product;
+  if (!product) return null;
+
+  // 3. Load settings and apply pricing markup on the server side
+  const markupSettings = await getMarkupSettings();
+  return applyMarkupToProduct(product, markupSettings);
 }
 
 export async function generateStaticParams() {

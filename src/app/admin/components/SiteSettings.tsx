@@ -16,6 +16,8 @@ const SETTING_LABELS: Record<string, { label: string; description: string; multi
   hero_badge_text: { label: 'Текст бейджа', description: 'Маленький статус над заголовком (напр. ВАШ ГИД)' },
   hero_cta_text: { label: 'Текст кнопки Юнита', description: 'Текст на кнопке перехода к тесту' },
   whatsapp_phone: { label: 'WhatsApp номер', description: 'Номер для приёма заказов (без +)' },
+  price_markup_percent: { label: 'Процентная наценка (%)', description: 'Автоматически увеличивает розничную стоимость всех продуктов на указанный процент (например, 10 для +10%). 0 — выключено.' },
+  price_markup_flat: { label: 'Фиксированная наценка (TJS)', description: 'Добавляет фиксированную сумму к цене каждого продукта в сомони (например, 5 для +5 сомони). 0 — выключено.' }
 };
 
 export const SiteSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {

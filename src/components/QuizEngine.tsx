@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
 import { QuizCategory, QuizOption, QuizSynergy, Lang } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EmpatheticLoader } from './EmpatheticLoader';
@@ -174,6 +175,8 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
         .select('*')
         .in('id', allProductIds);
       
+      const markupSettings = await getMarkupSettings();
+      
       const fullSynergies = synData.map((syn: any) => {
         const localizedProducts = (syn.products_data || []).map((p: any) => {
           // Ищем продукт в базе по ID или по имени (для обратной совместимости)
@@ -182,11 +185,13 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
           
           if (!dbProd) return p; // Если не нашли, оставляем как есть (заглушка)
 
+          const markedPrice = applyMarkupToPrice(Number(dbProd.price) || 0, markupSettings);
+
           return { 
             ...p, 
             id: dbProd.id,
             name: dbProd.name,
-            price: Number(dbProd.price) || 0, 
+            price: markedPrice, 
             image_url: dbProd.image_url,
             marketing_hooks: dbProd.marketing_hooks || [],
             tags: dbProd.tags || [],

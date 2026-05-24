@@ -1,16 +1,20 @@
-
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { slugify } from '@/lib/slugify';
 
+import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
+
 export async function GET() {
   try {
-    const { data: products, error } = await supabase
+    const { data: rawProducts, error } = await supabase
       .from('products')
       .select('*')
       .order('id');
 
     if (error) throw error;
+
+    const markupSettings = await getMarkupSettings();
+    const products = rawProducts?.map(p => applyMarkupToProduct(p, markupSettings)) || [];
 
     const baseUrl = 'https://www.toj-vitamin.tj';
 

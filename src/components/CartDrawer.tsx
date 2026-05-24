@@ -7,6 +7,7 @@ import { Lang, Product } from '@/lib/types';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useState } from 'react';
+import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
 
 interface CartItem extends Product {
   quantity: number;
@@ -51,7 +52,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
   const handleCheckout = async () => {
     setIsVerifying(true);
     try {
-      // 🛡️ SECURITY: Verify cart prices against Supabase database
+      // 🛡️ SECURITY: Verify cart prices against Supabase database with pricing markup applied
       const itemIds = items.map(i => i.id);
       const { data: realProducts, error } = await supabase
         .from('products')
@@ -62,9 +63,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, whatsappNumber, on
       let finalItemsList = '';
 
       if (!error && realProducts) {
+        const markupSettings = await getMarkupSettings();
         finalItemsList = items.map((item, index) => {
           const realProduct = realProducts.find(p => p.id === item.id);
-          const realPrice = realProduct ? realProduct.price : item.price;
+          const basePrice = realProduct ? realProduct.price : item.price;
+          const realPrice = applyMarkupToPrice(basePrice, markupSettings);
           verifiedTotal += realPrice * item.quantity;
           return `${index + 1}. ${item.name} (${realPrice} смн) x ${item.quantity}`;
         }).join('\n');

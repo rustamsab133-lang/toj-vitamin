@@ -46,15 +46,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
+
 export default async function PSEOPage({ params }: Props) {
   const city = CITIES[params.city.toLowerCase()];
   if (!city) notFound();
 
   const { data: products } = await supabase.from('products').select('*');
   const decodedSlug = decodeURIComponent(params.slug);
-  const product = products?.find(p => slugify(p.name) === decodedSlug);
+  const rawProduct = products?.find(p => slugify(p.name) === decodedSlug);
 
-  if (!product) notFound();
+  if (!rawProduct) notFound();
+
+  const markupSettings = await getMarkupSettings();
+  const product = applyMarkupToProduct(rawProduct, markupSettings);
 
   const jsonLd = {
     "@context": "https://schema.org/",

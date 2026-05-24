@@ -21,6 +21,7 @@ import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
 import { SearchOverlay } from '@/components/SearchOverlay';
+import { applyMarkupToProduct, getMarkupSettings } from '@/lib/markup';
 
 
 interface HomeClientProps {
@@ -39,11 +40,13 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const [isQuizPassed, setIsQuizPassed] = useState(false);
   
   // Use settings from server, but allow local override if needed
-  const [settings] = useState<Record<string, string>>({
+  const [settings, setSettings] = useState<Record<string, string>>({
     brand_name: "TOJ-VITAMIN",
     whatsapp_phone: "992176660707",
     hero_badge_text: lang === 'ru' ? 'Ваш эксперт по витаминам' : 'Роҳнамои шумо дар олами витаминҳо',
     hero_cta_text: lang === 'ru' ? 'Подобрать мои витамины' : 'Витаминҳои маро интихоб кунед',
+    price_markup_percent: "0",
+    price_markup_flat: "0",
     ...initialSettings
   });
 
@@ -109,9 +112,28 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const setAllProducts = useCart(state => state.setAllProducts);
   useEffect(() => {
     let cancelled = false;
-    async function loadGlobalProducts() {
+    async function loadGlobalProductsAndSettings() {
       try {
-        // Use static import for enrichment data (already in bundle via ProductCatalog)
+        // 1. Fetch fresh settings on client-side to bypass stale ISR cache instantly
+        const { data: settingsData } = await supabase
+          .from('site_settings')
+          .select('key, value');
+        
+        let activeMarkupPercent = 0;
+        let activeMarkupFlat = 0;
+
+        if (settingsData && settingsData.length > 0 && !cancelled) {
+          const updatedSettings = { ...settings };
+          settingsData.forEach(s => {
+            updatedSettings[s.key] = s.value;
+          });
+          setSettings(updatedSettings);
+          
+          activeMarkupPercent = parseFloat(updatedSettings.price_markup_percent || '0') || 0;
+          activeMarkupFlat = parseFloat(updatedSettings.price_markup_flat || '0') || 0;
+        }
+
+        // 2. Load and enrich products with pricing markup applied
         const enrichedData = (await import('@/data/enriched_gls_products.json')).default;
         const { data, error } = await supabase
           .from('products')
@@ -120,17 +142,25 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         
         if (!error && data && !cancelled) {
           const enrichedMap = enrichedData as Record<string, any>;
-          const enriched = data.map(p => ({
-            ...p,
-            ...(enrichedMap[p.name?.toLowerCase().trim() || ''] || {})
-          }));
+          const enriched = data.map(p => {
+            // Apply markup
+            const markedUpProduct = applyMarkupToProduct(p, {
+              percent: activeMarkupPercent,
+              flat: activeMarkupFlat
+            });
+            
+            return {
+              ...markedUpProduct,
+              ...(enrichedMap[p.name?.toLowerCase().trim() || ''] || {})
+            };
+          });
           setAllProducts(enriched);
         }
       } catch (e) {
-        console.error('Failed to load products globally', e);
+        console.error('Failed to load products and settings globally', e);
       }
     }
-    loadGlobalProducts();
+    loadGlobalProductsAndSettings();
     return () => { cancelled = true; };
   }, [setAllProducts]);
 

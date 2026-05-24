@@ -82,8 +82,8 @@ export async function generateBanner(
   let textColorPrimary = '#251E18';    // Темно-шоколадный
   let textColorSecondary = '#75695C';  // Кофейный
   let accentColor = '#B88E6F';         // Теплый терракотово-золотой акцент
-  let fontTitle = customFontFamily + 'Georgia, serif';    // Журнальный шрифт по умолчанию
-  let fontBody = customFontFamily + 'Georgia, serif';     // Журнальный шрифт для текста по умолчанию
+  let fontTitle = customFontFamily + "'DejaVu Sans', 'Liberation Sans', Georgia, serif";    // Журнальный шрифт по умолчанию
+  let fontBody = customFontFamily + "'DejaVu Sans', 'Liberation Sans', Georgia, serif";     // Журнальный шрифт для текста по умолчанию
   let styleSubtitle = 'СВЯЗКА ДЛЯ ЗДОРОВЬЯ';
   
   // Дополнительные настройки для разных стилей
@@ -102,8 +102,8 @@ export async function generateBanner(
     textColorPrimary = '#1A2D20';
     textColorSecondary = '#5B7F61';
     accentColor = '#5B7F61';
-    fontTitle = customFontFamily + 'Georgia, serif';
-    fontBody = customFontFamily + 'system-ui, -apple-system, sans-serif';
+    fontTitle = customFontFamily + "'DejaVu Sans', 'Liberation Sans', Georgia, serif";
+    fontBody = customFontFamily + "'DejaVu Sans', 'Liberation Sans', system-ui, -apple-system, sans-serif";
     podiumTopColor = '#FAF8F5'; // Каррарский белый мрамор
     podiumEdgeColor = '#E3DDD0';
     styleSubtitle = 'НАТУРАЛЬНЫЙ ОРГАНИК КОМПЛЕКС';
@@ -115,8 +115,8 @@ export async function generateBanner(
     textColorPrimary = '#1A1D20';
     textColorSecondary = '#4F575E';
     accentColor = '#2B3138';
-    fontTitle = customFontFamily + 'system-ui, -apple-system, sans-serif'; // Строгий гротеск
-    fontBody = customFontFamily + 'system-ui, -apple-system, sans-serif';
+    fontTitle = customFontFamily + "'DejaVu Sans', 'Liberation Sans', system-ui, -apple-system, sans-serif"; // Строгий гротеск
+    fontBody = customFontFamily + "'DejaVu Sans', 'Liberation Sans', system-ui, -apple-system, sans-serif";
     podiumTopColor = '#32373C'; // Темный сланец
     podiumEdgeColor = '#1F2225';
     styleSubtitle = 'АТЛЕТИЧЕСКАЯ ФОРМУЛА АКТИВНОСТИ';
@@ -129,8 +129,8 @@ export async function generateBanner(
     textColorPrimary = '#FFFFFF';      // Белоснежный контрастный
     textColorSecondary = '#94A3B8';    // Серебристо-серый
     accentColor = '#38BDF8';           // Светящийся голубой
-    fontTitle = customFontFamily + 'system-ui, -apple-system, sans-serif';
-    fontBody = customFontFamily + 'system-ui, -apple-system, sans-serif';
+    fontTitle = customFontFamily + "'DejaVu Sans', 'Liberation Sans', system-ui, -apple-system, sans-serif";
+    fontBody = customFontFamily + "'DejaVu Sans', 'Liberation Sans', system-ui, -apple-system, sans-serif";
     isGlassPodium = true;              // Стеклянный подиум
     styleSubtitle = 'НАУЧНЫЙ БИОХАКИНГ И КЛЕТОЧНЫЙ БАЛАНС';
     isNoShadow = true;                 // Без теней листьев, чистая эстетика

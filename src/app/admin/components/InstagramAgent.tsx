@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import { applyMarkupToProduct } from '@/lib/markup';
 
 interface InstagramAgentProps {
   onBack: () => void;
@@ -128,7 +129,13 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
         .order('id');
       
       if (dbProducts) {
-        const activeProds = dbProducts.filter((p: any) => p.price > 0 && !p.name.includes('[УДАЛЕН]'));
+        const percent = parseFloat(getSetting('price_markup_percent', '0')) || 0;
+        const flat = parseFloat(getSetting('price_markup_flat', '0')) || 0;
+        
+        const activeProds = dbProducts
+          .filter((p: any) => p.price > 0 && !p.name.includes('[УДАЛЕН]'))
+          .map((p: any) => applyMarkupToProduct(p, { percent, flat }));
+        
         setProducts(activeProds);
       }
 

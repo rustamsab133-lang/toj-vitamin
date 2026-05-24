@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
+import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
 
 // Инициализация Gemini (модель возьмет ключ из process.env.GEMINI_API_KEY)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -75,6 +76,9 @@ async function loadEnrichedCatalog(): Promise<string> {
       }
     }
 
+    // 3.5. Получаем настройки наценки
+    const markupSettings = await getMarkupSettings();
+
     // 4. Формируем сверхкомпактное текстовое описание каталога для контекста ИИ
     const catalogString = dbProducts
       .filter((p: any) => p.price > 0 && !p.name.includes('[УДАЛЕН]'))
@@ -83,7 +87,11 @@ async function loadEnrichedCatalog(): Promise<string> {
         const props = enrich.properties ? enrich.properties.join(', ') : 'Общее оздоровление';
         const tags = enrich.tags ? enrich.tags.join(', ') : 'Иммунитет';
         const synergies = enrich.synergies ? enrich.synergies.join('; ') : 'Отсутствует';
-        return `- ${p.name} (${p.full_name}): Цена: ${p.price} сомони. Свойства: [${props}]. Теги: [${tags}]. Синергия: [${synergies}]`;
+        
+        // Apply pricing markup dynamically so AI directs clients to the marked up retail price
+        const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
+
+        return `- ${p.name} (${p.full_name}): Цена: ${markedPrice} сомони. Свойства: [${props}]. Теги: [${tags}]. Синергия: [${synergies}]`;
       })
       .join('\n');
 
