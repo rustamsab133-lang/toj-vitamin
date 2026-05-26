@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
+
+// Инициализация Supabase с использованием service_role ключа для обхода Row Level Security (RLS)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Инициализация Gemini (модель возьмет ключ из process.env.GEMINI_API_KEY)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -11,6 +16,27 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 // Ключи из настроек Meta
 const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN || 'my_super_secret_verify_token_123';
 const PAGE_ACCESS_TOKEN = process.env.INSTAGRAM_PAGE_TOKEN || '';
+
+// Кэш для предотвращения шторма повторных запросов от Meta (интервал повторов обычно в пределах секунд)
+const processedMids = new Set<string>();
+const midQueue: string[] = [];
+
+function isDuplicateWebhook(mid: string): boolean {
+  if (processedMids.has(mid)) {
+    return true;
+  }
+  processedMids.add(mid);
+  midQueue.push(mid);
+  
+  // Ограничиваем размер очереди 500 элементами для защиты памяти
+  if (midQueue.length > 500) {
+    const oldest = midQueue.shift();
+    if (oldest) {
+      processedMids.delete(oldest);
+    }
+  }
+  return false;
+}
 
 // Функция для умной нормализации и нечеткого сопоставления продуктов RAG
 function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>) {
@@ -286,7 +312,7 @@ async function loadEnrichedCatalog(): Promise<string> {
 }
 
 // Генерация умного ответа через Gemini с инъекцией динамического каталога и промптов
-async function generateAIResponse(senderId: string, userMessage: string): Promise<string | null> {
+async function generateAIResponse(senderId: string, userMessage: string, chat: any): Promise<string | null> {
   try {
     // 1. Считываем настройки ИИ
     const { data: settingsData } = await supabase.from('site_settings').select('key, value');
@@ -298,13 +324,7 @@ async function generateAIResponse(senderId: string, userMessage: string): Promis
     }
     const chatLang = getSetting('instagram_agent_chat_lang', 'auto');
 
-    // 2. Память (Memory)
-    let { data: chat } = await supabase.from('agent_chats').select('*').eq('instagram_user_id', senderId).single();
-    if (!chat) {
-      const { data: newChat } = await supabase.from('agent_chats').insert({ instagram_user_id: senderId }).select().single();
-      chat = newChat;
-    }
-
+    // Память загружается на основе переданного объекта чата
     let historyText = 'Нет истории диалога.';
     if (chat) {
       const { data: messagesHistory } = await supabase
@@ -364,10 +384,9 @@ ${historyText}
     const result = await model.generateContent(fullPrompt);
     const reply = result.response.text().trim();
 
-    // 9. Логирование сообщений
+    // 9. Логирование ответа бота
     if (chat) {
       await supabase.from('agent_messages').insert([
-        { chat_id: chat.id, sender: 'user', message_text: userMessage, prompt_id_used: selectedPrompt?.id },
         { chat_id: chat.id, sender: 'bot', message_text: reply, prompt_id_used: selectedPrompt?.id }
       ]);
       await supabase.from('agent_chats').update({ updated_at: new Date().toISOString() }).eq('id', chat.id);
@@ -409,18 +428,61 @@ async function processWebhookInBackground(body: any) {
           // Проверяем: это текст? И это не эхо нашего бота?
           if (webhookEvent.message && webhookEvent.message.text && !webhookEvent.message.is_echo && senderId) {
             const text = webhookEvent.message.text;
-            console.log(`📩 НОВОЕ СООБЩЕНИЕ [ID: ${senderId}]: ${text}`);
+            const mid = webhookEvent.message.mid || `${senderId}_${text}_${webhookEvent.timestamp}`;
             
-            // Шаг 1: Думаем с помощью Gemini
-            const aiReply = await generateAIResponse(senderId, text);
+            console.log(`📩 НОВОЕ СООБЩЕНИЕ [ID: ${senderId}, MID: ${mid}]: ${text}`);
             
-            // Шаг 2: Отвечаем клиенту в Директ (только если ответ получен и агент активен)
+            // Шаг 1.1: Быстрая in-memory дедупликация для отсечения мгновенных параллельных повторов
+            if (isDuplicateWebhook(mid)) {
+              console.log(`⚡ [Deduplication] Обнаружен мгновенный in-memory дубликат (mid: ${mid}). Игнорируем обработку.`);
+              continue;
+            }
+
+            // Шаг 1.2: Подключение БД и поиск/создание чата (уже работает благодаря service_role ключу)
+            let { data: chat } = await supabase.from('agent_chats').select('*').eq('instagram_user_id', senderId).single();
+            if (!chat) {
+              const { data: newChat } = await supabase.from('agent_chats').insert({ instagram_user_id: senderId }).select().single();
+              chat = newChat;
+            }
+
+            if (chat) {
+              // Шаг 1.3: Базовый предохранитель в БД от повторных запросов при сетевых задержках
+              const { data: recentMessages } = await supabase
+                .from('agent_messages')
+                .select('message_text, created_at')
+                .eq('chat_id', chat.id)
+                .eq('sender', 'user')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+              if (recentMessages && recentMessages.length > 0) {
+                const lastMsg = recentMessages[0];
+                const timeDiff = Date.now() - new Date(lastMsg.created_at).getTime();
+                // Если текст совпадает и отправлен менее 20 секунд назад — расцениваем как дубль Meta
+                if (lastMsg.message_text === text && timeDiff < 20000) {
+                  console.log(`⚠️ [Deduplication] Дубликат сообщения обнаружен в БД для чата ${chat.id} (${timeDiff}ms назад). Пропускаем.`);
+                  continue;
+                }
+              }
+
+              // Мгновенно фиксируем входящее сообщение пользователя, блокируя параллельные транзакции
+              await supabase.from('agent_messages').insert({
+                chat_id: chat.id,
+                sender: 'user',
+                message_text: text
+              });
+            }
+
+            // Шаг 2: Думаем с помощью Gemini
+            const aiReply = await generateAIResponse(senderId, text, chat);
+            
+            // Шаг 3: Отвечаем клиенту в Директ
             if (aiReply) {
               await sendInstagramMessage(senderId, aiReply);
               // Авто-сопоставление по тексту: отправляем фото продуктов
               await detectAndSendProductPhotos(senderId, aiReply, text);
             } else {
-              console.log('🔇 Агент отключен, сообщение проигнорировано.');
+              console.log('🔇 Агент отключен или не вернул ответ, сообщение проигнорировано.');
             }
           }
         } catch (eventError) {
