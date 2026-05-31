@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Нет новых чатов для анализа.' });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" }); // Используем быструю модель для аналитики
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); // Используем быструю модель для аналитики
 
     let auditedCount = 0;
 

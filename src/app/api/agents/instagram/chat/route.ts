@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { genAI } from '@/lib/gemini';
-import { supabase } from '@/lib/supabase';
 import { generateBannerV2 } from '@/lib/agents/bannerGeneratorV2';
-import { BannerConfig, BannerProduct, DEFAULT_BANNER_CONFIG, BANNER_THEMES, ChatMessage } from '@/lib/types/banner';
+import { BannerConfig, BannerProduct, DEFAULT_BANNER_CONFIG, BANNER_THEMES, ChatMessage, TextLayer } from '@/lib/types/banner';
 import { SchemaType, FunctionDeclaration, Tool } from '@google/generative-ai';
 import { findEnrichmentForProduct } from '@/lib/agents/instagram';
 import fs from 'fs';
 import path from 'path';
+
+// Создаем Supabase Admin клиент с сервисным ключом для обхода RLS политик при сохранении памяти чата
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  }
+});
 
 // Загрузка обогащённых данных
 function loadEnrichedData(): Record<string, any> {
@@ -49,7 +59,7 @@ const functionDeclarations: FunctionDeclaration[] = [
   },
   {
     name: 'update_banner_config',
-    description: 'Обновляет визуальные параметры баннера: цвет фона, размер шрифта, размер фото, наклон, расположение, цвета текста.',
+    description: 'Обновляет визуальные параметры баннера: цвет фона, размер шрифта, размер фото, наклон, расположение, цвета текста, темы и шаблоны.',
     parameters: {
       type: SchemaType.OBJECT,
       properties: {
@@ -60,11 +70,19 @@ const functionDeclarations: FunctionDeclaration[] = [
         fontSize: { type: SchemaType.NUMBER, description: 'Размер шрифта заголовка в пикселях (40-90)' },
         photoSize: { type: SchemaType.NUMBER, description: 'Размер фото товаров в пикселях (300-600)' },
         photoAngle: { type: SchemaType.NUMBER, description: 'Угол наклона фото в градусах (-20 до +20)' },
-        photoLayout: { type: SchemaType.STRING, description: 'Расположение фото: center, duo или pyramid' },
+        photoLayout: { type: SchemaType.STRING, description: 'Шаблон сетки: center (по центру), duo (нахлёст двух продуктов), pyramid (пирамида из 3 продуктов), asymmetric_left (асимметричный сдвиг банок влево, текст справа), editorial_split (журнальный разделенный экран: слева текст на плашке, справа подиум)' },
         textPosition: { type: SchemaType.STRING, description: 'Позиция текста: top или bottom' },
         headline: { type: SchemaType.STRING, description: 'Новый заголовок баннера' },
         subtitle: { type: SchemaType.STRING, description: 'Подзаголовок бренда' },
         theme: { type: SchemaType.STRING, description: 'Имя темы: cream, chocolate, mint, indigo, white, black' },
+        aspectRatio: { type: SchemaType.STRING, description: 'Соотношение сторон баннера: 9:16 (Stories/Reels), 4:5 (Пост/Портрет), 1:1 (Квадрат), 16:9 (Широкий)' },
+        shadowIntensity: { type: SchemaType.NUMBER, description: 'Интенсивность теней под товарами 0-100 (0=нет, 55=средние, 100=глубокие)' },
+        lightAngle: { type: SchemaType.NUMBER, description: 'Угол источника света 0-360 градусов' },
+        bgGradient: { type: SchemaType.STRING, description: 'Hex-цвет второго конца градиента фона' },
+        bgGradientAngle: { type: SchemaType.NUMBER, description: 'Угол градиента фона 0-360' },
+        vignette: { type: SchemaType.NUMBER, description: 'Затемнение по краям (виньетка) 0-100 (20=легкое, 70=драматичное)' },
+        bgImage: { type: SchemaType.STRING, description: 'Путь к 3D-фону: /backgrounds/marble_podium.png (мраморный подиум), /backgrounds/tropical_pedestal.png (тропический), /backgrounds/dark_obsidian.png (черный обсидиан), /backgrounds/luxury_gold.png (золотистый спа) или пустая строка для цвета' },
+        fontTheme: { type: SchemaType.STRING, description: 'Стиль шрифтов: luxury (изящный Serif Lora для спа/премиума), sport (мощный Oswald для энергии/актива), clinical (минималистичный Outfit для науки), default (стандартный Montserrat)' },
       },
     },
   },
@@ -79,6 +97,76 @@ const functionDeclarations: FunctionDeclaration[] = [
       required: ['caption'],
     },
   },
+  {
+    name: 'manage_text_layers',
+    description: 'Добавляет, обновляет или удаляет свободные текстовые слои (бейджи, рекламные тексты, кнопки CTA, буллиты преимуществ, блоки цен) на баннере.',
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        action: {
+          type: SchemaType.STRING,
+          description: 'Действие: add (добавить новый слой), update (изменить существующий), remove (удалить слой)',
+          enum: ['add', 'update', 'remove']
+        } as any,
+        layerId: {
+          type: SchemaType.STRING,
+          description: 'ID текстового слоя (обязателен для update и remove)'
+        },
+        type: {
+          type: SchemaType.STRING,
+          description: 'Тип слоя: badge (бейдж с фоном), text (простой текст), cta (кнопка призыва с рамкой), bullets (маркированный список с галочками), price (крупный блок цены)',
+          enum: ['badge', 'text', 'cta', 'bullets', 'price']
+        } as any,
+        content: {
+          type: SchemaType.STRING,
+          description: 'Текст слоя. Для bullets разделяй строки символом переноса \\n'
+        },
+        x: {
+          type: SchemaType.NUMBER,
+          description: 'X координата в процентах холста (0-100)'
+        },
+        y: {
+          type: SchemaType.NUMBER,
+          description: 'Y координата в процентах холста (0-100)'
+        },
+        fontSize: {
+          type: SchemaType.NUMBER,
+          description: 'Размер шрифта в px (18-60)'
+        },
+        color: {
+          type: SchemaType.STRING,
+          description: 'Hex-цвет текста (например, #FAFAFA)'
+        },
+        bgColor: {
+          type: SchemaType.STRING,
+          description: 'Hex-цвет фона плашки/кнопки (для badge и cta)'
+        },
+        fontWeight: {
+          type: SchemaType.NUMBER,
+          description: 'Насыщенность шрифта: 400, 700 (bold), 800 (extra-bold), 900 (black)'
+        },
+        rotation: {
+          type: SchemaType.NUMBER,
+          description: 'Угол поворота в градусах (-180 до 180)'
+        },
+        opacity: {
+          type: SchemaType.NUMBER,
+          description: 'Прозрачность слоя от 0.0 до 1.0'
+        },
+        align: {
+          type: SchemaType.STRING,
+          description: 'Выравнивание текста: left, center, right',
+          enum: ['left', 'center', 'right']
+        } as any,
+        placement: {
+          type: SchemaType.STRING,
+          description: 'Расположение слоя: foreground (спереди баночек - по умолчанию), background (сзади баночек для трехмерной глубины и эффекта сэндвича)',
+          enum: ['foreground', 'background']
+        } as any
+      },
+      required: ['action']
+    }
+  }
 ];
 
 export async function POST(request: NextRequest) {
@@ -95,7 +183,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Загружаем продукты из БД
-    const { data: dbProducts } = await supabase
+    const { data: dbProducts } = await supabaseAdmin
       .from('products')
       .select('*')
       .gt('price', 0)
@@ -121,13 +209,15 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // Системный промпт
+    // Системный промпт с правилами дизайна 3.0
     const systemPrompt = `Ты — ИИ SMM-маркетолог и арт-директор бренда "TOJ-VITAMIN" (Точвитамин) в Таджикистане.
-Ты управляешь генератором Instagram-баннеров через чат. У тебя есть 3 функции:
+Ты управляешь генератором рекламных ИИ-баннеров нового поколения (версия 3.0).
 
-1. select_products — подбираешь 1-3 продукта из каталога для решения "боли" клиента
-2. update_banner_config — изменяешь визуал баннера (цвет, шрифт, размер, расположение)
-3. update_caption — обновляешь текст подписи поста
+У тебя есть 4 инструмента дизайна (Function Calling):
+1. select_products — подбираешь 1-3 продукта из каталога для решения болей клиента.
+2. update_banner_config — управляешь фоном, разметкой, темами, размером банок и стилем шрифта.
+3. update_caption — пишешь подписи к постам.
+4. manage_text_layers — управляешь свободным вектором: добавляешь рекламные бейджи, CTA-кнопки, ценники, галочки.
 
 КАТАЛОГ ПРОДУКТОВ (${catalog.length} товаров):
 ${JSON.stringify(catalog.slice(0, 107), null, 1)}
@@ -135,29 +225,22 @@ ${JSON.stringify(catalog.slice(0, 107), null, 1)}
 ТЕКУЩАЯ КОНФИГУРАЦИЯ БАННЕРА:
 ${JSON.stringify(clientConfig, null, 2)}
 
-ПРАВИЛА И ИНСТРУКЦИИ ДЛЯ ИИ-АРТ-ДИРЕКТОРА:
-- Когда пользователь описывает боль/проблему — СНАЧАЛА вызови select_products, потом ответь текстом
-- Когда пользователь просит изменить визуал (цвет, шрифт, размер, наклон, расположение) — ОБЯЗАТЕЛЬНО вызови update_banner_config с нужными параметрами. Не пытайся просто пообещать сделать это в тексте ответа, ты ОБЯЗАН совершить вызов функции!
-- Когда просит изменить текст подписи — вызови update_caption
-
-- **УВЕЛИЧЕНИЕ И УМЕНЬШЕНИЕ ФОТО ТОВАРОВ**:
-  * Если пользователь просит сделать фото/картинки продуктов крупнее, больше, увеличить их — вызови update_banner_config и установи параметр photoSize больше текущего (например: 450, 500, 550, макс 600).
-  * Если просит сделать фото меньше, уменьшить их — уменьши параметр photoSize (например: 350, 320, мин 300).
-
-- **НАКЛОН И ПОВОРОТ ФОТО ТОВАРОВ**:
-  * Если пользователь просит повернуть, наклонить, развернуть продукты (например: "поверни фото", "сделай наклон побольше") — вызови update_banner_config и передай photoAngle от -20 до +20 (положительные значения наклоняют вправо, отрицательные — влево).
-
-- **ТИПОГРАФИКА И ШРИФТ**:
-  * Заголовок fontSize может быть от 40 до 90. Если просит увеличить текст заголовка — увеличь fontSize.
-
-- **СЕТКА РАСПОЛОЖЕНИЯ (LAYOUTS & POSITION)**:
-  * Доступные layouts: center (горизонтальный ряд), duo (нахлёст двух продуктов), pyramid (пирамида из 3 продуктов).
-  * Доступные textPosition: top (текст вверху, продукты внизу) и bottom (текст внизу, продукты вверху).
-
+ПРАВИЛА АРТ-ДИРЕКШЕНА ДЛЯ СУПЕРПРОФЕССИОНАЛЬНЫХ КРЕАТИВОВ:
+- **ШРИФТЫ (fontTheme)**:
+  * Если товар премиальный, спа, для женской красоты, сна или спокойствия (Коллаген, 5-HTP, Гиалуронка) — ОБЯЗАТЕЛЬНО ставь fontTheme='luxury' (включает королевский Serif шрифт Lora).
+  * Если товар спортивный, мужской, для энергии и выносливости (Креатин, Тестобустер, Карнитин) — ОБЯЗАТЕЛЬНО ставь fontTheme='sport' (включает брутальный плотный Oswald).
+  * Если товар научный, клинический, строгий (Магний, Цинк, Железо) — используй fontTheme='clinical' (минималистичный Outfit).
+- **СЕТКА КОМПОЗИЦИИ (photoLayout)**:
+  * Для ультрамодного дизайна используй:
+    - \`asymmetric_left\`: продукт крупно слева, текстовый блок справа. Идеально для одиночных товаров-героев.
+    - \`editorial_split\`: левые 50% закрыты полупрозрачной подложкой с текстом, правые 50% содержат 3D-подиум с товаром. Выглядит как разворот дорогого журнала!
+- **ЭФФЕКТ СЭНДВИЧА (3D СЛОИ)**:
+  * При добавлении текста через manage_text_layers, если просят добавить фоновый текст, красивое огромное слово (например, "SLEEP", "ENERGY", "VITAMIN") — установи параметр placement='background'. Такой текст будет наложен ЗА баночкой, создавая колоссальный объем!
+  * Интерактивные кнопки (cta), бейджи со скидками (badge), цены (price) всегда держи спереди (placement='foreground' - по умолчанию).
 - **ЦВЕТОВЫЕ ТЕМЫ**:
-  * Доступные темы: cream, chocolate, mint, indigo, white, black. Вызови update_banner_config с параметром theme для автоматического применения гармоничной цветовой палитры.
+  * Доступные темы: cream, chocolate, mint, indigo, white, black. Выбирай их в зависимости от настроения.
 
-- Отвечай дружелюбно, профессионально, кратко и по делу на русском языке. При вызове функций передавай только те параметры, которые нужно обновить.`;
+Когда пользователь просит изменить баннер, добавляй надписи, кнопки и меняй настройки через соответствующие инструменты. Отвечай дружелюбно, лаконично и профессионально на русском языке.`;
 
     // Конвертируем историю в формат Gemini
     const geminiHistory = messages.slice(0, -1).map(m => ({
@@ -169,7 +252,7 @@ ${JSON.stringify(clientConfig, null, 2)}
 
     // Вызываем Gemini с Function Calling
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       tools: [{ functionDeclarations }] as Tool[],
       systemInstruction: systemPrompt,
     });
@@ -248,12 +331,70 @@ ${JSON.stringify(clientConfig, null, 2)}
             if (changes.textPosition) updatedConfig.textPosition = changes.textPosition;
             if (changes.headline) updatedConfig.headline = changes.headline;
             if (changes.subtitle) updatedConfig.subtitle = changes.subtitle;
+            if (changes.bgImage !== undefined) updatedConfig.bgImage = changes.bgImage;
+            if (changes.bgGradient !== undefined) updatedConfig.bgGradient = changes.bgGradient;
+            if (changes.bgGradientAngle !== undefined) updatedConfig.bgGradientAngle = changes.bgGradientAngle;
+            if (changes.shadowIntensity !== undefined) updatedConfig.shadowIntensity = changes.shadowIntensity;
+            if (changes.lightAngle !== undefined) updatedConfig.lightAngle = changes.lightAngle;
+            if (changes.vignette !== undefined) updatedConfig.vignette = changes.vignette;
+            if (changes.fontTheme !== undefined) updatedConfig.fontTheme = changes.fontTheme;
 
             functionCallResults.push({ name, result: { success: true, appliedChanges: Object.keys(changes) } });
 
           } else if (name === 'update_caption') {
             updatedConfig.caption = (args as any).caption || updatedConfig.caption;
             functionCallResults.push({ name, result: { success: true } });
+
+          } else if (name === 'manage_text_layers') {
+            const { action, layerId, type: lType, content, x, y, fontSize, color, bgColor, fontWeight, rotation, opacity, align, placement } = args as any;
+            const layers = [...(updatedConfig.textLayers || [])];
+
+            if (action === 'add') {
+              const newId = `tl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+              const newLayer: TextLayer = {
+                id: newId,
+                type: lType || 'text',
+                content: content || 'Новый текст',
+                x: x !== undefined ? Math.max(0, Math.min(100, x)) : 50,
+                y: y !== undefined ? Math.max(0, Math.min(100, y)) : 50,
+                fontSize: fontSize || 24,
+                color,
+                bgColor,
+                fontWeight: fontWeight || 700,
+                rotation: rotation || 0,
+                opacity: opacity !== undefined ? Math.max(0, Math.min(1, opacity)) : 1,
+                align: align || 'center',
+                placement: placement || 'foreground',
+              };
+              layers.push(newLayer);
+              updatedConfig.textLayers = layers;
+              functionCallResults.push({ name, result: { success: true, action: 'add', layerId: newId } });
+            } else if (action === 'update' && layerId) {
+              updatedConfig.textLayers = layers.map(l => {
+                if (l.id === layerId) {
+                  return {
+                    ...l,
+                    type: lType || l.type,
+                    content: content !== undefined ? content : l.content,
+                    x: x !== undefined ? Math.max(0, Math.min(100, x)) : l.x,
+                    y: y !== undefined ? Math.max(0, Math.min(100, y)) : l.y,
+                    fontSize: fontSize || l.fontSize,
+                    color: color !== undefined ? color : l.color,
+                    bgColor: bgColor !== undefined ? bgColor : l.bgColor,
+                    fontWeight: fontWeight || l.fontWeight,
+                    rotation: rotation !== undefined ? Math.max(-180, Math.min(180, rotation)) : l.rotation,
+                    opacity: opacity !== undefined ? Math.max(0, Math.min(1, opacity)) : l.opacity,
+                    align: align || l.align,
+                    placement: placement !== undefined ? placement : l.placement,
+                  };
+                }
+                return l;
+              });
+              functionCallResults.push({ name, result: { success: true, action: 'update', layerId } });
+            } else if (action === 'remove' && layerId) {
+              updatedConfig.textLayers = layers.filter(l => l.id !== layerId);
+              functionCallResults.push({ name, result: { success: true, action: 'remove', layerId } });
+            }
           }
         }
       }
@@ -301,7 +442,7 @@ ${JSON.stringify(clientConfig, null, 2)}
     const allMessages = [...messages, agentMessage];
 
     if (sessionId) {
-      await supabase.from('instagram_agent_sessions').upsert({
+      await supabaseAdmin.from('instagram_agent_sessions').upsert({
         id: sessionId,
         messages: allMessages,
         banner_config: updatedConfig,

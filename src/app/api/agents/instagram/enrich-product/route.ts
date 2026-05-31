@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Product name is required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
     const prompt = `
 Ты — опытный ИИ-нутрициолог и эксперт бренда премиальных витаминов "TOJ-VITAMIN" в Таджикистане.
 Тебе нужно составить качественное медицинское и нутрициологическое описание свойств, клинических синергий и тегов для продукта: "${name}" (Полное название: "${fullName || name}").
