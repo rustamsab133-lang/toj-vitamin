@@ -21,7 +21,9 @@ import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
 import { SearchOverlay } from '@/components/SearchOverlay';
+import { ChatWidget } from '@/components/ChatWidget';
 import { applyMarkupToProduct, getMarkupSettings } from '@/lib/markup';
+import { findEnrichmentForProduct } from '@/lib/products';
 
 
 interface HomeClientProps {
@@ -81,7 +83,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
       setSearch(urlSearch);
       setIsSearchOpen(true);
       const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
+      const currentHistoryState = typeof window !== 'undefined' ? window.history.state : null;
+      window.history.replaceState({ ...currentHistoryState }, '', newUrl);
     }
 
     return () => {
@@ -149,9 +152,10 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
               flat: activeMarkupFlat
             });
             
+            const enrichment = findEnrichmentForProduct(p.name, enrichedMap);
             return {
               ...markedUpProduct,
-              ...(enrichedMap[p.name?.toLowerCase().trim() || ''] || {})
+              ...enrichment
             };
           });
           setAllProducts(enriched);
@@ -372,6 +376,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         </footer>
   
       <SearchOverlay lang={lang} whatsappNumber={settings.whatsapp_phone} />
+      <ChatWidget lang={lang} />
     </main>
   );
 }
