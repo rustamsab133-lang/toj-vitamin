@@ -398,7 +398,7 @@
   border: none;
   background: transparent;
   padding: 8px 0;
-  font-size: 14px;
+  font-size: 16px; /* Prevents auto-zoom on iOS Safari */
   color: #1d1d1f;
   outline: none;
 }
@@ -434,12 +434,16 @@
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
   .chat-window {
-    bottom: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
     right: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 0 !important;
     bottom: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important; /* Dynamically adjusts height when virtual keyboard pops up */
+    height: -webkit-fill-available !important; /* Fallback for Safari */
+    height: 100vh !important; /* Standard fallback */
+    border-radius: 0 !important;
     z-index: 9999;
   }
   
@@ -448,3 +452,4 @@
     border-radius: 0;
   }
 }
+
