@@ -87,6 +87,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0; /* Prevents compressing header when keyboard opens */
 }
 
 .chat-header-info {
@@ -374,6 +375,7 @@
   padding: 14px 20px 20px 20px;
   background: rgba(253, 251, 247, 0.95);
   border-top: 1px solid rgba(29, 29, 31, 0.05);
+  flex-shrink: 0; /* Prevents input field compression when keyboard is open */
 }
 
 .chat-input-wrapper {

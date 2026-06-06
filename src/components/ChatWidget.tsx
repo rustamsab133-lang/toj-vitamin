@@ -94,12 +94,10 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
         const isMobile = window.innerWidth <= 640;
         if (isOpen && isMobile) {
           document.body.style.overflow = 'hidden';
-          document.body.style.position = 'fixed';
-          document.body.style.width = '100%';
+          document.body.style.height = '100%';
         } else {
           document.body.style.overflow = '';
-          document.body.style.position = '';
-          document.body.style.width = '';
+          document.body.style.height = '';
         }
       };
 
@@ -108,8 +106,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
       return () => {
         window.removeEventListener('resize', handleResize);
         document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
+        document.body.style.height = '';
       };
     }
   }, [isOpen]);
