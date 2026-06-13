@@ -442,9 +442,9 @@
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
-    height: 100dvh !important; /* Dynamically adjusts height when virtual keyboard pops up */
-    height: -webkit-fill-available !important; /* Fallback for Safari */
     height: 100vh !important; /* Standard fallback */
+    height: -webkit-fill-available !important; /* Fallback for Safari */
+    height: 100dvh !important; /* Dynamically adjusts height when virtual keyboard pops up */
     border-radius: 0 !important;
     z-index: 9999;
   }
