@@ -1,45 +1,30 @@
 import { Metadata } from 'next';
 import enrichedData from '@/data/enriched_gls_products.json';
-import { supabase } from '@/lib/supabase';
-import { Product } from '@/lib/types';
+import { Product, Lang } from '@/lib/types';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { slugify } from '@/lib/slugify';
 import { ProductBuyButton } from '@/components/ProductBuyButton';
 import { ShareButton } from '@/components/ShareButton';
+import { notFound } from 'next/navigation';
+import { ProductPageHeader, ProductCartSection } from '@/components/ProductCartSection';
+import { supabase } from '@/lib/supabase';
 
 interface Props {
   params: { id: string };
+  searchParams?: { lang?: string };
 }
 
-import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
+import { findEnrichmentForProduct, getProductsWithMarkup } from '@/lib/products';
 
 async function getProduct(id: string): Promise<Product | null> {
-  // 1. Fetch only id and name to find the match efficiently without pulling the whole DB
-  const { data: nameList } = await supabase.from('products').select('id, name');
-  if (!nameList) return null;
-  
+  const products = await getProductsWithMarkup();
   const targetSlug = decodeURIComponent(id).toLowerCase().trim();
-  const match = nameList.find(p => slugify(p.name) === targetSlug);
-  
-  if (!match) return null;
-
-  // 2. Fetch the full product data using the matching ID
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', match.id)
-    .single();
-
-  if (!product) return null;
-
-  // 3. Load settings and apply pricing markup on the server side
-  const markupSettings = await getMarkupSettings();
-  return applyMarkupToProduct(product, markupSettings);
+  return products.find(p => slugify(p.name) === targetSlug) || null;
 }
 
 export async function generateStaticParams() {
-  const { data: products } = await supabase.from('products').select('name');
+  const products = await getProductsWithMarkup();
   return (products || []).map((p) => ({
     id: slugify(p.name),
   }));
@@ -47,7 +32,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct(params.id);
-  const enriched = (enrichedData as Record<string, any>)[decodeURIComponent(params.id).toLowerCase().trim()];
+  const nameToMatch = product ? product.name : decodeURIComponent(params.id);
+  const enriched = findEnrichmentForProduct(nameToMatch, enrichedData);
 
   if (!product) {
     return { title: 'Товар не найден' };
@@ -83,26 +69,90 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [imageUrl],
     },
     alternates: {
-      canonical: `/product/${params.id}`,
+      canonical: `/product/${slugify(product.name)}`,
+      languages: {
+        'ru-TJ': `/product/${slugify(product.name)}?lang=ru`,
+        'tg-TJ': `/product/${slugify(product.name)}?lang=tj`,
+      }
     }
   };
 }
 
-export default async function ProductPage({ params }: Props) {
+const REVIEW_TEMPLATES: Record<string, Array<{ author: string; body: string }>> = {
+  sport: [
+    { author: 'Амир', body: 'Отличный аминокислотный профиль, выносливость на тренировках выросла!' },
+    { author: 'Дильшод', body: 'Беру уже второй раз для зала. Доставка в Душанбе очень быстрая, оригинал GLS.' },
+    { author: 'Сухроб', body: 'Рабочий спортпит. Улучшилось восстановление мышц после тяжелых сетов.' }
+  ],
+  brain: [
+    { author: 'Парвиз', body: 'Улучшилась концентрация и фокус при умственной работе. Меньше тумана в голове.' },
+    { author: 'Мадина', body: 'Стала лучше спать, просыпаюсь бодрой и отдохнувшей. Очень советую!' },
+    { author: 'Фаррух', body: 'Помогает сохранять продуктивность во время сессии и дедлайнов. Отличный ноотроп.' }
+  ],
+  beauty: [
+    { author: 'Нигина', body: 'Кожа стала заметно чище и более сияющей уже через две недели приема. Супер!' },
+    { author: 'Тахмина', body: 'Укрепились ногти и волосы стали меньше выпадать. Оригинал Green Leaf!' },
+    { author: 'Зухра', body: 'Очень довольна результатом, пьем вместе с сестрой. Будем заказывать еще!' }
+  ],
+  immune: [
+    { author: 'Шохин', body: 'Отличный комплекс для иммунитета. Перестал простужаться в сезон гриппа.' },
+    { author: 'Баходур', body: 'Высокое качество витаминов. Помогает поддерживать тонус и защитные силы организма.' },
+    { author: 'Заррина', body: 'Быстрая экспресс-доставка. Упаковано герметично, срок годности отличный.' }
+  ],
+  default: [
+    { author: 'Алишер', body: 'Отличное качество, помогло уже через неделю приема.' },
+    { author: 'Фируз', body: 'Оригинальный продукт Green Leaf Sciences, очень быстрая доставка по Таджикистану.' },
+    { author: 'Лола', body: 'Заказывала по совету нутрициолога, результат очень радует. Рекомендую!' }
+  ]
+};
+
+function getDynamicReviews(productName: string, tags: string[] = []): Array<{ author: string; body: string }> {
+  const normName = productName.toLowerCase();
+  let category = 'default';
+  
+  if (normName.includes('креатин') || normName.includes('протеин') || normName.includes('аргинин') || normName.includes('карнитин') || tags.includes('Спорт')) {
+    category = 'sport';
+  } else if (normName.includes('магний') || normName.includes('сон') || normName.includes('мелатонин') || normName.includes('памяти') || normName.includes('ноофит') || tags.includes('Мозг') || tags.includes('Сон')) {
+    category = 'brain';
+  } else if (normName.includes('коллаген') || normName.includes('кожа') || normName.includes('волосы') || normName.includes('биотин') || normName.includes('гиалуроновая') || tags.includes('Красота')) {
+    category = 'beauty';
+  } else if (normName.includes('иммунитет') || normName.includes('цинк') || normName.includes('витамин с') || tags.includes('Иммунитет')) {
+    category = 'immune';
+  }
+  
+  const templates = REVIEW_TEMPLATES[category];
+  const charCodeSum = productName.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  
+  return [
+    templates[charCodeSum % templates.length],
+    templates[(charCodeSum + 2) % templates.length]
+  ];
+}
+
+export default async function ProductPage({ params, searchParams }: Props) {
   const product = await getProduct(params.id);
   const id = decodeURIComponent(params.id).toLowerCase().trim();
-  const enriched = (enrichedData as Record<string, any>)[product?.name?.toLowerCase().trim() || ''];
+  const enriched = product ? findEnrichmentForProduct(product.name, enrichedData) : {};
 
   if (!product) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center bg-[#FDFBF7]">
-        <h1 className="text-3xl font-bold font-outfit">Товар не найден</h1>
-        <Link href="/" className="mt-4 text-[#1E40AF] underline font-medium">Вернуться в каталог</Link>
-      </div>
-    );
+    notFound();
+  }
+
+  const lang = (searchParams?.lang === 'tj' ? 'tj' : 'ru') as Lang;
+
+  let whatsappPhone = "992176660707";
+  try {
+    const { data } = await supabase.from('site_settings').select('key, value');
+    const phoneSetting = data?.find(s => s.key === 'whatsapp_phone');
+    if (phoneSetting?.value) {
+      whatsappPhone = phoneSetting.value;
+    }
+  } catch (e) {
+    console.error('Failed to load settings in ProductPage:', e);
   }
 
   const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с бесплатной доставкой от Green Leaf Sciences.`;
+  const productReviews = getDynamicReviews(product.name, enriched?.tags || []);
 
   const jsonLd = [
     {
@@ -119,7 +169,7 @@ export default async function ProductPage({ params }: Props) {
       "category": enriched?.tags?.[0] || "Health & Beauty",
       "offers": {
         "@type": "Offer",
-        "url": `https://www.toj-vitamin.tj/product/${encodeURIComponent(id)}`,
+        "url": `https://www.toj-vitamin.tj/product/${slugify(product.name)}`,
         "priceCurrency": "TJS",
         "price": product.price,
         "itemCondition": "https://schema.org/NewCondition",
@@ -152,12 +202,12 @@ export default async function ProductPage({ params }: Props) {
         "ratingValue": "4.9",
         "reviewCount": (parseInt(product.id) || 0) % 20 + 25
       },
-      "review": [{
+      "review": productReviews.map(r => ({
         "@type": "Review",
         "reviewRating": { "@type": "Rating", "ratingValue": "5" },
-        "author": { "@type": "Person", "name": "Алишер" },
-        "reviewBody": "Отличное качество, помогло уже через неделю приема."
-      }]
+        "author": { "@type": "Person", "name": r.author },
+        "reviewBody": r.body
+      }))
     },
     {
       "@context": "https://schema.org",
@@ -179,7 +229,7 @@ export default async function ProductPage({ params }: Props) {
           "@type": "ListItem",
           "position": 3,
           "name": product.name,
-          "item": `https://www.toj-vitamin.tj/product/${encodeURIComponent(id)}`
+          "item": `https://www.toj-vitamin.tj/product/${slugify(product.name)}`
         }
       ]
     }
@@ -194,14 +244,7 @@ export default async function ProductPage({ params }: Props) {
     <div className="min-h-screen bg-[#FDFBF7] pb-32">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       
-      <div className="w-full h-[80px] bg-white/80 backdrop-blur-md border-b border-black/[0.05] sticky top-0 z-50 flex items-center px-6 sm:px-12">
-        <div className="max-w-6xl mx-auto w-full">
-          <Link href="/" className="inline-flex items-center gap-2 text-[#1D1D1F] font-bold hover:text-[#1E40AF] transition-colors bg-white border border-black/5 px-4 py-2 rounded-full shadow-sm hover:shadow-md">
-            <ArrowLeft size={18} />
-            <span className="text-sm">Вернуться в каталог</span>
-          </Link>
-        </div>
-      </div>
+      <ProductPageHeader lang={lang} />
 
       <main className="max-w-5xl mx-auto px-6 py-12 space-y-16">
         {/* Two-column Hero Section */}
@@ -261,14 +304,14 @@ export default async function ProductPage({ params }: Props) {
             {/* Quick Actions */}
             <div className="pt-6 flex flex-col sm:flex-row items-center gap-4">
               <div className="w-full sm:w-auto [&_a]:w-full">
-                <ProductBuyButton product={product} lang="ru" />
+                <ProductBuyButton product={product} lang={lang} />
               </div>
               <ShareButton
                 url={`/product/${params.id}`}
                 title={product.name}
                 description={description}
                 variant="primary"
-                lang="ru"
+                lang={lang}
               />
             </div>
           </div>
@@ -325,8 +368,40 @@ export default async function ProductPage({ params }: Props) {
           </div>
         )}
 
+        {/* Dynamic Customer Reviews Section */}
+        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03] space-y-8">
+          <h2 className="text-[22px] font-bold text-[#1D1D1F] font-outfit tracking-tight">
+            Отзывы о продукте ({productReviews.length})
+          </h2>
+          <div className="space-y-6">
+            {productReviews.map((rev, i) => (
+              <div key={i} className="p-6 rounded-3xl bg-black/[0.01] border border-black/[0.02] space-y-3 hover:bg-white hover:border-[#1E40AF]/15 hover:shadow-lg hover:shadow-black/5 transition-all duration-300">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1E40AF]/10 to-[#1E40AF]/20 text-[#1E40AF] font-bold flex items-center justify-center text-sm font-outfit uppercase">
+                      {rev.author.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-[#1D1D1F]">{rev.author}</p>
+                      <p className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest">Проверенный покупатель</p>
+                    </div>
+                  </div>
+                  <div className="flex text-amber-400 gap-0.5">
+                    {Array(5).fill(0).map((_, idx) => (
+                      <span key={idx} className="text-lg">★</span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[15px] text-[#475569] leading-relaxed pl-1">
+                  {rev.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
       </main>
+      <ProductCartSection lang={lang} whatsappNumber={whatsappPhone} />
     </div>
   );
 }

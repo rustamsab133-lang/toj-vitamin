@@ -9,6 +9,8 @@ import { Metadata } from 'next';
 import { slugify } from '@/lib/slugify';
 import Link from 'next/link';
 import { MapPin, ShieldCheck, Truck, Clock } from 'lucide-react';
+import { ProductCartSection } from '@/components/ProductCartSection';
+import { Lang } from '@/lib/types';
 
 const CITIES: Record<string, { ru: string; tj: string }> = {
   'dushanbe': { ru: 'Душанбе', tj: 'Душанбе' },
@@ -21,6 +23,7 @@ const CITIES: Record<string, { ru: string; tj: string }> = {
 
 interface Props {
   params: { city: string; slug: string };
+  searchParams?: { lang?: string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -48,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
 
-export default async function PSEOPage({ params }: Props) {
+export default async function PSEOPage({ params, searchParams }: Props) {
   const city = CITIES[params.city.toLowerCase()];
   if (!city) notFound();
 
@@ -60,6 +63,20 @@ export default async function PSEOPage({ params }: Props) {
 
   const markupSettings = await getMarkupSettings();
   const product = applyMarkupToProduct(rawProduct, markupSettings);
+
+  const lang = (searchParams?.lang === 'tj' ? 'tj' : 'ru') as Lang;
+
+  let whatsappPhone = "992176660707";
+  let brandName = "TOJ-VITAMIN";
+  try {
+    const { data } = await supabase.from('site_settings').select('key, value');
+    const phoneSetting = data?.find(s => s.key === 'whatsapp_phone');
+    if (phoneSetting?.value) whatsappPhone = phoneSetting.value;
+    const brandSetting = data?.find(s => s.key === 'brand_name');
+    if (brandSetting?.value) brandName = brandSetting.value;
+  } catch (e) {
+    console.error('Failed to load settings in PSEOPage:', e);
+  }
 
   const jsonLd = {
     "@context": "https://schema.org/",
@@ -108,8 +125,8 @@ export default async function PSEOPage({ params }: Props) {
     <main className="min-h-screen bg-[#FDFBF7] relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <MainBackground />
-      <Header lang="ru" settings={{ brand_name: "TOJ-VITAMIN", whatsapp_phone: "992176660707" }} isImmersiveMode={false} />
-      <SearchOverlay lang="ru" whatsappNumber="992176660707" />
+      <Header lang={lang} settings={{ brand_name: brandName, whatsapp_phone: whatsappPhone }} isImmersiveMode={false} />
+      <SearchOverlay lang={lang} whatsappNumber={whatsappPhone} />
       
       <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto">
         {/* Breadcrumbs */}
@@ -196,9 +213,9 @@ export default async function PSEOPage({ params }: Props) {
            <div className="relative z-10 bg-white/80 backdrop-blur-2xl rounded-[64px] p-12 shadow-2xl border border-black/[0.03]">
               <div className="text-center mb-12">
                 <h2 className="text-[32px] font-bold font-outfit">Заказать {product.name} сейчас</h2>
-                <p className="text-[#64748B]">Выберите дозировку и оформите заказ через WhatsApp</p>
+                <p className="text-[#64748B]">Выберите дозировку и оформите заказ на сайте</p>
               </div>
-              <ProductCatalog lang="ru" whatsappNumber="992176660707" />
+              <ProductCatalog lang={lang} whatsappNumber={whatsappPhone} />
            </div>
         </div>
 
@@ -206,7 +223,7 @@ export default async function PSEOPage({ params }: Props) {
         <div className="max-w-3xl mx-auto space-y-8">
            <h2 className="text-[28px] font-bold text-center font-outfit mb-12">Часто задаваемые вопросы в {city.ru}</h2>
            {[
-             { q: `Как купить ${product.name} в ${city.ru}?`, a: `Вы можете выбрать товар в каталоге выше и нажать кнопку "Заказать в WhatsApp". Наш менеджер в ${city.ru} свяжется с вами для уточнения деталей.` },
+             { q: `Как купить ${product.name} в ${city.ru}?`, a: `Вы можете выбрать товар в каталоге выше и добавить его в корзину для оформления заказа. Наш менеджер в ${city.ru} свяжется с вами для уточнения деталей.` },
              { q: `Есть ли самовывоз в ${city.ru}?`, a: `Да, у нас есть пункт выдачи в центре ${city.ru}. При заказе менеджер сообщит точный адрес.` },
              { q: `Почему цена на ${product.name} в Таджикистане выше, чем на маркетплейсах?`, a: `Мы гарантируем оригинальность продукции Green Leaf Sciences и соблюдение условий хранения, что невозможно проконтролировать у сторонних продавцов.` }
            ].map((faq, i) => (
@@ -217,6 +234,7 @@ export default async function PSEOPage({ params }: Props) {
            ))}
         </div>
       </div>
+      <ProductCartSection lang={lang} whatsappNumber={whatsappPhone} />
     </main>
   );
 }
