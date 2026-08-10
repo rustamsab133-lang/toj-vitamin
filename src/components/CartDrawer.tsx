@@ -642,6 +642,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                     )}
                   </div>
 
+                  {/* Discount details between promocode block and checkout button */}
+                  {appliedPromo && (
+                    <div className="flex items-center justify-between text-[13px] font-bold font-outfit px-1 text-[#64748B] pt-1">
+                      <span>{lang === 'ru' ? 'Скидка по промокоду:' : 'Тахфиф бо промокод:'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="line-through text-slate-400 font-medium">{currentTotal} смн</span>
+                        <span className="text-emerald-600">−{discountAmount} смн</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* CHECKOUT BUTTON */}
                   <button
                     onClick={handleCheckout}
@@ -663,14 +674,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       {!isVerifying && <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />}
                     </div>
                   </button>
-
-                  {/* Crossed-out price if promo active */}
-                  {appliedPromo && (
-                    <p className="text-center text-[11px] text-[#94A3B8] font-bold font-outfit">
-                      <span className="line-through">{currentTotal} смн</span>
-                      <span className="text-emerald-600 ml-1.5">−{discountAmount} смн скидка</span>
-                    </p>
-                  )}
                 </div>
               </div>
             )}
