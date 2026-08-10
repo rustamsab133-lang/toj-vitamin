@@ -23,7 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Local env files
-.env*
+.env*.local
 
 # Vercel
 .vercel
@@ -40,8 +40,3 @@ yarn-error.log*
 # Sensitive credentials & keys
 google-key.json
 *.json.secret
-
-# Scratch & temporary files
-/scratch
-*.txt
-*.bak
