@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { ZONE_THEMES } from '@/lib/theme';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 const QuizEngine = dynamic(() => import('@/components/QuizEngine').then(m => m.QuizEngine), { ssr: false });
 const CartDrawer = dynamic(() => import('@/components/CartDrawer').then(m => m.CartDrawer), { ssr: false });
@@ -252,7 +253,13 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-0 overflow-hidden shadow-sm">
-                    <img src="/logo.webp" alt={settings.brand_name} className="w-full h-full object-contain scale-[3.0]" />
+                    <Image 
+                    src="/logo.webp" 
+                    alt={settings.brand_name} 
+                    width={40} 
+                    height={40} 
+                    className="w-full h-full object-contain scale-[3.0]" 
+                  />
                   </div>
                   <span className="font-bold text-[16px] text-white font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
                 </div>

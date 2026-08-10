@@ -14,9 +14,10 @@ export function UtmTracker() {
 
     if (utmSource || buyIdsParam) {
       if (utmSource) {
-        sessionStorage.setItem('utm_source', utmSource);
-        if (utmMedium) sessionStorage.setItem('utm_medium', utmMedium);
-        if (utmCampaign) sessionStorage.setItem('utm_campaign', utmCampaign);
+        localStorage.setItem('utm_source', utmSource);
+        if (utmMedium) localStorage.setItem('utm_medium', utmMedium);
+        if (utmCampaign) localStorage.setItem('utm_campaign', utmCampaign);
+        localStorage.setItem('utm_saved_at', Date.now().toString());
 
         // Track campaign visit
         import('@/lib/analytics').then(({ trackEvent }) => {

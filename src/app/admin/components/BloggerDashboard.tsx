@@ -21,6 +21,7 @@ interface BloggerProfile {
   promocode: string;
   discount_value: number;
   discount_type: 'percentage' | 'fixed';
+  fixed_fee?: number;
   created_at: string;
 }
 
@@ -41,6 +42,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   const [bloggersList, setBloggersList] = useState<BloggerProfile[]>([]);
   
   // Link generator states
+  const [showLinkGenerator, setShowLinkGenerator] = useState(false);
   const [bloggerNameInput, setBloggerNameInput] = useState('');
   const [utmMediumInput, setUtmMediumInput] = useState('shortlink');
   const [utmCampaignInput, setUtmCampaignInput] = useState('blogger');
@@ -59,6 +61,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   const [newBloggerPromocode, setNewBloggerPromocode] = useState('');
   const [newBloggerDiscountValue, setNewBloggerDiscountValue] = useState('10');
   const [newBloggerDiscountType, setNewBloggerDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [newBloggerFixedFee, setNewBloggerFixedFee] = useState('0');
   const [savingMapping, setSavingMapping] = useState(false);
 
   // Selected Blogger for detail view
@@ -66,7 +69,8 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   
   // Tabs and Period filter
   const [activeTab, setActiveTab] = useState<'bloggers' | 'referrals'>('bloggers');
-  const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days' | 'all'>('7days');
+  const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days' | 'all' | 'custom'>('7days');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   // Attribution mappings computed dynamically from bloggers list
   const mappings = useMemo(() => {
@@ -86,32 +90,57 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   const loadData = async () => {
     setLoading(true);
     try {
-      const [ordersRes, eventsRes, settingsRes, productsRes] = await Promise.all([
+      const [ordersRes, eventsRes, profilesRes, linksRes, productsRes, settingsRes] = await Promise.all([
         adminDbQuery({ action: 'select', table: 'orders', data: { order: { column: 'created_at', ascending: false } } }),
         adminDbQuery({ action: 'select', table: 'analytics_events', data: { order: { column: 'created_at', ascending: false } } }),
-        supabase.from('site_settings').select('*'),
-        supabase.from('products').select('id, name').order('name')
+        adminDbQuery({ action: 'select', table: 'blogger_profiles', data: { order: { column: 'created_at', ascending: false } } }).catch(() => ({ data: null })),
+        adminDbQuery({ action: 'select', table: 'blogger_links', data: { order: { column: 'created_at', ascending: false } } }).catch(() => ({ data: null })),
+        supabase.from('products').select('id, name').order('name'),
+        supabase.from('site_settings').select('*')
       ]);
 
       if (ordersRes.data) setOrders(ordersRes.data);
       if (eventsRes.data) setEvents(eventsRes.data);
       if (productsRes.data) setProducts(productsRes.data);
 
+      let loadedProfiles = false;
+      let loadedLinks = false;
+
+      if (profilesRes.data && profilesRes.data.length > 0) {
+        setBloggersList(profilesRes.data.map((p: any) => ({
+          ...p,
+          promocode: p.promocode_code || ''
+        })));
+        loadedProfiles = true;
+      }
+      if (linksRes.data && linksRes.data.length > 0) {
+        setGeneratedLinksList(linksRes.data.map((l: any) => ({
+          ...l,
+          bloggerName: l.blogger_username,
+          bloggerUsername: l.blogger_username
+        })));
+        loadedLinks = true;
+      }
+
       if (settingsRes.data) {
-        const profilesSetting = settingsRes.data.find(s => s.key === 'blogger_profiles');
-        if (profilesSetting && profilesSetting.value) {
-          try {
-            setBloggersList(JSON.parse(profilesSetting.value));
-          } catch (e) {
-            console.error("Failed to parse blogger profiles JSON:", e);
+        if (!loadedProfiles) {
+          const profilesSetting = settingsRes.data.find(s => s.key === 'blogger_profiles');
+          if (profilesSetting && profilesSetting.value) {
+            try {
+              setBloggersList(JSON.parse(profilesSetting.value));
+            } catch (e) {
+              console.error("Failed to parse blogger profiles JSON:", e);
+            }
           }
         }
-        const linksSetting = settingsRes.data.find(s => s.key === 'blogger_generated_links');
-        if (linksSetting && linksSetting.value) {
-          try {
-            setGeneratedLinksList(JSON.parse(linksSetting.value));
-          } catch (e) {
-            console.error("Failed to parse blogger generated links JSON:", e);
+        if (!loadedLinks) {
+          const linksSetting = settingsRes.data.find(s => s.key === 'blogger_generated_links');
+          if (linksSetting && linksSetting.value) {
+            try {
+              setGeneratedLinksList(JSON.parse(linksSetting.value));
+            } catch (e) {
+              console.error("Failed to parse blogger generated links JSON:", e);
+            }
           }
         }
       }
@@ -124,6 +153,8 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
 
   // Attribution helper function
   const getBloggerForOrder = (order: any) => {
+    if (order.utm_source) return order.utm_source.toLowerCase().trim();
+
     const match = order.operator_notes?.match(/\[UTM:\s*source=([^,\]]+)(?:,\s*medium=([^,\]]+))?(?:,\s*campaign=([^,\]]+))?\]/);
     let utmSource = match ? match[1] : null;
 
@@ -141,21 +172,41 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   // Filter events and orders by selected time period
   const filteredEvents = useMemo(() => {
     if (timePeriod === 'all') return events;
-    const cutoff = new Date();
+    let cutoff = new Date();
     if (timePeriod === 'today') cutoff.setHours(0, 0, 0, 0);
     if (timePeriod === '7days') cutoff.setDate(cutoff.getDate() - 7);
     if (timePeriod === '30days') cutoff.setDate(cutoff.getDate() - 30);
-    return events.filter(e => new Date(e.created_at) >= cutoff);
-  }, [events, timePeriod]);
+    if (timePeriod === 'custom' && dateRange.start) cutoff = new Date(dateRange.start);
+    
+    let endCutoff = new Date();
+    if (timePeriod === 'custom' && dateRange.end) {
+      endCutoff = new Date(dateRange.end);
+      endCutoff.setHours(23, 59, 59, 999);
+    }
+    return events.filter(e => {
+      const d = new Date(e.created_at);
+      return d >= cutoff && d <= endCutoff;
+    });
+  }, [events, timePeriod, dateRange]);
 
   const filteredOrdersForStats = useMemo(() => {
     if (timePeriod === 'all') return orders;
-    const cutoff = new Date();
+    let cutoff = new Date();
     if (timePeriod === 'today') cutoff.setHours(0, 0, 0, 0);
     if (timePeriod === '7days') cutoff.setDate(cutoff.getDate() - 7);
     if (timePeriod === '30days') cutoff.setDate(cutoff.getDate() - 30);
-    return orders.filter(o => new Date(o.created_at) >= cutoff);
-  }, [orders, timePeriod]);
+    if (timePeriod === 'custom' && dateRange.start) cutoff = new Date(dateRange.start);
+    
+    let endCutoff = new Date();
+    if (timePeriod === 'custom' && dateRange.end) {
+      endCutoff = new Date(dateRange.end);
+      endCutoff.setHours(23, 59, 59, 999);
+    }
+    return orders.filter(o => {
+      const d = new Date(o.created_at);
+      return d >= cutoff && d <= endCutoff;
+    });
+  }, [orders, timePeriod, dateRange]);
 
   // Blogger & Campaign Sales Summary (uses period-filtered data)
   const bloggerSummary = useMemo(() => {
@@ -224,12 +275,20 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
       const visitsCount = s.visits || s.ordersCount * 5;
       const conversionRate = visitsCount > 0 ? ((s.ordersCount / visitsCount) * 100).toFixed(1) : '0';
       
+      const bloggerProfile = bloggersList.find(b => b.username.toLowerCase().trim() === s.source);
+      const cost = bloggerProfile ? Number(bloggerProfile.fixed_fee || 0) : 0;
+      const netProfit = s.revenue - s.discountGiven - cost;
+      const roi = cost > 0 ? ((netProfit / cost) * 100).toFixed(1) : (netProfit > 0 ? '100+' : '0');
+      
       return {
         ...s,
-        name: s.source,
+        name: bloggerProfile ? bloggerProfile.name : s.source,
         visits: visitsCount,
         conversion: conversionRate,
-        promoCodes: Array.from(s.promoCodesUsed).join(', ') || 'Нет'
+        promoCodes: Array.from(s.promoCodesUsed).join(', ') || 'Нет',
+        cost,
+        netProfit,
+        roi
       };
     }).sort((a, b) => b.revenue - a.revenue);
   }, [filteredEvents, filteredOrdersForStats, mappings]);
@@ -253,7 +312,10 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
           revenue: stats ? stats.revenue : 0,
           discountGiven: stats ? stats.discountGiven : 0,
           promoCodes: b.promocode || 'Нет',
-          source: b.username
+          source: b.username,
+          cost: Number(b.fixed_fee || 0),
+          netProfit: stats ? (stats.revenue - stats.discountGiven - Number(b.fixed_fee || 0)) : -Number(b.fixed_fee || 0),
+          roi: stats && Number(b.fixed_fee || 0) > 0 ? (((stats.revenue - stats.discountGiven - Number(b.fixed_fee || 0)) / Number(b.fixed_fee || 0)) * 100).toFixed(1) : '0'
         };
       }).sort((a, b) => b.revenue - a.revenue);
     } else {
@@ -266,7 +328,10 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
           username: s.source,
           promocode: 'Нет',
           discount_value: '0',
-          discount_type: 'percentage'
+          discount_type: 'percentage',
+          cost: 0,
+          netProfit: s.revenue - s.discountGiven,
+          roi: '0'
         }));
     }
   }, [bloggerSummary, bloggersList, activeTab]);
@@ -289,6 +354,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
     if (found) return found;
     return bloggerSummary.find(b => b.source.toLowerCase().trim() === selectedBlogger.toLowerCase().trim()) || null;
   }, [selectedBlogger, filteredSummary, bloggerSummary]);
+
 
   // Export to CSV for Excel (UTF-8 BOM + semicolon separator)
   const handleExportCSV = () => {
@@ -443,12 +509,12 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
     try {
       setSavingLinkHistory(true);
       const { error } = await adminDbQuery({
-        action: 'upsert',
-        table: 'site_settings',
+        action: 'insert',
+        table: 'blogger_links',
         data: {
-          key: 'blogger_generated_links',
-          value: JSON.stringify(updatedList),
-          updated_at: new Date().toISOString()
+          blogger_username: bloggerNameInput,
+          url: generatedLink,
+          description: newLinkDescription.trim() || 'Без описания'
         }
       });
 
@@ -473,13 +539,9 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
     const updatedList = generatedLinksList.filter(item => item.id !== id);
     try {
       const { error } = await adminDbQuery({
-        action: 'upsert',
-        table: 'site_settings',
-        data: {
-          key: 'blogger_generated_links',
-          value: JSON.stringify(updatedList),
-          updated_at: new Date().toISOString()
-        }
+        action: 'delete',
+        table: 'blogger_links',
+        id: id
       });
 
       if (!error) {
@@ -529,7 +591,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
       }
     }
 
-    // 2. Save profile to Site Settings
+    // 2. Save profile to new table
     const newProfile: BloggerProfile = {
       id: Date.now().toString(),
       name: newBloggerName.trim(),
@@ -537,29 +599,35 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
       promocode: promocodeClean,
       discount_value: Number(newBloggerDiscountValue || 0),
       discount_type: newBloggerDiscountType,
+      fixed_fee: Number(newBloggerFixedFee || 0),
       created_at: new Date().toISOString()
     };
 
     const updatedList = [...bloggersList, newProfile];
 
     try {
-      const { error } = await adminDbQuery({
-        action: 'upsert',
-        table: 'site_settings',
+      const { error, data } = await adminDbQuery({
+        action: 'insert',
+        table: 'blogger_profiles',
         data: {
-          key: 'blogger_profiles',
-          value: JSON.stringify(updatedList),
-          updated_at: new Date().toISOString()
+          name: newProfile.name,
+          username: newProfile.username,
+          promocode_code: newProfile.promocode,
+          fixed_fee: newProfile.fixed_fee
         }
       });
 
       if (!error) {
-        setBloggersList(updatedList);
+        if (data && data[0]) {
+          newProfile.id = data[0].id;
+        }
+        setBloggersList([...bloggersList, newProfile]);
         setNewBloggerName('');
         setNewBloggerUsername('');
         setNewBloggerPromocode('');
         setNewBloggerDiscountValue('10');
         setNewBloggerDiscountType('percentage');
+        setNewBloggerFixedFee('0');
       } else {
         alert("Не удалось сохранить блогера: " + error.message);
       }
@@ -598,13 +666,9 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
 
     try {
       const { error } = await adminDbQuery({
-        action: 'upsert',
-        table: 'site_settings',
-        data: {
-          key: 'blogger_profiles',
-          value: JSON.stringify(updatedList),
-          updated_at: new Date().toISOString()
-        }
+        action: 'delete',
+        table: 'blogger_profiles',
+        id: id
       });
 
       if (!error) {
@@ -623,6 +687,18 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
     if (!selectedBlogger) return [];
     return orders.filter(o => getBloggerForOrder(o) === selectedBlogger.toLowerCase());
   }, [selectedBlogger, orders, mappings]);
+
+  const topProducts = useMemo(() => {
+    if (!selectedBloggerOrders.length) return [];
+    const counts: Record<string, number> = {};
+    selectedBloggerOrders.forEach(o => {
+      const items = typeof o.items === 'string' ? (()=>{ try{ return JSON.parse(o.items) }catch(e){return []} })() : (Array.isArray(o.items) ? o.items : []);
+      items.forEach((item: any) => {
+        counts[item.name] = (counts[item.name] || 0) + item.quantity;
+      });
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  }, [selectedBloggerOrders]);
 
   return (
     <div className="space-y-8 pb-10">
@@ -681,10 +757,15 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-6">
             
             {/* UTM Link Generator */}
-            <div className="lg:col-span-2 bg-gradient-to-r from-indigo-50/50 to-slate-50 border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="order-2">
+              <button onClick={() => setShowLinkGenerator(!showLinkGenerator)} className="mb-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-xl text-xs font-bold text-indigo-600 transition-colors flex items-center gap-2 border border-indigo-100/50">
+                <Link size={14}/> {showLinkGenerator ? 'Скрыть генератор ссылок' : 'Создать UTM-ссылку (опционально)'}
+              </button>
+              {showLinkGenerator && (
+                <div className="bg-gradient-to-r from-indigo-50/50 to-slate-50 border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
               <div>
                 <h3 className="font-bold text-slate-800 text-[15px] flex items-center gap-2">
                   <Link size={16} className="text-indigo-500" />
@@ -816,10 +897,12 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                   </div>
                 </div>
               )}
+                </div>
+              )}
             </div>
 
             {/* Blogger Profiles Management Card */}
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="order-1 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
               <div>
                 <h3 className="font-bold text-slate-800 text-[15px] flex items-center gap-2">
                   <Percent size={16} className="text-indigo-500" />
@@ -873,6 +956,15 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                     <option value="fixed">TJS Сумма</option>
                   </select>
                 </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Стоимость рекламы (Фикса TJS)"
+                    value={newBloggerFixedFee}
+                    onChange={(e) => setNewBloggerFixedFee(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-indigo-500 outline-none text-xs font-semibold bg-slate-50"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={savingMapping}
@@ -892,7 +984,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                       <div className="flex flex-col gap-0.5">
                         <span className="font-extrabold text-slate-800">{blogger.name}</span>
                         <span className="text-[10px] text-slate-400 font-medium">
-                          UTM: <span className="font-bold text-slate-500">{blogger.username}</span> | Промокод: <span className="font-bold text-indigo-600">{blogger.promocode}</span> (-{blogger.discount_value}{blogger.discount_type === 'percentage' ? '%' : ' смн'})
+                          UTM: <span className="font-bold text-slate-500">{blogger.username}</span> | Промокод: <span className="font-bold text-indigo-600">{blogger.promocode}</span> (-{blogger.discount_value}{blogger.discount_type === 'percentage' ? '%' : ' смн'}) | Фикса: <span className="font-bold text-emerald-600">{blogger.fixed_fee || 0} TJS</span>
                         </span>
                       </div>
                       <button 
@@ -908,69 +1000,6 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
             </div>
           </div>
 
-          {/* Link History Card */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <div>
-              <h3 className="font-bold text-slate-800 text-[15px] flex items-center gap-2">
-                <Link size={16} className="text-indigo-500" />
-                История созданных ссылок ({generatedLinksList.length})
-              </h3>
-              <p className="text-xs text-slate-400">Список ссылок, сгенерированных ранее с описанием и датой</p>
-            </div>
-
-            {generatedLinksList.length === 0 ? (
-              <p className="text-xs text-slate-300 py-6 text-center font-bold">История пуста. Вы еще не сохраняли ссылки.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="py-2.5">Дата</th>
-                      <th className="py-2.5">Блогер</th>
-                      <th className="py-2.5">Описание / Заметка</th>
-                      <th className="py-2.5">Ссылка</th>
-                      <th className="py-2.5 text-right">Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {generatedLinksList.map((item) => (
-                      <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors text-xs">
-                        <td className="py-3 font-semibold text-slate-500 whitespace-nowrap">
-                          {new Date(item.created_at).toLocaleDateString('ru-RU')}
-                        </td>
-                        <td className="py-3 font-bold text-slate-800 whitespace-nowrap">{item.bloggerName}</td>
-                        <td className="py-3 font-medium text-slate-600 max-w-[150px] truncate" title={item.description}>
-                          {item.description}
-                        </td>
-                        <td className="py-3 text-indigo-600 font-bold select-all break-all max-w-[200px] truncate" title={item.link}>
-                          {item.link}
-                        </td>
-                        <td className="py-3 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item.link);
-                                alert("Ссылка скопирована!");
-                              }}
-                              className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold rounded text-[10px] transition-colors"
-                            >
-                              Копировать
-                            </button>
-                            <button
-                              onClick={() => handleDeleteLinkFromHistory(item.id)}
-                              className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                            >
-                              <Trash size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
 
           {/* Table */}
           <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
@@ -1006,18 +1035,39 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                 </div>
 
                 {/* Period Filter */}
-                <div className="relative w-full sm:w-auto">
-                  <select
-                    value={timePeriod}
-                    onChange={(e: any) => setTimePeriod(e.target.value)}
-                    className="w-full sm:w-auto h-9 pl-3 pr-8 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none text-xs font-bold bg-slate-50 cursor-pointer appearance-none"
-                  >
-                    <option value="today">Сегодня</option>
-                    <option value="7days">За 7 дней</option>
-                    <option value="30days">За 30 дней</option>
-                    <option value="all">За всё время</option>
-                  </select>
-                  <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={timePeriod}
+                      onChange={(e: any) => setTimePeriod(e.target.value)}
+                      className="w-full sm:w-auto h-9 pl-3 pr-8 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none text-xs font-bold bg-slate-50 cursor-pointer appearance-none"
+                    >
+                      <option value="today">Сегодня</option>
+                      <option value="7days">За 7 дней</option>
+                      <option value="30days">За 30 дней</option>
+                      <option value="custom">Выбрать период...</option>
+                      <option value="all">За всё время</option>
+                    </select>
+                    <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                  
+                  {timePeriod === 'custom' && (
+                    <div className="flex items-center gap-1">
+                      <input 
+                        type="date" 
+                        value={dateRange.start} 
+                        onChange={e => setDateRange({...dateRange, start: e.target.value})}
+                        className="h-9 px-2 rounded-xl border border-slate-200 outline-none text-[10px] font-bold bg-white"
+                      />
+                      <span className="text-[10px] text-slate-400 font-bold">-</span>
+                      <input 
+                        type="date" 
+                        value={dateRange.end} 
+                        onChange={e => setDateRange({...dateRange, end: e.target.value})}
+                        className="h-9 px-2 rounded-xl border border-slate-200 outline-none text-[10px] font-bold bg-white"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1051,7 +1101,9 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                       <th className="pb-3 text-center">Конверсия</th>
                       <th className="pb-3">Промокоды</th>
                       <th className="pb-3 text-right">Выручка</th>
-                      <th className="pb-3 text-right">Выдано скидок</th>
+                      <th className="pb-3 text-right">Фикса</th>
+                      <th className="pb-3 text-right">Прибыль</th>
+                      <th className="pb-3 text-center">ROI</th>
                       <th className="pb-3 text-center">Действия</th>
                     </tr>
                   </thead>
@@ -1090,8 +1142,14 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                             {blogger.promoCodes}
                           </span>
                         </td>
-                        <td className="py-4 text-right font-extrabold text-slate-800 font-outfit">{blogger.revenue} смн</td>
-                        <td className="py-4 text-right font-bold text-red-500 font-outfit">-{blogger.discountGiven} смн</td>
+                        <td className="py-4 text-right font-extrabold text-slate-800 font-outfit">{blogger.revenue} смн<br/><span className="text-[9px] font-bold text-red-500">-{blogger.discountGiven} смн</span></td>
+                        <td className="py-4 text-right font-bold text-slate-500 font-outfit">{blogger.cost > 0 ? `${blogger.cost} смн` : '-'}</td>
+                        <td className="py-4 text-right font-extrabold text-slate-800 font-outfit">{blogger.netProfit} смн</td>
+                        <td className="py-4 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-outfit ${Number(blogger.roi) > 0 || blogger.roi === '100+' ? 'bg-emerald-500/10 text-emerald-600' : (blogger.cost > 0 ? 'bg-red-500/10 text-red-600' : 'bg-slate-100 text-slate-500')}`}>
+                            {blogger.cost > 0 ? `${blogger.roi}%` : '-'}
+                          </span>
+                        </td>
                         <td className="py-4 text-center">
                           <button
                             onClick={() => setSelectedBlogger(blogger.source)}
@@ -1201,6 +1259,46 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                 </div>
               )}
 
+              {/* Top Products */}
+              {topProducts.length > 0 && (
+                <div className="mb-6 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm space-y-3">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Топ-3 продаваемых товара</h4>
+                  <div className="space-y-2">
+                    {topProducts.map((prod, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-700">{idx + 1}. {prod[0]}</span>
+                        <span className="font-bold text-indigo-600">{prod[1]} шт</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Link History */}
+              <div className="mb-6">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">История ссылок блогера</h4>
+                <div className="space-y-2 max-h-[200px] overflow-y-auto no-scrollbar">
+                  {generatedLinksList.filter(l => l.bloggerUsername.toLowerCase() === selectedBlogger.toLowerCase()).map(item => (
+                    <div key={item.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-1 text-xs">
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-slate-800">{item.description}</span>
+                        <span className="text-[10px] text-slate-400">{new Date(item.created_at).toLocaleDateString('ru-RU')}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-indigo-600 font-semibold truncate max-w-[200px]" title={item.link}>{item.link}</span>
+                        <div className="flex gap-2">
+                          <button onClick={() => { navigator.clipboard.writeText(item.link); alert("Скопировано!"); }} className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded font-bold hover:bg-indigo-200">Копия</button>
+                          <button onClick={() => handleDeleteLinkFromHistory(item.id)} className="text-[10px] text-slate-400 hover:text-red-500 px-2 py-0.5 font-bold"><Trash size={12} /></button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {generatedLinksList.filter(l => l.bloggerUsername.toLowerCase() === selectedBlogger.toLowerCase()).length === 0 && (
+                     <p className="text-xs text-slate-400 text-center py-4">Нет сохраненных ссылок</p>
+                  )}
+                </div>
+              </div>
+
               {/* Orders List */}
               <div className="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
                 {selectedBloggerOrders.length === 0 ? (
@@ -1225,7 +1323,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
 
                       {/* Items */}
                       <div className="text-xs text-slate-600 space-y-1 bg-white p-3 rounded-xl border border-slate-100/50">
-                        {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
+                        {(typeof order.items === 'string' ? (()=>{ try{ return JSON.parse(order.items) }catch(e){return []} })() : (Array.isArray(order.items) ? order.items : [])).map((item: any, idx: number) => (
                           <div key={idx} className="flex justify-between">
                             <span className="font-semibold">{item.name}</span>
                             <span className="font-bold text-slate-500">x{item.quantity}</span>

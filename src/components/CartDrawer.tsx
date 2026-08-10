@@ -76,14 +76,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
   // Auto-apply promo code from UTM/Referral blogger session
   useEffect(() => {
     if (isOpen && !appliedPromo && typeof window !== 'undefined') {
-      const utmSource = sessionStorage.getItem('utm_source');
-      if (utmSource) {
-        const autoApplyBloggerPromo = async () => {
+      import('@/lib/analytics').then(({ getValidUtmParams }) => {
+        const utms = getValidUtmParams();
+        if (utms && utms.utm_source) {
+          const autoApplyBloggerPromo = async () => {
           try {
             const response = await fetch('/api/promo', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'get_by_blogger', username: utmSource.trim() })
+              body: JSON.stringify({ action: 'get_by_blogger', username: utms.utm_source.trim() })
             });
             const result = await response.json();
             if (response.ok && result.found && result.promocode) {
@@ -96,6 +97,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
         };
         autoApplyBloggerPromo();
       }
+      });
     }
   }, [isOpen, appliedPromo]);
 
@@ -276,14 +278,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
       const verifiedDiscountedTotal = Math.max(verifiedTotal - verifiedDiscount, 0);
 
-      // Get UTM tags from sessionStorage
-      const utmSource = typeof window !== 'undefined' ? sessionStorage.getItem('utm_source') : null;
-      const utmMedium = typeof window !== 'undefined' ? sessionStorage.getItem('utm_medium') : null;
-      const utmCampaign = typeof window !== 'undefined' ? sessionStorage.getItem('utm_campaign') : null;
+      // Get UTM tags from localStorage via analytics helper
+      const { getValidUtmParams } = await import('@/lib/analytics');
+      const utms = getValidUtmParams();
       
       let utmNotes = '';
-      if (utmSource) {
-        utmNotes = `[UTM: source=${utmSource}${utmMedium ? `, medium=${utmMedium}` : ''}${utmCampaign ? `, campaign=${utmCampaign}` : ''}]`;
+      if (utms && utms.utm_source) {
+        utmNotes = `[UTM: source=${utms.utm_source}${utms.utm_medium ? `, medium=${utms.utm_medium}` : ''}${utms.utm_campaign ? `, campaign=${utms.utm_campaign}` : ''}]`;
       }
 
       // Save order in database!
@@ -298,7 +299,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
           discount: verifiedDiscount,
           original_total: verifiedTotal,
           client_id: client?.id || null,
-          operator_notes: utmNotes || null
+          operator_notes: utmNotes || null,
+          utm_source: utms?.utm_source || null,
+          utm_medium: utms?.utm_medium || null,
+          utm_campaign: utms?.utm_campaign || null
         })
         .select('id')
         .single();

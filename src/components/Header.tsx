@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useClient } from '@/store/useClient';
 import { useCart } from '@/store/useCart';
 import { ClientCabinetModal } from './ClientCabinetModal';
+import Image from 'next/image';
 
 interface HeaderProps {
   lang: Lang;
@@ -130,7 +131,14 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                >
                   <div className="w-12 h-12 md:w-13 md:h-13 rounded-2xl bg-white shadow-sm border border-black/[0.03] flex items-center justify-center p-0 transition-all group-hover:scale-110 group-active:scale-95 duration-500 overflow-hidden shrink-0">
-                    <img src="/logo.webp" alt={`${settings.brand_name} Logo`} className="w-full h-full object-contain scale-[3.4]" />
+                    <Image 
+                      src="/logo.webp" 
+                      alt={`${settings.brand_name} Logo`} 
+                      width={52} 
+                      height={52} 
+                      className="w-full h-full object-contain scale-[3.4]" 
+                      priority
+                    />
                   </div>
                  <div className="flex flex-col gap-0">
                    <span className="text-[18px] md:text-[20px] font-bold tracking-tight text-[#1D1D1F] font-outfit leading-tight">

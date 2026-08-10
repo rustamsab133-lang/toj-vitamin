@@ -14,22 +14,48 @@ interface TrackEventParams {
 /**
  * CLIENT-SIDE TRACKING
  */
+
+export const getValidUtmParams = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const savedAtStr = localStorage.getItem('utm_saved_at');
+    if (savedAtStr) {
+      const savedAt = parseInt(savedAtStr, 10);
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+      if (Date.now() - savedAt > thirtyDaysMs) {
+        // Expired
+        localStorage.removeItem('utm_source');
+        localStorage.removeItem('utm_medium');
+        localStorage.removeItem('utm_campaign');
+        localStorage.removeItem('utm_saved_at');
+        return null;
+      }
+    }
+
+    const utmSource = localStorage.getItem('utm_source');
+    if (utmSource) {
+      return {
+        utm_source: utmSource,
+        utm_medium: localStorage.getItem('utm_medium'),
+        utm_campaign: localStorage.getItem('utm_campaign'),
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to read UTM parameters from localStorage', e);
+  }
+  return null;
+};
+
 export const trackEvent = async ({ event_name, data = {} }: TrackEventParams) => {
   if (typeof window === 'undefined') return;
 
-  // Automatically enrich event data with UTM parameters from sessionStorage
+  // Automatically enrich event data with UTM parameters from localStorage
   let enrichedData = { ...data };
-  try {
-    const utmSource = sessionStorage.getItem('utm_source');
-    if (utmSource) {
-      enrichedData.utm_source = utmSource;
-      const utmMedium = sessionStorage.getItem('utm_medium');
-      if (utmMedium) enrichedData.utm_medium = utmMedium;
-      const utmCampaign = sessionStorage.getItem('utm_campaign');
-      if (utmCampaign) enrichedData.utm_campaign = utmCampaign;
-    }
-  } catch (e) {
-    console.warn('Failed to read UTM parameters from sessionStorage', e);
+  const utms = getValidUtmParams();
+  if (utms) {
+    enrichedData.utm_source = utms.utm_source;
+    if (utms.utm_medium) enrichedData.utm_medium = utms.utm_medium;
+    if (utms.utm_campaign) enrichedData.utm_campaign = utms.utm_campaign;
   }
 
   // 1. Google Analytics 4

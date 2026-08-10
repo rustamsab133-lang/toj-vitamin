@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export const SplashScreen: React.FC = () => {
   return (
@@ -31,7 +32,14 @@ export const SplashScreen: React.FC = () => {
           {/* THE REAL LOGO IMAGE - LARGE & PRESTIGIOUS */}
           <div className="w-32 h-32 mb-8 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border border-[#E5E5EA]/50 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img src="/logo.webp" alt="TOJ-VITAMIN Brand Logo" className="w-full h-full object-contain scale-[1.8] relative z-10" />
+            <Image 
+              src="/logo.webp" 
+              alt="TOJ-VITAMIN Brand Logo" 
+              width={128} 
+              height={128} 
+              className="w-full h-full object-contain scale-[1.8] relative z-10" 
+              priority
+            />
           </div>
 
           <div className="relative">
