@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Wind,
   Activity,
-  ArrowRight
+  ArrowRight,
+  Plus
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
 import { useCart } from '@/store/useCart';
@@ -340,58 +341,63 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                               {product.name}
                             </h3>
 
-                            <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">
-                              {/* Standard View: Price & Clinical Info */}
-                              <div className="absolute inset-0 flex items-center justify-between gap-3 transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0">
-                                <div className="flex flex-col gap-0.5">
-                                  <div className="flex items-center gap-1.5 mb-1">
-                                     <ShieldCheck size={10} className="text-[#1E40AF]" />
-                                     <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em]">
-                                       {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
-                                     </span>
-                                  </div>
-                                  <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
-                                    {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    const { trackEvent } = await import('@/lib/analytics');
-                                    await trackEvent({
-                                      event_name: 'add_to_cart',
-                                      data: {
-                                        product_id: product.id,
-                                        product_name: product.name,
-                                        price: product.price
-                                      }
-                                    });
-                                    addItem(product);
-                                    triggerAnimation();
-                                    setIsOpen(true);
-                                  }}
-                                  className="h-10 w-10 rounded-full bg-[#1E40AF] text-white flex items-center justify-center shadow-lg hover:bg-black transition-all active:scale-90 shrink-0 pointer-events-auto interactive-child"
-                                  title={lang === 'ru' ? 'Купить' : 'Харид'}
-                                >
-                                  <ShoppingBag size={17} />
-                                </button>
-                              </div>
-
-                              {/* Hover View: Add to Cart Button */}
-                              <div className="absolute inset-0 flex items-center justify-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1]">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedProduct(product);
-                                    }}
-                                    className="w-full h-12 bg-[#1D1D1F] text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-[#1E40AF] active:scale-95 transition-all duration-300"
-                                  >
-                                    <ArrowRight size={16} />
-                                    <span className="text-[14px]">{lang === 'ru' ? 'Подробнее' : 'Маълумоти бештар'}</span>
-                                  </button>
-                              </div>
-                            </div>
+                             <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">
+                               {/* Standard View: Price & Clinical Info */}
+                               <div className="absolute inset-y-0 left-0 right-12 flex items-center transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0 pr-2">
+                                 <div className="flex flex-col gap-0.5">
+                                   <div className="flex items-center gap-1.5 mb-1">
+                                      <ShieldCheck size={10} className="text-[#1E40AF]" />
+                                      <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em] whitespace-nowrap">
+                                        {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
+                                      </span>
+                                   </div>
+                                   <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
+                                     {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
+                                   </p>
+                                 </div>
+                               </div>
+ 
+                               {/* Hover View: Details Button */}
+                               <div className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2">
+                                   <button
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       e.preventDefault();
+                                       setSelectedProduct(product);
+                                     }}
+                                     className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-auto interactive-child text-[11px] uppercase tracking-[0.15em]"
+                                   >
+                                     <ArrowRight size={14} />
+                                     <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
+                                   </button>
+                               </div>
+ 
+                               {/* Direct Buy Button (Always visible on the right) */}
+                               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center">
+                                 <button
+                                   onClick={async (e) => {
+                                     e.stopPropagation();
+                                     e.preventDefault();
+                                     const { trackEvent } = await import('@/lib/analytics');
+                                     await trackEvent({
+                                       event_name: 'add_to_cart',
+                                       data: {
+                                         product_id: product.id,
+                                         product_name: product.name,
+                                         price: product.price
+                                       }
+                                     });
+                                     addItem(product);
+                                     triggerAnimation();
+                                     setIsOpen(true);
+                                   }}
+                                   className="h-10 w-10 rounded-full bg-[#1E40AF] text-white flex items-center justify-center shadow-lg hover:bg-black transition-all active:scale-90 shrink-0 pointer-events-auto interactive-child"
+                                   title={lang === 'ru' ? 'Купить' : 'Харид'}
+                                 >
+                                   <Plus size={18} />
+                                 </button>
+                               </div>
+                             </div>
                           </div>
                         </div>
                       </motion.a>
