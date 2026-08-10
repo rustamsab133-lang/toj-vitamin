@@ -14,6 +14,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseRoutes = [
     '',
     '/journal',
+    '/opt',
+    '/b2b',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
@@ -74,7 +76,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Programmatic City routes (pSEO)
-  const cities = ['dushanbe', 'khujand', 'kulob', 'bokhtar', 'vakhdat', 'hissar'];
+  let cities = ['dushanbe', 'khujand', 'kulob', 'bokhtar', 'vakhdat', 'hissar'];
+  try {
+    const { data: citiesSetting } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'pseo_cities')
+      .single();
+    if (citiesSetting && citiesSetting.value) {
+      cities = citiesSetting.value.split(',').map((c: string) => c.trim().toLowerCase()).filter(Boolean);
+    }
+  } catch (e) {
+    console.warn('Failed to load dynamic cities for sitemap, using fallback.', e);
+  }
+
   const cityRoutes: any[] = [];
   
   cities.forEach(city => {

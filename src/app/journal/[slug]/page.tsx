@@ -17,11 +17,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!article) return { title: 'Статья не найдена' };
 
+  const cleanSlug = params.slug.toLowerCase().trim();
+
   return {
     title: `${article.title_ru} | Научный Журнал`,
     description: article.excerpt_ru,
     openGraph: {
       images: article.image_url ? [article.image_url] : [],
+    },
+    alternates: {
+      canonical: `https://www.toj-vitamin.tj/journal/${cleanSlug}`,
+      languages: {
+        'ru-TJ': `https://www.toj-vitamin.tj/journal/${cleanSlug}?lang=ru`,
+        'tg-TJ': `https://www.toj-vitamin.tj/journal/${cleanSlug}?lang=tj`,
+      }
     }
   };
 }

@@ -2,12 +2,14 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { UtmTracker } from "@/components/UtmTracker";
 
 export const viewport: Viewport = {
   themeColor: '#FDFBF7',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 const inter = Inter({ 
@@ -100,6 +102,27 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${outfit.variable}`}>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Блокировка pinch-to-zoom
+              document.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                  e.preventDefault();
+                }
+              }, { passive: false });
+
+              // Блокировка жестов масштабирования в iOS Safari
+              document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+              }, { passive: false });
+              
+              document.addEventListener('gesturechange', function(e) {
+                e.preventDefault();
+              }, { passive: false });
+            `
+          }}
+        />
         <Script
           strategy="afterInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-4FRDH17FRC'}`}
@@ -248,6 +271,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#FDFBF7] antialiased font-sans">
+        <UtmTracker />
         <div className="w-full min-h-screen overflow-x-hidden flex flex-col">
           {children}
         </div>

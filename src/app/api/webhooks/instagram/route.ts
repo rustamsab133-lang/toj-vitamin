@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
+import { getRelevantProducts } from '@/lib/agents/vectorSearch';
 
 // Инициализация Supabase с использованием service_role ключа для обхода Row Level Security (RLS)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -136,6 +137,32 @@ async function sendInstagramImage(recipientId: string, imageUrl: string) {
   }
 }
 
+// Функция для отправки изображений рекомендованных продуктов по их точным ID из базы
+async function sendRecommendedProductPhotos(recipientId: string, productIds: string[]) {
+  if (!productIds || productIds.length === 0) return;
+  try {
+    const { data: dbProducts } = await supabase
+      .from('products')
+      .select('name, image_url')
+      .in('id', productIds);
+
+    if (dbProducts && dbProducts.length > 0) {
+      // Ограничиваемся первыми 3 для предотвращения спама в ЛС
+      const limitList = dbProducts.slice(0, 3);
+      for (const prod of limitList) {
+        if (prod.image_url) {
+          console.log(`📸 Отправка фото по ID в Instagram Direct: "${prod.name}" -> ${prod.image_url}`);
+          await sendInstagramImage(recipientId, prod.image_url);
+          // Небольшая задержка 600 мс между картинками для соблюдения порядка
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Ошибка отправки фото рекомендуемых продуктов:', error);
+  }
+}
+
 // Функция для автоматического сопоставления названий товаров в ответе ИИ и отправки их фото
 async function detectAndSendProductPhotos(recipientId: string, aiReplyText: string, userMessageText?: string) {
   try {
@@ -246,15 +273,9 @@ async function detectAndSendProductPhotos(recipientId: string, aiReplyText: stri
   }
 }
 
-// Функция для сборки компактного каталога со свойствами и синергиями (RAG)
-async function loadEnrichedCatalog(): Promise<string> {
+// Функция для форматирования компактного каталога со свойствами и синергиями (RAG)
+async function formatEnrichedCatalogProducts(dbProducts: any[]): Promise<string> {
   try {
-    // 1. Получаем активные товары из Supabase
-    const { data: dbProducts } = await supabase
-      .from('products')
-      .select('*')
-      .order('id');
-    
     if (!dbProducts || dbProducts.length === 0) return 'Каталог пуст.';
 
     // 2. Получаем данные обогащения из Supabase site_settings
@@ -290,7 +311,6 @@ async function loadEnrichedCatalog(): Promise<string> {
 
     // 4. Формируем сверхкомпактное текстовое описание каталога для контекста ИИ
     const catalogString = dbProducts
-      .filter((p: any) => p.price > 0 && !p.name.includes('[УДАЛЕН]'))
       .map((p: any) => {
         const enrich = findEnrichmentForProduct(p.name, enrichedData);
         const props = enrich.properties ? enrich.properties.join(', ') : 'Общее оздоровление';
@@ -300,7 +320,7 @@ async function loadEnrichedCatalog(): Promise<string> {
         // Apply pricing markup dynamically so AI directs clients to the marked up retail price
         const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
 
-        return `- ${p.name} (${p.full_name}): Цена: ${markedPrice} сомони. Свойства: [${props}]. Теги: [${tags}]. Синергия: [${synergies}]`;
+        return `- [ID: ${p.id}] ${p.name} (${p.full_name}): Цена: ${markedPrice} сомони. Свойства: [${props}]. Теги: [${tags}]. Синергия: [${synergies}]`;
       })
       .join('\n');
 
@@ -312,7 +332,7 @@ async function loadEnrichedCatalog(): Promise<string> {
 }
 
 // Генерация умного ответа через Gemini с инъекцией динамического каталога и промптов
-async function generateAIResponse(senderId: string, userMessage: string, chat: any): Promise<string | null> {
+async function generateAIResponse(senderId: string, userMessage: string, chat: any): Promise<{ reply: string; recommendedProductIds: string[] } | null> {
   try {
     // 1. Считываем настройки ИИ
     const { data: settingsData } = await supabase.from('site_settings').select('key, value');
@@ -347,8 +367,11 @@ async function generateAIResponse(senderId: string, userMessage: string, chat: a
     const { data: goldenExamples } = await supabase.from('agent_golden_examples').select('*').limit(3);
     const goldenText = goldenExamples?.map((g: any) => `Пример запроса клиента: "${g.user_query}"\nИдеальный ответ бота: "${g.ideal_response}"`).join('\n\n') || '';
 
-    // 5. Собираем каталог
-    const catalog = await loadEnrichedCatalog();
+    // 5. Собираем каталог на основе векторного семантического поиска
+    const { data: dbProducts } = await supabase.from('products').select('*');
+    const activeProducts = dbProducts ? dbProducts.filter((p: any) => p.price > 0 && !p.name.includes('[УДАЛЕН]')) : [];
+    const relevantProducts = await getRelevantProducts(userMessage, activeProducts, 10);
+    const catalog = await formatEnrichedCatalogProducts(relevantProducts);
     
     // 6. Инструкции по языку общения
     let langInstruction = '';
@@ -360,6 +383,26 @@ async function generateAIResponse(senderId: string, userMessage: string, chat: a
       // Авто-определение под язык запроса пользователя
       langInstruction = 'ВНИМАНИЕ: Определи язык последнего сообщения клиента. Если клиент написал на таджикском языке (или на таджикском с использованием латиницы/кириллицы), ты обязан отвечать СТРОГО на таджикском языке. Если клиент написал на русском языке, ты обязан отвечать СТРОГО на русском языке. Твой язык ответа должен ВСЕГДА на 100% совпадать с языком последнего вопроса клиента.';
     }
+
+    const jsonInstruction = `
+ПРАВИЛА ОФОРМЛЕНИЯ ЗАКАЗА И ПОВЕДЕНИЯ:
+1. Если клиент хочет совершить покупку (например: "хочу купить", "оформи заказ", "возьму это"), но ЕЩЕ не написал свой номер телефона, ты ОБЯЗАН вежливо попросить его написать телефон. Например: "Я с радостью оформлю для вас заказ прямо здесь! Напишите, пожалуйста, ваш номер телефона". В этом случае НЕ заполняй поле "create_order".
+2. Если у тебя есть телефон клиента И клиент хочет заказать обсуждаемые товары, ты ОБЯЗАН заполнить поле "create_order" в JSON.
+3. Товары для поля "create_order" бери из обсуждаемых товаров каталога (точные id и цены).
+
+ФОРМАТ ОТВЕТА:
+Ты обязан вернуть ответ СТРОГО в виде JSON-объекта со следующей структурой:
+{
+  "reply": "Твой ответ клиенту на его языке (таджикском или русском) длиной 2-4 предложения (максимум 60 слов). Вежливо расскажи клиенту, что ты оформляешь его заказ, или задай уточняющий вопрос.",
+  "recommended_product_ids": ["список ID рекомендованных продуктов, выбранных из предоставленного выше каталога"],
+  "create_order": {
+    "phone": "номер телефона клиента (только если он есть в переписке)",
+    "items": [
+      { "id": "ID товара", "name": "Название товара", "price": цена_числом, "quantity": количество }
+    ]
+  } // Поле "create_order" добавляется ТОЛЬКО когда заказ реально оформляется (есть телефон И согласие). В остальных случаях этого поля НЕ должно быть (или установи в null).
+}
+Убедись, что JSON в поле ответа валидный и не содержит Markdown-разметки (не оборачивай его в \`\`\`json).`;
 
     // 7. Формируем финальный промпт
     const basePromptText = selectedPrompt ? selectedPrompt.prompt_text : fallbackPromptText;
@@ -377,12 +420,74 @@ ${goldenText ? 'ОБЯЗАТЕЛЬНЫЕ ПРИМЕРЫ СТИЛЯ И ОТВЕТ
 ${historyText}
 
 Клиент: "${userMessage}"
+
+${jsonInstruction}
 Бот:`;
 
     // 8. Генерация
     const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); 
-    const result = await model.generateContent(fullPrompt);
-    const reply = result.response.text().trim();
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json'
+      }
+    });
+    
+    const responseText = result.response.text().trim();
+    let reply = '';
+    let recommendedProductIds: string[] = [];
+    let createOrderData: any = null;
+
+    try {
+      const parsed = JSON.parse(responseText);
+      reply = parsed.reply || '';
+      recommendedProductIds = parsed.recommended_product_ids || [];
+      createOrderData = parsed.create_order;
+    } catch (e) {
+      console.error("❌ Ошибка парсинга JSON ответа Gemini в Instagram webhook:", e, responseText);
+      reply = responseText;
+    }
+
+    // Если ИИ решил создать заказ
+    if (createOrderData && createOrderData.phone && createOrderData.items && createOrderData.items.length > 0) {
+      try {
+        // Вычисляем сумму
+        const total = createOrderData.items.reduce((acc: number, item: any) => {
+          return acc + (Number(item.price) || 0) * (Number(item.quantity) || 1);
+        }, 0);
+
+        // Вставляем заказ в Supabase
+        const { data: newOrder, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            items: createOrderData.items.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              price: Number(item.price) || 0,
+              quantity: Number(item.quantity) || 1
+            })),
+            total,
+            status: 'new',
+            phone: String(createOrderData.phone).trim(),
+            channel: 'instagram',
+            operator_notes: 'Создано ИИ-консультантом в Instagram Direct'
+          })
+          .select('id')
+          .single();
+
+        if (orderError) {
+          console.error('❌ Ошибка базы данных при создании заказа через ИИ в Instagram:', orderError);
+        } else if (newOrder) {
+          console.log(`✅ Заказ №${newOrder.id} успешно создан через ИИ в Instagram!`);
+          const orderConfirmText = chatLang === 'tj' 
+            ? `\n\n✅ Закази шумо қабул шуд! Рақами фармоиш: №${newOrder.id}`
+            : `\n\n✅ Ваш заказ оформлен! Номер заказа: №${newOrder.id}`;
+          reply += orderConfirmText;
+        }
+      } catch (orderErr) {
+        console.error('❌ Ошибка при формировании заказа через ИИ в Instagram:', orderErr);
+      }
+    }
 
     // 9. Логирование ответа бота
     if (chat) {
@@ -392,10 +497,13 @@ ${historyText}
       await supabase.from('agent_chats').update({ updated_at: new Date().toISOString() }).eq('id', chat.id);
     }
 
-    return reply;
+    return { reply, recommendedProductIds };
   } catch (error) {
     console.error("❌ Ошибка Gemini API в Direct:", error);
-    return "К сожалению, система сейчас перегружена. Пожалуйста, напишите нам чуть позже, и наш специалист обязательно вас проконсультирует!";
+    return {
+      reply: "К сожалению, система сейчас перегружена. Пожалуйста, напишите нам чуть позже, и наш специалист обязательно вас проконсультирует!",
+      recommendedProductIds: []
+    };
   }
 }
 
@@ -474,13 +582,18 @@ async function processWebhookInBackground(body: any) {
             }
 
             // Шаг 2: Думаем с помощью Gemini
-            const aiReply = await generateAIResponse(senderId, text, chat);
+            const aiResponse = await generateAIResponse(senderId, text, chat);
             
             // Шаг 3: Отвечаем клиенту в Директ
-            if (aiReply) {
-              await sendInstagramMessage(senderId, aiReply);
-              // Авто-сопоставление по тексту: отправляем фото продуктов
-              await detectAndSendProductPhotos(senderId, aiReply, text);
+            if (aiResponse && aiResponse.reply) {
+              await sendInstagramMessage(senderId, aiResponse.reply);
+              // Отправляем фото продуктов на основе структурированных ID
+              if (aiResponse.recommendedProductIds && aiResponse.recommendedProductIds.length > 0) {
+                await sendRecommendedProductPhotos(senderId, aiResponse.recommendedProductIds);
+              } else {
+                // Фоллбек на старый метод, если массив ID пуст
+                await detectAndSendProductPhotos(senderId, aiResponse.reply, text);
+              }
             } else {
               console.log('🔇 Агент отключен или не вернул ответ, сообщение проигнорировано.');
             }

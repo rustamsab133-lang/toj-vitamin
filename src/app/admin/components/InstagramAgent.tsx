@@ -99,6 +99,11 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
 
   const [agentActive, setAgentActive] = useState(true);
   const [agentChatLang, setAgentChatLang] = useState('auto');
+  const [instagramAccountId, setInstagramAccountId] = useState('');
+  const [instagramAccessToken, setInstagramAccessToken] = useState('');
+  const [instagramProfile, setInstagramProfile] = useState<{ username: string; name: string; profilePictureUrl: string } | null>(null);
+  const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
   
   const [autoPostSchedule, setAutoPostSchedule] = useState('off');
   const [autoBannerStyle, setAutoBannerStyle] = useState('auto');
@@ -158,6 +163,8 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
       setAgentChatLang(getSetting('instagram_agent_chat_lang', 'auto'));
       setAutoPostSchedule(getSetting('instagram_autopost_schedule', 'off'));
       setAutoBannerStyle(getSetting('instagram_auto_banner_style', 'auto'));
+      setInstagramAccountId(getSetting('instagram_business_account_id', ''));
+      setInstagramAccessToken(getSetting('instagram_access_token', ''));
       
       try {
         const topicsJson = getSetting('instagram_autopost_topics', '[]');
@@ -200,11 +207,65 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
       const { data: chatsData } = await supabase.from('agent_chats').select('*').order('updated_at', { ascending: false }).limit(20);
       if (chatsData) setRecentChats(chatsData);
 
+      // 6. Загрузка данных активного профиля Instagram
+      const id = getSetting('instagram_business_account_id', '');
+      const token = getSetting('instagram_access_token', '');
+      if (id && token) {
+        try {
+          const profileRes = await fetch('/api/instagram/profile');
+          const profileData = await profileRes.json();
+          if (profileData.success) {
+            setInstagramProfile(profileData.profile);
+          } else {
+            setConnectionError(profileData.error || 'Соединение не установлено.');
+          }
+        } catch (e) {
+          console.error('Instagram connection check failed:', e);
+        }
+      }
+
     } catch (err) {
       console.error('Ошибка при загрузке настроек ИИ:', err);
     } finally {
       setIsLoadingSettings(false);
       setIsLoadingKnowledge(false);
+    }
+  };
+
+  // Ручная проверка подключения к Meta Graph API
+  const handleCheckConnection = async () => {
+    if (!instagramAccountId || !instagramAccessToken) {
+      alert('Пожалуйста, введите ID аккаунта и токен доступа.');
+      return;
+    }
+    setIsCheckingConnection(true);
+    setConnectionError('');
+    setInstagramProfile(null);
+    try {
+      const response = await fetch('/api/instagram/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instagramAccountId,
+          instagramAccessToken
+        })
+      });
+      const data = await response.json();
+      if (data.success && data.profile) {
+        setInstagramProfile(data.profile);
+        alert(`🔌 Соединение установлено!\nАккаунт: @${data.profile.username} (${data.profile.name})`);
+      } else {
+        const errMsg = data.error || 'Ошибка проверки соединения.';
+        setConnectionError(errMsg);
+        alert(`❌ Ошибка проверки токенов Meta API:\n${errMsg}`);
+      }
+    } catch (err: any) {
+      console.error('Check connection error:', err);
+      const errMsg = err.message || 'Ошибка сети.';
+      setConnectionError(errMsg);
+      alert(`❌ Ошибка сети: ${errMsg}`);
+    } finally {
+      setIsCheckingConnection(false);
     }
   };
 
@@ -216,9 +277,11 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
     const payload = [
       { key: 'instagram_agent_active', value: String(agentActive) },
       { key: 'instagram_agent_chat_lang', value: agentChatLang },
-            { key: 'instagram_auto_post_schedule', value: autoPostSchedule },
+      { key: 'instagram_autopost_schedule', value: autoPostSchedule },
       { key: 'instagram_auto_banner_style', value: autoBannerStyle },
-      { key: 'instagram_auto_post_topics', value: JSON.stringify(autoPostTopics) }
+      { key: 'instagram_autopost_topics', value: JSON.stringify(autoPostTopics) },
+      { key: 'instagram_business_account_id', value: instagramAccountId },
+      { key: 'instagram_access_token', value: instagramAccessToken }
     ];
 
     try {
@@ -390,6 +453,32 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
     setBannerConfig(newConfig);
   };
 
+  const handleRegenerate = async () => {
+    if (!bannerConfig.imagePrompt || bannerConfig.products.length === 0) {
+      alert('Пожалуйста, выберите продукты и введите промпт для генерации баннера.');
+      return;
+    }
+    setIsAgentLoading(true);
+    try {
+      const response = await fetch('/api/agents/instagram/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bannerConfig),
+      });
+      const data = await response.json();
+      if (data.success && data.bannerUrl) {
+        setBannerUrl(data.bannerUrl);
+      } else {
+        alert(data.error || 'Ошибка ИИ-генерации баннера');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка соединения с сервером');
+    } finally {
+      setIsAgentLoading(false);
+    }
+  };
+
   const handleCopyCaption = () => {
     if (bannerConfig.caption) {
       navigator.clipboard.writeText(bannerConfig.caption);
@@ -498,7 +587,8 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
               config={bannerConfig} 
               onCopyCaption={handleCopyCaption} 
               copied={copied} 
-              onChange={setBannerConfig}
+              onRegenerate={handleRegenerate}
+              isLoading={isAgentLoading}
               selectedProductId={selectedProductId}
               onSelectProductId={setSelectedProductId}
             />
@@ -510,8 +600,7 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
               config={bannerConfig} 
               onChange={handleManualRender} 
               disabled={isAgentLoading} 
-              selectedProductId={selectedProductId}
-              onSelectProductId={setSelectedProductId}
+              onRegenerate={handleRegenerate}
             />
           </div>
         </div>
@@ -660,6 +749,82 @@ export function InstagramAgent({ onBack }: InstagramAgentProps) {
             </div>
 
             
+            {/* Настройки Instagram Content Publishing API */}
+            <div className="lg:col-span-2 space-y-4 border-l border-slate-100 pl-6">
+              <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 pb-2 border-b border-slate-100">
+                🔌 Интеграция с Instagram Content Publishing API
+              </h4>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 font-sans">Instagram Business Account ID</label>
+                  <input
+                    type="text"
+                    value={instagramAccountId}
+                    onChange={(e) => setInstagramAccountId(e.target.value)}
+                    placeholder="Пример: 17841400000000000"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-fuchsia-500 font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Уникальный цифровой ID вашего Instagram-аккаунта (можно получить в Meta Graph Explorer).
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 font-sans">Facebook Page Access Token (Long-Lived)</label>
+                  <textarea
+                    value={instagramAccessToken}
+                    onChange={(e) => setInstagramAccessToken(e.target.value)}
+                    placeholder="EAAQb..."
+                    rows={3}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-fuchsia-500 font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Долгоживущий токен доступа страницы Facebook, привязанной к вашему Instagram Business.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleCheckConnection}
+                    disabled={isCheckingConnection || !instagramAccountId || !instagramAccessToken}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
+                  >
+                    {isCheckingConnection ? <Loader2 size={14} className="animate-spin" /> : null}
+                    {isCheckingConnection ? 'Проверяем токен...' : '🔌 Проверить подключение'}
+                  </button>
+
+                  {/* Connected Profile State */}
+                  {instagramProfile && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-150 rounded-xl text-emerald-700 shadow-sm">
+                      {instagramProfile.profilePictureUrl ? (
+                        <img 
+                          src={instagramProfile.profilePictureUrl} 
+                          alt="Avatar" 
+                          className="w-6 h-6 rounded-full object-cover border border-emerald-200" 
+                          crossOrigin="anonymous" 
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">IG</div>
+                      )}
+                      <div className="text-[11px] leading-tight">
+                        <span className="font-extrabold block">@{instagramProfile.username}</span>
+                        <span className="text-[9px] opacity-75 font-medium">{instagramProfile.name}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Connection Error State */}
+                  {connectionError && !instagramProfile && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-100 rounded-xl text-red-600 text-[10px] font-bold">
+                      <AlertCircle size={14} />
+                      <span>{connectionError}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end border-t border-slate-100 pt-4">

@@ -39,6 +39,12 @@ async function pingGoogleIndexing(articleSlug: string): Promise<boolean> {
 
 // ─── POST: Publish a draft ───────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const password = req.headers.get('x-admin-password');
+  const adminPass = process.env.ADMIN_PASSWORD;
+  if (!adminPass || password !== adminPass) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { articleId } = await req.json();
 
@@ -79,6 +85,12 @@ export async function POST(req: NextRequest) {
 
 // ─── DELETE: Remove a draft ──────────────────────────────────────────────────
 export async function DELETE(req: NextRequest) {
+  const password = req.headers.get('x-admin-password');
+  const adminPass = process.env.ADMIN_PASSWORD;
+  if (!adminPass || password !== adminPass) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { articleId } = await req.json();
 

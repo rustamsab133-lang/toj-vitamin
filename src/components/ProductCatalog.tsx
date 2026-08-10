@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Product, Lang } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -60,12 +60,90 @@ const ICON_MAP: Record<string, string> = {
   'tablet': 'vitamins'
 };
 
+const getProductCategories = (product: Product): string[] => {
+  const categories = new Set<string>();
+  
+  const tags = new Set<string>();
+  if (product.tags && Array.isArray(product.tags)) {
+    product.tags.forEach(t => tags.add(t.toLowerCase()));
+  }
+  
+  const nameLower = (product.name || '').toLowerCase();
+  
+  const hasKeyword = (keywords: string[]) => {
+    return keywords.some(k => nameLower.includes(k) || Array.from(tags).some(t => t.includes(k)));
+  };
 
+  // Brain & Sleep: "Мозг и сон"
+  if (hasKeyword(['мозг', 'сон', 'антистресс', 'нерв', 'мелатонин', 'магний', 'гинкго', 'готу', '5-htp', 'ноофит', 'память', 'спокойствие', 'продуктивность', 'тирозин', 'глицин', 'мелиссон'])) {
+    categories.add('brain');
+  }
+  
+  // Energy: "Энергия"
+  if (hasKeyword(['энергия', 'актив', 'выноли', 'выносливость', 'тонус', 'коэнзим', 'карнитин', 'l-carnitine', 'л-карнитин', 'pqq', 'женьшень', 'йохимбе', 'артурон', 'бета-аланин', 'креатин'])) {
+    categories.add('energy');
+  }
+  
+  // Immune: "Иммунитет"
+  if (hasKeyword(['иммун', 'простуд', 'защит', 'чеснок', 'цинк', 'селен', 'витамин c', 'витамин с', 'алоэ', 'мумие', 'д3', 'd3'])) {
+    categories.add('immune');
+  }
+  
+  // Joints & Bones: "Кости и Суставы"
+  if (hasKeyword(['сустав', 'кост', 'коллаген', 'хондроитин', 'глюкозамин', 'кальций', 'd3', 'д3', 'к2', 'msm', 'мсм', 'мартини', 'мумие'])) {
+    categories.add('joints');
+  }
+  
+  // Women: "Женское здоровье"
+  if (hasKeyword(['женск', 'женщин', 'беремен', 'фолиев', 'инозитол', 'максиферт', 'яичник', 'фертиль', 'спкя'])) {
+    categories.add('women');
+  }
+  
+  // Men: "Мужское здоровье"
+  if (hasKeyword(['мужск', 'мужчин', 'тестостерон', 'потенц', 'йохимбе', 'артурон', 'цинк', 'сила муж'])) {
+    categories.add('men');
+  }
+  
+  // Beauty: "Красота"
+  if (hasKeyword(['красот', 'кож', 'волос', 'ногт', 'биотин', 'молодост', 'anti-age', 'гиалурон', 'коллаген', 'мумие', 'омолож'])) {
+    categories.add('beauty');
+  }
+  
+  // Heart & Blood vessels: "Сердце"
+  if (hasKeyword(['сердц', 'сосуд', 'кардио', 'давлен', 'холестерин', 'калий', 'магний', 'омега', 'omega', 'рыбий жир', 'коэнзим', 'q10', 'таурин', 'аргинин'])) {
+    categories.add('heart');
+  }
+  
+  // Sport: "Спорт"
+  if (hasKeyword(['спорт', 'мышц', 'креатин', 'протеин', 'аминокисл', 'бцаа', 'bcaa', 'выносливость', 'аргинин', 'цитруллин', 'л-карнитин', 'l-carnitine', 'бета-аланин', 'протеинов'])) {
+    categories.add('sport');
+  }
+  
+  // Detox & Weight loss: "Похудение и Детокс"
+  if (hasKeyword(['похуден', 'детокс', 'очищен', 'жиросжиг', 'метаболизм', 'пищеварен', 'печен', 'хитозан', 'хлорофилл', 'алоэ', 'лен', 'хром', 'берберин', 'барбарис', 'липотроп'])) {
+    categories.add('detox');
+  }
 
-export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = ({ lang, whatsappNumber }) => {
+  // Fallback to vitamins shelf
+  if (categories.size === 0 || hasKeyword(['витамин', 'бад', 'мульти'])) {
+    categories.add('vitamins');
+  }
+  
+  return Array.from(categories);
+};
+
+export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
   const allProducts = useCart(state => state.allProducts);
   const products = allProducts;
   const loading = allProducts.length === 0;
+
+  const categorizedProducts = useMemo(() => {
+    return products.map(p => ({
+      ...p,
+      categories: getProductCategories(p)
+    }));
+  }, [products]);
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const setActiveZone = useThemeStore(state => state.setActiveZone);
   const { addItem, addMultiple, setIsOpen, triggerAnimation } = useCart();
@@ -91,14 +169,12 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
     };
   }, [setActiveZone]);
 
-  // Product loading is handled centrally by HomeClient via useCart().setAllProducts.
-  // No duplicate data fetching needed here.
+  const shelfCategories = CATEGORIES.filter(cat => cat.id !== 'all');
 
   const handleBuy = async (product: Product, synergyProduct?: Product) => {
-    // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
     const { trackEvent } = await import('@/lib/analytics');
     await trackEvent({
-      event_name: 'whatsapp_order_click',
+      event_name: 'add_to_cart',
       data: {
         product_id: product.id,
         product_name: product.name,
@@ -107,24 +183,19 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
       }
     });
 
-    const message = synergyProduct 
-      ? (lang === 'ru' 
-          ? `Здравствуйте! Хочу заказать набор: ${product.name} + ${synergyProduct.name}. Цена: ${product.price + synergyProduct.price} смн.`
-          : `Салом! Ман мехоҳам маҷмӯаро фармоиш диҳам: ${product.name} + ${synergyProduct.name}. Нарх: ${product.price + synergyProduct.price} смн.`)
-      : (lang === 'ru' 
-          ? `Здравствуйте! Хочу заказать: ${product.name}. Цена: ${product.price} смн.`
-          : `Салом! Ман мехоҳам фармоиш диҳам: ${product.name}. Нарх: ${product.price} смн.`);
+    if (synergyProduct) {
+      addMultiple([product, synergyProduct]);
+    } else {
+      addItem(product);
+    }
     
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    
+    triggerAnimation();
+    setIsOpen(true);
     setSelectedProduct(null);
   };
 
-  const shelfCategories = CATEGORIES.filter(c => c.id !== 'all');
-
   return (
-    <section
+    <section 
       id="catalog"
       className="w-full pb-32 relative"
     >
@@ -163,10 +234,9 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
           >
 
             {shelfCategories.map((category) => {
-              const categoryProducts = products.filter(p => {
-                const mappedCat = ICON_MAP[p.icon_type] || 'all';
-                return mappedCat === category.id;
-              });
+              const categoryProducts = categorizedProducts.filter(p => 
+                p.categories.includes(category.id)
+              );
 
               if (categoryProducts.length === 0) return null;
 
@@ -178,7 +248,7 @@ export const ProductCatalog: React.FC<{ lang: Lang; whatsappNumber: string }> = 
                   }}
                   key={category.id}
                   data-zone={category.id}
-                  className="w-full relative"
+                  className="w-full relative [content-visibility:auto] [contain-intrinsic-size:auto_500px]"
                 >
                   <div className="max-w-6xl mx-auto px-6 mb-2 flex items-end justify-between">
                     <div className="flex flex-col gap-2">

@@ -441,7 +441,7 @@
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    width: 100vw !important;
+    width: 100% !important;
     height: 100vh !important; /* Standard fallback */
     height: -webkit-fill-available !important; /* Fallback for Safari */
     height: 100dvh !important; /* Dynamically adjusts height when virtual keyboard pops up */

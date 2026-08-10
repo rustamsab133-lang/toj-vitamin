@@ -12,22 +12,34 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onAuth }) => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(false);
 
-    setTimeout(() => {
-      const adminPass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'toj2024';
-      if (password === adminPass) {
+    try {
+      const response = await fetch('/api/admin/db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': password
+        },
+        body: JSON.stringify({ action: 'verify' })
+      });
+
+      if (response.ok) {
         sessionStorage.setItem('toj-admin-auth', 'true');
         sessionStorage.setItem('toj-admin-password', password);
         onAuth();
       } else {
         setError(true);
       }
+    } catch (err) {
+      console.error('Authentication error:', err);
+      setError(true);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

@@ -4,23 +4,35 @@ import { AdminLogin } from './components/AdminLogin';
 import { ProductEditor } from './components/ProductEditor';
 import { QuizEditor } from './components/QuizEditor';
 import { ComplexEditor } from './components/ComplexEditor';
-import { OrdersDashboard } from './components/OrdersDashboard';
+import { OperatorWorkspace } from './components/OperatorWorkspace';
 import { SiteSettings } from './components/SiteSettings';
 import { SeoAgent } from './components/SeoAgent';
 import { InstagramAgent } from './components/InstagramAgent';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { WarehouseDashboard } from './components/WarehouseDashboard';
+import { FeedDashboard } from './components/FeedDashboard';
+import { CrmDashboard } from './components/CrmDashboard';
+import { PharmacyOrdersDashboard } from './components/PharmacyOrdersDashboard';
+import { BloggerDashboard } from './components/BloggerDashboard';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers';
 
 const MODULES = [
+  { id: 'pharmacy-orders' as AdminView, title: 'Закупки аптек', desc: 'B2B заказы, ссылки партнеров', icon: <Building2 size={24} />, color: '#F0FDF4' },
+  { id: 'crm' as AdminView, title: 'CRM Система', desc: 'Лояльность, задачи и клиенты', icon: <Users size={24} />, color: '#ECFDF5' },
   { id: 'instagram-agent' as AdminView, title: 'Instagram ИИ', desc: 'Авто-генерация постов', icon: <Instagram size={24} />, color: '#FDF4FF' },
   { id: 'seo-agent' as AdminView, title: 'SEO-Агент', desc: 'ИИ генерация статей', icon: <Bot size={24} />, color: '#EFF6FF' },
+  { id: 'analytics' as AdminView, title: 'Мега-Аналитика', desc: 'Выручка, промокоды, CRM', icon: <BarChart3 size={24} />, color: '#F5F3FF' },
+  { id: 'bloggers' as AdminView, title: 'Реклама у Блогеров', desc: 'Статистика UTM и короткие ссылки', icon: <Users size={24} />, color: '#EEF2FF' },
+  { id: 'warehouse' as AdminView, title: 'Офлайн-Склад', desc: 'Остатки и касса магазина', icon: <Warehouse size={24} />, color: '#FFF1F2' },
+  { id: 'feed-issues' as AdminView, title: 'Проблемы фидов', desc: 'Диагностика Meta & Google', icon: <FileWarning size={24} />, color: '#FFFBEB' },
   { id: 'products' as AdminView, title: 'Товары', desc: 'Каталог, цены, фото', icon: <Package size={24} />, color: '#F8FAFC' },
   { id: 'categories' as AdminView, title: 'Умные комплексы', desc: 'Управление подбором', icon: <Layers size={24} />, color: '#F8FAFC' },
   { id: 'complexes' as AdminView, title: 'Синергия', desc: 'Клинические связки', icon: <BarChart3 size={24} />, color: '#F8FAFC' },
-  { id: 'orders' as AdminView, title: 'Заказы', desc: 'Лента, статусы', icon: <ShoppingBag size={24} />, color: '#F8FAFC' },
+  { id: 'orders' as AdminView, title: 'АРМ Оператора', desc: 'Прием и статусы', icon: <ShoppingBag size={24} />, color: '#F8FAFC' },
   { id: 'settings' as AdminView, title: 'Настройки', desc: 'Сайт, тексты', icon: <Settings size={24} />, color: '#F8FAFC' },
 ];
 
@@ -28,7 +40,12 @@ export default function AdminPage() {
   const [isAuth, setIsAuth] = useState(false);
   const [view, setView] = useState<AdminView>('dashboard');
   const [stats, setStats] = useState({ products: 0, orders: 0, newOrders: 0 });
+  const [selectedFeedProductId, setSelectedFeedProductId] = useState<string | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
+
+  // States for cross-routing to POS from CRM
+  const [warehouseInitialTab, setWarehouseInitialTab] = useState<'pos' | 'dashboard' | 'products' | 'history' | undefined>(undefined);
+  const [warehouseInitialCustomerId, setWarehouseInitialCustomerId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     setMounted(true);
@@ -127,7 +144,29 @@ export default function AdminPage() {
 
           {view === 'products' && (
             <motion.div key="products" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <ProductEditor onBack={() => setView('dashboard')} />
+              <ProductEditor 
+                onBack={() => {
+                  if (selectedFeedProductId) {
+                    setSelectedFeedProductId(undefined);
+                    setView('feed-issues');
+                  } else {
+                    setView('dashboard');
+                  }
+                }} 
+                initialProductId={selectedFeedProductId}
+              />
+            </motion.div>
+          )}
+
+          {view === 'feed-issues' && (
+            <motion.div key="feed-issues" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <FeedDashboard 
+                onBack={() => setView('dashboard')} 
+                onEditProduct={(id) => {
+                  setSelectedFeedProductId(id);
+                  setView('products');
+                }}
+              />
             </motion.div>
           )}
 
@@ -146,7 +185,7 @@ export default function AdminPage() {
 
           {view === 'orders' && (
             <motion.div key="orders" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <OrdersDashboard onBack={() => setView('dashboard')} />
+              <OperatorWorkspace onBack={() => setView('dashboard')} />
             </motion.div>
           )}
 
@@ -165,6 +204,51 @@ export default function AdminPage() {
           {view === 'instagram-agent' && (
             <motion.div key="instagram-agent" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <InstagramAgent onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'analytics' && (
+            <motion.div key="analytics" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <AnalyticsDashboard onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'crm' && (
+            <motion.div key="crm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <CrmDashboard 
+                onBack={() => setView('dashboard')} 
+                onNavigateToPos={(customerId) => {
+                  setWarehouseInitialTab('pos');
+                  setWarehouseInitialCustomerId(customerId);
+                  setView('warehouse');
+                }}
+              />
+            </motion.div>
+          )}
+
+          {view === 'pharmacy-orders' && (
+            <motion.div key="pharmacy-orders" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <PharmacyOrdersDashboard onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'bloggers' && (
+            <motion.div key="bloggers" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <BloggerDashboard onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'warehouse' && (
+            <motion.div key="warehouse" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <WarehouseDashboard 
+                onBack={() => setView('dashboard')} 
+                initialTab={warehouseInitialTab}
+                initialCustomerId={warehouseInitialCustomerId}
+                onClearInitialParams={() => {
+                  setWarehouseInitialTab(undefined);
+                  setWarehouseInitialCustomerId(undefined);
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>

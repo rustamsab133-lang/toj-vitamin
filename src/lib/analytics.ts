@@ -17,14 +17,29 @@ interface TrackEventParams {
 export const trackEvent = async ({ event_name, data = {} }: TrackEventParams) => {
   if (typeof window === 'undefined') return;
 
+  // Automatically enrich event data with UTM parameters from sessionStorage
+  let enrichedData = { ...data };
+  try {
+    const utmSource = sessionStorage.getItem('utm_source');
+    if (utmSource) {
+      enrichedData.utm_source = utmSource;
+      const utmMedium = sessionStorage.getItem('utm_medium');
+      if (utmMedium) enrichedData.utm_medium = utmMedium;
+      const utmCampaign = sessionStorage.getItem('utm_campaign');
+      if (utmCampaign) enrichedData.utm_campaign = utmCampaign;
+    }
+  } catch (e) {
+    console.warn('Failed to read UTM parameters from sessionStorage', e);
+  }
+
   // 1. Google Analytics 4
   if ((window as any).gtag) {
-    (window as any).gtag('event', event_name, data);
+    (window as any).gtag('event', event_name, enrichedData);
   }
 
   // 2. Meta Pixel (Client-side)
   if ((window as any).fbq) {
-    (window as any).fbq('trackCustom', event_name, data);
+    (window as any).fbq('trackCustom', event_name, enrichedData);
   }
 
   // 3. Internal Database (Supabase)
@@ -32,7 +47,7 @@ export const trackEvent = async ({ event_name, data = {} }: TrackEventParams) =>
     const { error } = await supabase.from('analytics_events').insert({
       event_name,
       page_path: window.location.pathname,
-      event_data: data,
+      event_data: enrichedData,
       user_agent: window.navigator.userAgent,
     });
     if (error) console.error('DB Analytics Error:', error);
@@ -45,7 +60,7 @@ export const trackEvent = async ({ event_name, data = {} }: TrackEventParams) =>
   fetch('/api/analytics/capi', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ event_name, data, url: window.location.href }),
+    body: JSON.stringify({ event_name, data: enrichedData, url: window.location.href }),
   }).catch(() => {}); // Fire and forget
 };
 
@@ -108,3 +123,30 @@ export const trackSearch = (query: string) => {
     }
   });
 };
+
+/**
+ * Promocode Tracking
+ */
+export const trackPromoCodeApplied = (code: string, discountAmount: number, discountType: string, cartTotal: number) => {
+  return trackEvent({
+    event_name: 'promocode_applied',
+    data: {
+      code,
+      discount_amount: discountAmount,
+      discount_type: discountType,
+      cart_total: cartTotal
+    }
+  });
+};
+
+export const trackPromoCodeFailed = (code: string, errorReason: string, cartTotal: number) => {
+  return trackEvent({
+    event_name: 'promocode_failed',
+    data: {
+      code,
+      error_reason: errorReason,
+      cart_total: cartTotal
+    }
+  });
+};
+

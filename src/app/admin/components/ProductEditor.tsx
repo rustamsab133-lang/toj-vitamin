@@ -9,7 +9,7 @@ import { compressImage } from '@/lib/imageUtils';
 
 import { Product } from '@/lib/types';
 
-export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: string }> = ({ onBack, initialProductId }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Product | null>(null);
@@ -28,6 +28,18 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     loadProducts();
     getMarkupSettings().then(setMarkupSettings);
   }, []);
+
+  useEffect(() => {
+    if (initialProductId && products.length > 0) {
+      const prod = products.find(p => p.id === initialProductId);
+      if (prod) {
+        setEditing(prod);
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    }
+  }, [initialProductId, products]);
 
   const loadProducts = async () => {
     const { data } = await supabase.from('products').select('*').order('name');
@@ -49,23 +61,41 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       return collator.compare((a.name || '').trim(), (b.name || '').trim());
     });
 
-  const handleSave = async () => {
-    if (!editing) return;
+  const handleSave = async (productOverride?: Product) => {
+    const target = productOverride || editing;
+    if (!target) return;
     setSaving(true);
-    const { error } = await adminDbQuery({
-      action: 'upsert',
-      table: 'products',
-      data: {
-        ...editing,
-        updated_at: new Date().toISOString()
-      }
-    });
-    if (!error) {
-      setMsg('Сохранено!');
-      setTimeout(() => setMsg(''), 2000);
+    setMsg('');
+    try {
+      await adminDbQuery({
+        action: 'upsert',
+        table: 'products',
+        data: {
+          id: target.id,
+          name: target.name,
+          full_name: target.full_name,
+          description: target.description,
+          price: target.price,
+          icon_type: target.icon_type,
+          image_url: target.image_url,
+          barcode: target.barcode || null,
+          stock_quantity: target.stock_quantity || 0,
+        }
+      });
+      setMsg('✅ Сохранено!');
+      setTimeout(() => setMsg(''), 3000);
       loadProducts();
+    } catch (err: any) {
+      console.error('Save error:', err);
+      const errText = err?.message || 'Ошибка';
+      if (errText.includes('Unauthorized') || errText.includes('401')) {
+        setMsg('❌ Ошибка: Неверный пароль администратора. Войдите заново.');
+      } else {
+        setMsg(`❌ Ошибка сохранения: ${errText}`);
+      }
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -106,6 +136,7 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const file = e.target.files?.[0];
     if (!file || !editing) return;
     setUploading(true);
+    setMsg('Сжимаем и загружаем фото...');
 
     try {
       // 1. Сжимаем фото до ~200 КБ перед отправкой
@@ -126,17 +157,26 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           .from('product-images')
           .getPublicUrl(fileName);
 
-        setEditing({ ...editing, image_url: urlData.publicUrl });
+        // 3. Обновляем локальный стейт с новым URL
+        const updatedProduct = { ...editing, image_url: urlData.publicUrl };
+        setEditing(updatedProduct);
+        setMsg('Фото загружено! Автосохранение...');
+
+        // 4. Автоматически сохраняем в БД сразу после загрузки фото
+        setUploading(false);
+        await handleSave(updatedProduct);
       } else {
         console.error('Upload error:', uploadError);
-        setMsg('Ошибка загрузки фото');
+        setMsg(`❌ Ошибка загрузки фото: ${uploadError.message}`);
+        setUploading(false);
       }
     } catch (err) {
-      console.error('Compression error:', err);
-      setMsg('Ошибка сжатия изображения');
-    } finally {
+      console.error('Compression/upload error:', err);
+      setMsg('❌ Ошибка сжатия или загрузки изображения');
       setUploading(false);
     }
+    // Reset file input so the same file can be selected again
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const handleNewProduct = () => {
@@ -149,6 +189,8 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       price: 0,
       icon_type: 'pill',
       image_url: null,
+      barcode: '',
+      stock_quantity: 0
     });
   };
 
@@ -396,7 +438,7 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <Field label="Описание" value={editing.description || ''} onChange={(v) => setEditing({...editing, description: v})} multiline />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Field label="Закупочная цена (смн)" value={String(editing.price)} onChange={(v) => setEditing({...editing, price: Number(v) || 0})} type="number" />
+                    <Field label="Оптовая / B2B цена (смн)" value={String(editing.price)} onChange={(v) => setEditing({...editing, price: Number(v) || 0})} type="number" />
                     {(markupSettings.percent > 0 || markupSettings.flat > 0) && (
                       <div className="mt-2 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100">
                         <TrendingUp size={12} className="text-emerald-500 shrink-0" />
@@ -431,12 +473,16 @@ export const ProductEditor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </select>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Штрихкод" value={editing.barcode || ''} onChange={(v) => setEditing({...editing, barcode: v})} placeholder="Скан штрихкода" />
+                  <Field label="Остаток на складе" value={String(editing.stock_quantity || 0)} onChange={(v) => setEditing({...editing, stock_quantity: Number(v) || 0})} type="number" placeholder="0" />
+                </div>
                 <Field label="Ссылка на фото (URL)" value={editing.image_url || ''} onChange={(v) => setEditing({...editing, image_url: v || null})} placeholder="Или загрузите выше" />
               </div>
 
                <div className="flex gap-2 pt-2">
                 <button 
-                  onClick={handleSave} 
+                  onClick={() => handleSave()} 
                   disabled={saving || deleting} 
                   className="flex-1 h-11 rounded-xl bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >

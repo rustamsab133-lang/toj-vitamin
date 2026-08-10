@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { genAI } from '@/lib/gemini';
-import { generateBannerV2 } from '@/lib/agents/bannerGeneratorV2';
-import { BannerConfig, BannerProduct, DEFAULT_BANNER_CONFIG, BANNER_THEMES, ChatMessage, TextLayer } from '@/lib/types/banner';
+import { generateBannerAI } from '@/lib/agents/generateBannerAI';
+import { BannerConfig, BannerProduct, DEFAULT_BANNER_CONFIG, ChatMessage } from '@/lib/types/banner';
 import { SchemaType, FunctionDeclaration, Tool } from '@google/generative-ai';
 import { findEnrichmentForProduct } from '@/lib/agents/instagram';
 import fs from 'fs';
@@ -58,32 +58,35 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
   },
   {
-    name: 'update_banner_config',
-    description: 'Обновляет визуальные параметры баннера: цвет фона, размер шрифта, размер фото, наклон, расположение, цвета текста, темы и шаблоны.',
+    name: 'compose_image_prompt',
+    description: 'Составляет детальный промпт для генерации рекламного баннера через Nano Banana Pro AI.',
     parameters: {
       type: SchemaType.OBJECT,
       properties: {
-        bgColor: { type: SchemaType.STRING, description: 'Hex-цвет фона баннера, например #EFEAE2' },
-        textPrimary: { type: SchemaType.STRING, description: 'Hex-цвет основного текста' },
-        textSecondary: { type: SchemaType.STRING, description: 'Hex-цвет второстепенного текста' },
-        accentColor: { type: SchemaType.STRING, description: 'Hex-цвет акцента (линия-разделитель)' },
-        fontSize: { type: SchemaType.NUMBER, description: 'Размер шрифта заголовка в пикселях (40-90)' },
-        photoSize: { type: SchemaType.NUMBER, description: 'Размер фото товаров в пикселях (300-600)' },
-        photoAngle: { type: SchemaType.NUMBER, description: 'Угол наклона фото в градусах (-20 до +20)' },
-        photoLayout: { type: SchemaType.STRING, description: 'Шаблон сетки: center (по центру), duo (нахлёст двух продуктов), pyramid (пирамида из 3 продуктов), asymmetric_left (асимметричный сдвиг банок влево, текст справа), editorial_split (журнальный разделенный экран: слева текст на плашке, справа подиум)' },
-        textPosition: { type: SchemaType.STRING, description: 'Позиция текста: top или bottom' },
-        headline: { type: SchemaType.STRING, description: 'Новый заголовок баннера' },
-        subtitle: { type: SchemaType.STRING, description: 'Подзаголовок бренда' },
-        theme: { type: SchemaType.STRING, description: 'Имя темы: cream, chocolate, mint, indigo, white, black' },
-        aspectRatio: { type: SchemaType.STRING, description: 'Соотношение сторон баннера: 9:16 (Stories/Reels), 4:5 (Пост/Портрет), 1:1 (Квадрат), 16:9 (Широкий)' },
-        shadowIntensity: { type: SchemaType.NUMBER, description: 'Интенсивность теней под товарами 0-100 (0=нет, 55=средние, 100=глубокие)' },
-        lightAngle: { type: SchemaType.NUMBER, description: 'Угол источника света 0-360 градусов' },
-        bgGradient: { type: SchemaType.STRING, description: 'Hex-цвет второго конца градиента фона' },
-        bgGradientAngle: { type: SchemaType.NUMBER, description: 'Угол градиента фона 0-360' },
-        vignette: { type: SchemaType.NUMBER, description: 'Затемнение по краям (виньетка) 0-100 (20=легкое, 70=драматичное)' },
-        bgImage: { type: SchemaType.STRING, description: 'Путь к 3D-фону: /backgrounds/marble_podium.png (мраморный подиум), /backgrounds/tropical_pedestal.png (тропический), /backgrounds/dark_obsidian.png (черный обсидиан), /backgrounds/luxury_gold.png (золотистый спа) или пустая строка для цвета' },
-        fontTheme: { type: SchemaType.STRING, description: 'Стиль шрифтов: luxury (изящный Serif Lora для спа/премиума), sport (мощный Oswald для энергии/актива), clinical (минималистичный Outfit для науки), default (стандартный Montserrat)' },
+        imagePrompt: {
+          type: SchemaType.STRING,
+          description: 'Детальное описание сцены для генерации баннера (на английском). Включи: фон, окружение, освещение, расположение продуктов, настроение, цветовую палитру. Опиши всё детально как для профессионального фотографа.'
+        },
+        headline: {
+          type: SchemaType.STRING,
+          description: 'Заголовок на русском (1-5 слов) для отображения на баннере'
+        },
+        subtitle: {
+          type: SchemaType.STRING,
+          description: 'Подзаголовок бренда (по умолчанию TOJ-VITAMIN)'
+        },
+        stylePreset: {
+          type: SchemaType.STRING,
+          description: 'Стиль баннера: luxury_spa (премиум, спа), sport_energy (спорт, энергия), clinical_science (наука, медицина), editorial_magazine (журнальный разворот)',
+          enum: ['luxury_spa', 'sport_energy', 'clinical_science', 'editorial_magazine']
+        } as any,
+        aspectRatio: {
+          type: SchemaType.STRING,
+          description: 'Соотношение сторон: 9:16 (Stories/Reels), 4:5 (Пост/Портрет), 1:1 (Квадрат), 16:9 (Широкий)',
+          enum: ['9:16', '4:5', '1:1', '16:9']
+        } as any,
       },
+      required: ['imagePrompt', 'headline', 'stylePreset', 'aspectRatio'],
     },
   },
   {
@@ -96,76 +99,6 @@ const functionDeclarations: FunctionDeclaration[] = [
       },
       required: ['caption'],
     },
-  },
-  {
-    name: 'manage_text_layers',
-    description: 'Добавляет, обновляет или удаляет свободные текстовые слои (бейджи, рекламные тексты, кнопки CTA, буллиты преимуществ, блоки цен) на баннере.',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        action: {
-          type: SchemaType.STRING,
-          description: 'Действие: add (добавить новый слой), update (изменить существующий), remove (удалить слой)',
-          enum: ['add', 'update', 'remove']
-        } as any,
-        layerId: {
-          type: SchemaType.STRING,
-          description: 'ID текстового слоя (обязателен для update и remove)'
-        },
-        type: {
-          type: SchemaType.STRING,
-          description: 'Тип слоя: badge (бейдж с фоном), text (простой текст), cta (кнопка призыва с рамкой), bullets (маркированный список с галочками), price (крупный блок цены)',
-          enum: ['badge', 'text', 'cta', 'bullets', 'price']
-        } as any,
-        content: {
-          type: SchemaType.STRING,
-          description: 'Текст слоя. Для bullets разделяй строки символом переноса \\n'
-        },
-        x: {
-          type: SchemaType.NUMBER,
-          description: 'X координата в процентах холста (0-100)'
-        },
-        y: {
-          type: SchemaType.NUMBER,
-          description: 'Y координата в процентах холста (0-100)'
-        },
-        fontSize: {
-          type: SchemaType.NUMBER,
-          description: 'Размер шрифта в px (18-60)'
-        },
-        color: {
-          type: SchemaType.STRING,
-          description: 'Hex-цвет текста (например, #FAFAFA)'
-        },
-        bgColor: {
-          type: SchemaType.STRING,
-          description: 'Hex-цвет фона плашки/кнопки (для badge и cta)'
-        },
-        fontWeight: {
-          type: SchemaType.NUMBER,
-          description: 'Насыщенность шрифта: 400, 700 (bold), 800 (extra-bold), 900 (black)'
-        },
-        rotation: {
-          type: SchemaType.NUMBER,
-          description: 'Угол поворота в градусах (-180 до 180)'
-        },
-        opacity: {
-          type: SchemaType.NUMBER,
-          description: 'Прозрачность слоя от 0.0 до 1.0'
-        },
-        align: {
-          type: SchemaType.STRING,
-          description: 'Выравнивание текста: left, center, right',
-          enum: ['left', 'center', 'right']
-        } as any,
-        placement: {
-          type: SchemaType.STRING,
-          description: 'Расположение слоя: foreground (спереди баночек - по умолчанию), background (сзади баночек для трехмерной глубины и эффекта сэндвича)',
-          enum: ['foreground', 'background']
-        } as any
-      },
-      required: ['action']
-    }
   }
 ];
 
@@ -209,15 +142,14 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // Системный промпт с правилами дизайна 3.0
+    // Системный промпт с правилами Nano Banana Pro (Gemini 3 Pro Image)
     const systemPrompt = `Ты — ИИ SMM-маркетолог и арт-директор бренда "TOJ-VITAMIN" (Точвитамин) в Таджикистане.
-Ты управляешь генератором рекламных ИИ-баннеров нового поколения (версия 3.0).
+Ты управляешь генератором рекламных ИИ-баннеров нового поколения на базе Nano Banana Pro (Gemini 3 Pro Image).
 
-У тебя есть 4 инструмента дизайна (Function Calling):
+У тебя есть 3 инструмента дизайна (Function Calling):
 1. select_products — подбираешь 1-3 продукта из каталога для решения болей клиента.
-2. update_banner_config — управляешь фоном, разметкой, темами, размером банок и стилем шрифта.
+2. compose_image_prompt — составляешь детальный английский промпт для генерации рекламного изображения, задаешь стиль, заголовок и пропорции.
 3. update_caption — пишешь подписи к постам.
-4. manage_text_layers — управляешь свободным вектором: добавляешь рекламные бейджи, CTA-кнопки, ценники, галочки.
 
 КАТАЛОГ ПРОДУКТОВ (${catalog.length} товаров):
 ${JSON.stringify(catalog.slice(0, 107), null, 1)}
@@ -225,22 +157,19 @@ ${JSON.stringify(catalog.slice(0, 107), null, 1)}
 ТЕКУЩАЯ КОНФИГУРАЦИЯ БАННЕРА:
 ${JSON.stringify(clientConfig, null, 2)}
 
-ПРАВИЛА АРТ-ДИРЕКШЕНА ДЛЯ СУПЕРПРОФЕССИОНАЛЬНЫХ КРЕАТИВОВ:
-- **ШРИФТЫ (fontTheme)**:
-  * Если товар премиальный, спа, для женской красоты, сна или спокойствия (Коллаген, 5-HTP, Гиалуронка) — ОБЯЗАТЕЛЬНО ставь fontTheme='luxury' (включает королевский Serif шрифт Lora).
-  * Если товар спортивный, мужской, для энергии и выносливости (Креатин, Тестобустер, Карнитин) — ОБЯЗАТЕЛЬНО ставь fontTheme='sport' (включает брутальный плотный Oswald).
-  * Если товар научный, клинический, строгий (Магний, Цинк, Железо) — используй fontTheme='clinical' (минималистичный Outfit).
-- **СЕТКА КОМПОЗИЦИИ (photoLayout)**:
-  * Для ультрамодного дизайна используй:
-    - \`asymmetric_left\`: продукт крупно слева, текстовый блок справа. Идеально для одиночных товаров-героев.
-    - \`editorial_split\`: левые 50% закрыты полупрозрачной подложкой с текстом, правые 50% содержат 3D-подиум с товаром. Выглядит как разворот дорогого журнала!
-- **ЭФФЕКТ СЭНДВИЧА (3D СЛОИ)**:
-  * При добавлении текста через manage_text_layers, если просят добавить фоновый текст, красивое огромное слово (например, "SLEEP", "ENERGY", "VITAMIN") — установи параметр placement='background'. Такой текст будет наложен ЗА баночкой, создавая колоссальный объем!
-  * Интерактивные кнопки (cta), бейджи со скидками (badge), цены (price) всегда держи спереди (placement='foreground' - по умолчанию).
-- **ЦВЕТОВЫЕ ТЕМЫ**:
-  * Доступные темы: cream, chocolate, mint, indigo, white, black. Выбирай их в зависимости от настроения.
+ПРАВИЛА АРТ-ДИРЕКШЕНА ДЛЯ СОСТАВЛЕНИЯ ПРОМПТОВ (compose_image_prompt):
+- **ОБЯЗАТЕЛЬНО пиши imagePrompt на английском языке** (модель генерации картинок понимает только английский).
+- Описывай сцену детально: расстановку продуктов, окружение (например, "on a premium white travertine pedestal with soft shadows", "surrounded by fresh orange slices and splashing water drops"), освещение ("volumetric natural soft sunlight", "dramatic key light from the side"), палитру цветов и текстуры.
+- Укажи, что на баннере должен быть написан заголовок: "Render the text '{Headline}' on the banner in a clean elegant font".
+- Пресеты стилей (stylePreset):
+  * luxury_spa: для продуктов красоты, спокойствия, сна, женского здоровья (Коллаген, Магний, 5-HTP). Используй мягкие пастельные тона, мрамор, дерево, цветы.
+  * sport_energy: для продуктов энергии, силы, мужского здоровья (Креатин, Тестобустер, L-Карнитин). Используй бетон, металл, яркий свет, глубокие тени, воду.
+  * clinical_science: для базовых витаминов, аптечных серий (Цинк, Железо, Мультивитамины). Используй чистые медицинские тона, стекло, лабораторный минимализм.
+  * editorial_magazine: для стильных журнальных коллажей, креативного дизайна.
+- Не пытайся вручную рассчитывать координаты пикселей и позиций. Просто пиши человеческим языком, как профессиональный фотограф и арт-директор.
+- Важно: Сохраняй фирменный вид баночек TOJ-VITAMIN (зеленые пластиковые банки с лаконичной белой этикеткой). Добавляй в промпт фразу: "Show exact green supplement jar packaging matching the references, preserve labels".
 
-Когда пользователь просит изменить баннер, добавляй надписи, кнопки и меняй настройки через соответствующие инструменты. Отвечай дружелюбно, лаконично и профессионально на русском языке.`;
+Отвечай дружелюбно, лаконично и профессионально на русском языке.`;
 
     // Конвертируем историю в формат Gemini
     const geminiHistory = messages.slice(0, -1).map(m => ({
@@ -299,7 +228,6 @@ ${JSON.stringify(clientConfig, null, 2)}
               products: selectedProducts,
               headline: (args as any).headline || updatedConfig.headline,
               caption: (args as any).caption || updatedConfig.caption,
-              photoLayout: selectedProducts.length >= 3 ? 'pyramid' : selectedProducts.length === 2 ? 'duo' : 'center',
             };
 
             functionCallResults.push({
@@ -307,94 +235,20 @@ ${JSON.stringify(clientConfig, null, 2)}
               result: { success: true, productsSelected: selectedProducts.length, reasoning: (args as any).reasoning }
             });
 
-          } else if (name === 'update_banner_config') {
+          } else if (name === 'compose_image_prompt') {
             const changes = args as any;
 
-            // Применяем тему если указана
-            if (changes.theme && BANNER_THEMES[changes.theme]) {
-              const theme = BANNER_THEMES[changes.theme];
-              updatedConfig.bgColor = theme.bgColor;
-              updatedConfig.textPrimary = theme.textPrimary;
-              updatedConfig.textSecondary = theme.textSecondary;
-              updatedConfig.accentColor = theme.accentColor;
-            }
-
-            // Применяем остальные изменения
-            if (changes.bgColor) updatedConfig.bgColor = changes.bgColor;
-            if (changes.textPrimary) updatedConfig.textPrimary = changes.textPrimary;
-            if (changes.textSecondary) updatedConfig.textSecondary = changes.textSecondary;
-            if (changes.accentColor) updatedConfig.accentColor = changes.accentColor;
-            if (changes.fontSize) updatedConfig.fontSize = Math.max(40, Math.min(90, changes.fontSize));
-            if (changes.photoSize) updatedConfig.photoSize = Math.max(300, Math.min(600, changes.photoSize));
-            if (changes.photoAngle !== undefined) updatedConfig.photoAngle = Math.max(-20, Math.min(20, changes.photoAngle));
-            if (changes.photoLayout) updatedConfig.photoLayout = changes.photoLayout;
-            if (changes.textPosition) updatedConfig.textPosition = changes.textPosition;
+            if (changes.imagePrompt) updatedConfig.imagePrompt = changes.imagePrompt;
             if (changes.headline) updatedConfig.headline = changes.headline;
             if (changes.subtitle) updatedConfig.subtitle = changes.subtitle;
-            if (changes.bgImage !== undefined) updatedConfig.bgImage = changes.bgImage;
-            if (changes.bgGradient !== undefined) updatedConfig.bgGradient = changes.bgGradient;
-            if (changes.bgGradientAngle !== undefined) updatedConfig.bgGradientAngle = changes.bgGradientAngle;
-            if (changes.shadowIntensity !== undefined) updatedConfig.shadowIntensity = changes.shadowIntensity;
-            if (changes.lightAngle !== undefined) updatedConfig.lightAngle = changes.lightAngle;
-            if (changes.vignette !== undefined) updatedConfig.vignette = changes.vignette;
-            if (changes.fontTheme !== undefined) updatedConfig.fontTheme = changes.fontTheme;
+            if (changes.stylePreset) updatedConfig.stylePreset = changes.stylePreset;
+            if (changes.aspectRatio) updatedConfig.aspectRatio = changes.aspectRatio;
 
             functionCallResults.push({ name, result: { success: true, appliedChanges: Object.keys(changes) } });
 
           } else if (name === 'update_caption') {
             updatedConfig.caption = (args as any).caption || updatedConfig.caption;
             functionCallResults.push({ name, result: { success: true } });
-
-          } else if (name === 'manage_text_layers') {
-            const { action, layerId, type: lType, content, x, y, fontSize, color, bgColor, fontWeight, rotation, opacity, align, placement } = args as any;
-            const layers = [...(updatedConfig.textLayers || [])];
-
-            if (action === 'add') {
-              const newId = `tl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-              const newLayer: TextLayer = {
-                id: newId,
-                type: lType || 'text',
-                content: content || 'Новый текст',
-                x: x !== undefined ? Math.max(0, Math.min(100, x)) : 50,
-                y: y !== undefined ? Math.max(0, Math.min(100, y)) : 50,
-                fontSize: fontSize || 24,
-                color,
-                bgColor,
-                fontWeight: fontWeight || 700,
-                rotation: rotation || 0,
-                opacity: opacity !== undefined ? Math.max(0, Math.min(1, opacity)) : 1,
-                align: align || 'center',
-                placement: placement || 'foreground',
-              };
-              layers.push(newLayer);
-              updatedConfig.textLayers = layers;
-              functionCallResults.push({ name, result: { success: true, action: 'add', layerId: newId } });
-            } else if (action === 'update' && layerId) {
-              updatedConfig.textLayers = layers.map(l => {
-                if (l.id === layerId) {
-                  return {
-                    ...l,
-                    type: lType || l.type,
-                    content: content !== undefined ? content : l.content,
-                    x: x !== undefined ? Math.max(0, Math.min(100, x)) : l.x,
-                    y: y !== undefined ? Math.max(0, Math.min(100, y)) : l.y,
-                    fontSize: fontSize || l.fontSize,
-                    color: color !== undefined ? color : l.color,
-                    bgColor: bgColor !== undefined ? bgColor : l.bgColor,
-                    fontWeight: fontWeight || l.fontWeight,
-                    rotation: rotation !== undefined ? Math.max(-180, Math.min(180, rotation)) : l.rotation,
-                    opacity: opacity !== undefined ? Math.max(0, Math.min(1, opacity)) : l.opacity,
-                    align: align || l.align,
-                    placement: placement !== undefined ? placement : l.placement,
-                  };
-                }
-                return l;
-              });
-              functionCallResults.push({ name, result: { success: true, action: 'update', layerId } });
-            } else if (action === 'remove' && layerId) {
-              updatedConfig.textLayers = layers.filter(l => l.id !== layerId);
-              functionCallResults.push({ name, result: { success: true, action: 'remove', layerId } });
-            }
           }
         }
       }
@@ -421,11 +275,15 @@ ${JSON.stringify(clientConfig, null, 2)}
     }
 
     // Генерируем баннер если есть продукты
-    if (updatedConfig.products && updatedConfig.products.length > 0 && updatedConfig.headline) {
+    if (updatedConfig.products && updatedConfig.products.length > 0) {
+      if (!updatedConfig.imagePrompt) {
+        const prodNames = updatedConfig.products.map(p => p.name).join(' and ');
+        updatedConfig.imagePrompt = `A premium professional advertising studio photography of ${prodNames} placed on a clean minimalist stage, warm volumetric lighting, matching style preset ${updatedConfig.stylePreset || 'luxury_spa'}.`;
+      }
       try {
-        console.log(`🎨 Generating banner V2 with ${updatedConfig.products.length} products...`);
-        bannerUrl = await generateBannerV2(updatedConfig);
-        console.log('✅ Banner V2 generated successfully.');
+        console.log(`🎨 Generating banner AI with ${updatedConfig.products.length} products...`);
+        bannerUrl = await generateBannerAI(updatedConfig);
+        console.log('✅ Banner AI generated successfully.');
       } catch (err) {
         console.error('❌ Banner generation error:', err);
       }

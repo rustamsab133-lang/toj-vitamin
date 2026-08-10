@@ -1,11 +1,14 @@
 "use client";
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Dna, Globe, Instagram, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { Search, X, Dna, Globe, User, ShoppingBag } from 'lucide-react';
 import { useThemeStore } from '@/store/useTheme';
 import { ZONE_THEMES } from '@/lib/theme';
 import { Lang } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { useClient } from '@/store/useClient';
+import { useCart } from '@/store/useCart';
+import { ClientCabinetModal } from './ClientCabinetModal';
 
 interface HeaderProps {
   lang: Lang;
@@ -22,8 +25,32 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
   
+  const { client, isAuth } = useClient();
+  const { totalItems, setIsOpen: setIsCartOpen } = useCart();
+  
+  const [isCabinetOpen, setIsCabinetOpen] = useState(false);
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
   const currentTheme = useMemo(() => ZONE_THEMES[activeZone] || ZONE_THEMES.default, [activeZone]);
+
+  const [lastQuizResult, setLastQuizResult] = React.useState<{ catTitle: string; catId: string } | null>(null);
+
+  const totalCartItems = totalItems();
+
+  useEffect(() => {
+    const checkLastQuiz = () => {
+      try {
+        const saved = localStorage.getItem('toj_quiz_last');
+        if (saved) {
+          setLastQuizResult(JSON.parse(saved));
+        }
+      } catch {}
+    };
+
+    checkLastQuiz();
+    window.addEventListener('toj_quiz_completed', checkLastQuiz);
+    return () => window.removeEventListener('toj_quiz_completed', checkLastQuiz);
+  }, []);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -106,14 +133,25 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                  </div>
                </div>
 
-              {/* KILLER FEATURE CTA: Quiz Link */}
-              <button
-                onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
-                className="hidden md:flex items-center gap-2 h-10 px-5 rounded-full bg-[#1D1D1F] text-white hover:bg-[#1E40AF] transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97]"
-              >
-                <Dna size={14} />
-                <span>{settings.hero_cta_text || (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин')}</span>
-              </button>
+               {/* KILLER FEATURE CTA: Quiz Link */}
+               <button
+                 onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
+                 className={`hidden md:flex items-center gap-2 h-10 px-5 rounded-full transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] ${
+                   lastQuizResult 
+                     ? 'bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white shadow-[0_0_15px_rgba(30,64,175,0.3)] animate-pulse' 
+                     : 'bg-[#1D1D1F] text-white hover:bg-[#1E40AF]'
+                 }`}
+               >
+                 <Dna size={14} className={lastQuizResult ? 'animate-[spin_4s_linear_infinite]' : ''} />
+                 <span>
+                   {lastQuizResult 
+                     ? (lang === 'ru' 
+                         ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
+                         : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`)
+                     : (settings.hero_cta_text || (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин'))
+                   }
+                 </span>
+               </button>
 
               {/* Action Area */}
               <div className="flex items-center gap-2 sm:gap-3">
@@ -132,13 +170,44 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                   {lang === 'ru' ? 'RU' : 'TJ'}
                 </button>
 
-                {/* Cart Icon removed as per user request for direct WhatsApp flow */}
+                {/* Profile Cabinet Button */}
+                <button
+                  onClick={() => setIsCabinetOpen(true)}
+                  className="h-10 px-3 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm gap-1.5 active:scale-90"
+                >
+                  <User size={15} className="text-[#86868B]" />
+                  {isAuth && client ? (
+                    <span className="text-[10px] font-bold max-w-[80px] truncate hidden sm:inline">{client.name}</span>
+                  ) : (
+                    <span className="text-[10px] font-bold hidden sm:inline">{lang === 'ru' ? 'Войти' : 'Ворид'}</span>
+                  )}
+                </button>
 
+                {/* Shopping Cart Button */}
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="h-10 w-10 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm active:scale-90 relative"
+                >
+                  <ShoppingBag size={17} />
+                  {totalCartItems > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center animate-pulse">
+                      {totalCartItems}
+                    </span>
+                  )}
+                </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.header>
+
+      {/* Client Cabinet Modal */}
+      <ClientCabinetModal
+        isOpen={isCabinetOpen}
+        onClose={() => setIsCabinetOpen(false)}
+        lang={lang}
+      />
     </div>
   );
 };
+

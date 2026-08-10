@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { slugify } from '@/lib/slugify';
 import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
+import { findEnrichmentForProduct } from '@/lib/products';
+import enrichedData from '@/data/enriched_gls_products.json';
+
 
 export async function GET() {
   try {
@@ -26,7 +29,10 @@ export async function GET() {
     <description>Premium Vitamins and Supplements in Tajikistan</description>
 ${products?.map((product) => {
       const productUrl = `${baseUrl}/product/${slugify(product.name)}`;
-      const description = product.description || `Купить ${product.name} в Таджикистане. Высокое качество от Green Leaf Sciences.`;
+      const enrichment = findEnrichmentForProduct(product.name, enrichedData);
+      const description = (enrichment.properties && enrichment.properties.length > 0)
+        ? enrichment.properties.join('. ')
+        : (product.description || `Купить ${product.name} в Таджикистане. Высокое качество от Green Leaf Sciences.`);
       
       return `    <item>
       <g:id>prod_${product.id}</g:id>
@@ -48,7 +54,9 @@ ${products?.map((product) => {
     return new NextResponse(xml.trim(), {
       headers: {
         'Content-Type': 'text/xml; charset=utf-8',
-        'Cache-Control': 's-maxage=3600, stale-while-revalidate',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
   } catch (err: any) {

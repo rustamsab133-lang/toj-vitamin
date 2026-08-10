@@ -23,9 +23,9 @@ import {
 } from 'lucide-react';
 import { MedicalDisclaimer } from './MedicalDisclaimer';
 import { trackEvent } from '@/lib/analytics';
+import { useClient } from '@/store/useClient';
 
 interface QuizEngineProps {
-  whatsappNumber: string;
   lang: Lang;
   onImmersiveChange?: (isActive: boolean) => void;
 }
@@ -68,7 +68,8 @@ const STEP_DISPLAY_LABELS = [
 
 
 
-export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, onImmersiveChange }) => {
+export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange }) => {
+  const { client, isAuth, setClient } = useClient();
   const [step, setStep] = useState<Step>('category');
   const [error, setError] = useState<string | null>(null);
   
@@ -214,9 +215,57 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
       setSynergies(fullSynergies);
       // Save for Quick Start
       try {
-        localStorage.setItem('toj_quiz_last', JSON.stringify({ catTitle: selectedCat?.title, catId: selectedCat?.id }));
+        const recommendedProductNames = Array.from(
+          new Set(
+            fullSynergies
+              .flatMap((syn: any) => syn.products || [])
+              .map((p: any) => p.name)
+              .filter(Boolean)
+          )
+        );
+        const results = { 
+          catTitle: selectedCat?.title, 
+          catId: selectedCat?.id,
+          optionTitle: opt.text,
+          optionId: opt.id,
+          recommendedProductNames
+        };
+        localStorage.setItem('toj_quiz_last', JSON.stringify(results));
+        window.dispatchEvent(new Event('toj_quiz_completed'));
+        
+        // Auto-save to registered client profile if logged in
+        if (isAuth && client) {
+          fetch('/api/client/profile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              clientId: client.id,
+              quizResults: results
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.client) {
+              setClient(data.client);
+            }
+          })
+          .catch(err => console.error("Error saving quiz results to client profile:", err));
+        }
       } catch {}
-      trackEvent({ event_name: 'quiz_result_shown', data: { category_id: selectedCat?.id || '', synergy_count: fullSynergies.length } });
+      trackEvent({ 
+        event_name: 'quiz_result_shown', 
+        data: { 
+          category_id: selectedCat?.id || '', 
+          category_title: selectedCat?.title || '',
+          selected_option_id: opt.id,
+          selected_option_text: opt.text,
+          synergy_count: fullSynergies.length,
+          recommended_products: fullSynergies.flatMap(syn => syn.products || []).map((p: any) => ({ id: p.id, name: p.name, price: p.price })),
+          total_price: fullSynergies.reduce((sum, syn) => sum + (syn.total_price || 0), 0)
+        } 
+      });
     }
 
     setTimeout(() => {
@@ -238,7 +287,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
   const progressStep = step === 'category' ? 0 : step === 'option' ? 1 : 2;
 
   return (
-    <div className="w-full max-w-4xl mx-auto min-h-[500px]">
+    <div className="w-full max-w-4xl mx-auto min-h-[500px] overflow-x-hidden">
       
       {/* ERROR STATE */}
       {error && (
@@ -328,6 +377,17 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                    ? 'Алгоритм сформирует умный комплекс на основе клинических данных.' 
                    : 'Алгоритм дар асоси маълумоти клиникӣ маҷмӯи интеллектуалиро таҳия мекунад.'}
                </p>
+               
+               {/* Premium Swipe / Interact Hint */}
+               <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/60 backdrop-blur-md border border-[#1E40AF]/10 shadow-[0_4px_12px_rgba(30,64,175,0.05)] mt-3">
+                 <div className="relative w-2 h-2 flex items-center justify-center">
+                   <div className="absolute w-2 h-2 rounded-full bg-[#3B82F6] animate-ping" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
+                 </div>
+                 <span className="text-[11px] font-extrabold text-[#1D1D1F] tracking-widest uppercase font-outfit">
+                   {lang === 'ru' ? 'Выберите систему для сканирования' : 'Барои оғози ташхис интихоб кунед'}
+                 </span>
+               </div>
             </div>
 
             {/* QUICK START — shown to returning users */}
@@ -355,13 +415,16 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
               </motion.div>
             )}
             
-        <div className="apple-shelf-scroll px-6 pb-16 w-full -mx-4 md:mx-0 snap-x snap-mandatory overflow-x-auto">
+        <div className="apple-shelf-scroll px-6 pb-16 -mx-4 md:mx-0 snap-x snap-mandatory overflow-x-auto">
           {categories.map((c) => (
             <button 
               key={c.id} 
               onClick={() => handleSelectCategory(c)}
               className="apple-shelf-item w-[300px] h-[480px] snap-center group relative rounded-[40px] overflow-hidden bg-[#020617] shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-all duration-700 hover:scale-[1.02] active:scale-[0.98] text-left border border-white/5"
             >
+              {/* X-Ray Laser Scanner (Hardware accelerated, 60 FPS, zero CPU overhead) */}
+              <div className="absolute inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-80 shadow-[0_0_12px_#3B82F6,0_0_24px_rgba(59,130,246,0.6)] pointer-events-none z-20 animate-xray" />
+
               {/* 1. BACKGROUND GLOW & HUD */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 {/* Radial Glow */}
@@ -383,12 +446,14 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                   {/* Outer ring (CSS animation instead of JS) */}
                   <div className="absolute inset-0 rounded-full border border-[#1E40AF]/20 animate-[spin_10s_linear_infinite]" />
                   
-                  {/* Hologram Subject */}
-                  <div className="relative text-[#3B82F6] opacity-90 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:drop-shadow-[0_0_25px_rgba(59,130,246,0.8)] transition-all duration-500 group-hover:scale-110">
+                  {/* Hologram Subject with hardware-accelerated transforms */}
+                  <div className="relative text-[#3B82F6] opacity-90 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:drop-shadow-[0_0_25px_rgba(59,130,246,0.8)] transition-all duration-500 group-hover:scale-110 will-change-transform">
                     <img 
                       src={`/${c.id}_3d.png`} 
                       alt={c.title} 
                       className="w-40 h-40 object-contain mix-blend-screen opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                         const fallbackIcon = e.currentTarget.nextElementSibling;
@@ -432,14 +497,18 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
                   </h3>
                   
                   <div className="mt-8 flex items-center justify-between group/cta relative">
-                    {/* Shimmer Text (CSS-only, no framer-motion) */}
-                    <div className="relative overflow-hidden">
-                       <span className="text-[12px] font-bold text-white/50 uppercase tracking-[0.25em]">
-                         {lang === 'ru' ? 'Пройти анализ' : 'Гузаштан аз таҳлил'}
-                       </span>
+                    {/* Pulsing Scan Beacon next to call-to-action */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-2.5 h-2.5 flex items-center justify-center">
+                        <div className="absolute w-2.5 h-2.5 rounded-full bg-[#10B981] animate-radar" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                      </div>
+                      <span className="text-[11px] font-extrabold text-[#10B981] uppercase tracking-[0.25em] group-hover:text-white transition-colors duration-300">
+                        {lang === 'ru' ? 'Начать сканирование' : 'Оғози ташхис'}
+                      </span>
                     </div>
 
-                    {/* Static Arrow (no more sonar ripple animations) */}
+                    {/* Active Arrow with sonar ripple shadow on hover */}
                     <div className="relative">
                       <div className="relative z-10 w-11 h-11 rounded-full bg-[#3B82F6] flex items-center justify-center text-white shadow-[0_0_20px_rgba(59,130,246,0.6)] group-hover/cta:scale-110 group-hover/cta:shadow-[0_0_35px_rgba(59,130,246,0.9)] transition-all duration-300">
                         <ArrowRight size={20} className="group-hover/cta:translate-x-0.5 transition-transform" />
@@ -557,7 +626,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ whatsappNumber, lang, on
             {/* SYNERGY CARDS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
               {synergies.map((syn, idx) => (
-                <SynergyCard key={syn.id || idx} synergy={syn} whatsappNumber={whatsappNumber} lang={lang} />
+                <SynergyCard key={syn.id || idx} synergy={syn} lang={lang} />
               ))}
             </div>
 

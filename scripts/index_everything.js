@@ -28,13 +28,21 @@ async function indexEverything() {
     `${baseUrl}/journal`,
   ];
 
-  const slugify = (text) => text.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+  const slugify = (name) => {
+    if (!name) return '';
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[<>:"/\\|?*#%&()[\]]/g, '')
+      .replace(/[\s-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
 
   products.forEach(p => {
     const slug = slugify(p.name);
-    urls.push(`${baseUrl}/product/${slug}`);
+    urls.push(`${baseUrl}/product/${encodeURIComponent(slug)}`);
     cities.forEach(city => {
-      urls.push(`${baseUrl}/buy/${city}/${slug}`);
+      urls.push(`${baseUrl}/buy/${city}/${encodeURIComponent(slug)}`);
     });
   });
 

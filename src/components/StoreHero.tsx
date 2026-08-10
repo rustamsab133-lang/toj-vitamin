@@ -7,13 +7,12 @@ import Image from 'next/image';
 
 interface StoreHeroProps {
   lang: Lang;
-  whatsappNumber: string;
   settings: Record<string, string>;
 }
 
 const MotionImage = motion.create(Image);
 
-export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, settings }) => {
+export const StoreHero: React.FC<StoreHeroProps> = ({ lang, settings }) => {
   const sectionRef = React.useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -27,17 +26,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
       ref={sectionRef}
       className="relative w-full flex flex-col items-center pt-24 pb-0 overflow-hidden bg-[#FDFBF7]"
     >
-      {/* GLOBAL BACKGROUND ELEMENTS - MORE SUBTLE */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div 
-          className="absolute -top-24 -right-24 w-64 h-64 pointer-events-none" 
-          style={{ background: 'radial-gradient(circle at center, rgba(30,64,175,0.08) 0%, transparent 70%)' }}
-        />
-        <div 
-          className="absolute top-1/2 -left-20 w-48 h-48 pointer-events-none" 
-          style={{ background: 'radial-gradient(circle at center, rgba(56,189,248,0.08) 0%, transparent 70%)' }}
-        />
-      </div>
+
 
       <div className="w-full relative z-10 flex flex-col items-center">
         {/* TEXT CONTENT CONTAINER */}
@@ -85,7 +74,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
             transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.3 }}
           >
              <button 
-                onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
                 className="group relative flex items-center gap-5 bg-[#1D1D1F] px-10 py-4.5 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.2)] hover:shadow-[0_25px_50px_rgba(0,0,0,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 overflow-hidden border border-white/5"
              >
                 {/* ADVANCED GLASS GLOW EFFECT */}
@@ -98,7 +87,7 @@ export const StoreHero: React.FC<StoreHeroProps> = ({ lang, whatsappNumber, sett
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[1200ms] ease-in-out" />
                 
                 <span className="text-[14px] font-bold text-white tracking-widest relative z-10 uppercase font-outfit">
-                  {lang === 'ru' ? 'Начать диагностику' : 'Начать диагностику'}
+                  {lang === 'ru' ? 'Смотреть витамины' : 'Витаминҳоро бинед'}
                 </span>
                 
                 <div className="relative z-10 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#1E40AF] transition-colors duration-500">

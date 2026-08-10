@@ -140,16 +140,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   const lang = (searchParams?.lang === 'tj' ? 'tj' : 'ru') as Lang;
 
-  let whatsappPhone = "992176660707";
-  try {
-    const { data } = await supabase.from('site_settings').select('key, value');
-    const phoneSetting = data?.find(s => s.key === 'whatsapp_phone');
-    if (phoneSetting?.value) {
-      whatsappPhone = phoneSetting.value;
-    }
-  } catch (e) {
-    console.error('Failed to load settings in ProductPage:', e);
-  }
+
 
   const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с бесплатной доставкой от Green Leaf Sciences.`;
   const productReviews = getDynamicReviews(product.name, enriched?.tags || []);
@@ -401,7 +392,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
         </div>
 
       </main>
-      <ProductCartSection lang={lang} whatsappNumber={whatsappPhone} />
+      <ProductCartSection lang={lang} product={product} />
     </div>
   );
 }

@@ -3,11 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Product, Lang } from '@/lib/types';
 import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ShareButton } from './ShareButton';
 import { slugify } from '@/lib/slugify';
+import { useCart } from '@/store/useCart';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   lang,
   onBuy
 }) => {
+  const { addItem, addMultiple, setIsOpen: setIsCartOpen } = useCart();
   const [synergies, setSynergies] = useState<SynergyLink[]>([]);
   const [loadingSynergies, setLoadingSynergies] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -87,15 +90,30 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   useEffect(() => {
     if (!product) return;
 
-    const handlePopState = () => {
-      onCloseRef.current();
+    const handlePopState = (event: PopStateEvent) => {
+      if (!event.state || !event.state.isProductModalOpen) {
+        onCloseRef.current();
+      }
     };
 
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      // Push product URL as a single history entry
       const productSlug = slugify(product.name || '');
-      window.history.pushState({ isProductModalOpen: true }, '', `/product/${productSlug}`);
+      const targetUrl = `/product/${productSlug}`;
+      const currentHistoryState = typeof window !== 'undefined' ? window.history.state : null;
+      
+      if (typeof window !== 'undefined' && window.location.pathname !== targetUrl) {
+        window.history.pushState(
+          { 
+            ...currentHistoryState, 
+            isProductModalOpen: true,
+            productSlug 
+          }, 
+          '', 
+          targetUrl
+        );
+      }
+      
       window.addEventListener('popstate', handlePopState);
     } else {
       document.body.style.overflow = '';
@@ -108,19 +126,28 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   }, [isOpen, product]);
 
   const handleSmartClose = () => {
-    if (window.history.state?.isProductModalOpen) {
-      window.history.back(); // Will trigger popstate → onClose
+    const currentState = typeof window !== 'undefined' ? window.history.state : null;
+    if (currentState?.isProductModalOpen) {
+      window.history.back(); // Will trigger popstate -> onClose
     } else {
-      window.history.pushState(null, '', '/');
+      if (typeof window !== 'undefined') {
+        const nextState = { ...currentState };
+        delete nextState.isProductModalOpen;
+        delete nextState.productSlug;
+        window.history.pushState(nextState, '', '/');
+      }
       onCloseRef.current();
     }
   };
 
   if (!product || !mounted) return null;
 
-  const descriptionLines = product.description
-    ? product.description.split('\n').filter(line => line.trim().length > 0)
-    : [];
+  // Prefer clinical properties from enriched data, fallback to database description
+  const descriptionLines: string[] = (product as any).properties && (product as any).properties.length > 0
+    ? (product as any).properties
+    : (product.description ? product.description.split('\n').filter((line: string) => line.trim().length > 0) : []);
+
+
 
   const jsonLd = {
     "@context": "https://schema.org/",
@@ -203,13 +230,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
-          {/* OVERLAY - Deep & Minimal */}
+          {/* OVERLAY - Deep & Minimal (GPU Optimized for iOS/Mobile) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleSmartClose}
-            className="absolute inset-0 bg-[#000000]/30 backdrop-blur-md"
+            className="absolute inset-0 bg-[#000000]/60 sm:bg-[#000000]/30 sm:backdrop-blur-md transform-gpu"
           />
 
           <motion.div
@@ -218,7 +245,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0.5 }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="w-full sm:w-[580px] max-h-[100dvh] sm:max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[44px] shadow-[0_40px_100px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden will-change-transform"
+            className="w-full sm:w-[580px] max-h-[100dvh] sm:max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[44px] shadow-[0_40px_100px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden will-change-transform transform-gpu"
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           >
             {/* ACTIONS: Share + Close */}
             <div className="absolute right-6 sm:right-8 flex items-center gap-2 z-50" style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}>
@@ -238,11 +266,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
 
             {/* PURE IMAGE STUDIO */}
-            <div className="shrink-0 w-full h-[320px] sm:h-[380px] bg-[#F8FAFC] flex items-center justify-center p-8 relative overflow-hidden">
+            <div className="shrink-0 w-full h-[320px] sm:h-[380px] bg-[#F8FAFC] flex items-center justify-center p-8 relative overflow-hidden transform-gpu">
                {/* Background Studio Glow */}
                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#F8FAFC_0%,_#FFFFFF_70%)] opacity-50" />
                
-               <div className="relative w-full h-full">
+               <div className="relative w-full h-full transform-gpu">
                  {product.image_url ? (
                    <Image 
                      src={product.image_url} 
@@ -250,7 +278,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                      fill
                      priority
                      sizes="(max-width: 640px) 100vw, 500px"
-                     className="object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.05)]"
+                     className="object-contain sm:drop-shadow-[0_10px_30px_rgba(0,0,0,0.05)]"
                     />
                  ) : (
                     <ShoppingBag size={100} strokeWidth={0.5} className="text-[#E2E8F0] mx-auto h-full" />
@@ -379,11 +407,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                                     <div className="flex items-center justify-between">
                                       <p className="font-bold text-[#1D1D1F] text-[16px]">{synProd.price} {'смн'}</p>
                                       <button 
-                                        onClick={() => onBuy(product, synProd)}
-                                        className="h-10 bg-black text-white px-5 rounded-full text-[12px] font-bold flex items-center gap-2 hover:bg-[#25D366] transition-all shadow-md active:scale-95"
+                                        onClick={() => {
+                                          addMultiple([product, synProd]);
+                                          handleSmartClose();
+                                          setTimeout(() => {
+                                            setIsCartOpen(true);
+                                          }, 350);
+                                        }}
+                                        className="h-10 bg-black text-white px-5 rounded-full text-[12px] font-bold flex items-center gap-2 hover:bg-indigo-600 transition-all shadow-md active:scale-95"
                                       >
-                                        <MessageCircle size={14} fill="currentColor" />
-                                        {lang === 'ru' ? 'Заказать набор' : 'Фармоиш додани маҷмӯа'}
+                                        <ShoppingBag size={14} />
+                                        {lang === 'ru' ? 'Купить набор' : 'Харидани маҷмӯа'}
                                       </button>
                                     </div>
                                   </div>
@@ -397,7 +431,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                 {/* 6. Scientific Journal Link (Internal SEO) */}
                 <div className="pt-8">
-                   <a href="/journal" className="block bg-[#1D1D1F] rounded-[24px] p-6 sm:p-8 hover:scale-[1.01] transition-transform group shadow-xl">
+                   <Link href="/journal" className="block bg-[#1D1D1F] rounded-[24px] p-6 sm:p-8 hover:scale-[1.01] transition-transform group shadow-xl">
                       <div className="flex items-center justify-between gap-4">
                          <div>
                             <div className="flex items-center gap-2 mb-2 opacity-80 text-white">
@@ -417,7 +451,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             <ArrowRight size={20} />
                          </div>
                       </div>
-                   </a>
+                   </Link>
                 </div>
 
                 {/* BOTTOM SAFETY ZONE */}
@@ -426,15 +460,23 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
 
             {/* PREMIUM STICKY FOOTER: Glassmorphism */}
-            <div className="shrink-0 p-6 sm:p-10 bg-white/80 backdrop-blur-2xl border-t border-black/[0.05] z-40 relative">
-              <button 
-                onClick={() => onBuy(product)}
-                className="w-full h-[68px] bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-3 hover:bg-[#25D366] hover:scale-[1.01] active:scale-[0.98] transition-all duration-500 shadow-[0_30px_60px_rgba(0,0,0,0.25)] group"
-              >
-                <MessageCircle size={20} fill="currentColor" />
-                <span>{lang === 'ru' ? 'Заказать в WhatsApp' : 'Фармоиш дар WhatsApp'}</span>
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
+            <div className="shrink-0 p-6 sm:p-8 bg-white/80 backdrop-blur-2xl border-t border-black/[0.05] z-40 relative">
+              <div className="max-w-xl mx-auto">
+                <button
+                  onClick={() => {
+                    addItem(product);
+                    handleSmartClose();
+                    setTimeout(() => {
+                      setIsCartOpen(true);
+                    }, 350);
+                  }}
+                  className="w-full h-[64px] bg-[#1D1D1F] text-white rounded-[24px] text-[16px] font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 hover:scale-[1.01] active:scale-[0.97] transition-all duration-300 shadow-lg group"
+                >
+                  <ShoppingBag size={18} />
+                  <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
             </div>
             
           </motion.div>

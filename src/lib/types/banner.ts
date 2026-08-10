@@ -1,32 +1,21 @@
 /**
- * Instagram AI Agent 2.0 — Типы и конфигурации
+ * Instagram AI Agent 3.0 — Типы и конфигурации
  */
 
 export interface BannerConfig {
-  // Цвета
-  bgColor: string;
-  textPrimary: string;
-  textSecondary: string;
-  accentColor: string;
-
-  // Типографика
+  // Контент
   headline: string;
   subtitle: string;
-  fontSize: number;       // 40-90px
-
-  // Товары
+  caption: string;           // Текст подписи для Instagram поста (AIDA)
   products: BannerProduct[];
 
-  // Расположение фото
-  photoSize: number;      // 300-600px
-  photoAngle: number;     // -20 to +20 degrees
-  photoLayout: 'center' | 'duo' | 'pyramid';
+  // Настройки ИИ-генерации (Gemini 3 Pro Image / Nano Banana Pro)
+  imagePrompt: string;       // Детальный промпт для генерации сцены
+  stylePreset: 'luxury_spa' | 'sport_energy' | 'clinical_science' | 'editorial_magazine';
+  aspectRatio: '9:16' | '4:5' | '1:1' | '16:9';
 
-  // Текстовый блок
-  textPosition: 'top' | 'bottom';
-
-  // Caption для Instagram
-  caption: string;
+  // Результат
+  bannerUrl?: string;        // Сгенерированный баннер (base64 или URL)
 }
 
 export interface BannerProduct {
@@ -34,10 +23,6 @@ export interface BannerProduct {
   name: string;
   image_url: string;
   synergy_reason?: string;
-  x?: number;        // X координата в процентах (0-100)
-  y?: number;        // Y координата в процентах (0-100)
-  scale?: number;     // Масштаб (например, 0.5 - 2.0)
-  rotation?: number;  // Угол наклона в градусах (-180 до 180)
 }
 
 export interface ChatMessage {
@@ -57,77 +42,13 @@ export interface AgentSession {
   updated_at: string;
 }
 
-// 6 предустановленных тем
-export const BANNER_THEMES: Record<string, {
-  name: string;
-  emoji: string;
-  bgColor: string;
-  textPrimary: string;
-  textSecondary: string;
-  accentColor: string;
-}> = {
-  cream: {
-    name: 'Кремовый',
-    emoji: '🧁',
-    bgColor: '#EFEAE2',
-    textPrimary: '#251E18',
-    textSecondary: '#75695C',
-    accentColor: '#B88E6F',
-  },
-  chocolate: {
-    name: 'Шоколадный',
-    emoji: '🍫',
-    bgColor: '#2D2722',
-    textPrimary: '#FAFAF8',
-    textSecondary: '#B8A99A',
-    accentColor: '#D4A574',
-  },
-  mint: {
-    name: 'Мятный',
-    emoji: '🌿',
-    bgColor: '#E8F0E8',
-    textPrimary: '#1A2D20',
-    textSecondary: '#5B7F61',
-    accentColor: '#4CAF72',
-  },
-  indigo: {
-    name: 'Индиго',
-    emoji: '💎',
-    bgColor: '#1E1B3A',
-    textPrimary: '#FFFFFF',
-    textSecondary: '#94A3B8',
-    accentColor: '#818CF8',
-  },
-  white: {
-    name: 'Белый',
-    emoji: '⬜',
-    bgColor: '#FFFFFF',
-    textPrimary: '#111827',
-    textSecondary: '#6B7280',
-    accentColor: '#EC4899',
-  },
-  black: {
-    name: 'Чёрный',
-    emoji: '⬛',
-    bgColor: '#0A0A0A',
-    textPrimary: '#FAFAFA',
-    textSecondary: '#737373',
-    accentColor: '#F59E0B',
-  },
-};
-
 export const DEFAULT_BANNER_CONFIG: BannerConfig = {
-  bgColor: '#EFEAE2',
-  textPrimary: '#251E18',
-  textSecondary: '#75695C',
-  accentColor: '#B88E6F',
   headline: '',
   subtitle: 'TOJ-VITAMIN',
-  fontSize: 56,
-  products: [],
-  photoSize: 420,
-  photoAngle: 0,
-  photoLayout: 'center',
-  textPosition: 'top',
   caption: '',
+  products: [],
+  imagePrompt: '',
+  stylePreset: 'luxury_spa',
+  aspectRatio: '9:16',
+  bannerUrl: '',
 };

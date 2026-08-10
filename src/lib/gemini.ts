@@ -19,7 +19,7 @@ const genAI = new GoogleGenerativeAI(apiKey || '');
  * Gemini 2.0 Flash — быстрая и стабильная модель для генерации SEO-контента.
  */
 export const geminiModel = genAI.getGenerativeModel({
-  model: 'gemini-2.0-flash',
+  model: 'gemini-3.5-flash',
 });
 
 export { genAI };

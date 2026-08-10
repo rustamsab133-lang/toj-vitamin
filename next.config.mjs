@@ -9,7 +9,7 @@ const nextConfig = {
   },
   swcMinify: true,
   images: {
-    unoptimized: true,
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',
@@ -19,6 +19,15 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/b/:blogger',
+        destination: '/?utm_source=:blogger&utm_medium=shortlink&utm_campaign=blogger',
+        permanent: false,
+      },
+    ];
   },
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Product, Lang } from '@/lib/types';
@@ -11,7 +11,6 @@ import { ProductDetailModal } from './ProductDetailModal';
 
 interface SearchOverlayProps {
   lang: Lang;
-  whatsappNumber: string;
 }
 
 // --- Levenshtein Distance & Fuzzy Search Helpers ---
@@ -60,25 +59,28 @@ function isFuzzyMatch(query: string, target: string): boolean {
   });
 }
 
-import { trackSearch, trackWhatsAppClick } from '@/lib/analytics';
+import { trackSearch } from '@/lib/analytics';
 
-export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumber }) => {
+export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
   const search = useThemeStore(state => state.search);
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
-  const allProducts = useCart(state => state.allProducts);
+  const { allProducts, addItem, addMultiple, setIsOpen } = useCart();
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Track search query with debounce
-  React.useEffect(() => {
-    if (!search.trim() || search.length < 3) return;
-    const timer = setTimeout(() => {
-      trackSearch(search.trim());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [search]);
+  // Lock body scroll when search overlay is open to prevent background scrolling
+  useEffect(() => {
+    if (isSearchOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSearchOpen]);
 
   const filteredProducts = useMemo(() => {
     if (!search.trim() || allProducts.length === 0) return [];
@@ -125,6 +127,23 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
       return bScore - aScore; // Descending order
     });
   }, [search, allProducts]);
+
+  // Track search query with debounce
+  React.useEffect(() => {
+    if (!search.trim() || search.length < 3) return;
+    const timer = setTimeout(() => {
+      const resultsCount = filteredProducts.length;
+      const { trackEvent } = require('@/lib/analytics');
+      trackEvent({
+        event_name: 'search',
+        data: {
+          search_term: search.trim(),
+          results_count: resultsCount
+        }
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [search, filteredProducts]);
 
   const isOpen = isSearchOpen && search.trim().length > 0;
   const isLoading = isSearchOpen && search.trim().length > 0 && allProducts.length === 0;
@@ -282,18 +301,14 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang, whatsappNumb
         allProducts={allProducts}
         lang={lang}
         onBuy={async (product, synergy) => {
-          await trackWhatsAppClick(product);
-          if (synergy) await trackWhatsAppClick(synergy);
-
-          const message = synergy 
-            ? (lang === 'ru' 
-                ? `Здравствуйте! Хочу заказать набор: ${product.name} + ${synergy.name}. Цена: ${product.price + synergy.price} смн.`
-                : `Салом! Ман мехоҳам маҷмӯаро фармоиш диҳам: ${product.name} + ${synergy.name}. Нарх: ${product.price + synergy.price} смн.`)
-            : (lang === 'ru' 
-                ? `Здравствуйте! Хочу заказать: ${product.name}. Цена: ${product.price} смн.`
-                : `Салом! Ман мехоҳам фармоиш диҳам: ${product.name}. Нарх: ${product.price} смн.`);
-          
-          window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+          if (synergy) {
+            addMultiple([product, synergy]);
+          } else {
+            addItem(product);
+          }
+          setIsOpen(true);
+          setSelectedProduct(null);
+          setIsSearchOpen(false);
         }}
       />
     </>

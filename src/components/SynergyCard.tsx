@@ -8,20 +8,21 @@ import Image from 'next/image';
 
 interface SynergyCardProps {
   synergy: QuizSynergy;
-  whatsappNumber: string;
   lang: Lang;
 }
 
-export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumber, lang }) => {
+export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
   const total = synergy.total_price || 0;
   
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
+  const { allProducts, addMultiple, setIsOpen } = useCart();
+  
   const handleBuyInWhatsApp = async () => {
     // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
     const { trackEvent } = await import('@/lib/analytics');
     await trackEvent({
-      event_name: 'whatsapp_order_click',
+      event_name: 'add_to_cart',
       data: {
         synergy_type: synergy.type,
         total_price: synergy.total_price,
@@ -30,13 +31,15 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
     });
 
     if (synergy.products) {
-      const productNames = synergy.products.map(p => p.name).join(', ');
-      const message = lang === 'ru' 
-        ? `Здравствуйте! Хочу заказать комплекс: ${productNames}. Итого: ${total} смн. Протокол: ${synergy.dosage}.`
-        : `Салом! Ман мехоҳам маҷмӯаро фармоиш диҳам: ${productNames}. Маблағ: ${total} смн.`;
+      // Find full Product objects from allProducts using the IDs of synergy.products
+      const fullProducts = synergy.products
+        .map(sp => allProducts.find(ap => ap.id === sp.id))
+        .filter((p): p is Product => !!p);
       
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+      if (fullProducts.length > 0) {
+        addMultiple(fullProducts);
+      }
+      setIsOpen(true);
     }
   };
 
@@ -177,10 +180,10 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, whatsappNumbe
 
         <button 
           onClick={handleBuyInWhatsApp}
-          className="w-full sm:w-auto group relative h-[72px] px-10 bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-4 hover:bg-[#1E40AF] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 shadow-xl shadow-black/10 overflow-hidden"
+          className="w-full sm:w-auto group relative h-[72px] px-10 bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-4 hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 shadow-xl shadow-black/10 overflow-hidden"
         >
-          <MessageCircle size={20} fill="currentColor" />
-          <span>{lang === 'ru' ? 'Заказать комплекс' : 'Фармоиш додан'}</span>
+          <ShoppingBag size={20} />
+          <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
           <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           
           <div 

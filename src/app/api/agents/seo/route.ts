@@ -12,16 +12,16 @@ const supabase = createClient(
 // ─── Google Search Console Integration ───────────────────────────────────────
 async function getGSCOpportunities(): Promise<{ query: string; clicks: number; impressions: number; position: number }[]> {
   try {
-    const { OAuth2Client } = await import('google-auth-library');
     const { google } = await import('googleapis');
+    const path = await import('path');
 
-    const oauth2Client = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+    const keyFilePath = path.join(process.cwd(), 'google-key.json');
+    const auth = new google.auth.GoogleAuth({
+      keyFile: keyFilePath,
+      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+    });
 
-    const searchconsole = google.searchconsole({ version: 'v1', auth: oauth2Client });
+    const searchconsole = google.searchconsole({ version: 'v1', auth });
 
     // Last 28 days of data
     const endDate = new Date();
@@ -160,6 +160,12 @@ function sanitizeSlug(slug: string): string {
 
 // ─── Main POST handler ──────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const password = req.headers.get('x-admin-password');
+  const adminPass = process.env.ADMIN_PASSWORD;
+  if (!adminPass || password !== adminPass) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const customQuery = body.query as string | undefined;

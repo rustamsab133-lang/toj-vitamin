@@ -49,17 +49,33 @@ export function ProductPageHeader({ lang }: ProductPageHeaderProps) {
 
 interface ProductCartSectionProps {
   lang: Lang;
-  whatsappNumber: string;
+  product?: any;
 }
 
-export function ProductCartSection({ lang, whatsappNumber }: ProductCartSectionProps) {
+export function ProductCartSection({ lang, product }: ProductCartSectionProps) {
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
+  const { addItem, setIsOpen } = useCart();
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && product) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('buy') === '1') {
+        // 1. Добавить продукт в корзину
+        addItem(product);
+        // 2. Открыть корзину
+        setIsOpen(true);
+        // 3. Удалить параметр buy из URL, чтобы при перезагрузке товар не добавлялся снова
+        const url = new URL(window.location.href);
+        url.searchParams.delete('buy');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
+    }
+  }, [product, addItem, setIsOpen]);
 
   return (
     <>
       <CartDrawer 
         lang={lang} 
-        whatsappNumber={whatsappNumber} 
         onOrderSuccess={() => setIsOrderSuccess(true)}
       />
       <OrderSuccessOverlay 

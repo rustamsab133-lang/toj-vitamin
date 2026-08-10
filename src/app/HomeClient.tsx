@@ -9,9 +9,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { Lang } from '@/lib/types';
-import { Globe, ShoppingBag, Search, X, Dna, Instagram, MessageCircle, ArrowUpRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { SplashScreen } from '@/components/SplashScreen';
+import { Globe, ShoppingBag, Search, X, Instagram, MessageCircle, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { OrderSuccessOverlay } from '@/components/OrderSuccessOverlay';
 import { useRouter } from 'next/navigation';
@@ -33,13 +31,13 @@ interface HomeClientProps {
 export default function HomeClient({ initialSettings }: HomeClientProps) {
   const router = useRouter();
   const [lang, setLang] = React.useState<Lang>('ru');
-  const [isSplashVisible, setIsSplashVisible] = React.useState(true);
+
   const { totalItems, setIsOpen, isOpen, totalAmount, cartAnimationKey } = useCart();
   const search = useThemeStore(state => state.search);
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
-  const [isQuizPassed, setIsQuizPassed] = useState(false);
+
   
   // Use settings from server, but allow local override if needed
   const [settings, setSettings] = useState<Record<string, string>>({
@@ -62,19 +60,6 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   // Splash screen timer + quiz scroll observer (stable, runs once)
   useEffect(() => {
     setIsMounted(true);
-    
-    const timer = setTimeout(() => {
-      setIsSplashVisible(false);
-    }, 2000);
-
-    const quizObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        setIsQuizPassed(!entry.isIntersecting && entry.boundingClientRect.top < 0);
-      });
-    }, { threshold: 0 });
-
-    const quizEl = document.getElementById('quiz');
-    if (quizEl) quizObserver.observe(quizEl);
 
     // URL search param handling (runs once on mount)
     const params = new URLSearchParams(window.location.search);
@@ -82,15 +67,39 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
     if (urlSearch) {
       setSearch(urlSearch);
       setIsSearchOpen(true);
-      const newUrl = window.location.pathname;
+    }
+
+    // Capture UTM and referral parameters
+    const utmSource = params.get('utm_source') || params.get('ref');
+    const utmMedium = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+
+    if (utmSource) {
+      sessionStorage.setItem('utm_source', utmSource);
+      if (utmMedium) sessionStorage.setItem('utm_medium', utmMedium);
+      if (utmCampaign) sessionStorage.setItem('utm_campaign', utmCampaign);
+
+      // Track campaign visit
+      import('@/lib/analytics').then(({ trackEvent }) => {
+        trackEvent({
+          event_name: 'campaign_visit',
+          data: {
+            utm_source: utmSource,
+            utm_medium: utmMedium || 'none',
+            utm_campaign: utmCampaign || 'none',
+          }
+        });
+      }).catch(err => console.error("Failed to track campaign visit:", err));
+    }
+
+    // Clean URL query parameters to keep it clean
+    if (urlSearch || utmSource) {
+      const newUrl = window.location.pathname + (urlSearch ? `?search=${encodeURIComponent(urlSearch)}` : '');
       const currentHistoryState = typeof window !== 'undefined' ? window.history.state : null;
       window.history.replaceState({ ...currentHistoryState }, '', newUrl);
     }
 
-    return () => {
-      clearTimeout(timer);
-      quizObserver.disconnect();
-    };
+    return () => {};
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intentionally empty — one-time setup
 
@@ -185,13 +194,10 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
     >
       <MainBackground />
 
-      <AnimatePresence>
-        {isSplashVisible && <SplashScreen />}
-      </AnimatePresence>
+
 
       <CartDrawer 
         lang={lang} 
-        whatsappNumber={settings.whatsapp_phone} 
         onOrderSuccess={() => setIsOrderSuccess(true)}
       />
 
@@ -208,67 +214,30 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         isImmersiveMode={isImmersiveMode} 
       />
  
-      {/* FLOATING QUIZ REMINDER (appears when user scrolled past quiz section) */}
-      <AnimatePresence>
-        {isQuizPassed && !isOpen && !isSearchOpen && !isImmersiveMode && (
-          <motion.button
-            initial={{ scale: 0, x: -100 }}
-            animate={{
-              scale: 1,
-              x: 0,
-              y: isMounted && totalItems() > 0 ? (typeof window !== 'undefined' && window.innerWidth < 640 ? -76 : 0) : 0
-            }}
-            exit={{ scale: 0, x: -100 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
-            className="fixed bottom-6 left-6 z-[90] flex items-center gap-3 pl-4 pr-5 py-3 bg-[#1D1D1F] text-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white/10 transition-transform duration-500"
-          >
-            <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
-              <Dna size={16} />
-            </div>
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-0.5">{lang === 'ru' ? 'Умный подбор' : 'Интихоби зиракона'}</span>
-              <span className="font-outfit font-bold text-[13px]">{lang === 'ru' ? 'Пройти диагностику' : 'Ташхисро гузаред'}</span>
-            </div>
-          </motion.button>
-        )}
-      </AnimatePresence>
- 
-      {/* FLOATING CART SUMMARY */}
-      {/* Floating Cart Summary removed as per user request */}
+
 
  
       <div className="relative z-10 flex flex-col pt-16">
-        <StoreHero lang={lang} whatsappNumber={settings.whatsapp_phone} settings={settings} />
+        <StoreHero lang={lang} settings={settings} />
+
+        {/* CATALOG CONTENT */}
+        <div id="catalog">
+          <ProductCatalog lang={lang} />
+        </div>
+
         <ComboBanner 
           lang={lang} 
-          whatsappNumber={settings.whatsapp_phone} 
           onOrderSuccess={() => setIsOrderSuccess(true)}
         />
-        <ScienceGrid lang={lang} />
- 
+
         <div id="quiz" className={`${isImmersiveMode ? 'min-h-[90vh] flex items-center pt-0' : 'pb-24 pt-10'}`}>
           <QuizEngine 
-            whatsappNumber={settings.whatsapp_phone} 
             lang={lang} 
             onImmersiveChange={setIsImmersiveMode} 
           />
         </div>
 
-        {/* CATALOG CONTENT */}
-        <AnimatePresence mode="wait">
-          {!isImmersiveMode && (
-            <motion.div
-              key="catalog-content"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProductCatalog lang={lang} whatsappNumber={settings.whatsapp_phone} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <ScienceGrid lang={lang} />
       </div>
 
       <footer className="w-full bg-[#1D1D1F] text-white/60 relative z-20">
@@ -375,7 +344,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
           </div>
         </footer>
   
-      <SearchOverlay lang={lang} whatsappNumber={settings.whatsapp_phone} />
+      <SearchOverlay lang={lang} />
       <ChatWidget lang={lang} />
     </main>
   );

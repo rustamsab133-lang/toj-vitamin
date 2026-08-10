@@ -11,6 +11,7 @@ interface Message {
   sender: 'user' | 'bot';
   text: string;
   timestamp: Date;
+  recommendedProductIds?: string[];
 }
 
 interface ChatWidgetProps {
@@ -32,6 +33,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
   const allProducts = useCart((state) => state.allProducts);
   const addItem = useCart((state) => state.addItem);
   const setCartOpen = useCart((state) => state.setIsOpen);
+  const cartItems = useCart((state) => state.items);
 
   // Load chat session and initial message
   useEffect(() => {
@@ -135,13 +137,44 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Подготовка контекста корзины
+    const cartContext = cartItems && cartItems.length > 0
+      ? cartItems.map(item => `${item.name} (кол-во: ${item.quantity})`).join(', ')
+      : 'Корзина пуста';
+
+    // Подготовка контекста результатов теста
+    let quizContext = 'Тест не пройден';
+    try {
+      const saved = localStorage.getItem('toj_quiz_last');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        quizContext = `Категория: ${parsed.catTitle || ''}`;
+        if (parsed.optionTitle) {
+          quizContext += `, Проблема: ${parsed.optionTitle}`;
+        }
+        if (parsed.recommendedProductNames && parsed.recommendedProductNames.length > 0) {
+          quizContext += `, Рекомендованные продукты теста: ${parsed.recommendedProductNames.join(', ')}`;
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Ошибка при извлечении контекста теста:', err);
+    }
+
     try {
       const response = await fetch('/api/agents/web-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userText,
-          chatId: chatId
+          chatId: chatId,
+          cartItems: cartContext,
+          quizResult: quizContext,
+          cartItemsRaw: cartItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: Number(item.price) || 0,
+            quantity: item.quantity
+          }))
         })
       });
 
@@ -157,7 +190,8 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
           id: `msg-${Date.now()}-bot`,
           sender: 'bot',
           text: data.reply,
-          timestamp: new Date()
+          timestamp: new Date(),
+          recommendedProductIds: data.recommendedProductIds || []
         };
 
         setMessages((prev) => [...prev, botMessage]);
@@ -305,7 +339,11 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
             {/* Chat Body (Messages) */}
             <div className="chat-messages-area">
               {messages.map((msg) => {
-                const detectedProducts = msg.sender === 'bot' ? detectProductsInText(msg.text) : [];
+                const detectedProducts = msg.sender === 'bot'
+                  ? (msg.recommendedProductIds && msg.recommendedProductIds.length > 0
+                      ? allProducts.filter(p => msg.recommendedProductIds!.includes(p.id))
+                      : detectProductsInText(msg.text))
+                  : [];
                 
                 return (
                   <div key={msg.id} className={`flex flex-col gap-2`}>

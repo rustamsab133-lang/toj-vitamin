@@ -1,27 +1,31 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Sparkles, ArrowRight } from 'lucide-react';
 import { Lang } from '@/lib/types';
+import { useCart } from '@/store/useCart';
 
 interface ComboBannerProps {
   lang: Lang;
-  whatsappNumber: string;
   onOrderSuccess?: () => void;
 }
 
-export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, whatsappNumber, onOrderSuccess }) => {
+export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, onOrderSuccess }) => {
   const comboPrice = 254;
   
+  const { allProducts, addMultiple, setIsOpen } = useCart();
+
   const handleOrder = () => {
-    const message = lang === 'ru'
-      ? `Здравствуйте! Хочу заказать комбо: Инозитол + Магний Хелат. Цена: ${comboPrice} смн.`
-      : `Салом! Ман мехоҳам маҷмӯаро фармоиш диҳам: Инозитол + Магний Хелат. Нарх: ${comboPrice} смн.`;
+    const magnesium = allProducts.find(p => p.name.toLowerCase().includes('магний') && p.name.toLowerCase().includes('хелат'));
+    const inositol = allProducts.find(p => p.name.toLowerCase().includes('инозитол'));
     
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    const itemsToAdd = [];
+    if (magnesium) itemsToAdd.push(magnesium);
+    if (inositol) itemsToAdd.push(inositol);
     
-    if (onOrderSuccess) onOrderSuccess();
-    
-    window.open(whatsappUrl, '_blank');
+    if (itemsToAdd.length > 0) {
+      addMultiple(itemsToAdd);
+    }
+    setIsOpen(true);
   };
 
   return (
@@ -117,10 +121,10 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, whatsappNumber, 
               {/* Action Button */}
               <button 
                 onClick={handleOrder}
-                className="flex-1 md:flex-none h-14 md:h-16 px-8 bg-[#1D1D1F] text-white rounded-2xl text-[15px] font-bold flex items-center justify-center gap-3 hover:bg-[#25D366] transition-all duration-500 shadow-lg active:scale-95 group/btn min-w-[200px]"
+                className="flex-1 md:flex-none h-14 md:h-16 px-8 bg-[#1D1D1F] text-white rounded-2xl text-[15px] font-bold flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all duration-500 shadow-lg active:scale-95 group/btn min-w-[200px]"
               >
-                <MessageCircle size={20} fill="currentColor" className="group-hover/btn:scale-110 transition-transform" />
-                <span>{lang === 'ru' ? 'Купить в WhatsApp' : 'Бо WhatsApp харед'}</span>
+                <ShoppingBag size={20} fill="currentColor" className="group-hover/btn:scale-110 transition-transform" />
+                <span>{lang === 'ru' ? 'Купить комбо' : 'Харидани маҷмӯа'}</span>
                 <ArrowRight size={16} className="opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
               </button>
             </div>

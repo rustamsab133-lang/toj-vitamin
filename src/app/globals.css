@@ -8,6 +8,12 @@
   --apple-text: #0F172A;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  touch-action: pan-x pan-y;
+}
+
 body {
   color: var(--apple-text);
   background-color: var(--apple-bg);
@@ -84,19 +90,21 @@ button > *,
    backdrop-blur is extremely GPU-intensive. On low-end mobile devices
    it can cause GPU thrashing → browser kills the tab.
    ═══════════════════════════════════════════════════════════════════ */
-@media (max-width: 640px) and (hover: none) {
-  /* Reduce heavy blur on mobile touch devices */
-  .backdrop-blur-3xl {
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
+@media (max-width: 768px) {
+  /* Kill ALL backdrop blurs on mobile — including Tailwind JIT classes like backdrop-blur-[24px] */
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
-  .backdrop-blur-2xl {
-    backdrop-filter: blur(6px) !important;
-    -webkit-backdrop-filter: blur(6px) !important;
+
+  /* Reduce heavy CSS blur effects on decorative elements */
+  [class*="blur-["] {
+    filter: none !important;
   }
-  .backdrop-blur-xl {
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
+
+  /* Reduce heavy shadows that tax compositing */
+  [class*="shadow-["] {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
   }
 }
 
@@ -105,3 +113,121 @@ button > *,
   content-visibility: auto;
   contain-intrinsic-size: auto 2000px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Hardware-Accelerated X-Ray & Radar Scanner Animations (GPU 60 FPS)
+   These properties use translate3d to offload rendering to the GPU,
+   preventing page reflow and saving mobile battery / CPU.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes xray-scan {
+  0% {
+    transform: translate3d(0, -20px, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 480px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 0.3;
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes heartbeat-glow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+.animate-xray {
+  animation: xray-scan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.animate-radar {
+  animation: radar-pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+.animate-heartbeat-glow {
+  animation: heartbeat-glow 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* CRM Sliding Drawer & Modal Animations */
+@keyframes slide-in-right {
+  0% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale3d(0.95, 0.95, 1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Prevent iOS Safari auto-zoom on input focus by forcing 16px minimum font size */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Disable double-tap zoom delay and zoom bugs on all interactive elements */
+a, button, select, input, textarea {
+  touch-action: manipulation;
+}
+
+

@@ -125,8 +125,8 @@ export default async function PSEOPage({ params, searchParams }: Props) {
     <main className="min-h-screen bg-[#FDFBF7] relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <MainBackground />
-      <Header lang={lang} settings={{ brand_name: brandName, whatsapp_phone: whatsappPhone }} isImmersiveMode={false} />
-      <SearchOverlay lang={lang} whatsappNumber={whatsappPhone} />
+      <Header lang={lang} settings={{ brand_name: brandName }} isImmersiveMode={false} />
+      <SearchOverlay lang={lang} />
       
       <div className="pt-32 pb-20 px-6 max-w-5xl mx-auto">
         {/* Breadcrumbs */}
@@ -215,7 +215,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
                 <h2 className="text-[32px] font-bold font-outfit">Заказать {product.name} сейчас</h2>
                 <p className="text-[#64748B]">Выберите дозировку и оформите заказ на сайте</p>
               </div>
-              <ProductCatalog lang={lang} whatsappNumber={whatsappPhone} />
+              <ProductCatalog lang={lang} />
            </div>
         </div>
 
@@ -234,7 +234,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
            ))}
         </div>
       </div>
-      <ProductCartSection lang={lang} whatsappNumber={whatsappPhone} />
+      <ProductCartSection lang={lang} />
     </main>
   );
 }

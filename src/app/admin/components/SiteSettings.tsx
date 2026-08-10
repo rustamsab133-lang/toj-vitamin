@@ -17,7 +17,8 @@ const SETTING_LABELS: Record<string, { label: string; description: string; multi
   hero_cta_text: { label: 'Текст кнопки Юнита', description: 'Текст на кнопке перехода к тесту' },
   whatsapp_phone: { label: 'WhatsApp номер', description: 'Номер для приёма заказов (без +)' },
   price_markup_percent: { label: 'Процентная наценка (%)', description: 'Автоматически увеличивает розничную стоимость всех продуктов на указанный процент (например, 10 для +10%). 0 — выключено.' },
-  price_markup_flat: { label: 'Фиксированная наценка (TJS)', description: 'Добавляет фиксированную сумму к цене каждого продукта в сомони (например, 5 для +5 сомони). 0 — выключено.' }
+  price_markup_flat: { label: 'Фиксированная наценка (TJS)', description: 'Добавляет фиксированную сумму к цене каждого продукта в сомони (например, 5 для +5 сомони). 0 — выключено.' },
+  pseo_cities: { label: 'Города для pSEO продвижения', description: 'Список городов через запятую (например, dushanbe, khujand, kulob, bokhtar, vakhdat, hissar) для автоматического создания посадочных страниц.' }
 };
 
 export const SiteSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -29,7 +30,13 @@ export const SiteSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const loadSettings = async () => {
     const { data } = await supabase.from('site_settings').select('*');
-    if (data) setSettings(data);
+    if (data) {
+      const hasPseo = data.some(s => s.key === 'pseo_cities');
+      if (!hasPseo) {
+        data.push({ key: 'pseo_cities', value: 'dushanbe, khujand, kulob, bokhtar, vakhdat, hissar' });
+      }
+      setSettings(data);
+    }
   };
 
   const updateValue = (key: string, value: string) => {
@@ -60,8 +67,8 @@ export const SiteSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </div>
 
       <div className="space-y-4">
-        {settings.map(s => {
-          const meta = SETTING_LABELS[s.key] || { label: s.key, description: '' };
+        {settings.filter(s => !!SETTING_LABELS[s.key]).map(s => {
+          const meta = SETTING_LABELS[s.key];
           return (
             <div key={s.key} className="bg-white rounded-2xl border border-slate-100 p-6 space-y-3">
               <div className="flex items-center gap-2">
