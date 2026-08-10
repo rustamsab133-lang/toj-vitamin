@@ -389,7 +389,6 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                      });
                                      addItem(product);
                                      triggerAnimation();
-                                     setIsOpen(true);
                                    }}
                                    className="h-10 w-10 rounded-full bg-[#1E40AF] text-white flex items-center justify-center shadow-lg hover:bg-black transition-all active:scale-90 shrink-0 pointer-events-auto interactive-child"
                                    title={lang === 'ru' ? 'Купить' : 'Харид'}
