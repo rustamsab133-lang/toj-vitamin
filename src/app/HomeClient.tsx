@@ -2,25 +2,27 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { StoreHero } from '@/components/StoreHero';
-import { QuizEngine } from '@/components/QuizEngine';
 import { ProductCatalog } from '@/components/ProductCatalog';
 import { ScienceGrid } from '@/components/ScienceGrid';
-import { CartDrawer } from '@/components/CartDrawer';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { Lang } from '@/lib/types';
 import { Globe, ShoppingBag, Search, X, Instagram, MessageCircle, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { OrderSuccessOverlay } from '@/components/OrderSuccessOverlay';
 import { useRouter } from 'next/navigation';
 import { ZONE_THEMES } from '@/lib/theme';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+const QuizEngine = dynamic(() => import('@/components/QuizEngine').then(m => m.QuizEngine), { ssr: false });
+const CartDrawer = dynamic(() => import('@/components/CartDrawer').then(m => m.CartDrawer), { ssr: false });
+const OrderSuccessOverlay = dynamic(() => import('@/components/OrderSuccessOverlay').then(m => m.OrderSuccessOverlay), { ssr: false });
+const SearchOverlay = dynamic(() => import('@/components/SearchOverlay').then(m => m.SearchOverlay), { ssr: false });
+const ChatWidget = dynamic(() => import('@/components/ChatWidget').then(m => m.ChatWidget), { ssr: false });
 
 import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
-import { SearchOverlay } from '@/components/SearchOverlay';
-import { ChatWidget } from '@/components/ChatWidget';
 import { applyMarkupToProduct, getMarkupSettings } from '@/lib/markup';
 import { findEnrichmentForProduct } from '@/lib/products';
 
@@ -33,7 +35,9 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const router = useRouter();
   const [lang, setLang] = React.useState<Lang>('ru');
 
-  const { totalItems, setIsOpen, isOpen, totalAmount, cartAnimationKey } = useCart();
+  const totalItems = useCart(state => state.totalItems);
+  const setIsOpen = useCart(state => state.setIsOpen);
+  const cartAnimationKey = useCart(state => state.cartAnimationKey);
   const search = useThemeStore(state => state.search);
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);

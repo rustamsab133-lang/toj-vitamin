@@ -338,7 +338,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-[12px]"
+            className="absolute inset-0 bg-black/60 md:backdrop-blur-[12px]"
           />
 
           {/* PREMIUM DRAWER — solid warm white with subtle depth */}

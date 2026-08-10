@@ -37,6 +37,15 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
 
   const totalCartItems = totalItems();
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)');
+    setIsMobile(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
+
   useEffect(() => {
     const checkLastQuiz = () => {
       try {
@@ -67,10 +76,10 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
     <div className={`fixed top-0 left-0 w-full z-[100] flex justify-center px-3 pt-3 sm:px-4 sm:pt-4 pointer-events-none transition-all duration-1000 ${isImmersiveMode ? 'opacity-0 -translate-y-12' : 'opacity-100 translate-y-0'}`}>
       <motion.header
         animate={{
-          backgroundColor: currentTheme.glow,
+          backgroundColor: isMobile ? currentTheme.bg : currentTheme.glow,
         }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
-        className="pointer-events-auto h-14 md:h-16 w-full max-w-5xl rounded-[28px] backdrop-blur-3xl border border-white/20 shadow-[0_15px_40px_rgba(0,0,0,0.05)] flex items-center justify-between px-4 sm:px-6 transition-all duration-700"
+        className="pointer-events-auto h-14 md:h-16 w-full max-w-5xl rounded-[28px] md:backdrop-blur-3xl border border-white/20 shadow-[0_15px_40px_rgba(0,0,0,0.05)] flex items-center justify-between px-4 sm:px-6 transition-all duration-700"
       >
         <AnimatePresence mode="wait">
           {isSearchOpen ? (
@@ -157,14 +166,14 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={() => setIsSearchOpen(true)}
-                  className="h-10 w-10 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm group active:scale-90"
+                  className="h-10 w-10 flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 md:backdrop-blur-sm group active:scale-90"
                 >
                   <Search size={18} className="group-hover:scale-110 transition-transform" />
                 </button>
 
                 <button
                   onClick={() => setLang && setLang(lang === 'ru' ? 'tj' : 'ru')}
-                  className="flex h-10 px-3 rounded-full bg-white/40 hover:bg-white/60 transition-colors text-[10px] font-bold text-[#1D1D1F] items-center gap-1.5 border border-white/50 backdrop-blur-sm"
+                  className="flex h-10 px-3 rounded-full bg-white/75 hover:bg-white/85 transition-colors text-[10px] font-bold text-[#1D1D1F] items-center gap-1.5 border border-white/50 md:backdrop-blur-sm"
                 >
                   <Globe size={13} className="text-[#86868B]" />
                   {lang === 'ru' ? 'RU' : 'TJ'}
@@ -173,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 {/* Profile Cabinet Button */}
                 <button
                   onClick={() => setIsCabinetOpen(true)}
-                  className="h-10 px-3 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm gap-1.5 active:scale-90"
+                  className="h-10 px-3 flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 md:backdrop-blur-sm gap-1.5 active:scale-90"
                 >
                   <User size={15} className="text-[#86868B]" />
                   {isAuth && client ? (
@@ -186,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 {/* Shopping Cart Button */}
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm active:scale-90 relative"
+                  className="h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 md:backdrop-blur-sm active:scale-90 relative"
                 >
                   <ShoppingBag size={17} />
                   {totalCartItems > 0 && (

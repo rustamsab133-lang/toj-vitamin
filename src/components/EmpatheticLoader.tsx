@@ -71,19 +71,19 @@ export const EmpatheticLoader: React.FC<EmpatheticLoaderProps> = ({ lang = 'ru',
         <div className="relative w-16 h-16 mx-auto">
           <div className="absolute inset-0 flex items-center justify-center gap-1.5">
              <motion.div 
-               animate={{ height: ['8px', '28px', '8px'] }}
+               animate={{ scaleY: [0.3, 1, 0.3] }}
                transition={{ duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0 }}
-               className="w-1.5 bg-[#1E40AF] rounded-full"
+               className="w-1.5 h-7 bg-[#1E40AF] rounded-full transform-gpu origin-center"
              />
              <motion.div 
-               animate={{ height: ['8px', '28px', '8px'] }}
+               animate={{ scaleY: [0.3, 1, 0.3] }}
                transition={{ duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-               className="w-1.5 bg-[#1D1D1F] rounded-full"
+               className="w-1.5 h-7 bg-[#1D1D1F] rounded-full transform-gpu origin-center"
              />
              <motion.div 
-               animate={{ height: ['8px', '28px', '8px'] }}
+               animate={{ scaleY: [0.3, 1, 0.3] }}
                transition={{ duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-               className="w-1.5 bg-[#1E40AF] rounded-full"
+               className="w-1.5 h-7 bg-[#1E40AF] rounded-full transform-gpu origin-center"
              />
           </div>
         </div>
