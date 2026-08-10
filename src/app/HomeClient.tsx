@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { OrderSuccessOverlay } from '@/components/OrderSuccessOverlay';
 import { useRouter } from 'next/navigation';
 import { ZONE_THEMES } from '@/lib/theme';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
@@ -344,6 +345,50 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
           </div>
         </footer>
   
+      {/* Floating Mobile Cart Button */}
+      <AnimatePresence>
+        {isMounted && totalItems() > 0 && (
+          <motion.button
+            key={`mobile-cart-${cartAnimationKey}`}
+            initial={{ scale: 0.8, opacity: 0, y: 30 }}
+            animate={{ 
+              scale: [1, 1.25, 0.95, 1], // quick GPU scale pulse
+              opacity: 1, 
+              y: 0 
+            }}
+            exit={{ scale: 0.8, opacity: 0, y: 30 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 15
+            }}
+            onClick={() => setIsOpen(true)}
+            className="md:hidden fixed bottom-24 left-6 z-[90] w-14 h-14 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] border border-white/10 active:scale-95 transition-transform"
+            aria-label="Open Cart"
+            style={{ transform: 'translate3d(0,0,0)' }} // Force GPU compositing
+          >
+            <ShoppingBag size={22} />
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
+              {totalItems()}
+            </span>
+            
+            {/* GPU-Accelerated Floating +1 indicator */}
+            {cartAnimationKey > 0 && (
+              <motion.span
+                key={`plus-one-anim-${cartAnimationKey}`}
+                initial={{ y: 0, opacity: 1, scale: 0.8 }}
+                animate={{ y: -50, opacity: 0, scale: 1.1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full pointer-events-none shadow-md z-[100]"
+                style={{ transform: 'translate3d(0,0,0)' }} // Force GPU compositing
+              >
+                +1
+              </motion.span>
+            )}
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       <SearchOverlay lang={lang} />
       <ChatWidget lang={lang} />
     </main>

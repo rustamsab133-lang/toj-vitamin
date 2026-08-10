@@ -186,7 +186,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 {/* Shopping Cart Button */}
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="h-10 w-10 flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm active:scale-90 relative"
+                  className="h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-white/40 hover:bg-white/80 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm active:scale-90 relative"
                 >
                   <ShoppingBag size={17} />
                   {totalCartItems > 0 && (

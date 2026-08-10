@@ -87,36 +87,26 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, onOrderSuccess }
           {/* RIGHT: Floating Breakout Images Section */}
           <div className="w-full md:w-[45%] mt-6 md:mt-0 relative flex justify-center items-center md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2 z-10 md:h-[220px]">
             
-            {/* Breakout container */}
-            <div className="relative flex items-center justify-center -space-x-12 md:-space-x-16">
+            {/* Breakout container — side by side, no overlap */}
+            <div className="relative flex items-center justify-center gap-2 md:gap-4">
               
               {/* Product 1: Magnesium */}
-              <div className="relative group/img z-10 md:-translate-y-6">
-                <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full scale-125 opacity-0 group-hover/img:opacity-100 transition-opacity duration-700" />
+              <div className="relative group/img md:-translate-y-4">
                 <motion.img
-                  whileHover={{ scale: 1.08, y: -5 }}
+                  whileHover={{ scale: 1.06, y: -4 }}
                   src="/magnesium_source.jpg" 
                   alt="Магний Хелат"
-                  className="w-[130px] h-[150px] md:w-[170px] md:h-[200px] object-contain relative z-10 drop-shadow-2xl transition-transform duration-500"
-                  style={{ 
-                    WebkitMaskImage: 'radial-gradient(circle at center, black 55%, transparent 95%)',
-                    maskImage: 'radial-gradient(circle at center, black 55%, transparent 95%)'
-                  }}
+                  className="w-[120px] h-[140px] md:w-[155px] md:h-[185px] object-contain drop-shadow-lg transition-transform duration-500 rounded-lg"
                 />
               </div>
 
               {/* Product 2: Inositol */}
-              <div className="relative group/img z-20 md:translate-y-6 md:translate-x-2">
-                <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full scale-125 opacity-0 group-hover/img:opacity-100 transition-opacity duration-700" />
+              <div className="relative group/img md:translate-y-4">
                 <motion.img
-                  whileHover={{ scale: 1.08, y: -5 }}
+                  whileHover={{ scale: 1.06, y: -4 }}
                   src="/inositol_source.jpg" 
                   alt="Инозитол"
-                  className="w-[130px] h-[150px] md:w-[170px] md:h-[200px] object-contain relative z-20 drop-shadow-2xl transition-transform duration-500"
-                  style={{ 
-                    WebkitMaskImage: 'radial-gradient(circle at center, black 55%, transparent 95%)',
-                    maskImage: 'radial-gradient(circle at center, black 55%, transparent 95%)'
-                  }}
+                  className="w-[120px] h-[140px] md:w-[155px] md:h-[185px] object-contain drop-shadow-lg transition-transform duration-500 rounded-lg"
                 />
               </div>
 
