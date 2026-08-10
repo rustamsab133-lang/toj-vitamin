@@ -354,10 +354,28 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                     {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
                                   </p>
                                 </div>
-                                <div className="flex items-center gap-1 text-[#1E40AF] text-[10px] font-bold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-                                   {lang === 'ru' ? 'Инфо' : 'Инфо'}
-                                   <ArrowRight size={12} />
-                                </div>
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    const { trackEvent } = await import('@/lib/analytics');
+                                    await trackEvent({
+                                      event_name: 'add_to_cart',
+                                      data: {
+                                        product_id: product.id,
+                                        product_name: product.name,
+                                        price: product.price
+                                      }
+                                    });
+                                    addItem(product);
+                                    triggerAnimation();
+                                    setIsOpen(true);
+                                  }}
+                                  className="h-10 w-10 rounded-full bg-[#1E40AF] text-white flex items-center justify-center shadow-lg hover:bg-black transition-all active:scale-90 shrink-0 pointer-events-auto interactive-child"
+                                  title={lang === 'ru' ? 'Купить' : 'Харид'}
+                                >
+                                  <ShoppingBag size={17} />
+                                </button>
                               </div>
 
                               {/* Hover View: Add to Cart Button */}
