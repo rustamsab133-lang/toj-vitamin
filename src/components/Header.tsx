@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
   
   const { client, isAuth } = useClient();
-  const { totalItems, setIsOpen: setIsCartOpen } = useCart();
+  const { totalItems, setIsOpen: setIsCartOpen, cartAnimationKey } = useCart();
   
   const [isCabinetOpen, setIsCabinetOpen] = useState(false);
   
@@ -153,13 +153,13 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                {/* KILLER FEATURE CTA: Quiz Link */}
                <button
                  onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
-                 className={`hidden md:flex items-center gap-2 h-10 px-5 rounded-full transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] ${
+                 className={`hidden md:flex items-center gap-2 h-10 px-5 rounded-full transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] group ${
                    lastQuizResult 
-                     ? 'bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white shadow-[0_0_15px_rgba(30,64,175,0.3)] animate-pulse' 
+                     ? 'bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white shadow-[0_0_15px_rgba(30,64,175,0.3)]' 
                      : 'bg-[#1D1D1F] text-white hover:bg-[#1E40AF]'
                  }`}
                >
-                 <Dna size={14} className={lastQuizResult ? 'animate-[spin_4s_linear_infinite]' : ''} />
+                 <Dna size={14} className={lastQuizResult ? 'group-hover:animate-[spin_2s_linear_infinite] transition-transform duration-500' : ''} />
                  <span>
                    {lastQuizResult 
                      ? (lang === 'ru' 
@@ -201,9 +201,15 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 </button>
 
                 {/* Shopping Cart Button */}
-                <button
+                <motion.button
+                  key={`header-cart-${cartAnimationKey}`}
+                  animate={cartAnimationKey > 0 ? {
+                    scale: [1, 1.25, 0.95, 1]
+                  } : {}}
+                  transition={{ duration: 0.4 }}
                   onClick={() => setIsCartOpen(true)}
                   className="h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 md:backdrop-blur-sm active:scale-90 relative"
+                  style={{ transform: 'translate3d(0,0,0)' }} // Force GPU
                 >
                   <ShoppingBag size={17} />
                   {totalCartItems > 0 && (
@@ -211,7 +217,21 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                       {totalCartItems}
                     </span>
                   )}
-                </button>
+
+                  {/* GPU-Accelerated Floating +1 indicator on desktop */}
+                  {cartAnimationKey > 0 && (
+                    <motion.span
+                      key={`header-plus-one-${cartAnimationKey}`}
+                      initial={{ y: 0, opacity: 1, scale: 0.8 }}
+                      animate={{ y: -40, opacity: 0, scale: 1.1 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full pointer-events-none shadow-md z-[100]"
+                      style={{ transform: 'translate3d(0,0,0)' }} // Force GPU
+                    >
+                      +1
+                    </motion.span>
+                  )}
+                </motion.button>
               </div>
             </motion.div>
           )}
