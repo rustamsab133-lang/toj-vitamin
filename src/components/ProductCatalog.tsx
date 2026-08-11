@@ -293,8 +293,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
 
                   <div className="apple-shelf-scroll px-8 pb-6">
                     {categoryProducts.map((product) => (
-                      <motion.a
-                        href={`/product/${slugify(product.name || '')}`}
+                      <motion.div
                         key={`${category.id}-${product.id}`}
                         whileHover={{
                           y: -12,
@@ -302,171 +301,168 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                           transition: { duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }
                         }}
                         whileTap={{ scale: 0.96 }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setSelectedProduct(product);
-                        }}
-                        className="apple-shelf-item group relative flex flex-col w-[230px] sm:w-[260px] cursor-pointer touch-manipulation block"
+                        className="group relative flex flex-col w-[230px] sm:w-[260px] h-full"
                       >
-                        <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_60px_120px_rgba(30,64,175,0.08)] transition-all duration-700 overflow-hidden h-full">
-
-                          {/* 1. BACKGROUND EFFECTS */}
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent pointer-events-none" />
-                          <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-30 transition-all duration-1200 bg-gradient-to-r from-transparent via-white to-transparent translate-x-[-200%] group-hover:translate-x-[200%] z-20" />
-
-                          {/* 2. TOP BADGES */}
-                          <div className="absolute top-7 left-7 z-20 flex flex-wrap gap-1.5 pointer-events-none">
-                             {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag: string, idx: number) => (
-                               <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
-                                 {tag}
-                               </span>
-                             ))}
-                           </div>
-                          <div className="absolute top-7 right-7 z-20 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                             <div className="w-1.5 h-1.5 rounded-full bg-[#1E40AF] animate-pulse" />
-                             <span className="text-[8px] font-bold uppercase tracking-widest text-[#94A3B8]">
-                               {lang === 'ru' ? 'Подробно' : 'Тафсилот'}
-                             </span>
-                          </div>
-
-                          {/* 3. PRODUCT IMAGE STUDIO */}
-                          <div className="mb-6 aspect-[4/5] relative bg-gradient-to-b from-[#FBFDFF] to-white rounded-[40px] overflow-hidden flex items-center justify-center p-6 transition-all duration-700 border border-[#EDF2F7] group-hover:border-[#1E40AF]/10">
-                            {/* Inner Aura Glow */}
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(30,64,175,0.03)_0%,transparent_70%)] group-hover:opacity-100 transition-opacity" />
+                        <motion.a
+                          href={`/product/${slugify(product.name || '')}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedProduct(product);
+                          }}
+                          className="apple-shelf-item flex flex-col cursor-pointer touch-manipulation block h-full w-full"
+                        >
+                          <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_60px_120px_rgba(30,64,175,0.08)] transition-all duration-700 overflow-hidden h-full">
                             
-                            {product.image_url ? (
-                              <motion.div 
-                                className="relative w-full h-full"
-                                whileHover={{ y: -8 }}
-                                transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-                              >
-                                <Image
-                                  src={product.image_url}
-                                  alt={product.name}
-                                  fill
-                                  sizes="(max-width: 640px) 250px, 300px"
-                                  className="object-contain p-4"
-                                />
-                              </motion.div>
-                            ) : (
-                              <ShoppingBag size={42} strokeWidth={1} className="text-[#E2E8F0]" />
-                            )}
+                            {/* 1. BACKGROUND EFFECTS */}
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent pointer-events-none" />
+                            <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-30 transition-all duration-1200 bg-gradient-to-r from-transparent via-white to-transparent translate-x-[-200%] group-hover:translate-x-[200%] z-20" />
 
-                            <div className="absolute bottom-6 right-6">
-                              <div 
-                                className="w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center border border-[#EDF2F7] text-[#1E40AF]"
-                              >
-                                <Sparkles size={16} />
+                            {/* 2. TOP BADGES */}
+                            <div className="absolute top-7 left-7 z-20 flex flex-wrap gap-1.5 pointer-events-none">
+                               {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag: string, idx: number) => (
+                                 <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
+                                   {tag}
+                                 </span>
+                               ))}
+                             </div>
+                            <div className="absolute top-7 right-7 z-20 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+                               <div className="w-1.5 h-1.5 rounded-full bg-[#1E40AF] animate-pulse" />
+                               <span className="text-[8px] font-bold uppercase tracking-widest text-[#94A3B8]">
+                                 {lang === 'ru' ? 'Подробно' : 'Тафсилот'}
+                               </span>
+                            </div>
+
+                            {/* 3. PRODUCT IMAGE STUDIO */}
+                            <div className="mb-6 aspect-[4/5] relative bg-gradient-to-b from-[#FBFDFF] to-white rounded-[40px] overflow-hidden flex items-center justify-center p-6 transition-all duration-700 border border-[#EDF2F7] group-hover:border-[#1E40AF]/10">
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(30,64,175,0.03)_0%,transparent_70%)] group-hover:opacity-100 transition-opacity" />
+                              
+                              {product.image_url ? (
+                                <motion.div 
+                                  className="relative w-full h-full"
+                                  whileHover={{ y: -8 }}
+                                  transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
+                                >
+                                  <Image
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    fill
+                                    sizes="(max-width: 640px) 250px, 300px"
+                                    className="object-contain p-4"
+                                  />
+                                </motion.div>
+                              ) : (
+                                <ShoppingBag size={42} strokeWidth={1} className="text-[#E2E8F0]" />
+                              )}
+
+                              <div className="absolute bottom-6 right-6">
+                                <div 
+                                  className="w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center border border-[#EDF2F7] text-[#1E40AF]"
+                                >
+                                  <Sparkles size={16} />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 4. CONTENT & ACTIONS */}
+                            <div className="flex-1 flex flex-col relative z-10 px-1 text-[#1D1D1F]">
+                              <h3 className="text-[17px] font-bold leading-[1.3] mb-4 font-outfit line-clamp-2 h-[44px] group-hover:text-[#1E40AF] transition-colors duration-500">
+                                {product.name}
+                              </h3>
+
+                              <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">
+                                 {/* Standard View: Price & Clinical Info */}
+                                 <div className="absolute inset-y-0 left-0 right-12 flex items-center transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0 pr-2">
+                                   <div className="flex flex-col gap-0.5">
+                                     <div className="flex items-center gap-1.5 mb-1">
+                                        <ShieldCheck size={10} className="text-[#1E40AF]" />
+                                        <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em] whitespace-nowrap">
+                                          {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
+                                        </span>
+                                     </div>
+                                     <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
+                                       {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
+                                     </p>
+                                   </div>
+                                 </div>
+
+                                 {/* Hover View: Details Button */}
+                                 <div className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2">
+                                     <div className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-none text-[11px] uppercase tracking-[0.15em]">
+                                       <ArrowRight size={14} />
+                                       <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
+                                     </div>
+                                 </div>
                               </div>
                             </div>
                           </div>
+                        </motion.a>
 
-                          {/* 4. CONTENT & ACTIONS */}
-                          <div className="flex-1 flex flex-col relative z-10 px-1 text-[#1D1D1F]">
-                            <h3 className="text-[17px] font-bold leading-[1.3] mb-4 font-outfit line-clamp-2 h-[44px] group-hover:text-[#1E40AF] transition-colors duration-500">
-                              {product.name}
-                            </h3>
+                        {/* Direct Buy Button (Always visible on the right, positioned relative to the outer card container) */}
+                        <div className="absolute bottom-[36px] right-[24px] z-30 flex items-center">
+                          {(() => {
+                            const isAdded = !!addedProductIds[product.id];
+                            return (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  if (isAdded) return;
 
-                             <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">
-                               {/* Standard View: Price & Clinical Info */}
-                               <div className="absolute inset-y-0 left-0 right-12 flex items-center transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0 pr-2">
-                                 <div className="flex flex-col gap-0.5">
-                                   <div className="flex items-center gap-1.5 mb-1">
-                                      <ShieldCheck size={10} className="text-[#1E40AF]" />
-                                      <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em] whitespace-nowrap">
-                                        {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
-                                      </span>
-                                   </div>
-                                   <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
-                                     {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
-                                   </p>
-                                 </div>
-                               </div>
- 
-                               {/* Hover View: Details Button */}
-                               <div className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2">
-                                   <button
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       e.preventDefault();
-                                       setSelectedProduct(product);
-                                     }}
-                                     className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-auto interactive-child text-[11px] uppercase tracking-[0.15em]"
-                                   >
-                                     <ArrowRight size={14} />
-                                     <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
-                                   </button>
-                               </div>
- 
-                               {/* Direct Buy Button (Always visible on the right) */}
-                               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center">
-                                 {(() => {
-                                   const isAdded = !!addedProductIds[product.id];
-                                   return (
-                                     <button
-                                       onClick={async (e) => {
-                                         e.stopPropagation();
-                                         e.preventDefault();
-                                         if (isAdded) return;
+                                  const { trackEvent } = await import('@/lib/analytics');
+                                  await trackEvent({
+                                    event_name: 'add_to_cart',
+                                    data: {
+                                      product_id: product.id,
+                                      product_name: product.name,
+                                      price: product.price
+                                    }
+                                  });
+                                  addItem(product);
+                                  triggerAnimation();
 
-                                         const { trackEvent } = await import('@/lib/analytics');
-                                         await trackEvent({
-                                           event_name: 'add_to_cart',
-                                           data: {
-                                             product_id: product.id,
-                                             product_name: product.name,
-                                             price: product.price
-                                           }
-                                         });
-                                         addItem(product);
-                                         triggerAnimation();
-
-                                         setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
-                                         setTimeout(() => {
-                                           setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
-                                         }, 1000);
-                                       }}
-                                       className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child overflow-hidden relative ${
-                                         isAdded
-                                           ? 'bg-green-600 text-white'
-                                           : 'bg-[#1E40AF] text-white hover:bg-black'
-                                       }`}
-                                       title={lang === 'ru' ? 'Купить' : 'Харид'}
-                                       style={{ touchAction: 'manipulation', transform: 'translate3d(0,0,0)' }}
-                                     >
-                                       <AnimatePresence mode="wait" initial={false}>
-                                         {isAdded ? (
-                                           <motion.span
-                                             key="check"
-                                             initial={{ scale: 0, rotate: -90 }}
-                                             animate={{ scale: 1, rotate: 0 }}
-                                             exit={{ scale: 0, rotate: 90 }}
-                                             transition={{ duration: 0.2 }}
-                                             className="absolute inset-0 flex items-center justify-center"
-                                           >
-                                             <Check size={18} />
-                                           </motion.span>
-                                         ) : (
-                                           <motion.span
-                                             key="plus"
-                                             initial={{ scale: 0, rotate: 90 }}
-                                             animate={{ scale: 1, rotate: 0 }}
-                                             exit={{ scale: 0, rotate: -90 }}
-                                             transition={{ duration: 0.2 }}
-                                             className="absolute inset-0 flex items-center justify-center"
-                                           >
-                                             <Plus size={18} />
-                                           </motion.span>
-                                         )}
-                                       </AnimatePresence>
-                                     </button>
-                                   );
-                                 })()}
-                               </div>
-                             </div>
-                          </div>
+                                  setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
+                                  setTimeout(() => {
+                                    setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
+                                  }, 1000);
+                                }}
+                                className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child overflow-hidden relative ${
+                                  isAdded
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-[#1E40AF] text-white hover:bg-black'
+                                }`}
+                                title={lang === 'ru' ? 'Купить' : 'Харид'}
+                                style={{ touchAction: 'manipulation', transform: 'translate3d(0,0,0)' }}
+                              >
+                                <AnimatePresence mode="wait" initial={false}>
+                                  {isAdded ? (
+                                    <motion.span
+                                      key="check"
+                                      initial={{ scale: 0, rotate: -90 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      exit={{ scale: 0, rotate: 90 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="absolute inset-0 flex items-center justify-center"
+                                    >
+                                      <Check size={18} />
+                                    </motion.span>
+                                  ) : (
+                                    <motion.span
+                                      key="plus"
+                                      initial={{ scale: 0, rotate: 90 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      exit={{ scale: 0, rotate: -90 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="absolute inset-0 flex items-center justify-center"
+                                    >
+                                      <Plus size={18} />
+                                    </motion.span>
+                                  )}
+                                </AnimatePresence>
+                              </button>
+                            );
+                          })()}
                         </div>
-                      </motion.a>
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>
