@@ -399,50 +399,61 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                </div>
  
                                {/* Direct Buy Button (Always visible on the right) */}
-                               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center">
-                                 {(() => {
-                                   const isAdded = !!addedProductIds[product.id];
-                                   return (
-                                     <motion.button
-                                       key={`buy-btn-${product.id}-${isAdded ? 'added' : 'normal'}`}
-                                       initial={{ scale: 0.8 }}
-                                       animate={{ scale: 1 }}
-                                       transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                                       onClick={async (e) => {
-                                         e.stopPropagation();
-                                         e.preventDefault();
-                                         if (isAdded) return; // Prevent double-clicks during animation
-                                         
-                                         const { trackEvent } = await import('@/lib/analytics');
-                                         await trackEvent({
-                                           event_name: 'add_to_cart',
-                                           data: {
-                                             product_id: product.id,
-                                             product_name: product.name,
-                                             price: product.price
-                                           }
-                                         });
-                                         addItem(product);
-                                         triggerAnimation();
+                               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center pointer-events-auto">
+                                 <button
+                                   onClick={async (e) => {
+                                     e.stopPropagation();
+                                     e.preventDefault();
+                                     if (addedProductIds[product.id]) return;
 
-                                         // Trigger temporary checkmark state
-                                         setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
-                                         setTimeout(() => {
-                                           setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
-                                         }, 1000);
-                                       }}
-                                       className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child ${
-                                         isAdded 
-                                           ? 'bg-green-600 text-white hover:bg-green-600' 
-                                           : 'bg-[#1E40AF] text-white hover:bg-black'
-                                       }`}
-                                       title={lang === 'ru' ? 'Купить' : 'Харид'}
-                                       style={{ transform: 'translate3d(0,0,0)' }} // Force GPU
-                                     >
-                                       {isAdded ? <Check size={18} /> : <Plus size={18} />}
-                                     </motion.button>
-                                   );
-                                 })()}
+                                     const { trackEvent } = await import('@/lib/analytics');
+                                     await trackEvent({
+                                       event_name: 'add_to_cart',
+                                       data: {
+                                         product_id: product.id,
+                                         product_name: product.name,
+                                         price: product.price
+                                       }
+                                     });
+                                     addItem(product);
+                                     triggerAnimation();
+
+                                     setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
+                                     setTimeout(() => {
+                                       setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
+                                     }, 1000);
+                                   }}
+                                   className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 shrink-0 pointer-events-auto interactive-child transition-colors duration-300 ${
+                                     addedProductIds[product.id]
+                                       ? 'bg-green-600 text-white'
+                                       : 'bg-[#1E40AF] text-white hover:bg-black'
+                                   }`}
+                                   title={lang === 'ru' ? 'Купить' : 'Харид'}
+                                 >
+                                   <AnimatePresence mode="wait" initial={false}>
+                                     {addedProductIds[product.id] ? (
+                                       <motion.span
+                                         key="check"
+                                         initial={{ scale: 0, rotate: -90 }}
+                                         animate={{ scale: 1, rotate: 0 }}
+                                         exit={{ scale: 0, rotate: 90 }}
+                                         transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                                       >
+                                         <Check size={18} />
+                                       </motion.span>
+                                     ) : (
+                                       <motion.span
+                                         key="plus"
+                                         initial={{ scale: 0 }}
+                                         animate={{ scale: 1 }}
+                                         exit={{ scale: 0 }}
+                                         transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                                       >
+                                         <Plus size={18} />
+                                       </motion.span>
+                                     )}
+                                   </AnimatePresence>
+                                 </button>
                                </div>
                              </div>
                           </div>
