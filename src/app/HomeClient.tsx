@@ -36,7 +36,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const router = useRouter();
   const [lang, setLang] = React.useState<Lang>('ru');
 
-  const totalItems = useCart(state => state.totalItems);
+  const totalItemsCount = useCart(state => state.totalItems());
   const setIsOpen = useCart(state => state.setIsOpen);
   const cartAnimationKey = useCart(state => state.cartAnimationKey);
   const search = useThemeStore(state => state.search);
@@ -358,7 +358,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   
       {/* Floating Mobile Cart Button */}
       <AnimatePresence>
-        {isMounted && totalItems() > 0 && (
+        {isMounted && totalItemsCount > 0 && (
           <motion.button
             key={`mobile-cart-${cartAnimationKey}`}
             initial={{ scale: 0.8, opacity: 0, y: 30 }}
@@ -380,7 +380,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
           >
             <ShoppingBag size={22} />
             <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
-              {totalItems()}
+              {totalItemsCount}
             </span>
             
             {/* GPU-Accelerated Floating +1 indicator */}
