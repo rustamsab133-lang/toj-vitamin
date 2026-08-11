@@ -72,7 +72,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   const [editingBloggerName, setEditingBloggerName] = useState('');
   
   // Tabs and Period filter
-  const [activeTab, setActiveTab] = useState<'bloggers' | 'referrals'>('bloggers');
+  const [activeTab, setActiveTab] = useState<'bloggers' | 'referrals' | 'organic'>('bloggers');
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days' | 'all' | 'custom'>('7days');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
@@ -327,7 +327,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
           roi: stats && Number(b.fixed_fee || 0) > 0 ? (((stats.revenue - stats.discountGiven - Number(b.fixed_fee || 0)) / Number(b.fixed_fee || 0)) * 100).toFixed(1) : '0'
         };
       }).sort((a, b) => b.revenue - a.revenue);
-    } else {
+    } else if (activeTab === 'referrals') {
       const bloggerUsernames = new Set(bloggersList.map(b => b.username.toLowerCase().trim()));
       return bloggerSummary
         .filter(s => !bloggerUsernames.has(s.source.toLowerCase().trim()))
@@ -342,8 +342,38 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
           netProfit: s.revenue - s.discountGiven,
           roi: '0'
         }));
+    } else {
+      // activeTab === 'organic'
+      const organicOrders = filteredOrdersForStats.filter(o => !getBloggerForOrder(o));
+      const revenue = organicOrders.reduce((acc, o) => acc + Number(o.total || 0), 0);
+      const discountGiven = organicOrders.reduce((acc, o) => acc + Number(o.discount || 0), 0);
+      
+      const organicVisits = filteredEvents.filter(e => e.event_name === 'campaign_visit' && !e.event_data?.utm_source).length;
+      const organicCartAdds = filteredEvents.filter(e => e.event_name === 'add_to_cart' && !e.event_data?.utm_source).length;
+      
+      const conversionRate = organicVisits > 0 ? ((organicOrders.length / organicVisits) * 100).toFixed(1) : (organicOrders.length > 0 ? '—' : '0');
+      
+      return [{
+        id: 'organic',
+        name: 'Органический трафик (Сайт)',
+        source: 'organic',
+        username: 'organic',
+        promocode: 'Нет',
+        discount_value: '0',
+        discount_type: 'percentage',
+        visits: organicVisits,
+        cartAdds: organicCartAdds,
+        ordersCount: organicOrders.length,
+        conversion: conversionRate,
+        revenue,
+        discountGiven,
+        promoCodes: 'Нет',
+        cost: 0,
+        netProfit: revenue - discountGiven,
+        roi: '0'
+      }];
     }
-  }, [bloggerSummary, bloggersList, activeTab]);
+  }, [bloggerSummary, bloggersList, activeTab, filteredOrdersForStats, filteredEvents]);
 
   // Overall Campaign Metrics
   const summaryMetrics = useMemo(() => {
@@ -367,7 +397,9 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
 
   // Export to CSV for Excel (UTF-8 BOM + semicolon separator)
   const handleExportCSV = () => {
-    const title = activeTab === 'bloggers' ? 'Аналитика_Блогеров' : 'Внешние_Рефералы';
+    const title = activeTab === 'bloggers' 
+      ? 'Аналитика_Блогеров' 
+      : (activeTab === 'referrals' ? 'Внешние_Рефералы' : 'Органические_Заказы');
     const filename = `${title}_${new Date().toISOString().slice(0, 10)}.csv`;
     
     const headers = [
@@ -727,6 +759,9 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
   // Orders details list for selected blogger
   const selectedBloggerOrders = useMemo(() => {
     if (!selectedBlogger) return [];
+    if (selectedBlogger.toLowerCase() === 'organic') {
+      return orders.filter(o => !getBloggerForOrder(o));
+    }
     return orders.filter(o => getBloggerForOrder(o) === selectedBlogger.toLowerCase());
   }, [selectedBlogger, orders, mappings]);
 
@@ -1116,6 +1151,16 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                     }`}
                   >
                     Внешние рефералы
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('organic')}
+                    className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg transition-all ${
+                      activeTab === 'organic' 
+                        ? 'bg-white text-slate-800 shadow-sm' 
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    Сайт (Органика)
                   </button>
                 </div>
 
