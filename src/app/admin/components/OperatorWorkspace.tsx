@@ -6,7 +6,7 @@ import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
 import { 
   Phone, MessageCircle, Send, Instagram, Globe, Store, 
   Search, Plus, Package, Truck, CheckCircle, XCircle, 
-  ChevronRight, Clock, UserPlus, Save, AlertCircle, Eye, X, User, MapPin, CreditCard, Calendar, Edit3 
+  ChevronRight, Clock, UserPlus, Save, AlertCircle, Eye, X, User, MapPin, CreditCard, Calendar, Edit3, RefreshCw 
 } from 'lucide-react';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -101,12 +101,20 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
     }
   };
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     loadData();
+    // Auto-refresh orders every 15 seconds to sync dynamically in background!
+    const timer = setInterval(() => {
+      loadData(true);
+    }, 15000);
+    return () => clearInterval(timer);
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
+    else setIsRefreshing(true);
     try {
       const [ordersRes, productsRes, markupSettings] = await Promise.all([
         adminDbQuery({ action: 'select', table: 'orders', data: { order: { column: 'created_at', ascending: false } } }),
@@ -123,7 +131,8 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
+      else setIsRefreshing(false);
     }
   };
 
@@ -473,12 +482,22 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
             <p className="text-slate-500 text-sm">Прием заказов и управление доставкой</p>
           </div>
         </div>
-        <button 
-          onClick={() => setIsCreating(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
-        >
-          <Plus size={18} /> Создать заказ (Экспресс)
-        </button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <button 
+            onClick={() => loadData(false)}
+            disabled={isRefreshing}
+            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0"
+            title="Обновить данные с базы"
+          >
+            <RefreshCw size={16} className={`text-slate-500 ${isRefreshing ? 'animate-spin text-indigo-500' : ''}`} />
+          </button>
+          <button 
+            onClick={() => setIsCreating(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm flex-1 md:flex-initial justify-center"
+          >
+            <Plus size={18} /> Создать заказ (Экспресс)
+          </button>
+        </div>
       </div>
 
       {isCreating ? (
