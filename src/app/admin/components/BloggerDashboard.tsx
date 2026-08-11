@@ -157,18 +157,23 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
 
   // Attribution helper function
   const getBloggerForOrder = (order: any) => {
+    // 1. If order has a promocode, and it matches a registered blogger's promo code, prioritize the promocode!
+    if (order.promocode) {
+      const codeUpper = order.promocode.toUpperCase().trim();
+      if (mappings[codeUpper]) {
+        return mappings[codeUpper].toLowerCase().trim();
+      }
+    }
+
+    // 2. Otherwise, check UTM source from DB field or operator notes
     if (order.utm_source) return order.utm_source.toLowerCase().trim();
 
     const match = order.operator_notes?.match(/\[UTM:\s*source=([^,\]]+)(?:,\s*medium=([^,\]]+))?(?:,\s*campaign=([^,\]]+))?\]/);
     let utmSource = match ? match[1] : null;
 
     if (!utmSource && order.promocode) {
-      const codeUpper = order.promocode.toUpperCase().trim();
-      if (mappings[codeUpper]) {
-        utmSource = mappings[codeUpper];
-      } else {
-        utmSource = order.promocode.replace(/\d+$/, '').toLowerCase();
-      }
+      // Fallback fallback for promo code that is not registered but matches pattern (e.g. name15)
+      utmSource = order.promocode.replace(/\d+$/, '').toLowerCase();
     }
     return utmSource ? utmSource.toLowerCase().trim() : null;
   };
@@ -276,8 +281,8 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
     });
 
     return Object.values(stats).map(s => {
-      const visitsCount = s.visits || s.ordersCount * 5;
-      const conversionRate = visitsCount > 0 ? ((s.ordersCount / visitsCount) * 100).toFixed(1) : '0';
+      const visitsCount = s.visits;
+      const conversionRate = visitsCount > 0 ? ((s.ordersCount / visitsCount) * 100).toFixed(1) : (s.ordersCount > 0 ? '—' : '0');
       
       const bloggerProfile = bloggersList.find(b => b.username.toLowerCase().trim() === s.source);
       const cost = bloggerProfile ? Number(bloggerProfile.fixed_fee || 0) : 0;
@@ -373,7 +378,10 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
       'Конверсия (%)',
       'Промокоды',
       'Выручка (смн)',
-      'Выдано скидок (смн)'
+      'Выдано скидок (смн)',
+      'Стоимость рекламы / Фикса (смн)',
+      'Чистая прибыль (смн)',
+      'ROI (%)'
     ];
 
     const rows = filteredSummary.map(item => [
@@ -384,7 +392,10 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
       item.conversion,
       item.promoCodes,
       item.revenue,
-      item.discountGiven
+      item.discountGiven,
+      item.cost,
+      item.netProfit,
+      item.roi
     ]);
 
     const csvContent = [
@@ -1208,7 +1219,7 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                         <td className="py-4 text-center font-bold text-indigo-600">{blogger.ordersCount}</td>
                         <td className="py-4 text-center">
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 font-outfit">
-                            {blogger.conversion}%
+                            {blogger.conversion}{blogger.conversion !== '—' ? '%' : ''}
                           </span>
                         </td>
                         <td className="py-4">

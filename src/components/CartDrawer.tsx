@@ -39,6 +39,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
   const [isPromoOpen, setIsPromoOpen] = useState(false);
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [manuallyRemovedPromo, setManuallyRemovedPromo] = useState(false);
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
   const [promoError, setPromoError] = useState('');
   const [shakePromo, setShakePromo] = useState(false);
@@ -70,12 +71,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
       // Reset errors
       setPromoError('');
       setShakePromo(false);
+      setManuallyRemovedPromo(false);
     }
   }, [isOpen, client]);
 
   // Auto-apply promo code from UTM/Referral blogger session
   useEffect(() => {
-    if (isOpen && !appliedPromo && typeof window !== 'undefined') {
+    if (isOpen && !appliedPromo && !manuallyRemovedPromo && typeof window !== 'undefined') {
       import('@/lib/analytics').then(({ getValidUtmParams }) => {
         const utms = getValidUtmParams();
         if (utms && utms.utm_source) {
@@ -178,6 +180,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
       setAppliedPromo(data);
       setPromoInput('');
+      setManuallyRemovedPromo(false);
 
       // Calculate discount amount for analytics
       let discountAmount = 0;
@@ -212,6 +215,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
   const handleRemovePromo = () => {
     setAppliedPromo(null);
     setPromoError('');
+    setManuallyRemovedPromo(true);
   };
 
   // Secure checkout
@@ -267,10 +271,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
           const promoResult = await promoRes.json();
           if (promoResult.found && promoResult.promocode) {
             const dbPromo = promoResult.promocode;
-            if (dbPromo.discount_type === 'percentage') {
-              verifiedDiscount = Math.round((verifiedTotal * Number(dbPromo.discount_value)) / 100);
+            // Check minimum order amount requirement
+            if (verifiedTotal >= Number(dbPromo.min_order_amount || 0)) {
+              if (dbPromo.discount_type === 'percentage') {
+                verifiedDiscount = Math.round((verifiedTotal * Number(dbPromo.discount_value)) / 100);
+              } else {
+                verifiedDiscount = Math.min(Number(dbPromo.discount_value), verifiedTotal);
+              }
             } else {
-              verifiedDiscount = Math.min(Number(dbPromo.discount_value), verifiedTotal);
+              console.warn("Promocode minimum order amount check failed at checkout");
             }
           }
         }
@@ -309,6 +318,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
       if (orderErr) {
         console.error("Failed to insert order in DB:", orderErr);
+        alert(lang === 'ru' 
+          ? 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз.' 
+          : 'Ҳангоми сабти фармоиш хатогӣ рӯй дод. Лутфан, дубора кӯшиш кунед.'
+        );
+        setIsVerifying(false);
+        return;
       }
 
       // Increment promocode usage count in Supabase via secure API
