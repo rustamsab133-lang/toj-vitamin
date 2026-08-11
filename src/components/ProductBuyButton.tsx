@@ -30,7 +30,7 @@ export const ProductBuyButton = ({ product, lang }: { product: Product, lang: La
       whileTap={{ scale: 0.96 }}
       whileHover={{ scale: 1.02 }}
       onClick={handleBuy}
-      className="h-[68px] px-12 rounded-[24px] font-bold text-[18px] shadow-2xl transition-colors flex items-center justify-center gap-3 w-full sm:w-auto overflow-hidden relative bg-[#1D1D1F] text-white hover:bg-indigo-600"
+      className="h-[68px] px-12 rounded-[24px] font-bold text-[18px] shadow-2xl transition-colors flex items-center justify-center gap-3 w-full sm:w-auto overflow-hidden relative bg-[#1D1D1F] text-white hover:bg-indigo-600 group"
     >
       <div className="flex items-center gap-3">
         <ShoppingBag size={24} fill="currentColor" />
@@ -39,9 +39,9 @@ export const ProductBuyButton = ({ product, lang }: { product: Product, lang: La
         </span>
       </div>
       
-      {/* Subtle shine effect */}
+      {/* Subtle shine effect — runs only on hover */}
       <div 
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 animate-[shimmer_3s_linear_infinite]"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:animate-[shimmer_2.5s_linear_infinite] transition-opacity duration-300"
       />
     </motion.button>
   );

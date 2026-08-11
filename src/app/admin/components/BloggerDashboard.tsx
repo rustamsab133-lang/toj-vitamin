@@ -6,7 +6,7 @@ import { slugify } from '@/lib/slugify';
 import { 
   ChevronLeft, Users, Copy, Check, TrendingUp, DollarSign, 
   ShoppingBag, Percent, RefreshCw, Eye, Plus, Trash, Link, 
-  ChevronDown, X, Download, ArrowUpRight
+  ChevronDown, X, Download, ArrowUpRight, Edit2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -66,6 +66,10 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
 
   // Selected Blogger for detail view
   const [selectedBlogger, setSelectedBlogger] = useState<string | null>(null);
+
+  // Edit blogger states
+  const [editingBloggerId, setEditingBloggerId] = useState<string | null>(null);
+  const [editingBloggerName, setEditingBloggerName] = useState('');
   
   // Tabs and Period filter
   const [activeTab, setActiveTab] = useState<'bloggers' | 'referrals'>('bloggers');
@@ -682,6 +686,33 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
     }
   };
 
+  // Update blogger name
+  const handleUpdateBloggerName = async (id: string) => {
+    if (!editingBloggerName.trim()) return;
+
+    try {
+      const { error } = await adminDbQuery({
+        action: 'update',
+        table: 'blogger_profiles',
+        id: id,
+        data: {
+          name: editingBloggerName.trim()
+        }
+      });
+
+      if (!error) {
+        setBloggersList(bloggersList.map(b => b.id === id ? { ...b, name: editingBloggerName.trim() } : b));
+        setEditingBloggerId(null);
+        setEditingBloggerName('');
+      } else {
+        alert("Не удалось обновить имя: " + error.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Ошибка обновления: " + err.message);
+    }
+  };
+
   // Orders details list for selected blogger
   const selectedBloggerOrders = useMemo(() => {
     if (!selectedBlogger) return [];
@@ -981,18 +1012,61 @@ export const BloggerDashboard: React.FC<BloggerDashboardProps> = ({ onBack }) =>
                 ) : (
                   bloggersList.map((blogger) => (
                     <div key={blogger.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 text-xs">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-extrabold text-slate-800">{blogger.name}</span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          UTM: <span className="font-bold text-slate-500">{blogger.username}</span> | Промокод: <span className="font-bold text-indigo-600">{blogger.promocode}</span> (-{blogger.discount_value}{blogger.discount_type === 'percentage' ? '%' : ' смн'}) | Фикса: <span className="font-bold text-emerald-600">{blogger.fixed_fee || 0} TJS</span>
-                        </span>
-                      </div>
-                      <button 
-                        onClick={() => handleDeleteBlogger(blogger.id)}
-                        className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                      >
-                        <Trash size={14} />
-                      </button>
+                      {editingBloggerId === blogger.id ? (
+                        <div className="flex items-center gap-1.5 flex-1">
+                          <input
+                            type="text"
+                            value={editingBloggerName}
+                            onChange={(e) => setEditingBloggerName(e.target.value)}
+                            className="flex-1 h-7 px-2 rounded border border-slate-200 outline-none text-xs font-semibold bg-white"
+                          />
+                          <button
+                            onClick={() => handleUpdateBloggerName(blogger.id)}
+                            className="p-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded transition-colors"
+                            title="Сохранить"
+                          >
+                            <Check size={12} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingBloggerId(null);
+                              setEditingBloggerName('');
+                            }}
+                            className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded transition-colors"
+                            title="Отмена"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-extrabold text-slate-800">{blogger.name}</span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              UTM: <span className="font-bold text-slate-500">{blogger.username}</span> | Промокод: <span className="font-bold text-indigo-600">{blogger.promocode}</span> (-{blogger.discount_value}{blogger.discount_type === 'percentage' ? '%' : ' смн'}) | Фикса: <span className="font-bold text-emerald-600">{blogger.fixed_fee || 0} TJS</span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingBloggerId(blogger.id);
+                                setEditingBloggerName(blogger.name);
+                              }}
+                              className="text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                              title="Редактировать имя"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteBlogger(blogger.id)}
+                              className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                              title="Удалить"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))
                 )}

@@ -1,7 +1,6 @@
 "use client";
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { StoreHero } from '@/components/StoreHero';
 import { ProductCatalog } from '@/components/ProductCatalog';
 import { ScienceGrid } from '@/components/ScienceGrid';
 import { useCart } from '@/store/useCart';
@@ -24,8 +23,6 @@ const ChatWidget = dynamic(() => import('@/components/ChatWidget').then(m => m.C
 import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
-import { applyMarkupToProduct, getMarkupSettings } from '@/lib/markup';
-import { findEnrichmentForProduct } from '@/lib/products';
 
 
 interface HomeClientProps {
@@ -136,9 +133,6 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         const { data: settingsData } = await supabase
           .from('site_settings')
           .select('key, value');
-        
-        let activeMarkupPercent = 0;
-        let activeMarkupFlat = 0;
 
         if (settingsData && settingsData.length > 0 && !cancelled) {
           const updatedSettings = { ...settings };
@@ -146,34 +140,15 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
             updatedSettings[s.key] = s.value;
           });
           setSettings(updatedSettings);
-          
-          activeMarkupPercent = parseFloat(updatedSettings.price_markup_percent || '0') || 0;
-          activeMarkupFlat = parseFloat(updatedSettings.price_markup_flat || '0') || 0;
         }
 
-        // 2. Load and enrich products with pricing markup applied
-        const enrichedData = (await import('@/data/enriched_gls_products.json')).default;
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('id');
-        
-        if (!error && data && !cancelled) {
-          const enrichedMap = enrichedData as Record<string, any>;
-          const enriched = data.map(p => {
-            // Apply markup
-            const markedUpProduct = applyMarkupToProduct(p, {
-              percent: activeMarkupPercent,
-              flat: activeMarkupFlat
-            });
-            
-            const enrichment = findEnrichmentForProduct(p.name, enrichedMap);
-            return {
-              ...markedUpProduct,
-              ...enrichment
-            };
-          });
-          setAllProducts(enriched);
+        // 2. Load pre-enriched products from server API
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const enriched = await res.json();
+          if (!cancelled) {
+            setAllProducts(enriched);
+          }
         }
       } catch (e) {
         console.error('Failed to load products and settings globally', e);
@@ -223,18 +198,17 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
 
 
  
-      <div className="relative z-10 flex flex-col pt-16">
-        <StoreHero lang={lang} settings={settings} />
+      <div className="relative z-10 flex flex-col">
+        <ComboBanner 
+          lang={lang} 
+          settings={settings}
+          onOrderSuccess={() => setIsOrderSuccess(true)}
+        />
 
         {/* CATALOG CONTENT */}
         <div id="catalog">
           <ProductCatalog lang={lang} />
         </div>
-
-        <ComboBanner 
-          lang={lang} 
-          onOrderSuccess={() => setIsOrderSuccess(true)}
-        />
 
         <div id="quiz" className={`${isImmersiveMode ? 'min-h-[90vh] flex items-center pt-0' : 'pb-24 pt-10'}`}>
           <QuizEngine 

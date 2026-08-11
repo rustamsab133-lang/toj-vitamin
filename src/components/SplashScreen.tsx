@@ -13,8 +13,8 @@ export const SplashScreen: React.FC = () => {
     >
       {/* BACKGROUND ELEMENTS - SUBTLE AMBIENT BLUR */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#1E40AF]/5 blur-[100px] rounded-full animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-[#8C7851]/5 blur-[80px] rounded-full animate-pulse delay-700" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#1E40AF]/5 blur-[100px] rounded-full" />
+        <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-[#8C7851]/5 blur-[80px] rounded-full" />
       </div>
 
       <div className="relative flex flex-col items-center">

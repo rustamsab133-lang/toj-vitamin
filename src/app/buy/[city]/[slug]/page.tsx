@@ -21,6 +21,8 @@ const CITIES: Record<string, { ru: string; tj: string }> = {
   'hissar': { ru: 'Гиссар', tj: 'Ҳисор' }
 };
 
+export const revalidate = 300; // Revalidate pages every 5 minutes
+
 interface Props {
   params: { city: string; slug: string };
   searchParams?: { lang?: string };

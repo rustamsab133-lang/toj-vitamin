@@ -14,11 +14,12 @@ import { FeedDashboard } from './components/FeedDashboard';
 import { CrmDashboard } from './components/CrmDashboard';
 import { PharmacyOrdersDashboard } from './components/PharmacyOrdersDashboard';
 import { BloggerDashboard } from './components/BloggerDashboard';
+import { ComboEditor } from './components/ComboEditor';
 import { supabase } from '@/lib/supabase';
 import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos';
 
 const MODULES = [
   { id: 'pharmacy-orders' as AdminView, title: 'Закупки аптек', desc: 'B2B заказы, ссылки партнеров', icon: <Building2 size={24} />, color: '#F0FDF4' },
@@ -34,6 +35,7 @@ const MODULES = [
   { id: 'complexes' as AdminView, title: 'Синергия', desc: 'Клинические связки', icon: <BarChart3 size={24} />, color: '#F8FAFC' },
   { id: 'orders' as AdminView, title: 'АРМ Оператора', desc: 'Прием и статусы', icon: <ShoppingBag size={24} />, color: '#F8FAFC' },
   { id: 'settings' as AdminView, title: 'Настройки', desc: 'Сайт, тексты', icon: <Settings size={24} />, color: '#F8FAFC' },
+  { id: 'combos' as AdminView, title: 'Комбо-баннеры', desc: 'Управление комбо на главной', icon: <Layers size={24} />, color: '#F0FDFA' },
 ];
 
 export default function AdminPage() {
@@ -192,6 +194,12 @@ export default function AdminPage() {
           {view === 'settings' && (
             <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <SiteSettings onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'combos' && (
+            <motion.div key="combos" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <ComboEditor onBack={() => setView('dashboard')} />
             </motion.div>
           )}
 

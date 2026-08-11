@@ -10,6 +10,8 @@ import { notFound } from 'next/navigation';
 import { ProductPageHeader, ProductCartSection } from '@/components/ProductCartSection';
 import { supabase } from '@/lib/supabase';
 
+export const revalidate = 300; // Revalidate pages every 5 minutes
+
 interface Props {
   params: { id: string };
   searchParams?: { lang?: string };
@@ -227,8 +229,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
   ];
 
   const displayProduct = {
-    ...product,
-    ...(enriched || {})
+    ...(enriched || {}),
+    ...product
   };
 
   return (

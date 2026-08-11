@@ -4,12 +4,138 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Product, Lang } from '@/lib/types';
+import { Product, Lang, Article } from '@/lib/types';
 import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ShareButton } from './ShareButton';
 import { slugify } from '@/lib/slugify';
 import { useCart } from '@/store/useCart';
+
+// Cache for journal articles to load them once per session
+let cachedArticles: Article[] | null = null;
+let articlesPromise: Promise<Article[]> | null = null;
+
+async function getPublishedArticles(): Promise<Article[]> {
+  if (cachedArticles) return cachedArticles;
+  if (articlesPromise) return articlesPromise;
+
+  articlesPromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('journal_articles')
+        .select('*')
+        .eq('is_published', true);
+      
+      if (error) throw error;
+      cachedArticles = data || [];
+      return cachedArticles;
+    } catch (err) {
+      console.error('Failed to fetch journal articles for matching:', err);
+      return [];
+    } finally {
+      articlesPromise = null;
+    }
+  })();
+
+  return articlesPromise;
+}
+
+function findBestArticle(product: Product, articles: Article[]): Article | null {
+  if (!articles || articles.length === 0) return null;
+  
+  // 1. First priority: article that contains link to this product
+  const productLinkPattern = `/product/${product.id}`;
+  const linkedArticle = articles.find(art => 
+    art.content_ru?.includes(productLinkPattern) || 
+    art.content_tj?.includes(productLinkPattern)
+  );
+  if (linkedArticle) return linkedArticle;
+
+  // 2. Second priority: title/excerpt/content keyword match
+  const cleanName = product.name.toLowerCase();
+  
+  const keywordMappings = [
+    { keywords: ['магний', 'magnesium'], matchTerms: ['магний', 'магния', 'magnesium'] },
+    { keywords: ['кальций', 'calcium'], matchTerms: ['кальций', 'кальция', 'calcium', 'суставы', 'коллаген'] },
+    { keywords: ['b5', 'пантотеновая'], matchTerms: ['синергия', 'энергия'] },
+    { keywords: ['в-комплекс', 'b-complex'], matchTerms: ['мультивитамины', 'синергия', 'b12'] },
+    { keywords: ['д3', 'd3'], matchTerms: ['d3', 'д3', 'витамин d', 'витамин д', 'солнца'] },
+    { keywords: ['ашваганда', 'ashwagandha'], matchTerms: ['ашваганда', 'ashwagandha'] },
+    { keywords: ['q10', 'коэнзим', 'coenzyme'], matchTerms: ['q10', 'коэнзим', 'coenzyme'] },
+    { keywords: ['биотин', 'biotin'], matchTerms: ['биотин', 'biotin'] },
+    { keywords: ['цинк', 'zinc'], matchTerms: ['цинк', 'цинка', 'zinc'] },
+    { keywords: ['инозитол', 'inositol'], matchTerms: ['инозитол', 'inositol'] },
+    { keywords: ['гинкго', 'ginkgo'], matchTerms: ['гинкго', 'ginkgo'] },
+    { keywords: ['йод', 'iodine'], matchTerms: ['йод', 'йододефицит', 'iodine'] },
+    { keywords: ['глюкозамин', 'хондроитин', 'glucosamine'], matchTerms: ['глюкозамин', 'хондроитин', 'glucosamine'] },
+    { keywords: ['коллаген', 'collagen'], matchTerms: ['коллаген', 'collagen'] },
+    { keywords: ['омега', 'omega'], matchTerms: ['омега', 'omega'] },
+    { keywords: ['креатин', 'creatine'], matchTerms: ['креатин', 'creatine'] },
+    { keywords: ['фолиевая', 'фолиев', 'folic'], matchTerms: ['фолиев', 'folic'] },
+    { keywords: ['мумие', 'мумиё', 'shilajit'], matchTerms: ['мумие', 'мумиё', 'shilajit'] },
+    { keywords: ['хитозан', 'chitosan'], matchTerms: ['хитозан', 'chitosan'] },
+    { keywords: ['хлорофилл', 'chlorophyll'], matchTerms: ['хлорофилл', 'chlorophyll'] },
+    { keywords: ['хром', 'chromium'], matchTerms: ['хром', 'chromium'] },
+    { keywords: ['калий'], matchTerms: ['калий'] },
+    { keywords: ['женьшень', 'ginseng'], matchTerms: ['женьшень', 'ginseng'] },
+    { keywords: ['b12', 'в12'], matchTerms: ['b12', 'в12'] },
+    { keywords: ['алоэ', 'aloe'], matchTerms: ['алоэ', 'aloe'] },
+    { keywords: ['каротин', 'carotene'], matchTerms: ['каротин', 'carotene'] },
+    { keywords: ['гиалурон', 'hyaluronic'], matchTerms: ['гиалурон', 'hyaluronic'] },
+    { keywords: ['глутатион', 'glutathione'], matchTerms: ['глутатион', 'glutathione'] },
+    { keywords: ['таурин', 'taurine'], matchTerms: ['таурин', 'taurine'] },
+    { keywords: ['протеин', 'protein', 'белок'], matchTerms: ['энергия', 'синергия', 'synergy'] },
+    { keywords: ['селен', 'selenium'], matchTerms: ['цинк', 'тестостерон', 'иммунитет'] },
+    { keywords: ['льн', 'flaxseed'], matchTerms: ['хитозан', 'очищение', 'detox'] },
+    { keywords: ['карнитин', 'carnitine'], matchTerms: ['таурин', 'энергия', 'жиросжигания'] },
+    { keywords: ['мультивитамины', '12+9', 'актив шипучие'], matchTerms: ['мультивитамины', 'детский иммунитет', 'детский', 'детям'] },
+    // Formulas & Special Ingredients
+    { keywords: ['ноофит', 'памяти', 'pqq', 'тирозин'], matchTerms: ['мозга', 'мышление', 'ginkgo'] },
+    { keywords: ['очищение', 'детокс', 'detox', 'липотропный', 'берберин'], matchTerms: ['печени', 'очищение', 'lipoic', 'glutation', 'хитозан'] },
+    { keywords: ['спортивная', 'спорт', 'жиросжигатель', 'аргинин', 'цитруллин', 'аминокислотный', 'йохимбе'], matchTerms: ['спорт', 'актив', 'энергия', 'taurin', 'креатин'] },
+    { keywords: ['диабет'], matchTerms: ['хром', 'сахар', 'хрома'] },
+    { keywords: ['женская', 'беременных'], matchTerms: ['женское', 'инозитол', 'фолиевая', 'беременности'] },
+    { keywords: ['мужская', 'мака'], matchTerms: ['мужская', 'тестостерон', 'цинк'] },
+    { keywords: ['волос', 'ногти', 'кожа'], matchTerms: ['волос', 'биотин', 'коллаген'] },
+    { keywords: ['глаз', 'зрение'], matchTerms: ['зрение', 'каротин'] },
+    { keywords: ['кардио'], matchTerms: ['сердца', 'q10'] },
+    { keywords: ['липоевая', 'lipoic'], matchTerms: ['липоевая', 'lipoic', 'печени', 'antioxidant'] },
+    { keywords: ['5-htp', 'мелатонин', 'сон'], matchTerms: ['5-htp', 'неврастения', 'сон', 'мелатонин', 'антидепрессант'] },
+    { keywords: ['к2'], matchTerms: ['d3', 'д3', 'коллаген', 'витамин солнце'] },
+    { keywords: ['msm'], matchTerms: ['суставы', 'глюкозамин', 'хондроитин', 'коллаген'] },
+    { keywords: ['железо'], matchTerms: ['фолиевая', 'беременности', 'b12'] },
+    { keywords: ['детские', 'для детей'], matchTerms: ['детский', 'детям', 'иммунитет'] },
+    { keywords: ['витамин с', 'vitamin c'], matchTerms: ['детский иммунитет', 'витамин с', 'vitamin c'] }
+  ];
+
+  const matchedMapping = keywordMappings.find(mapping => 
+    mapping.keywords.some(kw => cleanName.includes(kw))
+  );
+
+  if (matchedMapping) {
+    const titleMatch = articles.find(art => {
+      const titleLower = (art.title_ru || '').toLowerCase();
+      return matchedMapping.matchTerms.some(term => titleLower.includes(term));
+    });
+    if (titleMatch) return titleMatch;
+
+    const contentMatch = articles.find(art => {
+      const contentLower = (art.content_ru || '').toLowerCase();
+      return matchedMapping.matchTerms.some(term => contentLower.includes(term));
+    });
+    if (contentMatch) return contentMatch;
+  }
+
+  // 3. Fallback: direct name match
+  const directTextMatch = articles.find(art => {
+    const contentLower = (art.content_ru || '').toLowerCase();
+    const cleanProdName = product.name.replace('GLS', '').replace('капс', '').replace('порошок', '').trim().toLowerCase();
+    return cleanProdName.length > 3 && contentLower.includes(cleanProdName);
+  });
+  if (directTextMatch) return directTextMatch;
+
+  return null;
+}
 
 interface ProductDetailModalProps {
   isOpen: boolean;

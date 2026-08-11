@@ -422,8 +422,8 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               onClick={() => handleSelectCategory(c)}
               className="apple-shelf-item w-[300px] h-[480px] snap-center group relative rounded-[40px] overflow-hidden bg-[#020617] shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-all duration-700 hover:scale-[1.02] active:scale-[0.98] text-left border border-white/5"
             >
-              {/* X-Ray Laser Scanner (Hardware accelerated, 60 FPS, zero CPU overhead) */}
-              <div className="absolute inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-80 shadow-[0_0_12px_#3B82F6,0_0_24px_rgba(59,130,246,0.6)] pointer-events-none z-20 animate-xray" />
+              {/* X-Ray Laser Scanner (Runs on hover only to conserve CPU/GPU) */}
+              <div className="absolute inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-0 group-hover:opacity-80 shadow-[0_0_12px_#3B82F6,0_0_24px_rgba(59,130,246,0.6)] pointer-events-none z-20 group-hover:animate-xray transition-opacity duration-300" />
 
               {/* 1. BACKGROUND GLOW & HUD */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -443,8 +443,8 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               {/* 2. HOLOGRAM CENTERPIECE */}
               <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none mb-32">
                 <div className="relative flex items-center justify-center w-40 h-40">
-                  {/* Outer ring (CSS animation instead of JS) */}
-                  <div className="absolute inset-0 rounded-full border border-[#1E40AF]/20 animate-[spin_10s_linear_infinite]" />
+                  {/* Outer ring (Rotates on hover only to conserve CPU/GPU) */}
+                  <div className="absolute inset-0 rounded-full border border-[#1E40AF]/20 group-hover:animate-[spin_10s_linear_infinite]" />
                   
                   {/* Hologram Subject with hardware-accelerated transforms */}
                   <div className="relative text-[#3B82F6] opacity-90 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:drop-shadow-[0_0_25px_rgba(59,130,246,0.8)] transition-all duration-500 group-hover:scale-110 will-change-transform">
