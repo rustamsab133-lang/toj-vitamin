@@ -999,6 +999,78 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
                       </span>
                     </div>
                   </div>
+
+                  {/* Marketing & Attribution Details */}
+                  {(selectedOrder.promocode || selectedOrder.utm_source || (selectedOrder.discount && Number(selectedOrder.discount) > 0)) ? (
+                    <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100 space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-500">
+                        <Globe size={14} /> Источник заказа и Маркетинг
+                      </div>
+                      
+                      {selectedOrder.promocode && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-500">Промокод:</span>
+                          <span className="font-extrabold px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700 font-outfit">
+                            {selectedOrder.promocode}
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedOrder.discount !== undefined && selectedOrder.discount !== null && Number(selectedOrder.discount) > 0 && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-500">Скидка по промокоду:</span>
+                          <span className="font-extrabold text-red-600">
+                            -{selectedOrder.discount} смн
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedOrder.original_total && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-500">Сумма без скидки:</span>
+                          <span className="font-bold text-slate-700">
+                            {selectedOrder.original_total} смн
+                          </span>
+                        </div>
+                      )}
+
+                      {(selectedOrder.utm_source || selectedOrder.utm_medium || selectedOrder.utm_campaign) && (
+                        <div className="pt-2 border-t border-indigo-100/50 space-y-1.5 text-[11px]">
+                          <p className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">UTM-метки:</p>
+                          {selectedOrder.utm_source && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Источник (source):</span>
+                              <span className="font-semibold text-slate-800">{selectedOrder.utm_source}</span>
+                            </div>
+                          )}
+                          {selectedOrder.utm_medium && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Канал (medium):</span>
+                              <span className="font-semibold text-slate-800">{selectedOrder.utm_medium}</span>
+                            </div>
+                          )}
+                          {selectedOrder.utm_campaign && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Кампания (campaign):</span>
+                              <span className="font-semibold text-slate-800">{selectedOrder.utm_campaign}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        <Globe size={14} className="text-slate-500" /> Источник заказа
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500">Переход:</span>
+                        <span className="font-semibold text-slate-800">
+                          Прямой переход / Органический трафик с сайта
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Col: Status Control, Courier & Operator Notes */}
@@ -1078,7 +1150,12 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
                   <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
                     <Package size={16} className="text-indigo-600" /> Состав заказа ({selectedOrder.items?.length || 0} товаров)
                   </h4>
-                  <span className="text-lg font-bold text-slate-900">Итого: {selectedOrder.total} смн</span>
+                  <div className="text-right">
+                    {selectedOrder.discount && Number(selectedOrder.discount) > 0 && (
+                      <span className="block text-xs font-semibold text-red-500">Скидка: -{selectedOrder.discount} смн</span>
+                    )}
+                    <span className="text-lg font-bold text-slate-900">Итого: {selectedOrder.total} смн</span>
+                  </div>
                 </div>
 
                 <div className="bg-slate-50/70 rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">

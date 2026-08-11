@@ -56,6 +56,12 @@ export interface Order {
   payment_status?: 'unpaid' | 'paid';
   cancel_reason?: string;
   operator_notes?: string;
+  promocode?: string | null;
+  discount?: number | null;
+  original_total?: number | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
 }
 
 // ==== QUIZ TYPES ====
