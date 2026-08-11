@@ -30,44 +30,48 @@ interface ComboBannerProps {
 
 const THEME_PRESETS = {
   'slate': {
-    bg: 'from-[#F8FAFC] to-[#F1F5F9]',
-    border: 'border-[#2563EB]/10',
-    shadow: 'shadow-[0_20px_40px_-15px_rgba(37,99,235,0.08)]',
-    text: 'text-[#1D1D1F]',
-    subtitle: 'text-[#2563EB]',
-    desc: 'text-[#64748B]',
-    badge: 'bg-[#2563EB]/10 text-[#2563EB]',
-    button: 'bg-[#1D1D1F] text-white hover:bg-[#2563EB] shadow-[#1D1D1F]/20',
+    bg: 'from-slate-50 via-white to-slate-100/90',
+    border: 'border-slate-200/80',
+    shadow: 'shadow-[0_25px_60px_-15px_rgba(15,23,42,0.06)]',
+    text: 'text-slate-900',
+    subtitle: 'text-indigo-600',
+    desc: 'text-slate-500',
+    badge: 'bg-indigo-50/80 text-indigo-600 border border-indigo-100/50',
+    button: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-600/20 hover:shadow-indigo-600/30',
+    glow: 'rgba(99,102,241,0.05)',
   },
   'mystic-dark': {
-    bg: 'from-[#0F172A] to-[#1E293B]',
+    bg: 'from-[#0B0F19] via-[#111827] to-[#1F2937]',
     border: 'border-amber-500/20',
-    shadow: 'shadow-[0_20px_40px_-15px_rgba(245,158,11,0.15)]',
-    text: 'text-[#F8FAFC]',
+    shadow: 'shadow-[0_25px_60px_-15px_rgba(245,158,11,0.15)]',
+    text: 'text-slate-100',
     subtitle: 'text-amber-400',
-    desc: 'text-[#94A3B8]',
-    badge: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
-    button: 'bg-amber-500 text-[#0F172A] hover:bg-amber-600 shadow-amber-500/30 font-bold',
+    desc: 'text-slate-400',
+    badge: 'bg-amber-500/10 text-amber-300 border border-amber-500/20',
+    button: 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:from-amber-400 hover:to-amber-500 shadow-amber-500/20 hover:shadow-amber-500/30 font-extrabold',
+    glow: 'rgba(245,158,11,0.06)',
   },
   'emerald-green': {
-    bg: 'from-[#F0FDF4] to-[#DCFCE7]',
-    border: 'border-emerald-600/10',
-    shadow: 'shadow-[0_20px_40px_-15px_rgba(16,185,129,0.1)]',
-    text: 'text-[#166534]',
-    subtitle: 'text-emerald-700',
-    desc: 'text-[#166534]/70',
-    badge: 'bg-emerald-600/10 text-emerald-700',
-    button: 'bg-emerald-800 text-white hover:bg-emerald-700 shadow-[#166534]/20',
+    bg: 'from-[#064E3B] via-[#022C22] to-[#047857]',
+    border: 'border-emerald-500/20',
+    shadow: 'shadow-[0_25px_60px_-15px_rgba(16,185,129,0.12)]',
+    text: 'text-[#ECFDF5]',
+    subtitle: 'text-emerald-300',
+    desc: 'text-emerald-100/70',
+    badge: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20',
+    button: 'bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-emerald-400/20 hover:shadow-emerald-400/30 font-bold',
+    glow: 'rgba(52,211,153,0.04)',
   },
   'sunset-orange': {
-    bg: 'from-[#FFF7ED] to-[#FFEDD5]',
-    border: 'border-orange-500/10',
-    shadow: 'shadow-[0_20px_40px_-15px_rgba(249,115,22,0.1)]',
-    text: 'text-[#9A3412]',
+    bg: 'from-[#FFF7ED] via-[#FFEDD5] to-[#FED7AA]',
+    border: 'border-orange-300/40',
+    shadow: 'shadow-[0_25px_60px_-15px_rgba(249,115,22,0.12)]',
+    text: 'text-orange-950',
     subtitle: 'text-orange-600',
-    desc: 'text-[#9A3412]/70',
-    badge: 'bg-orange-500/10 text-orange-600',
-    button: 'bg-orange-600 text-white hover:bg-orange-700 shadow-orange-600/20',
+    desc: 'text-orange-900/70',
+    badge: 'bg-orange-100/80 text-orange-600 border border-orange-200/50',
+    button: 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-orange-500/20 hover:shadow-orange-500/30 font-bold',
+    glow: 'rgba(249,115,22,0.04)',
   }
 };
 
@@ -176,10 +180,16 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
             drag={activeCombos.length > 1 ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
-            className={`relative rounded-[28px] md:rounded-[36px] bg-gradient-to-r ${currentTheme.bg} border ${currentTheme.border} ${currentTheme.shadow} overflow-visible select-none cursor-grab active:cursor-grabbing`}
+            className={`relative rounded-[28px] md:rounded-[36px] bg-gradient-to-br ${currentTheme.bg} border ${currentTheme.border} ${currentTheme.shadow} overflow-hidden select-none cursor-grab active:cursor-grabbing hover:translate-y-[-2px] transition-transform duration-300`}
           >
+            {/* Ambient Background Glow */}
+            <div 
+              className="absolute -right-16 -top-16 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-all duration-500" 
+              style={{ background: currentTheme.glow || 'rgba(99,102,241,0.05)' }} 
+            />
+
             {/* Subtle glow & texture */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.4)_0%,_transparent_100%)] rounded-[28px] md:rounded-[36px] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.45)_0%,_transparent_100%)] rounded-[28px] md:rounded-[36px] pointer-events-none opacity-80" />
 
             <div className="relative z-10 flex flex-col md:flex-row items-center md:min-h-[170px] p-6 md:p-8 gap-6 md:gap-0">
               {/* LEFT: Content */}
@@ -227,32 +237,40 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
                 </div>
               </div>
 
-              {/* RIGHT: Floating Overlapping Product Images */}
-              <div className="w-full md:w-[40%] relative flex justify-center items-center md:absolute md:right-6 md:top-1/2 md:-translate-y-1/2 z-10 md:h-[220px]">
+              {/* RIGHT: Floating Overlapping Product Images (Aligned & Grounded) */}
+              <div className="w-full md:w-[40%] relative flex justify-center items-end md:absolute md:right-6 md:bottom-6 md:top-auto md:translate-y-0 z-10 md:h-[190px]">
                 {currentProducts.length === 0 ? (
-                  <span className={`text-[12px] font-semibold italic ${currentTheme.desc}`}>Загрузка продуктов...</span>
+                  <span className={`text-[12px] font-semibold italic ${currentTheme.desc} pb-10`}>Загрузка продуктов...</span>
                 ) : (
-                  <div className="relative flex items-center justify-center gap-1 md:gap-3 px-4">
-                    {currentProducts.map((p, pIdx) => {
-                      const isEven = pIdx % 2 === 0;
-                      // Offset alternating images up/down
-                      const translateY = isEven ? '-translate-y-2 md:-translate-y-4' : 'translate-y-2 md:translate-y-4';
-                      
-                      return (
-                        <div
-                          key={p.id}
-                          className={`relative group/img transition-all duration-500 ${translateY} -ml-4 sm:-ml-6 md:-ml-8 first:ml-0`}
-                          style={{ zIndex: pIdx + 10 }}
-                        >
-                          <motion.img
-                            whileHover={{ scale: 1.1, y: isEven ? -8 : 6, zIndex: 60 }}
-                            src={p.image_url || '/placeholder.jpg'}
-                            alt={p.name}
-                            className="w-[85px] h-[105px] sm:w-[100px] sm:h-[125px] md:w-[135px] md:h-[165px] object-contain drop-shadow-xl transition-transform duration-500 rounded-lg"
-                          />
-                        </div>
-                      );
-                    })}
+                  <div className="relative flex items-end justify-center px-4 pt-4 pb-2 w-full">
+                    {/* Shadow pedestal to ground the products */}
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-[85%] h-2.5 bg-black/15 blur-[6px] rounded-full pointer-events-none" />
+
+                    <div className="relative flex items-end justify-center -space-x-4 sm:-space-x-6 md:-space-x-8">
+                      {currentProducts.map((p, pIdx) => {
+                        const isEven = pIdx % 2 === 0;
+                        return (
+                          <motion.div
+                            key={p.id}
+                            whileHover={{ 
+                              scale: 1.14, 
+                              y: -10, 
+                              rotate: isEven ? -2 : 2,
+                              zIndex: 50 
+                            }}
+                            transition={{ type: "spring", stiffness: 350, damping: 18 }}
+                            className="relative drop-shadow-[0_15px_30px_rgba(0,0,0,0.25)] transition-all duration-300 shrink-0"
+                            style={{ zIndex: pIdx + 10 }}
+                          >
+                            <img
+                              src={p.image_url || '/placeholder.jpg'}
+                              alt={p.name}
+                              className="w-[90px] h-[115px] sm:w-[110px] sm:h-[135px] md:w-[145px] md:h-[175px] object-contain select-none"
+                            />
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
