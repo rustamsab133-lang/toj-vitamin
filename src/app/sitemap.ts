@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { slugify } from '@/lib/slugify';
 import enrichedData from '@/data/enriched_gls_products.json';
 
+import { getHiddenProductIds, filterVisibleProducts } from '@/lib/hiddenProducts';
+
 /**
  * Enhanced Sitemap for Google Search Console
  * Includes product image support for Google Images indexing
@@ -23,11 +25,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  // Dynamic Product routes
-  let { data: products } = await supabase
-    .from('products')
-    .select('name, image_url, created_at')
-    .order('name');
+  // Dynamic Product routes (excluding hidden/out of stock products)
+  const [{ data: rawProducts }, hiddenIds] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id, name, image_url, created_at')
+      .order('name'),
+    getHiddenProductIds()
+  ]);
+
+  let products = rawProducts ? filterVisibleProducts(rawProducts, hiddenIds) : null;
 
   // Dynamic Journal/Articles routes
   const { data: articles } = await supabase

@@ -1,32 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { genAI } from '@/lib/gemini';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { generateBannerAI } from '@/lib/agents/generateBannerAI';
 import { BannerConfig, BannerProduct, DEFAULT_BANNER_CONFIG, ChatMessage } from '@/lib/types/banner';
 import { SchemaType, FunctionDeclaration, Tool } from '@google/generative-ai';
 import { findEnrichmentForProduct } from '@/lib/agents/instagram';
-import fs from 'fs';
-import path from 'path';
-
-// Создаем Supabase Admin клиент с сервисным ключом для обхода RLS политик при сохранении памяти чата
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  }
-});
-
-// Загрузка обогащённых данных
-function loadEnrichedData(): Record<string, any> {
-  try {
-    const jsonPath = path.join(process.cwd(), 'src/data/enriched_gls_products.json');
-    return JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-  } catch {
-    return {};
-  }
-}
+import { loadEnrichedData as loadEnrichedDataShared } from '@/lib/agents/shared/enrichment';
+import { AGENT_MODEL } from '@/lib/agents/shared/config';
 
 // Function declarations для Gemini
 const functionDeclarations: FunctionDeclaration[] = [
@@ -127,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Загружаем обогащённые данные
-    const enrichedData = loadEnrichedData();
+    const enrichedData = await loadEnrichedDataShared();
 
     // Формируем каталог для промпта
     const catalog = dbProducts.map((p: any) => {
@@ -181,7 +161,7 @@ ${JSON.stringify(clientConfig, null, 2)}
 
     // Вызываем Gemini с Function Calling
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3.1-flash-lite',
+      model: AGENT_MODEL,
       tools: [{ functionDeclarations }] as Tool[],
       systemInstruction: systemPrompt,
     });
@@ -321,7 +301,7 @@ ${JSON.stringify(clientConfig, null, 2)}
   } catch (error: any) {
     console.error('❌ Chat agent error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: process.env.NODE_ENV === 'development' ? (error.message || 'Internal server error') : 'Произошла ошибка. Попробуйте позже.' },
       { status: 500 }
     );
   }

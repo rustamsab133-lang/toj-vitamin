@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, Plus, Minus, Check, Loader2, AlertCircle, Calendar, MessageSquare, ShieldAlert, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Check, Loader2, AlertCircle, Calendar, MessageSquare, ShieldAlert, LogOut, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface B2BProduct {
@@ -14,6 +14,8 @@ interface B2BProduct {
   retail_price: number;
   price: number; // специальная B2B цена со скидкой
   discount_percent: number;
+  is_hidden?: boolean;
+  in_stock?: boolean;
 }
 
 interface B2BPharmacy {
@@ -41,6 +43,8 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedOrderId, setSubmittedOrderId] = useState<string | null>(null);
   const [submittedTotal, setSubmittedTotal] = useState(0);
+  const [submittedWaMessage, setSubmittedWaMessage] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
   const [notes, setNotes] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [isCartMobileOpen, setIsCartMobileOpen] = useState(false);
@@ -146,6 +150,29 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
 
       setSubmittedOrderId(data.order_id);
       setSubmittedTotal(totalAmount);
+
+      // Construct WhatsApp message with items list before clearing cart
+      const orderIdShort = data.order_id.slice(0, 8).toUpperCase();
+      const itemsText = cartItems
+        .map((item, idx) => `${idx + 1}. ${item.product.name} — ${item.quantity} шт. (${item.product.price * item.quantity} смн)`)
+        .join('\n');
+      const notesText = notes.trim() ? `\nПримечание: ${notes.trim()}` : '';
+      const dateText = deliveryDate ? `\nЖелаемая дата доставки: ${deliveryDate}` : '';
+      const msg = `Здравствуйте! Аптека "${pharmacy?.name || 'Партнер'}" оформила B2B заказ на сайте TOJ-VITAMIN:\n---\nСумма: ${totalAmount} смн\nID заказа: #B2B-${orderIdShort}\n---\nСостав заказа:\n${itemsText}${notesText}${dateText}\n---\nОжидаем подтверждения и доставки.`;
+      setSubmittedWaMessage(msg);
+
+      // Attempt direct WhatsApp redirection
+      const waUrl = `https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(msg)}`;
+      try {
+        const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = waUrl;
+        } else {
+          window.open(waUrl, '_blank', 'noopener,noreferrer');
+        }
+      } catch (err) {
+        console.error('Redirection failed:', err);
+      }
       
       // Update local pharmacy balance
       if (pharmacy) {
@@ -164,17 +191,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleSendWhatsAppNotification = () => {
-    if (!pharmacy || !submittedOrderId) return;
-    const itemsText = cartItems.length > 0 
-      ? cartItems.map((item, idx) => `${idx + 1}. ${item.product.name} (${item.product.price} смн) x ${item.quantity}`).join('\n')
-      : 'Товары';
-    
-    const msg = `Здравствуйте! Аптека "${pharmacy.name}" оформила B2B заказ на сайте TOJ-VITAMIN:\n---\nСумма: ${submittedTotal} смн\nID заказа: #${submittedOrderId.slice(0, 8)}\n---\nОжидаем подтверждения и доставки.`;
-    const waUrl = `https://wa.me/992176660707?text=${encodeURIComponent(msg)}`;
-    window.location.href = waUrl;
   };
 
   // UI States
@@ -204,10 +220,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
     );
   }
 
-  // Check if credit limit is exceeded
-  const availableCredit = Math.max(pharmacy.credit_limit - pharmacy.balance, 0);
-  const isCreditExceeded = totalAmount > availableCredit;
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24 lg:pb-0">
       {/* Dynamic Header */}
@@ -222,7 +234,7 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
           </div>
         </div>
 
-        {/* Pharmacy credit/discount details & logout */}
+        {/* Pharmacy details & logout */}
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex flex-wrap items-center gap-2">
             {pharmacy.discount_percent > 0 && (
@@ -230,12 +242,9 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                 Скидка: {pharmacy.discount_percent}%
               </div>
             )}
-            <div className="bg-blue-50 text-blue-700 px-3.5 py-2 rounded-xl text-xs font-bold border border-blue-100 shadow-sm">
-              Лимит долга: {pharmacy.balance.toLocaleString()} / {pharmacy.credit_limit.toLocaleString()} смн
-            </div>
-            {availableCredit > 0 && (
+            {pharmacy.phone && (
               <div className="bg-slate-100 text-slate-600 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200">
-                Доступно: {availableCredit.toLocaleString()} смн
+                Тел: {pharmacy.phone}
               </div>
             )}
           </div>
@@ -290,20 +299,30 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.map(p => {
               const qtyInCart = cart[p.id] || 0;
+              const isOutOfStock = Boolean(p.is_hidden || p.in_stock === false);
               return (
                 <div 
                   key={p.id}
-                  className="bg-white border border-slate-100 hover:border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-all group"
+                  className={`bg-white border rounded-2xl p-4 shadow-sm flex flex-col justify-between transition-all group ${
+                    isOutOfStock 
+                      ? 'border-amber-100 bg-slate-50/40 opacity-80' 
+                      : 'border-slate-100 hover:border-slate-200 hover:shadow-md'
+                  }`}
                 >
                   <div className="space-y-3">
                     {/* Image Placeholder */}
                     <div className="aspect-[4/3] rounded-xl bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-50 relative">
+                      {isOutOfStock && (
+                        <span className="absolute top-2 left-2 z-10 text-[10px] font-bold text-white bg-amber-500 px-2 py-0.5 rounded-md shadow-sm">
+                          Нет в наличии
+                        </span>
+                      )}
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <ShoppingCart size={24} className="text-slate-300" />
                       )}
-                      {p.discount_percent > 0 && (
+                      {!isOutOfStock && p.discount_percent > 0 && (
                         <span className="absolute top-2 left-2 text-[9px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                           -{p.discount_percent}%
                         </span>
@@ -320,17 +339,25 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
 
                   <div className="pt-4 border-t border-slate-50 mt-4 flex items-center justify-between">
                     <div className="flex flex-col">
-                      {pharmacy.discount_percent > 0 && (
+                      {!isOutOfStock && pharmacy.discount_percent > 0 && (
                         <span className="text-xs text-slate-400 line-through leading-none font-bold mb-1">
                           {p.retail_price} смн
                         </span>
                       )}
-                      <span className="text-base font-extrabold text-emerald-600 leading-none">
-                        {p.price} <span className="text-[10px] font-bold uppercase text-emerald-500">смн</span>
+                      <span className={`text-base font-extrabold leading-none ${isOutOfStock ? 'text-slate-400' : 'text-emerald-600'}`}>
+                        {p.price} <span className="text-[10px] font-bold uppercase text-slate-400">смн</span>
                       </span>
                     </div>
 
-                    {qtyInCart > 0 ? (
+                    {isOutOfStock ? (
+                      <button
+                        disabled
+                        className="bg-slate-100 text-slate-400 px-3 py-2 rounded-xl text-xs font-semibold cursor-not-allowed border border-slate-200"
+                        title="Товар временно отсутствует на складе"
+                      >
+                        Нет в наличии
+                      </button>
+                    ) : qtyInCart > 0 ? (
                       <div className="flex items-center bg-slate-900 text-white rounded-xl p-0.5 shadow-sm border border-slate-800">
                         <button 
                           onClick={() => updateCartQty(p.id, -1)}
@@ -435,13 +462,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                   <span className="text-slate-400 font-medium">Товаров в корзине:</span>
                   <span className="font-bold text-slate-700">{totalQty} шт</span>
                 </div>
-                
-                {isCreditExceeded && (
-                  <div className="flex items-center gap-1.5 p-2 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 text-[10px] font-semibold leading-relaxed">
-                    <AlertCircle size={12} className="shrink-0 text-amber-500" />
-                    <span>Внимание: Сумма заказа превышает доступный лимит кредита ({availableCredit} смн). Заказ пойдет на одобрение.</span>
-                  </div>
-                )}
 
                 <div className="flex justify-between items-end pt-2 border-t border-slate-200/50">
                   <span className="text-slate-500 font-bold text-xs">Итого к оплате:</span>
@@ -573,13 +593,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                   <span className="text-slate-400 font-medium">Товаров в корзине:</span>
                   <span className="font-bold text-slate-700">{totalQty} шт</span>
                 </div>
-                
-                {isCreditExceeded && (
-                  <div className="p-2 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 text-[10px] font-semibold leading-relaxed flex items-center gap-1.5">
-                    <AlertCircle size={12} className="shrink-0 text-amber-500" />
-                    <span>Сумма заказа превышает доступный лимит кредита ({availableCredit} смн).</span>
-                  </div>
-                )}
 
                 <div className="flex justify-between items-end pt-2 border-t border-slate-200/50">
                   <span className="text-slate-500 font-bold text-xs">Итого к оплате:</span>
@@ -609,31 +622,65 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-6"
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-5"
             >
               <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
                 <Check size={32} />
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit">Заказ успешно оформлен!</h3>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Благодарим за заказ. Заявка зарегистрирована под номером <strong className="text-slate-700">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму {submittedTotal} смн и отправлена менеджеру на подтверждение.
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit">Заказ успешно зарегистрирован!</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Заявка сохранена под номером <strong className="text-slate-800">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму <strong className="text-emerald-600">{submittedTotal.toLocaleString()} смн</strong>.
                 </p>
+                <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-800 font-medium text-left leading-relaxed">
+                  ✅ Заказ принят в обработку. Нажмите кнопку ниже для отправки чека менеджеру в WhatsApp:
+                </div>
               </div>
 
-              <div className="space-y-2 pt-2">
-                {/* Whatsapp redirection */}
-                <button
-                  onClick={handleSendWhatsAppNotification}
-                  className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+              <div className="space-y-2.5 pt-1">
+                {/* 100% Reliable Native WhatsApp Link */}
+                <a
+                  href={`https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(submittedWaMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-[#25D366]/20 transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
-                  <MessageSquare size={16} fill="currentColor" /> Отправить чек в WhatsApp 💬
-                </button>
-                
+                  <MessageSquare size={18} />
+                  Открыть чат в WhatsApp
+                </a>
+
+                {/* Copy Text Button */}
                 <button
-                  onClick={() => setSubmittedOrderId(null)}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl text-xs font-bold transition-all"
+                  type="button"
+                  onClick={() => {
+                    if (submittedWaMessage) {
+                      navigator.clipboard.writeText(submittedWaMessage);
+                      setIsCopied(true);
+                      setTimeout(() => setIsCopied(false), 2500);
+                    }
+                  }}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check size={14} className="text-emerald-600" /> Чек скопирован в буфер!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} /> Скопировать чек заказа
+                    </>
+                  )}
+                </button>
+
+                {/* Close modal */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmittedOrderId(null);
+                    setIsCopied(false);
+                  }}
+                  className="w-full text-slate-400 hover:text-slate-600 py-2 text-xs font-semibold transition-colors"
                 >
                   Вернуться в каталог B2B
                 </button>

@@ -40,3 +40,11 @@ yarn-error.log*
 # Sensitive credentials & keys
 google-key.json
 *.json.secret
+.env.production
+.env.vercel.pulled
+.env*.pulled
+
+# Scratch & temporary workspace files
+/scratch/
+tsconfig.tsbuildinfo
+*.txt

@@ -6,6 +6,8 @@ import { ChevronDown, Clock, ShieldCheck, ShoppingBag, Dna, Sparkles, Zap, Arrow
 import { useCart } from '@/store/useCart';
 import Image from 'next/image';
 
+import { trackEvent } from '@/lib/analytics';
+
 interface SynergyCardProps {
   synergy: QuizSynergy;
   lang: Lang;
@@ -18,10 +20,9 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
 
   const { allProducts, addMultiple, setIsOpen } = useCart();
   
-  const handleBuyInWhatsApp = async () => {
+  const handleBuyInWhatsApp = () => {
     // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
-    const { trackEvent } = await import('@/lib/analytics');
-    await trackEvent({
+    trackEvent({
       event_name: 'add_to_cart',
       data: {
         synergy_type: synergy.type,

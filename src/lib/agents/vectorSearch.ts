@@ -1,8 +1,35 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as fs from 'fs';
-import * as path from 'path';
+/**
+ * Vector search for relevant products using Gemini embeddings.
+ * Uses cosine similarity between query embedding and pre-computed product embeddings.
+ * 
+ * Embeddings are loaded lazily and cached in memory to avoid
+ * reading from disk on every request.
+ */
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { genAI } from '@/lib/gemini';
+
+// Lazy-loaded in-memory cache for product embeddings
+let cachedEmbeddings: Record<string, { embedding: number[] }> | null = null;
+
+function loadEmbeddings(): Record<string, { embedding: number[] }> | null {
+  if (cachedEmbeddings) return cachedEmbeddings;
+
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const embeddingsPath = path.join(process.cwd(), 'src/data/product_embeddings.json');
+    if (!fs.existsSync(embeddingsPath)) {
+      console.warn('⚠️ Файл product_embeddings.json не найден.');
+      return null;
+    }
+    cachedEmbeddings = JSON.parse(fs.readFileSync(embeddingsPath, 'utf-8'));
+    console.log(`✅ Загружено ${Object.keys(cachedEmbeddings!).length} эмбеддингов в кеш.`);
+    return cachedEmbeddings;
+  } catch (err) {
+    console.error('❌ Ошибка загрузки эмбеддингов:', err);
+    return null;
+  }
+}
 
 function cosineSimilarity(vecA: number[], vecB: number[]): number {
   let dotProduct = 0.0;
@@ -25,30 +52,25 @@ export async function getRelevantProducts(
   try {
     if (!query || query.trim().length === 0) return dbProducts.slice(0, count);
 
-    // 1. Читаем кэш эмбеддингов
-    const embeddingsPath = path.join(process.cwd(), 'src/data/product_embeddings.json');
-    if (!fs.existsSync(embeddingsPath)) {
-      console.warn('⚠️ Файл product_embeddings.json не найден. Возвращаем дефолтные товары.');
+    // 1. Load cached embeddings (lazy, one-time)
+    const embeddings = loadEmbeddings();
+    if (!embeddings) {
       return dbProducts.slice(0, count);
     }
 
-    const embeddingsCache: Record<string, { embedding: number[] }> = JSON.parse(
-      fs.readFileSync(embeddingsPath, 'utf-8')
-    );
-
-    // 2. Генерируем эмбеддинг для поискового запроса
+    // 2. Generate embedding for search query
     const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
     const result = await model.embedContent(query.trim());
     const queryVector = result.embedding.values;
 
-    // 3. Вычисляем близость для каждого товара
+    // 3. Compute similarity for each product
     const scoredProducts = dbProducts.map((p) => {
-      const cached = embeddingsCache[p.id];
+      const cached = embeddings[p.id];
       const score = cached ? cosineSimilarity(queryVector, cached.embedding) : 0;
       return { product: p, score };
     });
 
-    // 4. Сортируем по убыванию сходства
+    // 4. Sort by descending similarity
     scoredProducts.sort((a, b) => b.score - a.score);
 
     console.log(`🔍 Векторный поиск по запросу "${query}":`);

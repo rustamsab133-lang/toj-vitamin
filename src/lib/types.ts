@@ -13,6 +13,7 @@ export interface Product {
   marketing_hooks?: string[];
   barcode?: string;
   stock_quantity?: number;
+  is_hidden?: boolean;
 }
 
 export interface Complex {

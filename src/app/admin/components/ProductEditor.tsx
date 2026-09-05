@@ -3,14 +3,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { adminDbQuery } from '@/lib/admin-api';
 import { getMarkupSettings, applyMarkupToPrice, MarkupSettings } from '@/lib/markup';
-import { Search, Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, Loader2, TrendingUp } from 'lucide-react';
+import { Search, Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft, Loader2, TrendingUp, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage } from '@/lib/imageUtils';
+import { invalidateHiddenProductsCache } from '@/lib/hiddenProducts';
 
 import { Product } from '@/lib/types';
 
 export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: string }> = ({ onBack, initialProductId }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [hiddenProductIds, setHiddenProductIds] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'visible' | 'hidden'>('all');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
@@ -42,24 +45,85 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
   }, [initialProductId, products]);
 
   const loadProducts = async () => {
-    const { data } = await supabase.from('products').select('*').order('name');
-    if (data) {
-      const collator = new Intl.Collator(['ru', 'tg', 'en'], { sensitivity: 'base', numeric: true });
-      const sorted = [...data].sort((a, b) => collator.compare((a.name || '').trim(), (b.name || '').trim()));
-      setProducts(sorted);
+    try {
+      const [{ data: prodData }, { data: settingsData }] = await Promise.all([
+        supabase.from('products').select('*').order('name'),
+        supabase.from('site_settings').select('value').eq('key', 'hidden_product_ids').maybeSingle()
+      ]);
+
+      let hiddenIds: string[] = [];
+      if (settingsData?.value) {
+        try {
+          const parsed = JSON.parse(settingsData.value);
+          if (Array.isArray(parsed)) hiddenIds = parsed.map(String);
+        } catch (e) {}
+      }
+      setHiddenProductIds(hiddenIds);
+
+      if (prodData) {
+        const collator = new Intl.Collator(['ru', 'tg', 'en'], { sensitivity: 'base', numeric: true });
+        const sorted = [...prodData].map(p => ({
+          ...p,
+          is_hidden: Boolean(p.is_hidden || hiddenIds.includes(String(p.id)))
+        })).sort((a, b) => collator.compare((a.name || '').trim(), (b.name || '').trim()));
+        setProducts(sorted);
+      }
+    } catch (err) {
+      console.error('Failed to load products:', err);
     }
   };
 
   const filtered = products
-    .filter(p =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      String(p.id).includes(search)
-    )
+    .filter(p => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.full_name.toLowerCase().includes(search.toLowerCase()) ||
+        String(p.id).includes(search);
+      if (!matchesSearch) return false;
+
+      if (statusFilter === 'visible') return !p.is_hidden;
+      if (statusFilter === 'hidden') return p.is_hidden;
+      return true;
+    })
     .sort((a, b) => {
       const collator = new Intl.Collator(['ru', 'tg', 'en'], { sensitivity: 'base', numeric: true });
       return collator.compare((a.name || '').trim(), (b.name || '').trim());
     });
+
+  const toggleHideProduct = async (e: React.MouseEvent, p: Product) => {
+    e.stopPropagation();
+    const newHidden = !p.is_hidden;
+
+    // Оптимистичное обновление интерфейса
+    const updatedHiddenIds = newHidden
+      ? Array.from(new Set([...hiddenProductIds, String(p.id)]))
+      : hiddenProductIds.filter(id => id !== String(p.id));
+
+    setHiddenProductIds(updatedHiddenIds);
+    setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_hidden: newHidden } : item));
+    if (editing?.id === p.id) {
+      setEditing(prev => prev ? { ...prev, is_hidden: newHidden } : null);
+    }
+
+    setMsg(newHidden ? `👁️ Товар скрыт (нет в наличии)` : `✅ Товар снова отображается`);
+    setTimeout(() => setMsg(''), 3000);
+
+    try {
+      await adminDbQuery({
+        action: 'upsert',
+        table: 'site_settings',
+        data: {
+          key: 'hidden_product_ids',
+          value: JSON.stringify(updatedHiddenIds)
+        }
+      });
+      invalidateHiddenProductsCache();
+    } catch (err: any) {
+      console.error('Error toggling hidden product:', err);
+      setMsg(`❌ Ошибка сохранения статуса: ${err.message || 'Ошибка'}`);
+      loadProducts();
+    }
+  };
 
   const handleSave = async (productOverride?: Product) => {
     const target = productOverride || editing;
@@ -67,6 +131,7 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
     setSaving(true);
     setMsg('');
     try {
+      // 1. Сохраняем основные данные товара
       await adminDbQuery({
         action: 'upsert',
         table: 'products',
@@ -82,6 +147,29 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
           stock_quantity: target.stock_quantity || 0,
         }
       });
+
+      // 2. Сохраняем статус видимости (скрытия) товара
+      const isNowHidden = Boolean(target.is_hidden);
+      let updatedHiddenIds = [...hiddenProductIds];
+      if (isNowHidden) {
+        if (!updatedHiddenIds.includes(String(target.id))) {
+          updatedHiddenIds.push(String(target.id));
+        }
+      } else {
+        updatedHiddenIds = updatedHiddenIds.filter(id => id !== String(target.id));
+      }
+
+      await adminDbQuery({
+        action: 'upsert',
+        table: 'site_settings',
+        data: {
+          key: 'hidden_product_ids',
+          value: JSON.stringify(updatedHiddenIds)
+        }
+      });
+      setHiddenProductIds(updatedHiddenIds);
+      invalidateHiddenProductsCache();
+
       setMsg('✅ Сохранено!');
       setTimeout(() => setMsg(''), 3000);
       loadProducts();
@@ -119,6 +207,21 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
           setMsg(`Ошибка: ${error.message}`);
         }
       } else {
+        // Очищаем из скрытых если он там был
+        if (hiddenProductIds.includes(String(id))) {
+          const updated = hiddenProductIds.filter(hId => hId !== String(id));
+          await adminDbQuery({
+            action: 'upsert',
+            table: 'site_settings',
+            data: {
+              key: 'hidden_product_ids',
+              value: JSON.stringify(updated)
+            }
+          });
+          setHiddenProductIds(updated);
+          invalidateHiddenProductsCache();
+        }
+
         setMsg('Удалено успешно!');
         setEditing(null);
         await loadProducts();
@@ -190,7 +293,8 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
       icon_type: 'pill',
       image_url: null,
       barcode: '',
-      stock_quantity: 0
+      stock_quantity: 0,
+      is_hidden: false
     });
   };
 
@@ -251,6 +355,9 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
     }
   };
 
+  const visibleCount = products.filter(p => !p.is_hidden).length;
+  const hiddenCount = products.filter(p => p.is_hidden).length;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -267,16 +374,57 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Поиск по названию или ID..."
-          className="w-full h-12 bg-white rounded-xl pl-11 pr-4 text-sm font-medium outline-none border border-slate-100 focus:border-slate-200 transition-all placeholder:text-slate-300"
-        />
+      {/* Search and Status Filter */}
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Поиск по названию или ID..."
+            className="w-full h-12 bg-white rounded-xl pl-11 pr-4 text-sm font-medium outline-none border border-slate-100 focus:border-slate-200 transition-all placeholder:text-slate-300 shadow-sm"
+          />
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              statusFilter === 'all'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-100 hover:border-slate-200'
+            }`}
+          >
+            Все ({products.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('visible')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              statusFilter === 'visible'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-100 hover:border-slate-200'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            В наличии ({visibleCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('hidden')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              statusFilter === 'hidden'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-100 hover:border-slate-200'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            Скрытые ({hiddenCount})
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6 items-start relative">
@@ -290,27 +438,64 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
                 // На мобилках скроллим вверх при выборе
                 if (window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border ${
+              className={`flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-all border group ${
                 editing?.id === p.id 
-                  ? 'bg-slate-800 text-white border-slate-800' 
-                  : 'bg-white hover:bg-slate-50 border-slate-100 shadow-sm'
+                  ? 'bg-slate-800 text-white border-slate-800 shadow-md' 
+                  : p.is_hidden
+                    ? 'bg-amber-50/40 hover:bg-amber-50/70 border-amber-200/70 shadow-none'
+                    : 'bg-white hover:bg-slate-50 border-slate-100 shadow-sm'
               }`}
             >
-              <div className={`w-14 h-14 rounded-lg overflow-hidden shrink-0 flex items-center justify-center ${
-                editing?.id === p.id ? 'bg-white/10' : 'bg-slate-50'
+              <div className={`w-14 h-14 rounded-lg overflow-hidden shrink-0 flex items-center justify-center relative ${
+                editing?.id === p.id ? 'bg-white/10' : p.is_hidden ? 'bg-amber-100/60' : 'bg-slate-50'
               }`}>
                 {p.image_url ? (
-                  <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                  <img src={p.image_url} alt="" className={`w-full h-full object-cover ${p.is_hidden ? 'opacity-70' : ''}`} />
                 ) : (
                   <ImageIcon size={20} className={editing?.id === p.id ? 'text-white/40' : 'text-slate-300'} />
                 )}
+                {p.is_hidden && (
+                  <div className="absolute inset-0 bg-slate-900/10 backdrop-blur-[0.5px] flex items-center justify-center">
+                    <EyeOff size={14} className="text-amber-800" />
+                  </div>
+                )}
               </div>
+
               <div className="flex-1 min-w-0">
-                <p className={`font-bold text-sm truncate ${editing?.id === p.id ? 'text-white' : 'text-slate-700'}`}>{p.name}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className={`font-bold text-sm truncate ${editing?.id === p.id ? 'text-white' : 'text-slate-700'}`}>
+                    {p.name}
+                  </p>
+                  {p.is_hidden && (
+                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                      editing?.id === p.id 
+                        ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' 
+                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}>
+                      Скрыт
+                    </span>
+                  )}
+                </div>
                 <p className={`text-xs mt-0.5 ${editing?.id === p.id ? 'text-white/50' : 'text-slate-400'}`}>
                   ID: {p.id} · <span className="line-through">{p.price}</span> → <span className="font-bold">{applyMarkupToPrice(p.price, markupSettings)} смн</span>
                 </p>
               </div>
+
+              {/* Quick toggle button */}
+              <button
+                type="button"
+                onClick={(e) => toggleHideProduct(e, p)}
+                title={p.is_hidden ? 'Товар скрыт. Нажмите, чтобы снова показывать' : 'Товар в наличии. Нажмите, чтобы скрыть'}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                  editing?.id === p.id
+                    ? 'hover:bg-white/20 text-white/70 hover:text-white'
+                    : p.is_hidden
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 shadow-sm'
+                      : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
+                }`}
+              >
+                {p.is_hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           ))}
           {filtered.length === 0 && <p className="text-center py-10 text-slate-400 text-sm">Ничего не найдено</p>}
@@ -429,6 +614,49 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+
+              {/* Visibility Status Toggle (В наличии / Скрыть товар) */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                editing.is_hidden 
+                  ? 'bg-amber-50/70 border-amber-200 text-amber-900' 
+                  : 'bg-emerald-50/60 border-emerald-100 text-slate-800'
+              }`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${editing.is_hidden ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+                      <span className="text-xs font-bold">
+                        {editing.is_hidden ? 'Товар скрыт (нет в наличии)' : 'Товар в наличии (активен)'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-tight">
+                      {editing.is_hidden 
+                        ? 'Скрыт на сайте и в поиске. В B2B заказе отображается с пометкой «Нет в наличии».' 
+                        : 'Отображается на сайте и доступен для заказа розничным клиентам и B2B.'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditing({ ...editing, is_hidden: !editing.is_hidden })}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                      editing.is_hidden
+                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {editing.is_hidden ? (
+                      <>
+                        <EyeOff size={14} /> Скрыт
+                      </>
+                    ) : (
+                      <>
+                        <Eye size={14} /> Показывается
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Fields */}

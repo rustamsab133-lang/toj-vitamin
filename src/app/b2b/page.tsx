@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, Plus, Minus, Check, Loader2, Calendar, MessageSquare, Phone, Info } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Check, Loader2, Calendar, MessageSquare, Phone, Info, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface B2BProduct {
@@ -12,6 +12,8 @@ interface B2BProduct {
   image_url: string | null;
   icon_type: string;
   price: number; // базовая оптовая цена из products.price
+  is_hidden?: boolean;
+  in_stock?: boolean;
 }
 
 export default function B2BStorefrontPage() {
@@ -22,6 +24,10 @@ export default function B2BStorefrontPage() {
   
   // Cart state: productId -> quantity
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedOrderId, setSubmittedOrderId] = useState<string | null>(null);
   const [submittedTotal, setSubmittedTotal] = useState(0);
@@ -91,14 +97,33 @@ export default function B2BStorefrontPage() {
     });
   };
 
+  const handlePhoneChange = (val: string) => {
+    setPhoneError(null);
+    let digits = val.replace(/\D/g, '');
+    if (digits.startsWith('992') && digits.length > 9) {
+      digits = digits.slice(3);
+    }
+    setCustomerPhone(digits.slice(0, 9));
+  };
+
   const handleDirectCheckout = async () => {
     if (cartItems.length === 0 || isSubmitting) return;
 
+    const cleanPhone = customerPhone.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length < 9) {
+      setPhoneError('Укажите номер телефона (9 цифр)');
+      return;
+    }
+    setPhoneError(null);
+
     setIsSubmitting(true);
     try {
+      const fullPhone = `+992${cleanPhone}`;
+      const customerDisplayName = customerName.trim() || 'Оптовый покупатель';
+
       const payload = {
-        phone: 'whatsapp',
-        pharmacy_name: 'Лид с WhatsApp',
+        phone: fullPhone,
+        pharmacy_name: customerDisplayName,
         address: '',
         notes: '',
         delivery_date: null,
@@ -123,18 +148,26 @@ export default function B2BStorefrontPage() {
       setSubmittedOrderId(data.order_id);
       setSubmittedTotal(totalAmount);
       
-      // Construct the WhatsApp message with items list
+      // Construct the WhatsApp message with items list and contact details
       const orderIdShort = data.order_id.slice(0, 8).toUpperCase();
+      const clientLine = customerName.trim()
+        ? `Клиент: ${customerName.trim()} (${fullPhone})`
+        : `Телефон: ${fullPhone}`;
       const itemsText = cartItems
-        .map((item, idx) => `${idx + 1}. ${item.product.name} — ${item.quantity} шт.`)
+        .map((item, idx) => `${idx + 1}. ${item.product.name} — ${item.quantity} шт. (${item.product.price * item.quantity} смн)`)
         .join('\n');
-      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n\nСостав заказа:\n${itemsText}\n\nПодтвердите доставку...`;
+      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
       setSubmittedWaMessage(msg);
 
       // Attempt direct WhatsApp redirection
-      const waUrl = `https://wa.me/992176660707?text=${encodeURIComponent(msg)}`;
+      const waUrl = `https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(msg)}`;
       try {
-        window.location.href = waUrl;
+        const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = waUrl;
+        } else {
+          window.open(waUrl, '_blank', 'noopener,noreferrer');
+        }
       } catch (err) {
         console.error('Redirection failed:', err);
       }
@@ -215,14 +248,24 @@ export default function B2BStorefrontPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.map(p => {
               const qtyInCart = cart[p.id] || 0;
+              const isOutOfStock = Boolean(p.is_hidden || p.in_stock === false);
               return (
                 <div 
                   key={p.id}
-                  className="bg-white border border-slate-100 hover:border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-all group"
+                  className={`bg-white border rounded-2xl p-4 shadow-sm flex flex-col justify-between transition-all group ${
+                    isOutOfStock 
+                      ? 'border-amber-100 bg-slate-50/40 opacity-80' 
+                      : 'border-slate-100 hover:border-slate-200 hover:shadow-md'
+                  }`}
                 >
                   <div className="space-y-3">
                     {/* Image */}
                     <div className="aspect-[4/3] rounded-xl bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-50 relative">
+                      {isOutOfStock && (
+                        <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-bold shadow-sm">
+                          Нет в наличии
+                        </div>
+                      )}
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
                       ) : (
@@ -241,12 +284,20 @@ export default function B2BStorefrontPage() {
                   <div className="pt-4 border-t border-slate-50 mt-4 flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Цена опт:</span>
-                      <span className="text-base font-extrabold text-emerald-600 leading-none mt-1">
-                        {p.price} <span className="text-[10px] font-bold uppercase text-emerald-500">смн</span>
+                      <span className={`text-base font-extrabold leading-none mt-1 ${isOutOfStock ? 'text-slate-400' : 'text-emerald-600'}`}>
+                        {p.price} <span className="text-[10px] font-bold uppercase text-slate-400">смн</span>
                       </span>
                     </div>
 
-                    {qtyInCart > 0 ? (
+                    {isOutOfStock ? (
+                      <button
+                        disabled
+                        className="bg-slate-100 text-slate-400 px-3 py-2 rounded-xl text-xs font-semibold cursor-not-allowed border border-slate-200"
+                        title="Товар временно отсутствует на складе"
+                      >
+                        Нет в наличии
+                      </button>
+                    ) : qtyInCart > 0 ? (
                       <div className="flex items-center bg-slate-900 text-white rounded-xl p-0.5 shadow-sm border border-slate-800">
                         <button 
                           onClick={() => updateCartQty(p.id, -1)}
@@ -332,6 +383,52 @@ export default function B2BStorefrontPage() {
                 </div>
               </div>
 
+              {/* Contact info inputs */}
+              <div className="space-y-3 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                <div>
+                  <label className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
+                    <span className="flex items-center gap-1.5">
+                      <Phone size={13} className="text-emerald-600" />
+                      Номер телефона <span className="text-red-500">*</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">WhatsApp</span>
+                  </label>
+                  <div className={`flex items-center gap-2 rounded-xl border p-1 bg-white transition-all ${
+                    phoneError ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10'
+                  }`}>
+                    <div className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-700 select-none">
+                      +992
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder="90 123 45 67"
+                      maxLength={9}
+                      value={customerPhone}
+                      onChange={e => handlePhoneChange(e.target.value)}
+                      className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-normal font-sans"
+                    />
+                  </div>
+                  {phoneError && (
+                    <p className="text-[11px] text-red-500 font-semibold mt-1 pl-1">
+                      {phoneError}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Аптека или ваше имя <span className="text-slate-400 font-normal">(необязательно)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: Аптека «Шифо»"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
               <button
                 onClick={handleDirectCheckout}
                 disabled={isSubmitting}
@@ -397,7 +494,7 @@ export default function B2BStorefrontPage() {
               </div>
 
               {/* Items List */}
-              <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[250px]">
+              <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[220px]">
                 {cartItems.map(item => (
                   <div key={item.product.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
                     <div className="min-w-0 pr-2 flex-1">
@@ -417,7 +514,7 @@ export default function B2BStorefrontPage() {
               </div>
 
               {/* Total calculations */}
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-4 space-y-2">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-3 space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-400 font-medium">Товаров в корзине:</span>
                   <span className="font-bold text-slate-700">{totalQty} шт</span>
@@ -431,22 +528,65 @@ export default function B2BStorefrontPage() {
                 </div>
               </div>
 
-                <button
-                  onClick={() => {
-                    setIsCartMobileOpen(false);
-                    handleDirectCheckout();
-                  }}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#25D366] hover:bg-[#20ba59] disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={16} /> Оформление...
-                    </>
-                  ) : (
-                    <>🟢 Отправить чек в WhatsApp</>
+              {/* Mobile Contact info inputs */}
+              <div className="space-y-2.5 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 mb-4">
+                <div>
+                  <label className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
+                    <span className="flex items-center gap-1.5">
+                      <Phone size={12} className="text-emerald-600" />
+                      Номер телефона <span className="text-red-500">*</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">WhatsApp</span>
+                  </label>
+                  <div className={`flex items-center gap-2 rounded-xl border p-1 bg-white transition-all ${
+                    phoneError ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200'
+                  }`}>
+                    <div className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-700 select-none">
+                      +992
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder="90 123 45 67"
+                      maxLength={9}
+                      value={customerPhone}
+                      onChange={e => handlePhoneChange(e.target.value)}
+                      className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-normal font-sans"
+                    />
+                  </div>
+                  {phoneError && (
+                    <p className="text-[11px] text-red-500 font-semibold mt-1 pl-1">
+                      {phoneError}
+                    </p>
                   )}
-                </button>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Аптека или ваше имя <span className="text-slate-400 font-normal">(необязательно)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: Аптека «Шифо»"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleDirectCheckout}
+                disabled={isSubmitting}
+                className="w-full bg-[#25D366] hover:bg-[#20ba59] disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} /> Оформление...
+                  </>
+                ) : (
+                  <>🟢 Отправить чек в WhatsApp</>
+                )}
+              </button>
             </motion.div>
           </div>
         )}
@@ -460,23 +600,65 @@ export default function B2BStorefrontPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-6"
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-5"
             >
               <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
                 <Check size={32} />
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit">Заказ успешно оформлен!</h3>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Благодарим за заказ. Заявка зарегистрирована под номером <strong className="text-slate-700">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму {submittedTotal} смн и отправлена менеджеру на подтверждение.
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit">Заказ успешно зарегистрирован!</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Заявка сохранена в системе под номером <strong className="text-slate-800">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму <strong className="text-emerald-600">{submittedTotal.toLocaleString()} смн</strong>.
                 </p>
+                <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-800 font-medium text-left leading-relaxed">
+                  ✅ Номер телефона сохранён в админ-панели. Менеджер уже видит ваш заказ. Нажмите кнопку ниже для отправки чека в WhatsApp:
+                </div>
               </div>
 
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2.5 pt-1">
+                {/* 100% Reliable Native WhatsApp Link */}
+                <a
+                  href={`https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(submittedWaMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-[#25D366]/20 transition-all flex items-center justify-center gap-2 active:scale-98"
+                >
+                  <MessageSquare size={18} />
+                  Открыть чат в WhatsApp
+                </a>
+
+                {/* Copy Text Button */}
                 <button
-                  onClick={() => setSubmittedOrderId(null)}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow-md"
+                  type="button"
+                  onClick={() => {
+                    if (submittedWaMessage) {
+                      navigator.clipboard.writeText(submittedWaMessage);
+                      setIsCopied(true);
+                      setTimeout(() => setIsCopied(false), 2500);
+                    }
+                  }}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check size={14} className="text-emerald-600" /> Чек скопирован в буфер!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} /> Скопировать чек заказа
+                    </>
+                  )}
+                </button>
+
+                {/* Close modal */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmittedOrderId(null);
+                    setIsCopied(false);
+                  }}
+                  className="w-full text-slate-400 hover:text-slate-600 py-2 text-xs font-semibold transition-colors"
                 >
                   Продолжить покупки
                 </button>

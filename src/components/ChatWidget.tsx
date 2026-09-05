@@ -62,10 +62,11 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
-  // Keep local storage updated
+  // Keep local storage updated (limit to last 50 messages to prevent storage bloat)
   useEffect(() => {
     if (messages.length > 0 && typeof window !== 'undefined') {
-      localStorage.setItem('web_chat_messages', JSON.stringify(messages));
+      const trimmed = messages.slice(-50);
+      localStorage.setItem('web_chat_messages', JSON.stringify(trimmed));
     }
   }, [messages]);
 
@@ -161,9 +162,13 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     }
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch('/api/agents/web-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message: userText,
           chatId: chatId,
@@ -177,6 +182,8 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
           }))
         })
       });
+
+      clearTimeout(timeout);
 
       const data = await response.json();
 

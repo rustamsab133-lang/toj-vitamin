@@ -1,23 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { genAI } from '@/lib/gemini';
+import { checkRateLimit, getClientIP, STRICT_RATE_LIMIT } from '@/lib/rateLimit';
+import { AGENT_MODEL, safeErrorMessage } from '@/lib/agents/shared/config';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = getClientIP(request);
+    const rl = checkRateLimit(`enrich:${ip}`, STRICT_RATE_LIMIT);
+    if (!rl.success) {
+      return NextResponse.json({ success: false, error: 'Too many requests' }, { status: 429 });
+    }
+
     const { name, fullName } = await request.json();
     if (!name) {
       return NextResponse.json({ success: false, error: 'Product name is required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+    // Input length validation
+    const safeName = String(name).trim().slice(0, 200);
+    const safeFullName = fullName ? String(fullName).trim().slice(0, 300) : safeName;
+
+    const model = genAI.getGenerativeModel({ model: AGENT_MODEL });
     const prompt = `
 Ты — опытный ИИ-нутрициолог и эксперт бренда премиальных витаминов "TOJ-VITAMIN" в Таджикистане.
-Тебе нужно составить качественное медицинское и нутрициологическое описание свойств, клинических синергий и тегов для продукта: "${name}" (Полное название: "${fullName || name}").
+Тебе нужно составить качественное медицинское и нутрициологическое описание свойств, клинических синергий и тегов для продукта: "${safeName}" (Полное название: "${safeFullName}").
 
 Верни строго валидный JSON-объект следующей структуры (не пиши ничего лишнего, никаких \`\`\`json, только чистый JSON):
 {
-  "name": "${name}",
+  "name": "${safeName}",
   "properties": [
     "Список из 3-5 основных свойств, полезных эффектов, показаний на русском языке (краткие предложения, 5-10 слов)"
   ],
@@ -41,6 +52,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: enrichData });
   } catch (error: any) {
     console.error('❌ Error enriching product:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: safeErrorMessage(error) }, { status: 500 });
   }
 }

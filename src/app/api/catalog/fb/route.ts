@@ -3,20 +3,25 @@ import { supabase } from '@/lib/supabase';
 import { slugify } from '@/lib/slugify';
 import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
 import { findEnrichmentForProduct } from '@/lib/products';
+import { getHiddenProductIds, filterVisibleProducts } from '@/lib/hiddenProducts';
 import enrichedData from '@/data/enriched_gls_products.json';
 
 
 export async function GET() {
   try {
-    const { data: rawProducts, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('id');
+    const [{ data: rawProducts, error }, hiddenIds] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*')
+        .order('id'),
+      getHiddenProductIds()
+    ]);
 
     if (error) throw error;
 
+    const visibleProducts = filterVisibleProducts(rawProducts || [], hiddenIds);
     const markupSettings = await getMarkupSettings();
-    const products = rawProducts?.map(p => applyMarkupToProduct(p, markupSettings)) || [];
+    const products = visibleProducts.map(p => applyMarkupToProduct(p, markupSettings));
 
     const baseUrl = 'https://www.toj-vitamin.tj';
 

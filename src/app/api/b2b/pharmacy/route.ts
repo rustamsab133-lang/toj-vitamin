@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       throw prodError || new Error('Ошибка загрузки каталога товаров');
     }
 
-    // Получаем наценку розницы
+    // Получаем наценку розницы и список скрытых товаров
     const { data: settingsData } = await supabaseAdmin
       .from('site_settings')
       .select('*');
@@ -43,6 +43,15 @@ export async function GET(request: Request) {
       percent: parseFloat(percentSetting?.value || '0') || 0,
       flat: parseFloat(flatSetting?.value || '0') || 0
     };
+
+    const hiddenSetting = settingsData?.find((s: any) => s.key === 'hidden_product_ids');
+    let hiddenIds: string[] = [];
+    if (hiddenSetting?.value) {
+      try {
+        const parsed = JSON.parse(hiddenSetting.value);
+        if (Array.isArray(parsed)) hiddenIds = parsed.map(String);
+      } catch (e) {}
+    }
 
     if (token) {
       // Ищем аптеку по токену
@@ -67,6 +76,7 @@ export async function GET(request: Request) {
         const retailPrice = Math.round(retail);
 
         const discountPrice = Math.round(baseWholesale * (1 - (Number(pharmacy.discount_percent) || 0) / 100));
+        const isHidden = Boolean(p.is_hidden || hiddenIds.includes(String(p.id)));
 
         return {
           id: p.id,
@@ -77,7 +87,9 @@ export async function GET(request: Request) {
           icon_type: p.icon_type,
           retail_price: retailPrice,
           price: discountPrice,
-          discount_percent: pharmacy.discount_percent
+          discount_percent: pharmacy.discount_percent,
+          is_hidden: isHidden,
+          in_stock: !isHidden
         };
       });
 
@@ -85,15 +97,20 @@ export async function GET(request: Request) {
     }
 
     // Формируем чистые оптовые товары для публичного доступа
-    const b2bProducts = products.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      full_name: p.full_name,
-      description: p.description,
-      image_url: p.image_url,
-      icon_type: p.icon_type,
-      price: Number(p.price) || 0 // Базовая оптовая цена из базы данных
-    }));
+    const b2bProducts = products.map((p: any) => {
+      const isHidden = Boolean(p.is_hidden || hiddenIds.includes(String(p.id)));
+      return {
+        id: p.id,
+        name: p.name,
+        full_name: p.full_name,
+        description: p.description,
+        image_url: p.image_url,
+        icon_type: p.icon_type,
+        price: Number(p.price) || 0, // Базовая оптовая цена из базы данных
+        is_hidden: isHidden,
+        in_stock: !isHidden
+      };
+    });
 
     return NextResponse.json({ products: b2bProducts });
   } catch (error: any) {
@@ -185,11 +202,30 @@ export async function POST(request: Request) {
       throw prodError || new Error('Ошибка при проверке каталога товаров');
     }
 
+    // Проверяем скрытые товары (которых нет в наличии)
+    const { data: hiddenSettingData } = await supabaseAdmin
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'hidden_product_ids')
+      .maybeSingle();
+
+    let postHiddenIds: string[] = [];
+    if (hiddenSettingData?.value) {
+      try {
+        const parsed = JSON.parse(hiddenSettingData.value);
+        if (Array.isArray(parsed)) postHiddenIds = parsed.map(String);
+      } catch (e) {}
+    }
+
     let totalAmount = 0;
     const orderItems = items.map((cartItem: any) => {
       const dbProd = dbProducts.find(p => String(p.id) === String(cartItem.product_id));
       if (!dbProd) {
         throw new Error(`Товар с ID ${cartItem.product_id} не найден в базе данных`);
+      }
+
+      if (postHiddenIds.includes(String(dbProd.id))) {
+        throw new Error(`Товар "${dbProd.name}" временно отсутствует на складе и недоступен для заказа`);
       }
 
       // Берем оптовую цену со скидкой аптеки
@@ -209,13 +245,7 @@ export async function POST(request: Request) {
       };
     });
 
-    // 4. Проверяем кредитный лимит для зарегистрированных аптек
-    if (token) {
-      const availableCredit = Math.max(pharmacy.credit_limit - pharmacy.balance, 0);
-      if (totalAmount > availableCredit) {
-        return NextResponse.json({ error: 'Превышен лимит долга аптеки' }, { status: 400 });
-      }
-    }
+    // 4. Кредитный лимит отключен — аптеки могут свободно оформлять заказы
 
     // 5. Создаем заказ
     const { data: orderData, error: insertError } = await supabaseAdmin

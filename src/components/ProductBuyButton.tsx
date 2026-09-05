@@ -5,14 +5,15 @@ import { Product, Lang } from '@/lib/types';
 import { useCart } from '@/store/useCart';
 import { motion } from 'framer-motion';
 
+import { trackEvent } from '@/lib/analytics';
+
 export const ProductBuyButton = ({ product, lang }: { product: Product, lang: Lang }) => {
   const { addItem, setIsOpen, triggerAnimation } = useCart();
-  const handleBuy = async (e: React.MouseEvent) => {
+  const handleBuy = (e: React.MouseEvent) => {
     e.preventDefault();
     
     // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
-    const { trackEvent } = await import('@/lib/analytics');
-    await trackEvent({
+    trackEvent({
       event_name: 'add_to_cart',
       data: {
         product_id: product.id,

@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { getMarkupSettings, applyMarkupToProduct } from './markup';
 import { Product } from './types';
+import { getHiddenProductIds, filterVisibleProducts, isProductHidden } from './hiddenProducts';
 
 /**
  * Unified helper to fetch all active products from Supabase with the pricing markup automatically applied.
@@ -8,19 +9,25 @@ import { Product } from './types';
  */
 export async function getProductsWithMarkup(): Promise<Product[]> {
   try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('id');
+    const [{ data: products, error }, hiddenIds] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*')
+        .order('id'),
+      getHiddenProductIds()
+    ]);
 
     if (error || !products) {
       console.error('❌ Error fetching products:', error?.message);
       return [];
     }
 
+    // Filter out hidden products (out of stock)
+    const visibleProducts = filterVisibleProducts(products, hiddenIds);
+
     // Apply pricing markup dynamically
     const markupSettings = await getMarkupSettings();
-    return products.map(p => applyMarkupToProduct(p, markupSettings));
+    return visibleProducts.map(p => applyMarkupToProduct(p, markupSettings));
   } catch (err) {
     console.error('❌ Failed to load products with markup:', err);
     return [];
@@ -32,6 +39,11 @@ export async function getProductsWithMarkup(): Promise<Product[]> {
  */
 export async function getProductByIdWithMarkup(id: string | number): Promise<Product | null> {
   try {
+    const hiddenIds = await getHiddenProductIds();
+    if (isProductHidden(id, hiddenIds)) {
+      return null;
+    }
+
     const { data: product, error } = await supabase
       .from('products')
       .select('*')
@@ -40,6 +52,10 @@ export async function getProductByIdWithMarkup(id: string | number): Promise<Pro
 
     if (error || !product) {
       console.error(`❌ Error fetching product ID ${id}:`, error?.message);
+      return null;
+    }
+
+    if (isProductHidden(product.id, hiddenIds) || product.is_hidden) {
       return null;
     }
 

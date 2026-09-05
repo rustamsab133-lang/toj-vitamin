@@ -68,18 +68,19 @@ export const trackEvent = async ({ event_name, data = {} }: TrackEventParams) =>
     (window as any).fbq('trackCustom', event_name, enrichedData);
   }
 
-  // 3. Internal Database (Supabase)
-  try {
-    const { error } = await supabase.from('analytics_events').insert({
+  // 3. Internal Database (Supabase) - non-blocking background save
+  Promise.resolve(
+    supabase.from('analytics_events').insert({
       event_name,
       page_path: window.location.pathname,
       event_data: enrichedData,
       user_agent: window.navigator.userAgent,
-    });
+    })
+  ).then(({ error }) => {
     if (error) console.error('DB Analytics Error:', error);
-  } catch (err) {
+  }).catch((err: any) => {
     console.error('Failed to log event to DB:', err);
-  }
+  });
 
   // 4. Server-side Meta CAPI (Forwarding)
   // We trigger a background call to our API to handle CAPI sending

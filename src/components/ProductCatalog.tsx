@@ -24,6 +24,7 @@ import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { slugify } from '@/lib/slugify';
 import { BackgroundGlow } from './BackgroundGlow';
+import { trackEvent } from '@/lib/analytics';
 
 const CATEGORIES = [
   { id: 'all', label: { ru: 'Все', tj: 'Ҳама' }, icon: ShoppingBag },
@@ -198,9 +199,8 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
 
   const shelfCategories = CATEGORIES.filter(cat => cat.id !== 'all');
 
-  const handleBuy = async (product: Product, synergyProduct?: Product) => {
-    const { trackEvent } = await import('@/lib/analytics');
-    await trackEvent({
+  const handleBuy = (product: Product, synergyProduct?: Product) => {
+    trackEvent({
       event_name: 'add_to_cart',
       data: {
         product_id: product.id,
@@ -301,7 +301,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                           transition: { duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }
                         }}
                         whileTap={{ scale: 0.96 }}
-                        className="group relative flex flex-col w-[230px] sm:w-[260px] h-full"
+                        className="apple-shelf-item group relative flex flex-col w-[230px] sm:w-[260px] h-full"
                       >
                         <motion.a
                           href={`/product/${slugify(product.name || '')}`}
@@ -309,9 +309,9 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                             e.preventDefault();
                             setSelectedProduct(product);
                           }}
-                          className="apple-shelf-item flex flex-col cursor-pointer touch-manipulation block h-full w-full"
+                          className="flex flex-col cursor-pointer touch-manipulation w-full flex-1"
                         >
-                          <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_60px_120px_rgba(30,64,175,0.08)] transition-all duration-700 overflow-hidden h-full">
+                          <div className="relative flex flex-col p-6 rounded-[48px] bg-white border border-[#1D1D1F]/5 shadow-[0_15px_45px_rgba(0,0,0,0.03)] group-hover:shadow-[0_60px_120px_rgba(30,64,175,0.08)] transition-all duration-700 overflow-hidden flex-1">
                             
                             {/* 1. BACKGROUND EFFECTS */}
                             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent pointer-events-none" />
@@ -386,7 +386,17 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                  </div>
 
                                  {/* Hover View: Details Button */}
-                                 <div className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2">
+                                 <div 
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      setSelectedProduct(product);
+                                    }}
+                                    className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2 cursor-pointer pointer-events-auto z-20"
+                                  >
                                      <div className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-none text-[11px] uppercase tracking-[0.15em]">
                                        <ArrowRight size={14} />
                                        <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
@@ -403,13 +413,15 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                             const isAdded = !!addedProductIds[product.id];
                             return (
                               <button
-                                onClick={async (e) => {
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                   if (isAdded) return;
 
-                                  const { trackEvent } = await import('@/lib/analytics');
-                                  await trackEvent({
+                                  trackEvent({
                                     event_name: 'add_to_cart',
                                     data: {
                                       product_id: product.id,
@@ -419,13 +431,14 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                   });
                                   addItem(product);
                                   triggerAnimation();
+                                  setIsOpen(true);
 
                                   setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
                                   setTimeout(() => {
                                     setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
                                   }, 1000);
                                 }}
-                                className={`h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child overflow-hidden relative ${
+                                className={`h-11 w-11 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child overflow-hidden relative ${
                                   isAdded
                                     ? 'bg-green-600 text-white'
                                     : 'bg-[#1E40AF] text-white hover:bg-black'

@@ -18,6 +18,47 @@ interface CartDrawerProps {
   onOrderSuccess?: () => void;
 }
 
+// Optimized component for loading cart images quickly and robustly
+interface CartProductImageProps {
+  src: string | null | undefined;
+  alt: string;
+  sizeIcon?: number;
+}
+
+const CartProductImage: React.FC<CartProductImageProps> = ({ src, alt, sizeIcon = 24 }) => {
+  const [hasError, setHasError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  if (!src || hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-[#F5F5F7]">
+        <ShoppingBag size={sizeIcon} strokeWidth={1} className="text-[#86868B]/40" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {loading && (
+        <div className="absolute inset-0 bg-[#F5F5F7] animate-pulse rounded-lg" />
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 640px) 250px, 300px"
+        priority={true} // Ignore lazy loading, load immediately when cart drawer is mounted
+        className={`object-contain transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          setHasError(true);
+          setLoading(false);
+        }}
+      />
+    </div>
+  );
+};
+
 export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) => {
   const {
     items,
@@ -454,7 +495,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                         className="w-full p-3.5 rounded-2xl bg-white border border-[#E8E8ED] hover:border-blue-200 hover:shadow-md transition-all flex items-center gap-3.5 group"
                       >
                         <div className="w-11 h-11 rounded-xl bg-[#FAFAFA] flex items-center justify-center p-1.5 border border-[#F0F0F5] relative overflow-hidden">
-                          <Image src={p.image_url || ''} fill sizes="44px" className="object-contain" alt="" />
+                          <CartProductImage src={p.image_url} alt={p.name} sizeIcon={16} />
                         </div>
                         <div className="flex-1 text-left">
                           <p className="font-bold text-[13px] text-[#1D1D1F] font-outfit line-clamp-1">{p.name}</p>
@@ -485,11 +526,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       >
                         <div className="flex gap-4">
                           <div className="w-[72px] h-[72px] rounded-xl bg-[#FAFAFA] border border-[#F0F0F5] flex-shrink-0 p-2 group-hover:scale-[1.03] transition-transform duration-500 relative overflow-hidden">
-                            {item.image_url ? (
-                              <Image src={item.image_url} alt={item.name} fill sizes="72px" className="object-contain" />
-                            ) : (
-                              <ShoppingBag size={24} strokeWidth={1} className="text-[#E2E8F0] mx-auto" />
-                            )}
+                            <CartProductImage src={item.image_url} alt={item.name} sizeIcon={24} />
                           </div>
 
                           <div className="flex-1 flex flex-col justify-between min-w-0">
@@ -533,7 +570,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 border border-blue-100 relative overflow-hidden">
-                                  <Image src={synergyProduct.image_url || ''} fill sizes="40px" className="object-contain" alt="" />
+                                  <CartProductImage src={synergyProduct.image_url} alt={synergyProduct.name} sizeIcon={14} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[12px] font-bold text-[#1D1D1F] line-clamp-1 font-outfit">{synergyProduct.name}</p>
