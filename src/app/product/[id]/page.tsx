@@ -27,9 +27,11 @@ async function getProduct(id: string): Promise<Product | null> {
 
 export async function generateStaticParams() {
   const products = await getProductsWithMarkup();
-  return (products || []).map((p) => ({
-    id: slugify(p.name),
-  }));
+  return (products || [])
+    .map((p) => ({
+      id: slugify(p.name || ''),
+    }))
+    .filter((p) => Boolean(p.id && p.id.trim().length > 0));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

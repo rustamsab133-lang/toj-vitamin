@@ -41,9 +41,11 @@ export async function generateStaticParams() {
     .select('slug')
     .eq('is_published', true);
 
-  return (articles || []).map((a) => ({
-    slug: a.slug,
-  }));
+  return (articles || [])
+    .map((a) => ({
+      slug: (a.slug || '').trim(),
+    }))
+    .filter((a) => Boolean(a.slug && a.slug.length > 0));
 }
 
 export default async function ArticlePage({ params }: Props) {
