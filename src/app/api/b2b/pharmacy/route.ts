@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 // Инициализируем защищенный клиент Supabase с Service Role Key для обхода RLS на сервере
 const supabaseAdmin = createClient(
@@ -181,7 +182,7 @@ export async function POST(request: Request) {
             discount_percent: 0, // У лида скидка 0% на первый заказ (идут по базовой оптовой цене)
             credit_limit: 0,
             balance: 0,
-            token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) // генерируем случайный токен
+            token: randomUUID() // генерируем валидный UUID токен
           })
           .select('*')
           .single();

@@ -19,11 +19,7 @@ import {
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // --- System instruction (статическая часть промпта, кешируется Gemini) ---
-const SYSTEM_INSTRUCTION = `Ты — ИИ-консультант премиального интернет-магазина витаминов "TOJ-VITAMIN" в Таджикистане.
-Твоя задача — вежливо, профессионально и кратко отвечать клиентам в чате на сайте, помогать с выбором витаминов из каталога под их жалобы и боли, объяснять синергию продуктов и помогать оформить заказ.
-Отвечай ОЧЕНЬ КОРОТКО (2-4 предложения, максимум 60 слов).
-Пиши приветствие ("Салом!", "Привет!" и т.д.) ТОЛЬКО в самом первом сообщении диалога. Если в истории переписки уже есть предыдущие сообщения, НИКОГДА не здоровайся заново.
-
+const SYSTEM_RULES = `
 ПРАВИЛА ОФОРМЛЕНИЯ ЗАКАЗА И ПОВЕДЕНИЯ:
 1. Если клиент хочет совершить покупку (например: "хочу купить", "оформи заказ", "возьму это"), но ЕЩЕ не написал свой номер телефона, ты ОБЯЗАН вежливо попросить его написать телефон. В этом случае НЕ заполняй поле "create_order".
 2. Если у тебя есть телефон клиента И клиент хочет заказать товары, ты ОБЯЗАН заполнить поле "create_order" в JSON.
@@ -43,6 +39,13 @@ const SYSTEM_INSTRUCTION = `Ты — ИИ-консультант премиал�
 }
 Поле "create_order" добавляется ТОЛЬКО когда заказ реально оформляется (есть телефон И согласие). В остальных случаях установи в null.
 Убедись, что JSON валидный и не содержит Markdown-разметки.`;
+
+const DEFAULT_SYSTEM_INSTRUCTION = `Ты — ИИ-консультант премиального интернет-магазина витаминов "TOJ-VITAMIN" в Таджикистане.
+Твоя задача — вежливо, профессионально и кратко отвечать клиентам в чате на сайте, помогать с выбором витаминов из каталога под их жалобы и боли, объяснять синергию продуктов и помогать оформить заказ.
+Отвечай ОЧЕНЬ КОРОТКО (2-4 предложения, максимум 60 слов).
+Пиши приветствие ("Салом!", "Привет!" и т.д.) ТОЛЬКО в самом первом сообщении диалога. Если в истории переписки уже есть предыдущие сообщения, НИКОГДА не здоровайся заново.`;
+
+const SYSTEM_INSTRUCTION = `${DEFAULT_SYSTEM_INSTRUCTION}\n\n${SYSTEM_RULES}`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -193,9 +196,13 @@ ${historyText}
 Бот:`;
 
     // 12. Запрос к Gemini — используем systemInstruction для статических правил
+    const finalSystemInstruction = customPromptText
+      ? `${customPromptText}\n\n${SYSTEM_RULES}`
+      : SYSTEM_INSTRUCTION;
+
     const model = genAI.getGenerativeModel({
       model: AGENT_MODEL,
-      systemInstruction: customPromptText || SYSTEM_INSTRUCTION,
+      systemInstruction: finalSystemInstruction,
     });
 
     const result = await model.generateContent({
@@ -212,12 +219,18 @@ ${historyText}
 
     try {
       const parsed = JSON.parse(responseText);
-      reply = parsed.reply || '';
-      recommendedProductIds = parsed.recommended_product_ids || [];
-      createOrderData = parsed.create_order;
+      reply = parsed.reply || parsed.response || parsed.message || parsed.text || '';
+      recommendedProductIds = parsed.recommended_product_ids || parsed.product_ids || parsed.products || [];
+      createOrderData = parsed.create_order || parsed.order;
     } catch (e) {
       console.error('❌ Ошибка парсинга JSON ответа Gemini:', e, responseText);
       reply = responseText; // Фоллбек на весь текст, если не удалось распарсить JSON
+    }
+
+    if (!reply || reply.trim().length === 0) {
+      reply = chatLang === 'tj'
+        ? 'Салом! Ман метавонам ба шумо дар интихоби витаминҳо кӯмак кунам. Шуморо кадом масъала ё мақсад нигарон мекунад?'
+        : 'Здравствуйте! Я помогу вам подобрать витамины. Расскажите, какая у вас цель или жалоба?';
     }
 
     // 13. Если ИИ решил создать заказ — валидируем телефон

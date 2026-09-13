@@ -43,8 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Товар не найден' };
   }
 
-  const title = `${product.name} | Премиальные витамины GLS в Таджикистане`;
-  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с бесплатной доставкой от Green Leaf Sciences.`;
+  const title = `${product.name} | Купить в интернет-магазине toj-vitamin (Таджикистан)`;
+  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`;
   const imageUrl = product.image_url ? 
     (product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`) : 
     'https://www.toj-vitamin.tj/og-large-logo.png';
@@ -105,7 +105,7 @@ const REVIEW_TEMPLATES: Record<string, Array<{ author: string; body: string }>> 
   ],
   default: [
     { author: 'Алишер', body: 'Отличное качество, помогло уже через неделю приема.' },
-    { author: 'Фируз', body: 'Оригинальный продукт Green Leaf Sciences, очень быстрая доставка по Таджикистану.' },
+    { author: 'Фируз', body: 'Оригинальный качественный продукт, очень быстрая доставка по Таджикистану от toj-vitamin.' },
     { author: 'Лола', body: 'Заказывала по совету нутрициолога, результат очень радует. Рекомендую!' }
   ]
 };
@@ -144,9 +144,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   const lang = (searchParams?.lang === 'tj' ? 'tj' : 'ru') as Lang;
 
-
-
-  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с бесплатной доставкой от Green Leaf Sciences.`;
+  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`;
   const productReviews = getDynamicReviews(product.name, enriched?.tags || []);
 
   const jsonLd = [
@@ -158,7 +156,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       "description": enriched?.properties?.join('. ') || product.description || product.name,
       "brand": {
         "@type": "Brand",
-        "name": "Green Leaf Sciences"
+        "name": "GLS"
       },
       "sku": product.id,
       "category": enriched?.tags?.[0] || "Health & Beauty",
@@ -170,8 +168,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
         "itemCondition": "https://schema.org/NewCondition",
         "availability": "https://schema.org/InStock",
         "seller": {
-          "@type": "Organization",
-          "name": "tojvitamin"
+          "@type": "Store",
+          "name": "toj-vitamin",
+          "url": "https://www.toj-vitamin.tj"
         },
         "shippingDetails": {
           "@type": "OfferShippingDetails",
@@ -262,7 +261,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           <div className="space-y-6">
             <div className="space-y-3">
               <p className="text-[#94A3B8] text-[12px] font-bold uppercase tracking-[0.25em]">
-                Green Leaf Sciences
+                Интернет-магазин toj-vitamin
               </p>
               <h1 className="text-[36px] md:text-[48px] font-bold text-[#1D1D1F] leading-[1.1] tracking-tight font-outfit">
                 {product.name}

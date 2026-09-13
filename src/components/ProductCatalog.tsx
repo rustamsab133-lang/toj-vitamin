@@ -174,7 +174,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [addedProductIds, setAddedProductIds] = useState<Record<string, boolean>>({});
   const setActiveZone = useThemeStore(state => state.setActiveZone);
-  const { addItem, addMultiple, setIsOpen, triggerAnimation } = useCart();
+  const { addItem, addMultiple, setIsOpen, triggerAnimation, triggerToast } = useCart();
 
   // Zone theme observer — created once, cleaned up on unmount
   useEffect(() => {
@@ -212,13 +212,13 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
 
     if (synergyProduct) {
       addMultiple([product, synergyProduct]);
+      triggerToast(synergyProduct, lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
     } else {
       addItem(product);
+      triggerToast(product);
     }
     
     triggerAnimation();
-    setIsOpen(true);
-    setSelectedProduct(null);
   };
 
   return (
@@ -431,12 +431,12 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                   });
                                   addItem(product);
                                   triggerAnimation();
-                                  setIsOpen(true);
+                                  triggerToast(product);
 
                                   setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
                                   setTimeout(() => {
                                     setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
-                                  }, 1000);
+                                  }, 1500);
                                 }}
                                 className={`h-11 w-11 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child overflow-hidden relative ${
                                   isAdded

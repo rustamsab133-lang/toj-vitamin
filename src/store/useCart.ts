@@ -17,6 +17,10 @@ interface CartState {
   setAllProducts: (products: Product[]) => void;
   cartAnimationKey: number;
   triggerAnimation: () => void;
+  toastItem: { product: Product; title?: string } | null;
+  showToast: boolean;
+  triggerToast: (product: Product, customTitle?: string) => void;
+  hideToast: () => void;
 }
 
 export const useCart = create<CartState>()(
@@ -26,8 +30,15 @@ export const useCart = create<CartState>()(
       allProducts: [],
       isOpen: false,
       cartAnimationKey: 0,
+      toastItem: null,
+      showToast: false,
       setIsOpen: (open) => set({ isOpen: open }),
       triggerAnimation: () => set((state) => ({ cartAnimationKey: state.cartAnimationKey + 1 })),
+      triggerToast: (product, customTitle) => set({
+        toastItem: { product, title: customTitle },
+        showToast: true,
+      }),
+      hideToast: () => set({ showToast: false }),
       setAllProducts: (products) => set({ allProducts: products }),
       addItem: (product) => {
         const items = get().items;

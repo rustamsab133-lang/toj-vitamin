@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: "Научный Журнал | Green Leaf Sciences",
-  description: "Экспертные статьи о здоровье, биохакинге и синергии витаминов от врачей и нутрициологов Green Leaf Sciences.",
+  title: "Научный Журнал | toj-vitamin",
+  description: "Экспертные статьи о здоровье, биохакинге и синергии витаминов от экспертов и нутрициологов интернет-магазина toj-vitamin.",
 };
 
 export default async function JournalPage() {

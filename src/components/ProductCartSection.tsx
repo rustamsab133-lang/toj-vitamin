@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/store/useCart';
 import { CartDrawer } from '@/components/CartDrawer';
+import { CartToast } from '@/components/CartToast';
 import { OrderSuccessOverlay } from '@/components/OrderSuccessOverlay';
 import { Lang } from '@/lib/types';
 
@@ -78,6 +79,7 @@ export function ProductCartSection({ lang, product }: ProductCartSectionProps) {
         lang={lang} 
         onOrderSuccess={() => setIsOrderSuccess(true)}
       />
+      <CartToast lang={lang} />
       <OrderSuccessOverlay 
         isVisible={isOrderSuccess} 
         onClose={() => setIsOrderSuccess(false)} 

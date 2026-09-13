@@ -32,13 +32,13 @@ export async function GET() {
   <channel>
     <title>toj-vitamin.tj Google Product Feed</title>
     <link>${baseUrl}</link>
-    <description>Premium Vitamins and Supplements in Tajikistan from Green Leaf Sciences</description>
+    <description>Premium Vitamins and Supplements in Tajikistan from toj-vitamin store</description>
 ${products?.map((product) => {
       const productUrl = `${baseUrl}/product/${slugify(product.name)}`;
       const enrichment = findEnrichmentForProduct(product.name, enrichedData);
       const description = (enrichment.properties && enrichment.properties.length > 0)
         ? enrichment.properties.join('. ')
-        : (product.description || `Купить ${product.name} в Таджикистане. Премиальное качество от Green Leaf Sciences. Бесплатная доставка по Душанбе.`);
+        : (product.description || `Купить ${product.name} в Таджикистане. Премиальное качество от интернет-магазина toj-vitamin. Бесплатная доставка по Душанбе.`);
       
       return `    <item>
       <g:id>${product.id}</g:id>
@@ -46,7 +46,7 @@ ${products?.map((product) => {
       <g:description><![CDATA[${description.substring(0, 5000)}]]></g:description>
       <g:link>${productUrl}</g:link>
       <g:image_link>${product.image_url}</g:image_link>
-      <g:brand>Green Leaf Sciences</g:brand>
+      <g:brand>GLS</g:brand>
       <g:condition>new</g:condition>
       <g:availability>in stock</g:availability>
       <g:price>${Number(product.price).toFixed(2)} TJS</g:price>

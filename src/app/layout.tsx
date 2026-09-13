@@ -36,10 +36,10 @@ export const metadata: Metadata = {
     default: "TOJ-VITAMIN (Точвитамин) — Премиальные Витамины №1 в Таджикистане | Купить БАДы в Душанбе",
     template: "%s | toj-vitamin.tj"
   },
-  description: "Официальный маркетплейс TOJ-VITAMIN (Точвитамин / Таджвитамин) в Душанбе. Премиальные витамины и БАДы от Green Leaf Sciences. Умный научный подбор, бесплатная консультация и доставка по всему Таджикистану.",
+  description: "Официальный интернет-магазин TOJ-VITAMIN (Точвитамин / Таджвитамин) в Душанбе. Сертифицированные витамины и БАДы. Умный научный подбор, бесплатная консультация и быстрая доставка по всему Таджикистану.",
   keywords: [
     "купить витамины", "купить витамины в Душанбе", "витамины в Таджикистане", 
-    "лучшие БАДы Душанбе", "Green Leaf Sciences Таджикистан", "GLS Душанбе", 
+    "лучшие БАДы Душанбе", "магазин toj-vitamin", "GLS Душанбе", 
     "магазин витаминов Таджикистан", "витаминҳо харидан Душанбе", 
     "иловаҳои биологӣ Тоҷикистон", "нутрицевтики", "здоровье Душанбе",
     "спортивное питание Таджикистан", "витамины для женщин Душанбе",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     "точвитамин", "тачвитамин", "точ-витамин", "тач-витамин", "taj-vitamin", "tajvitamin",
     "таджвитамин", "тадж-витамин", "тодж-витамин", "vitamin tj", "vitamin.tj", "витамин тч", "витамин.тч"
   ],
-  authors: [{ name: "Green Leaf Sciences", url: "https://www.toj-vitamin.tj" }],
+  authors: [{ name: "toj-vitamin", url: "https://www.toj-vitamin.tj" }],
   
   // Open Graph (Instagram, Telegram, WhatsApp)
   openGraph: {
@@ -58,13 +58,13 @@ export const metadata: Metadata = {
     url: "https://www.toj-vitamin.tj",
     siteName: "toj-vitamin",
     title: "toj-vitamin.tj | Научный подход к вашему здоровью",
-    description: "Премиальные витамины и биодобавки с бесплатной консультацией в Таджикистане. Наука за гранью возможного.",
+    description: "Премиальные витамины и биодобавки с бесплатной консультацией в Таджикистане. Интернет-магазин toj-vitamin.",
     images: [
       {
         url: "/og-large-logo.png",
         width: 1200,
         height: 630,
-        alt: "toj-vitamin - Green Leaf Sciences",
+        alt: "toj-vitamin — интернет-магазин витаминов и БАДов",
       },
     ],
   },
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "toj-vitamin.tj | Витамины и БАДы №1 в Таджикистане",
-    description: "Научный подход к подбору витаминов. Экспертиза Green Leaf Sciences.",
+    description: "Научный подход к подбору витаминов. Интернет-магазин toj-vitamin.",
     images: ["/og-large-logo.png"],
   },
 
@@ -209,10 +209,12 @@ export default function RootLayout({
               },
               {
                 "@context": "https://schema.org",
-                "@type": "MedicalBusiness",
-                "name": "Green Leaf Sciences (toj-vitamin.tj)",
+                "@type": "Store",
+                "name": "toj-vitamin",
+                "alternateName": "Интернет-магазин toj-vitamin",
+                "description": "Интернет-магазин сертифицированных витаминов и БАДов в Таджикистане с быстрой доставкой по Душанбе и регионам.",
                 "image": "https://www.toj-vitamin.tj/og-image.png",
-                "@id": "https://www.toj-vitamin.tj",
+                "@id": "https://www.toj-vitamin.tj/#store",
                 "url": "https://www.toj-vitamin.tj",
                 "telephone": "+992176660707",
                 "address": {

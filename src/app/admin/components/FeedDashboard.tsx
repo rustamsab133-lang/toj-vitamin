@@ -189,7 +189,7 @@ export const FeedDashboard: React.FC<FeedDashboardProps> = ({ onBack, onEditProd
           name: p.name,
           rowInFeed,
           recommendation: 'Расширить название товара',
-          description: 'Название слишком короткое. Добавьте бренд, объем или форму выпуска (например, "Green Leaf Sciences Omega-3 120 капсул").'
+          description: 'Название слишком короткое. Добавьте бренд, объем или форму выпуска (например, "GLS Омега-3 120 капсул").'
         });
       }
 
@@ -208,7 +208,7 @@ export const FeedDashboard: React.FC<FeedDashboardProps> = ({ onBack, onEditProd
       const isTemplateDesc = p.description && (
         p.description.includes('Купить') && 
         p.description.includes('в Таджикистане') && 
-        p.description.includes('Green Leaf Sciences')
+        (p.description.includes('toj-vitamin') || p.description.includes('Green Leaf Sciences'))
       );
       if (isTemplateDesc) {
         detectedRecs.push({

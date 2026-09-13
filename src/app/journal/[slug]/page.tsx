@@ -68,7 +68,7 @@ export default async function ArticlePage({ params }: Props) {
         "name": `Как принимать ${article.title_ru}?`,
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": `Рекомендуемую дозировку и протокол приема вы найдете в нашей статье или можете получить бесплатную консультацию эксперта Green Leaf Sciences в WhatsApp.`
+          "text": `Рекомендуемую дозировку и протокол приема вы найдете в нашей статье или можете получить бесплатную консультацию эксперта интернет-магазина toj-vitamin в WhatsApp.`
         }
       },
       {
@@ -76,7 +76,7 @@ export default async function ArticlePage({ params }: Props) {
         "name": "Есть ли доставка по Душанбе?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Да, мы осуществляем бесплатную доставку витаминов и БАДов по Душанбе при заказе от определенной суммы. Возможна доставка в Худжанд и другие регионы Таджикистана."
+          "text": "Да, интернет-магазин toj-vitamin осуществляет быструю доставку витаминов и БАДов по Душанбе, Худжанду и всем регионам Таджикистана."
         }
       }
     ]
@@ -90,8 +90,8 @@ export default async function ArticlePage({ params }: Props) {
     "datePublished": article.published_at,
     "dateModified": article.published_at,
     "author": [{
-      "@type": "Person",
-      "name": article.author_name || 'Green Leaf Sciences',
+      "@type": "Organization",
+      "name": article.author_name || 'toj-vitamin',
       "url": "https://www.toj-vitamin.tj"
     }]
   };

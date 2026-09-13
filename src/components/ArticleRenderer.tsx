@@ -23,7 +23,7 @@ export const ArticleRenderer: React.FC<ArticleRendererProps> = ({ article, lang 
     "datePublished": article.published_at,
     "author": [{
       "@type": "Organization",
-      "name": (article as any).author_name || article.author || 'Green Leaf Sciences',
+      "name": (article as any).author_name || article.author || 'toj-vitamin',
       "url": "https://www.toj-vitamin.tj"
     }]
   };
@@ -153,7 +153,7 @@ export const ArticleRenderer: React.FC<ArticleRendererProps> = ({ article, lang 
                   2. Journal of Clinical Medicine - Micronutrient Synergies and Bioavailability (2025).
                 </li>
                 <li className="text-[12px] text-[#94A3B8] leading-relaxed italic">
-                  3. Green Leaf Sciences Research - Internal Protocol for Central Asia Regions.
+                  3. Исследования и протоколы интернет-магазина toj-vitamin для Центральной Азии.
                 </li>
              </ul>
           </div>

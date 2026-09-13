@@ -91,7 +91,7 @@ async function getProductContext(targetQuery: string): Promise<string> {
 
 // ─── Generate Article with Gemini ────────────────────────────────────────────
 async function generateArticle(targetQuery: string, productContext: string) {
-  const systemPrompt = `Ты — ведущий медицинский редактор научного журнала Green Leaf Sciences (Таджикистан). 
+  const systemPrompt = `Ты — ведущий медицинский эксперт интернет-магазина toj-vitamin (Таджикистан). 
 Твоя задача: написать экспертную SEO-статью для сайта toj-vitamin.tj.
 
 ОБЯЗАТЕЛЬНЫЕ ПРАВИЛА:
@@ -222,8 +222,8 @@ export async function POST(req: NextRequest) {
         title_ru: article.title_ru,
         excerpt_ru: article.excerpt_ru,
         content_ru: article.content_ru,
-        author_name: 'Green Leaf Sciences',
-        author_role: 'Научная редакция',
+        author_name: 'toj-vitamin',
+        author_role: 'Экспертная редакция',
         is_published: false, // ЧЕРНОВИК — публикуется вручную
         published_at: new Date().toISOString(),
       })

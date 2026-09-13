@@ -49,7 +49,7 @@ export default function Loading() {
         transition={{ delay: 0.5 }}
         className="mt-8 text-[12px] font-bold text-[#1D1D1F]/40 uppercase tracking-[0.3em] font-outfit"
       >
-        Green Leaf Sciences
+        toj-vitamin
       </motion.p>
     </div>
   );

@@ -23,6 +23,7 @@ const ChatWidget = dynamic(() => import('@/components/ChatWidget').then(m => m.C
 import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
+import { CartToast } from '@/components/CartToast';
 
 
 interface HomeClientProps {
@@ -182,6 +183,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         onOrderSuccess={() => setIsOrderSuccess(true)}
       />
 
+      <CartToast lang={lang} />
+
       <OrderSuccessOverlay 
         isVisible={isOrderSuccess} 
         onClose={() => setIsOrderSuccess(false)} 
@@ -245,8 +248,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                   </p>
                   <p className="text-[12px] text-white/40 leading-relaxed">
                     {lang === 'ru'
-                      ? 'Ищете ли вы нас как TOJ-VITAMIN, Точвитамин, Тоджвитамин или Таджвитамин — наш маркетплейс гарантирует 100% оригинальность продукции Green Leaf Sciences и быструю доставку по всему Таджикистану.'
-                      : 'Новобаста аз он ки шумо моро ҳамчун TOJ-VITAMIN ё Тоҷвитамин меҷӯед — маркетплейси мо сифати маҳсулот ва интиқоли зудро дар тамоми Тоҷикистон кафолат медиҳад.'}
+                      ? 'Ищете ли вы нас как TOJ-VITAMIN, Точвитамин, Тоджвитамин или Таджвитамин — наш интернет-магазин гарантирует 100% оригинальность всей продукции и быструю доставку по всему Таджикистану.'
+                      : 'Новобаста аз он ки шумо моро ҳамчун TOJ-VITAMIN ё Тоҷвитамин меҷӯед — мағозаи интернетии мо сифати маҳсулот ва интиқоли зудро дар тамоми Тоҷикистон кафолат медиҳад.'}
                   </p>
                 </div>
               </div>

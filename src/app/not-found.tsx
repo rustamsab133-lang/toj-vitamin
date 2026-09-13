@@ -48,7 +48,7 @@ export default function NotFound() {
 
       <div className="mt-20 opacity-30">
          <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-[#1D1D1F]">
-           Green Leaf Sciences
+           toj-vitamin
          </p>
       </div>
     </div>

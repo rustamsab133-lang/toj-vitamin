@@ -37,7 +37,7 @@ ${products?.map((product) => {
       const enrichment = findEnrichmentForProduct(product.name, enrichedData);
       const description = (enrichment.properties && enrichment.properties.length > 0)
         ? enrichment.properties.join('. ')
-        : (product.description || `Купить ${product.name} в Таджикистане. Высокое качество от Green Leaf Sciences.`);
+        : (product.description || `Купить ${product.name} в Таджикистане. Высокое качество от интернет-магазина toj-vitamin.`);
       
       return `    <item>
       <g:id>prod_${product.id}</g:id>
@@ -45,7 +45,7 @@ ${products?.map((product) => {
       <g:description><![CDATA[${description.substring(0, 5000)}]]></g:description>
       <g:link>${productUrl}</g:link>
       <g:image_link>${product.image_url}</g:image_link>
-      <g:brand>Green Leaf Sciences</g:brand>
+      <g:brand>GLS</g:brand>
       <g:condition>new</g:condition>
       <g:availability>in stock</g:availability>
       <g:price>${Number(product.price).toFixed(2)} TJS</g:price>

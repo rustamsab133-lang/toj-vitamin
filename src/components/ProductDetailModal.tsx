@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product, Lang, Article } from '@/lib/types';
-import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ShareButton } from './ShareButton';
 import { slugify } from '@/lib/slugify';
@@ -159,7 +159,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   lang,
   onBuy
 }) => {
-  const { addItem, addMultiple, setIsOpen: setIsCartOpen } = useCart();
+  const { addItem, addMultiple, setIsOpen: setIsCartOpen, triggerAnimation, triggerToast } = useCart();
+  const [isAdded, setIsAdded] = useState(false);
+  const [addedBundles, setAddedBundles] = useState<Record<string, boolean>>({});
   const [synergies, setSynergies] = useState<SynergyLink[]>([]);
   const [loadingSynergies, setLoadingSynergies] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -283,7 +285,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     "description": product.description || product.name,
     "brand": {
       "@type": "Brand",
-      "name": "Green Leaf Sciences"
+      "name": "GLS"
+    },
+    "seller": {
+      "@type": "Store",
+      "name": "toj-vitamin"
     },
     "offers": {
       "@type": "Offer",
@@ -533,17 +539,33 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                                     <div className="flex items-center justify-between">
                                       <p className="font-bold text-[#1D1D1F] text-[16px]">{synProd.price} {'смн'}</p>
                                       <button 
+                                        type="button"
                                         onClick={() => {
                                           addMultiple([product, synProd]);
-                                          handleSmartClose();
+                                          triggerAnimation();
+                                          triggerToast(synProd, lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+                                          setAddedBundles(prev => ({ ...prev, [synProd.id]: true }));
                                           setTimeout(() => {
-                                            setIsCartOpen(true);
-                                          }, 350);
+                                            setAddedBundles(prev => ({ ...prev, [synProd.id]: false }));
+                                          }, 2500);
                                         }}
-                                        className="h-10 bg-black text-white px-5 rounded-full text-[12px] font-bold flex items-center gap-2 hover:bg-indigo-600 transition-all shadow-md active:scale-95"
+                                        className={`h-10 px-5 rounded-full text-[12px] font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 ${
+                                          addedBundles[synProd.id]
+                                            ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+                                            : 'bg-black text-white hover:bg-indigo-600'
+                                        }`}
                                       >
-                                        <ShoppingBag size={14} />
-                                        {lang === 'ru' ? 'Купить набор' : 'Харидани маҷмӯа'}
+                                        {addedBundles[synProd.id] ? (
+                                          <>
+                                            <Check size={14} className="stroke-[3]" />
+                                            {lang === 'ru' ? 'Набор добавлен' : 'Маҷмӯа илова шуд'}
+                                          </>
+                                        ) : (
+                                          <>
+                                            <ShoppingBag size={14} />
+                                            {lang === 'ru' ? 'Купить набор' : 'Харидани маҷмӯа'}
+                                          </>
+                                        )}
                                       </button>
                                     </div>
                                   </div>
@@ -563,7 +585,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             <div className="flex items-center gap-2 mb-2 opacity-80 text-white">
                                <ShieldCheck size={16} />
                                <span className="text-[10px] font-bold uppercase tracking-widest">
-                                 {lang === 'ru' ? 'Green Leaf Sciences' : 'Green Leaf Sciences'}
+                                 {lang === 'ru' ? 'toj-vitamin Экспертиза' : 'toj-vitamin Экспертиза'}
                                </span>
                             </div>
                             <h4 className="text-[18px] sm:text-[20px] font-bold text-white font-outfit mb-1">
@@ -586,21 +608,47 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
 
             {/* PREMIUM STICKY FOOTER: Glassmorphism */}
-            <div className="shrink-0 p-6 sm:p-8 bg-white/80 backdrop-blur-2xl border-t border-black/[0.05] z-40 relative">
-              <div className="max-w-xl mx-auto">
+            <div className="shrink-0 p-4 sm:p-6 bg-white/80 backdrop-blur-2xl border-t border-black/[0.05] z-40 relative">
+              <div className="max-w-xl mx-auto flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={() => {
                     addItem(product);
-                    handleSmartClose();
-                    setTimeout(() => {
-                      setIsCartOpen(true);
-                    }, 350);
+                    triggerAnimation();
+                    triggerToast(product);
+                    setIsAdded(true);
+                    setTimeout(() => setIsAdded(false), 2500);
                   }}
-                  className="w-full h-[64px] bg-[#1D1D1F] text-white rounded-[24px] text-[16px] font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 hover:scale-[1.01] active:scale-[0.97] transition-all duration-300 shadow-lg group"
+                  className={`flex-1 h-[56px] sm:h-[64px] rounded-[24px] text-[15px] sm:text-[16px] font-bold flex items-center justify-center gap-2.5 transition-all duration-300 shadow-lg active:scale-[0.97] ${
+                    isAdded
+                      ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+                      : 'bg-[#1D1D1F] text-white hover:bg-indigo-600 hover:scale-[1.01]'
+                  }`}
                 >
-                  <ShoppingBag size={18} />
-                  <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  {isAdded ? (
+                    <>
+                      <Check size={20} className="stroke-[3]" />
+                      <span>{lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag size={18} />
+                      <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCartOpen(true);
+                  }}
+                  className="h-[56px] sm:h-[64px] px-4 sm:px-6 rounded-[24px] bg-black/[0.05] hover:bg-black/[0.1] active:scale-[0.97] text-[#1D1D1F] text-[13px] sm:text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0"
+                  title={lang === 'ru' ? 'Открыть корзину' : 'Кушодани сабад'}
+                >
+                  <ShoppingBag size={17} />
+                  <span className="hidden sm:inline">{lang === 'ru' ? 'В корзину' : 'Ба сабад'}</span>
+                  <ArrowRight size={15} />
                 </button>
               </div>
             </div>

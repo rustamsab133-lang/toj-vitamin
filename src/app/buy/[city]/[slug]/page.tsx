@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: `Витамины в ${city.ru}` };
 
   const title = `Купить ${product.name} в ${city.ru} | Цена, Доставка, Отзывы`;
-  const description = `Ищете ${product.name} в ${city.ru}? ✅ Официальный магазин Green Leaf Sciences. Бесплатная консультация и быстрая доставка по ${city.ru} и Таджикистану. Заказывайте прямо сейчас!`;
+  const description = `Ищете ${product.name} в ${city.ru}? ✅ Интернет-магазин toj-vitamin. Бесплатная консультация и быстрая доставка по ${city.ru} и Таджикистану. Заказывайте прямо сейчас!`;
 
   return {
     title,
@@ -88,7 +88,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
     "description": product.description || product.name,
     "brand": {
       "@type": "Brand",
-      "name": "Green Leaf Sciences"
+      "name": "GLS"
     },
     "offers": {
       "@type": "Offer",
@@ -97,6 +97,11 @@ export default async function PSEOPage({ params, searchParams }: Props) {
       "price": product.price,
       "itemCondition": "https://schema.org/NewCondition",
       "availability": "https://schema.org/InStock",
+      "seller": {
+        "@type": "Store",
+        "name": "toj-vitamin",
+        "url": "https://www.toj-vitamin.tj"
+      },
       "shippingDetails": {
         "@type": "OfferShippingDetails",
         "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "TJS" },
@@ -149,7 +154,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
             <span className="text-[#1E40AF]">в городе {city.ru}</span>
           </h1>
           <p className="text-[20px] text-[#475569] max-w-3xl leading-relaxed">
-            Прямые поставки витаминов премиум-класса Green Leaf Sciences в {city.ru}. 
+            Прямые поставки сертифицированных витаминов от интернет-магазина toj-vitamin в {city.ru}. 
             Лабораторная чистота, высокая биодоступность и быстрая локальная доставка.
           </p>
         </div>
@@ -158,7 +163,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
           {[
             { icon: Truck, title: 'Локальная доставка', desc: `Курьерская служба в ${city.ru} доставит ваш заказ в течение 2-4 часов.` },
-            { icon: ShieldCheck, title: 'Гарантия Green Leaf', desc: 'Прямой импорт без посредников. 100% защита от подделок.' },
+            { icon: ShieldCheck, title: 'Гарантия toj-vitamin', desc: 'Прямой импорт без посредников. 100% защита от подделок.' },
             { icon: Clock, title: 'Поддержка 24/7', desc: `Наши специалисты в ${city.ru} всегда готовы проконсультировать вас.` }
           ].map((b, i) => (
             <div key={i} className="group bg-white/60 hover:bg-white backdrop-blur-xl border border-black/[0.05] p-10 rounded-[40px] transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
@@ -180,7 +185,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
             <div className="space-y-6 text-[#475569] text-[16px] leading-relaxed">
               <p>
                 В условиях климата города {city.ru} поддержание оптимального уровня микроэлементов становится критически важным. 
-                {product.name} от Green Leaf Sciences разработан с учетом последних клинических исследований для обеспечения 
+                {product.name} в каталоге toj-vitamin подобран с учетом стандартов качества для обеспечения 
                 максимальной абсорбции.
               </p>
               <p>
@@ -227,7 +232,7 @@ export default async function PSEOPage({ params, searchParams }: Props) {
            {[
              { q: `Как купить ${product.name} в ${city.ru}?`, a: `Вы можете выбрать товар в каталоге выше и добавить его в корзину для оформления заказа. Наш менеджер в ${city.ru} свяжется с вами для уточнения деталей.` },
              { q: `Есть ли самовывоз в ${city.ru}?`, a: `Да, у нас есть пункт выдачи в центре ${city.ru}. При заказе менеджер сообщит точный адрес.` },
-             { q: `Почему цена на ${product.name} в Таджикистане выше, чем на маркетплейсах?`, a: `Мы гарантируем оригинальность продукции Green Leaf Sciences и соблюдение условий хранения, что невозможно проконтролировать у сторонних продавцов.` }
+             { q: `Почему цена на ${product.name} в Таджикистане выше, чем на маркетплейсах?`, a: `Интернет-магазин toj-vitamin гарантирует 100% оригинальность сертифицированной продукции и соблюдение условий хранения.` }
            ].map((faq, i) => (
              <div key={i} className="border-b border-black/[0.05] pb-8">
                <h4 className="font-bold text-[18px] mb-3">{faq.q}</h4>
