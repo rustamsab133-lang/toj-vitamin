@@ -5,7 +5,7 @@ import { Pharmacy, PharmacyOrder } from '@/lib/types';
 import { 
   ChevronLeft, Building2, TrendingUp, BarChart3, Search, 
   UserPlus, Phone, Calendar, ClipboardList, Trash2, X, Plus, Minus,
-  Edit, Copy, Check, ShoppingCart, Clock, ShieldAlert, Award, Package
+  Edit, Copy, Check, ShoppingCart, Clock, ShieldAlert, Award, Package, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -33,6 +33,7 @@ const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string; next?: 
 export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<SubTab>('dashboard');
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Data lists
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
@@ -94,11 +95,20 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
   }, [isModalOpen]);
 
   useEffect(() => {
-    loadAllData();
+    loadAllData(true);
+    // Background polling every 15 seconds to catch new pharmacy orders live
+    const pollInterval = setInterval(() => {
+      loadAllData(false);
+    }, 15000);
+    return () => clearInterval(pollInterval);
   }, [activeTab]);
 
-  const loadAllData = async () => {
-    setLoading(true);
+  const loadAllData = async (showSpinner = true) => {
+    if (showSpinner) {
+      setLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
     try {
       // 1. Fetch Pharmacies
       const { data: pharmData } = await adminDbQuery({
@@ -173,7 +183,8 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     } catch (err) {
       console.error('B2B dashboard loading error:', err);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -518,26 +529,37 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
           </div>
         </div>
 
-        {/* Tab selection */}
-        <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-slate-100">
-          {[
-            { id: 'dashboard', label: 'Заказы', icon: <ClipboardList size={16} /> },
-            { id: 'pharmacies', label: 'Аптеки', icon: <Building2 size={16} /> },
-            { id: 'prices', label: 'Цены B2B', icon: <TrendingUp size={16} /> },
-            { id: 'new-order', label: 'Новый заказ', icon: <Plus size={16} /> }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as SubTab)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-slate-900 text-white shadow-md' 
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              {tab.icon} <span>{tab.label}</span>
-            </button>
-          ))}
+        {/* Tab selection & Refresh */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-slate-100">
+            {[
+              { id: 'dashboard', label: 'Заказы', icon: <ClipboardList size={16} /> },
+              { id: 'pharmacies', label: 'Аптеки', icon: <Building2 size={16} /> },
+              { id: 'prices', label: 'Цены B2B', icon: <TrendingUp size={16} /> },
+              { id: 'new-order', label: 'Новый заказ', icon: <Plus size={16} /> }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as SubTab)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === tab.id 
+                    ? 'bg-slate-900 text-white shadow-md' 
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                {tab.icon} <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => loadAllData(false)}
+            title="Обновить заказы"
+            disabled={isRefreshing}
+            className="p-2.5 rounded-xl bg-white border border-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-50 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw size={15} className={isRefreshing ? 'animate-spin text-emerald-600' : ''} />
+          </button>
         </div>
       </div>
 

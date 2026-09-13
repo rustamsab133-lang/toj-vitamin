@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, Plus, Minus, Check, Loader2, AlertCircle, Calendar, MessageSquare, ShieldAlert, LogOut, Copy } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Check, Loader2, AlertCircle, Calendar, MessageSquare, ShieldAlert, LogOut, Copy, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface B2BProduct {
@@ -161,19 +161,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
       const msg = `Здравствуйте! Аптека "${pharmacy?.name || 'Партнер'}" оформила B2B заказ на сайте TOJ-VITAMIN:\n---\nСумма: ${totalAmount} смн\nID заказа: #B2B-${orderIdShort}\n---\nСостав заказа:\n${itemsText}${notesText}${dateText}\n---\nОжидаем подтверждения и доставки.`;
       setSubmittedWaMessage(msg);
 
-      // Attempt direct WhatsApp redirection
-      const waUrl = `https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(msg)}`;
-      try {
-        const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isMobile) {
-          window.location.href = waUrl;
-        } else {
-          window.open(waUrl, '_blank', 'noopener,noreferrer');
-        }
-      } catch (err) {
-        console.error('Redirection failed:', err);
-      }
-      
       // Update local pharmacy balance
       if (pharmacy) {
         setPharmacy({
@@ -629,17 +616,26 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit">Заказ успешно зарегистрирован!</h3>
+                <span className="inline-block text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
+                  Заказ успешно принят
+                </span>
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit pt-1">Оптовый заказ зарегистрирован!</h3>
                 <p className="text-slate-500 text-xs leading-relaxed">
                   Заявка сохранена под номером <strong className="text-slate-800">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму <strong className="text-emerald-600">{submittedTotal.toLocaleString()} смн</strong>.
                 </p>
-                <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-800 font-medium text-left leading-relaxed">
-                  ✅ Заказ принят в обработку. Нажмите кнопку ниже для отправки чека менеджеру в WhatsApp:
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 text-[11px] text-slate-600 font-medium text-left leading-relaxed space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Check size={14} className="text-emerald-600 shrink-0" />
+                    Заказ принят в обработку на складе TOJ-VITAMIN
+                  </div>
+                  <p className="text-slate-500 text-[11px]">
+                    Баланс аптеки обновлён. Менеджер свяжется с вами для согласования времени доставки.
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-2.5 pt-1">
-                {/* 100% Reliable Native WhatsApp Link */}
+                {/* WhatsApp Link (Optional) */}
                 <a
                   href={`https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(submittedWaMessage)}`}
                   target="_blank"
@@ -647,7 +643,16 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                   className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-[#25D366]/20 transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
                   <MessageSquare size={18} />
-                  Открыть чат в WhatsApp
+                  Открыть чек в WhatsApp
+                </a>
+
+                {/* Direct Call to Manager */}
+                <a
+                  href="tel:+992176660707"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-3 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-2 active:scale-98"
+                >
+                  <Phone size={14} className="text-emerald-600" />
+                  Позвонить менеджеру (+992 17 666 07 07)
                 </a>
 
                 {/* Copy Text Button */}
@@ -660,7 +665,7 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                       setTimeout(() => setIsCopied(false), 2500);
                     }
                   }}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   {isCopied ? (
                     <>

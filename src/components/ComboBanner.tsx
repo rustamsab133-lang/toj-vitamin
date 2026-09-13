@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Lang, Product } from '@/lib/types';
 import { useCart } from '@/store/useCart';
 
@@ -111,9 +111,10 @@ const THEME_PRESETS: Record<string, {
 };
 
 export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrderSuccess }) => {
-  const { allProducts, addMultiple, setIsOpen } = useCart();
+  const { allProducts, addMultiple, triggerAnimation, triggerToast } = useCart();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hoveredBtn, setHoveredBtn] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
 
   // 1. Parse active combos from settings
   const rawBanners = settings?.combo_banners;
@@ -176,7 +177,10 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
   const handleOrder = () => {
     if (currentProducts.length > 0) {
       addMultiple(currentProducts);
-      setIsOpen(true);
+      triggerAnimation();
+      triggerToast(currentProducts[0], lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2500);
     }
   };
 
@@ -296,14 +300,21 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
                     disabled={currentProducts.length === 0}
                     onMouseEnter={() => setHoveredBtn(true)}
                     onMouseLeave={() => setHoveredBtn(false)}
-                    className="h-12 md:h-[52px] px-7 md:px-9 rounded-xl text-[15px] md:text-[16px] font-bold transition-all duration-300 shadow-lg active:scale-[0.96] disabled:opacity-50 interactive-child"
+                    className="h-12 md:h-[52px] px-7 md:px-9 rounded-xl text-[15px] md:text-[16px] font-bold transition-all duration-300 shadow-lg active:scale-[0.96] disabled:opacity-50 interactive-child flex items-center justify-center gap-2"
                     style={{ 
-                      background: hoveredBtn ? theme.btnHover : theme.btnBg, 
-                      color: theme.btnText,
-                      boxShadow: `0 8px 24px -6px ${theme.btnBg}44`
+                      background: isAdded ? '#10B981' : (hoveredBtn ? theme.btnHover : theme.btnBg), 
+                      color: isAdded ? '#FFFFFF' : theme.btnText,
+                      boxShadow: isAdded ? '0 8px 24px -6px rgba(16, 185, 129, 0.5)' : `0 8px 24px -6px ${theme.btnBg}44`
                     }}
                   >
-                    {btnLabel}
+                    {isAdded ? (
+                      <>
+                        <Check size={18} className="stroke-[3]" />
+                        <span>{lang === 'ru' ? 'Добавлено' : 'Илова шуд'}</span>
+                      </>
+                    ) : (
+                      btnLabel
+                    )}
                   </button>
                 </div>
               </div>

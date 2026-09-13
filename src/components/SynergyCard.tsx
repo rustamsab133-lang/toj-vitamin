@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { QuizSynergy, Lang, Product } from '@/lib/types';
-import { ChevronDown, Clock, ShieldCheck, ShoppingBag, Dna, Sparkles, Zap, ArrowRight, MessageCircle } from 'lucide-react';
+import { ChevronDown, Clock, ShieldCheck, ShoppingBag, Dna, Sparkles, Zap, ArrowRight, MessageCircle, Check } from 'lucide-react';
 import { useCart } from '@/store/useCart';
 import Image from 'next/image';
 
@@ -17,8 +17,9 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
   const total = synergy.total_price || 0;
   
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  const [isAdded, setIsAdded] = React.useState(false);
 
-  const { allProducts, addMultiple, setIsOpen } = useCart();
+  const { allProducts, addMultiple, triggerAnimation, triggerToast } = useCart();
   
   const handleBuyInWhatsApp = () => {
     // ─── Unified Tracking (GA4 + Meta CAPI + DB) ────────────────────────
@@ -39,8 +40,11 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
       
       if (fullProducts.length > 0) {
         addMultiple(fullProducts);
+        triggerAnimation();
+        triggerToast(fullProducts[0], lang === 'ru' ? 'Комплекс добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 2500);
       }
-      setIsOpen(true);
     }
   };
 
@@ -181,11 +185,24 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
 
         <button 
           onClick={handleBuyInWhatsApp}
-          className="w-full sm:w-auto group relative h-[72px] px-10 bg-[#1D1D1F] text-white rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-4 hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 shadow-xl shadow-black/10 overflow-hidden"
+          className={`w-full sm:w-auto group relative h-[72px] px-10 rounded-[28px] text-[18px] font-bold flex items-center justify-center gap-4 transition-all duration-500 shadow-xl overflow-hidden ${
+            isAdded
+              ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+              : 'bg-[#1D1D1F] text-white hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-black/10'
+          }`}
         >
-          <ShoppingBag size={20} />
-          <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
-          <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          {isAdded ? (
+            <>
+              <Check size={22} className="stroke-[3]" />
+              <span>{lang === 'ru' ? 'Комплекс добавлен' : 'Маҷмӯа илова шуд'}</span>
+            </>
+          ) : (
+            <>
+              <ShoppingBag size={20} />
+              <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </>
+          )}
           
           <div 
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none animate-[shimmer_3s_linear_infinite]"

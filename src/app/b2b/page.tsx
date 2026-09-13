@@ -26,11 +26,15 @@ export default function B2BStorefrontPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedOrderId, setSubmittedOrderId] = useState<string | null>(null);
   const [submittedTotal, setSubmittedTotal] = useState(0);
+  const [submittedCustomerPhone, setSubmittedCustomerPhone] = useState('');
   const [submittedWaMessage, setSubmittedWaMessage] = useState('');
   const [isCartMobileOpen, setIsCartMobileOpen] = useState(false);
   
@@ -124,9 +128,9 @@ export default function B2BStorefrontPage() {
       const payload = {
         phone: fullPhone,
         pharmacy_name: customerDisplayName,
-        address: '',
-        notes: '',
-        delivery_date: null,
+        address: customerAddress.trim(),
+        notes: notes.trim(),
+        delivery_date: deliveryDate || null,
         items: cartItems.map(item => ({
           product_id: item.product.id,
           quantity: item.quantity
@@ -147,33 +151,27 @@ export default function B2BStorefrontPage() {
 
       setSubmittedOrderId(data.order_id);
       setSubmittedTotal(totalAmount);
+      setSubmittedCustomerPhone(fullPhone);
       
-      // Construct the WhatsApp message with items list and contact details
+      // Construct the WhatsApp message with items list, address and contact details
       const orderIdShort = data.order_id.slice(0, 8).toUpperCase();
       const clientLine = customerName.trim()
         ? `Клиент: ${customerName.trim()} (${fullPhone})`
         : `Телефон: ${fullPhone}`;
+      const addressLine = customerAddress.trim() ? `\nАдрес: ${customerAddress.trim()}` : '';
+      const dateLine = deliveryDate ? `\nЖелаемая дата доставки: ${deliveryDate}` : '';
+      const notesLine = notes.trim() ? `\nПримечание: ${notes.trim()}` : '';
       const itemsText = cartItems
         .map((item, idx) => `${idx + 1}. ${item.product.name} — ${item.quantity} шт. (${item.product.price * item.quantity} смн)`)
         .join('\n');
-      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
+      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}${addressLine}${dateLine}${notesLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
       setSubmittedWaMessage(msg);
 
-      // Attempt direct WhatsApp redirection
-      const waUrl = `https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(msg)}`;
-      try {
-        const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isMobile) {
-          window.location.href = waUrl;
-        } else {
-          window.open(waUrl, '_blank', 'noopener,noreferrer');
-        }
-      } catch (err) {
-        console.error('Redirection failed:', err);
-      }
-
-      // Clear cart
+      // Reset cart and optional fields without forced redirect
       setCart({});
+      setNotes('');
+      setDeliveryDate('');
+      setCustomerAddress('');
       setIsCartMobileOpen(false);
     } catch (err: any) {
       alert(err.message || 'Не удалось оформить заказ');
@@ -391,7 +389,7 @@ export default function B2BStorefrontPage() {
                       <Phone size={13} className="text-emerald-600" />
                       Номер телефона <span className="text-red-500">*</span>
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">WhatsApp</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">WhatsApp / Звонок</span>
                   </label>
                   <div className={`flex items-center gap-2 rounded-xl border p-1 bg-white transition-all ${
                     phoneError ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10'
@@ -417,7 +415,7 @@ export default function B2BStorefrontPage() {
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                    Аптека или ваше имя <span className="text-slate-400 font-normal">(необязательно)</span>
+                    Аптека или контактное лицо <span className="text-slate-400 font-normal">(необязательно)</span>
                   </label>
                   <input
                     type="text"
@@ -427,19 +425,60 @@ export default function B2BStorefrontPage() {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
                   />
                 </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Адрес доставки / аптеки <span className="text-slate-400 font-normal">(город, улица)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: г. Душанбе, ул. Рудаки 45"
+                    value={customerAddress}
+                    onChange={e => setCustomerAddress(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
+                      Желаемая дата
+                    </label>
+                    <input
+                      type="date"
+                      value={deliveryDate}
+                      onChange={e => setDeliveryDate(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
+                      Примечание
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Вход со двора..."
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
                 onClick={handleDirectCheckout}
                 disabled={isSubmitting}
-                className="w-full bg-[#25D366] hover:bg-[#20ba59] disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-98"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-98"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="animate-spin" size={16} /> Оформление...
+                    <Loader2 className="animate-spin" size={16} /> Оформление заказа...
                   </>
                 ) : (
-                  <>🟢 Отправить чек в WhatsApp</>
+                  <>
+                    <Check size={16} /> Оформить оптовый заказ
+                  </>
                 )}
               </button>
             </div>
@@ -536,7 +575,7 @@ export default function B2BStorefrontPage() {
                       <Phone size={12} className="text-emerald-600" />
                       Номер телефона <span className="text-red-500">*</span>
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">WhatsApp</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">WhatsApp / Звонок</span>
                   </label>
                   <div className={`flex items-center gap-2 rounded-xl border p-1 bg-white transition-all ${
                     phoneError ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200'
@@ -562,7 +601,7 @@ export default function B2BStorefrontPage() {
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                    Аптека или ваше имя <span className="text-slate-400 font-normal">(необязательно)</span>
+                    Аптека или контактное лицо <span className="text-slate-400 font-normal">(необязательно)</span>
                   </label>
                   <input
                     type="text"
@@ -572,19 +611,60 @@ export default function B2BStorefrontPage() {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
                   />
                 </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Адрес доставки / аптеки <span className="text-slate-400 font-normal">(город, улица)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: г. Душанбе, ул. Рудаки 45"
+                    value={customerAddress}
+                    onChange={e => setCustomerAddress(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
+                      Желаемая дата
+                    </label>
+                    <input
+                      type="date"
+                      value={deliveryDate}
+                      onChange={e => setDeliveryDate(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs font-medium text-slate-700 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
+                      Примечание
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Вход со двора..."
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
                 onClick={handleDirectCheckout}
                 disabled={isSubmitting}
-                className="w-full bg-[#25D366] hover:bg-[#20ba59] disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="animate-spin" size={16} /> Оформление...
+                    <Loader2 className="animate-spin" size={16} /> Оформление заказа...
                   </>
                 ) : (
-                  <>🟢 Отправить чек в WhatsApp</>
+                  <>
+                    <Check size={16} /> Оформить оптовый заказ
+                  </>
                 )}
               </button>
             </motion.div>
@@ -607,17 +687,26 @@ export default function B2BStorefrontPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit">Заказ успешно зарегистрирован!</h3>
+                <span className="inline-block text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
+                  Заказ успешно принят
+                </span>
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight font-outfit pt-1">Оптовый заказ зарегистрирован!</h3>
                 <p className="text-slate-500 text-xs leading-relaxed">
-                  Заявка сохранена в системе под номером <strong className="text-slate-800">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму <strong className="text-emerald-600">{submittedTotal.toLocaleString()} смн</strong>.
+                  Номер заявки: <strong className="text-slate-800">#B2B-{submittedOrderId.slice(0, 8).toUpperCase()}</strong> на сумму <strong className="text-emerald-600">{submittedTotal.toLocaleString()} смн</strong>.
                 </p>
-                <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-800 font-medium text-left leading-relaxed">
-                  ✅ Номер телефона сохранён в админ-панели. Менеджер уже видит ваш заказ. Нажмите кнопку ниже для отправки чека в WhatsApp:
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 text-[11px] text-slate-600 font-medium text-left leading-relaxed space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Check size={14} className="text-emerald-600 shrink-0" />
+                    Заказ сохранён в системе TOJ-VITAMIN
+                  </div>
+                  <p className="text-slate-500 text-[11px]">
+                    Менеджер свяжется с вами {submittedCustomerPhone ? <>по номеру <strong className="text-slate-700">{submittedCustomerPhone}</strong></> : null} для подтверждения наличия и согласования отгрузки.
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-2.5 pt-1">
-                {/* 100% Reliable Native WhatsApp Link */}
+                {/* WhatsApp Link (Optional) */}
                 <a
                   href={`https://api.whatsapp.com/send?phone=992176660707&text=${encodeURIComponent(submittedWaMessage)}`}
                   target="_blank"
@@ -625,7 +714,16 @@ export default function B2BStorefrontPage() {
                   className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-[#25D366]/20 transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
                   <MessageSquare size={18} />
-                  Открыть чат в WhatsApp
+                  Открыть чек в WhatsApp
+                </a>
+
+                {/* Direct Call to Manager */}
+                <a
+                  href="tel:+992176660707"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-3 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-2 active:scale-98"
+                >
+                  <Phone size={14} className="text-emerald-600" />
+                  Позвонить менеджеру (+992 17 666 07 07)
                 </a>
 
                 {/* Copy Text Button */}
@@ -638,7 +736,7 @@ export default function B2BStorefrontPage() {
                       setTimeout(() => setIsCopied(false), 2500);
                     }
                   }}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   {isCopied ? (
                     <>
@@ -660,7 +758,7 @@ export default function B2BStorefrontPage() {
                   }}
                   className="w-full text-slate-400 hover:text-slate-600 py-2 text-xs font-semibold transition-colors"
                 >
-                  Продолжить покупки
+                  Вернуться в каталог
                 </button>
               </div>
             </motion.div>

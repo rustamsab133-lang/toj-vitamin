@@ -34,6 +34,8 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
   const addItem = useCart((state) => state.addItem);
   const setCartOpen = useCart((state) => state.setIsOpen);
   const cartItems = useCart((state) => state.items);
+  const triggerAnimation = useCart((state) => state.triggerAnimation);
+  const triggerToast = useCart((state) => state.triggerToast);
 
   // Load chat session and initial message
   useEffect(() => {
@@ -254,8 +256,10 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
+    triggerAnimation();
+    triggerToast(product);
     
-    // Триггерим визуальное подтверждение добавления на секунду
+    // Триггерим визуальное подтверждение добавления
     setAddedProductIds((prev) => {
       const next = new Set(prev);
       next.add(product.id);
@@ -268,9 +272,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
         next.delete(product.id);
         return next;
       });
-      // Плавно открываем корзину на сайте для финализации заказа
-      setCartOpen(true);
-    }, 800);
+    }, 2000);
   };
 
   const handleClearHistory = () => {

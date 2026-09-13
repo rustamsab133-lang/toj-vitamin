@@ -66,7 +66,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
-  const { allProducts, addItem, addMultiple, setIsOpen } = useCart();
+  const { allProducts, addItem, addMultiple, triggerAnimation, triggerToast } = useCart();
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -303,12 +303,12 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
         onBuy={async (product, synergy) => {
           if (synergy) {
             addMultiple([product, synergy]);
+            triggerToast(synergy, lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
           } else {
             addItem(product);
+            triggerToast(product);
           }
-          setIsOpen(true);
-          setSelectedProduct(null);
-          setIsSearchOpen(false);
+          triggerAnimation();
         }}
       />
     </>
