@@ -316,11 +316,18 @@ async function formatEnrichedCatalogProducts(dbProducts: any[]): Promise<string>
         const props = enrich.properties ? enrich.properties.join(', ') : 'Общее оздоровление';
         const tags = enrich.tags ? enrich.tags.join(', ') : 'Иммунитет';
         const synergies = enrich.synergies ? enrich.synergies.join('; ') : 'Отсутствует';
-        
-        // Apply pricing markup dynamically so AI directs clients to the marked up retail price
         const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
 
-        return `- [ID: ${p.id}] ${p.name} (${p.full_name}): Цена: ${markedPrice} сомони. Свойства: [${props}]. Теги: [${tags}]. Синергия: [${synergies}]`;
+        let instructStr = '';
+        if (enrich.instructions) {
+          const parts: string[] = [];
+          if (enrich.instructions.usage) parts.push(`Прием: ${enrich.instructions.usage}`);
+          if (enrich.instructions.course) parts.push(`Курс: ${enrich.instructions.course}`);
+          if (enrich.instructions.contraindications) parts.push(`Противопоказания: ${enrich.instructions.contraindications}`);
+          if (parts.length > 0) instructStr = `. Инструкция производителя GLS: [${parts.join('; ')}]`;
+        }
+
+        return `- [ID: ${p.id}] ${p.name} (${p.full_name}): Цена: ${markedPrice} сомони. Свойства: [${props}]. Теги: [${tags}]. Синергия: [${synergies}]${instructStr}`;
       })
       .join('\n');
 
