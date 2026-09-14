@@ -165,7 +165,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeout = setTimeout(() => controller.abort(), 45000); // 45 second timeout for AI generation
 
       const response = await fetch('/api/agents/web-chat', {
         method: 'POST',

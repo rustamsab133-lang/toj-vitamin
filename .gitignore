@@ -48,3 +48,6 @@ google-key.json
 /scratch/
 tsconfig.tsbuildinfo
 *.txt
+
+.vercel
+.env*

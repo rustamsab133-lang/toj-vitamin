@@ -19,37 +19,76 @@ let settingsCacheTime = 0;
 const SETTINGS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Get all active products (price > 0, not deleted) with caching.
+ * Get all active products (price > 0, not deleted) with caching and local fallback.
  */
 export async function getActiveProducts(): Promise<any[]> {
   const now = Date.now();
-  if (cachedProducts && (now - productsCacheTime) < PRODUCTS_CACHE_TTL) {
+  if (cachedProducts && cachedProducts.length > 0 && (now - productsCacheTime) < PRODUCTS_CACHE_TTL) {
     return cachedProducts;
   }
 
-  const [{ data: dbProducts }, settings] = await Promise.all([
-    supabaseAdmin.from('products').select('*'),
-    getCachedSettings()
-  ]);
+  try {
+    const [{ data: dbProducts, error: dbError }, settings] = await Promise.all([
+      supabaseAdmin.from('products').select('*'),
+      getCachedSettings()
+    ]);
 
-  let hiddenIds: string[] = [];
-  if (settings.hidden_product_ids) {
-    try {
-      const parsed = JSON.parse(settings.hidden_product_ids);
-      if (Array.isArray(parsed)) hiddenIds = parsed.map(String);
-    } catch (e) {}
-  }
+    if (dbError) {
+      console.error('❌ Ошибка загрузки продуктов из Supabase:', dbError);
+    }
 
-  cachedProducts = dbProducts
-    ? dbProducts.filter((p: any) => 
+    let hiddenIds: string[] = [];
+    if (settings && settings.hidden_product_ids) {
+      try {
+        const parsed = JSON.parse(settings.hidden_product_ids);
+        if (Array.isArray(parsed)) hiddenIds = parsed.map(String);
+      } catch (e) {}
+    }
+
+    if (dbProducts && Array.isArray(dbProducts) && dbProducts.length > 0) {
+      const active = dbProducts.filter((p: any) => 
         p.price > 0 && 
         !p.name?.includes('[УДАЛЕН]') && 
         !p.is_hidden && 
         !hiddenIds.includes(String(p.id))
-      )
-    : [];
-  productsCacheTime = now;
-  return cachedProducts;
+      );
+      if (active.length > 0) {
+        cachedProducts = active;
+        productsCacheTime = now;
+        return cachedProducts;
+      }
+    }
+  } catch (err) {
+    console.error('❌ Исключение при получении активных продуктов:', err);
+  }
+
+  // Если кеш уже есть и в нем есть товары, возвращаем его
+  if (cachedProducts && cachedProducts.length > 0) {
+    return cachedProducts;
+  }
+
+  // Резервный локальный фоллбек: загрузка из src/data/products_db.json
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const dbJsonPath = path.join(process.cwd(), 'src/data/products_db.json');
+    if (fs.existsSync(dbJsonPath)) {
+      const fallbackData = JSON.parse(fs.readFileSync(dbJsonPath, 'utf-8'));
+      if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+        cachedProducts = fallbackData.map((p: any) => ({
+          ...p,
+          price: p.price || 150
+        }));
+        productsCacheTime = now;
+        console.warn(`⚠️ getActiveProducts: использован локальный фоллбек (${cachedProducts.length} позиций)`);
+        return cachedProducts;
+      }
+    }
+  } catch (fallbackErr) {
+    console.error('❌ Ошибка загрузки локального фоллбека продуктов:', fallbackErr);
+  }
+
+  return cachedProducts || [];
 }
 
 /**

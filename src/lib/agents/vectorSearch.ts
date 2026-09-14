@@ -44,43 +44,75 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+function keywordScore(query: string, product: any): number {
+  if (!query || !product) return 0;
+  const q = query.toLowerCase();
+  const name = (product.name || '').toLowerCase();
+  const fullName = (product.full_name || '').toLowerCase();
+  const tags = Array.isArray(product.tags) ? product.tags.join(' ').toLowerCase() : '';
+
+  let score = 0;
+  const words = q.split(/[\s,.;:!?+()\-]+/).filter((w: string) => w.length >= 3);
+  for (const w of words) {
+    if (name.includes(w)) score += 0.35;
+    if (fullName.includes(w)) score += 0.25;
+    if (tags.includes(w)) score += 0.15;
+  }
+  return score;
+}
+
 export async function getRelevantProducts(
   query: string,
   dbProducts: any[],
   count: number = 10
 ): Promise<any[]> {
   try {
+    if (!dbProducts || dbProducts.length === 0) return [];
     if (!query || query.trim().length === 0) return dbProducts.slice(0, count);
 
-    // 1. Load cached embeddings (lazy, one-time)
+    // 1. Попытка векторного поиска с таймаутом 2.5 секунды
+    let queryVector: number[] | null = null;
     const embeddings = loadEmbeddings();
-    if (!embeddings) {
-      return dbProducts.slice(0, count);
+
+    if (embeddings) {
+      try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+        const embedPromise = model.embedContent(query.trim());
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Embedding timeout')), 2500)
+        );
+
+        const result: any = await Promise.race([embedPromise, timeoutPromise]);
+        if (result?.embedding?.values) {
+          queryVector = result.embedding.values;
+        }
+      } catch (embedErr) {
+        console.warn('⚠️ Векторный эмбеддинг пропущен (таймаут или ошибка), переключаемся на ключевые слова:', embedErr);
+      }
     }
 
-    // 2. Generate embedding for search query
-    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
-    const result = await model.embedContent(query.trim());
-    const queryVector = result.embedding.values;
-
-    // 3. Compute similarity for each product
+    // 2. Расчет скоринга (векторный + ключевые слова)
     const scoredProducts = dbProducts.map((p) => {
-      const cached = embeddings[p.id];
-      const score = cached ? cosineSimilarity(queryVector, cached.embedding) : 0;
-      return { product: p, score };
+      let vecScore = 0;
+      if (queryVector && embeddings && embeddings[p.id]) {
+        vecScore = cosineSimilarity(queryVector, embeddings[p.id].embedding);
+      }
+      const kwScore = keywordScore(query, p);
+      const totalScore = vecScore + kwScore;
+      return { product: p, score: totalScore, vecScore, kwScore };
     });
 
-    // 4. Sort by descending similarity
+    // 3. Сортировка по общему баллу
     scoredProducts.sort((a, b) => b.score - a.score);
 
-    console.log(`🔍 Векторный поиск по запросу "${query}":`);
+    console.log(`🔍 Поиск по запросу "${query}":`);
     scoredProducts.slice(0, 5).forEach((sp) => {
-      console.log(`   - [${sp.score.toFixed(3)}] ${sp.product.name}`);
+      console.log(`   - [${sp.score.toFixed(3)} | vec:${sp.vecScore.toFixed(2)} kw:${sp.kwScore.toFixed(2)}] ${sp.product.name}`);
     });
 
     return scoredProducts.slice(0, count).map((sp) => sp.product);
   } catch (err) {
-    console.error('❌ Ошибка при векторном поиске:', err);
-    return dbProducts.slice(0, count); // Фоллбек
+    console.error('❌ Ошибка при поиске товаров:', err);
+    return dbProducts ? dbProducts.slice(0, count) : [];
   }
 }

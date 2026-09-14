@@ -115,35 +115,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Сохраняем сообщение пользователя
-    await supabaseAdmin.from('agent_messages').insert({
-      chat_id: currentChatId,
-      sender: 'user',
-      message_text: sanitizedMessage
-    });
+    // 5. Запускаем параллельную выборку контекста для максимальной скорости ответа
+    const [
+      , // Сохранение входящего сообщения
+      historyRes,
+      settings,
+      activeProducts,
+      promptsRes
+    ] = await Promise.all([
+      supabaseAdmin.from('agent_messages').insert({
+        chat_id: currentChatId,
+        sender: 'user',
+        message_text: sanitizedMessage
+      }),
+      supabaseAdmin
+        .from('agent_messages')
+        .select('sender, message_text')
+        .eq('chat_id', currentChatId)
+        .order('created_at', { ascending: false })
+        .limit(MAX_HISTORY_MESSAGES),
+      getCachedSettings(),
+      getActiveProducts(),
+      supabaseAdmin.from('agent_prompts').select('id, prompt_text').eq('is_active', true)
+    ]);
 
-    // 6. Подтягиваем историю сообщений чата (ограничено)
+    // 6. Подтягиваем историю сообщений чата
     let historyText = 'Нет истории диалога.';
-    const { data: messagesHistory } = await supabaseAdmin
-      .from('agent_messages')
-      .select('sender, message_text')
-      .eq('chat_id', currentChatId)
-      .order('created_at', { ascending: false })
-      .limit(MAX_HISTORY_MESSAGES);
-
-    if (messagesHistory && messagesHistory.length > 0) {
-      historyText = messagesHistory
+    if (historyRes.data && historyRes.data.length > 0) {
+      historyText = historyRes.data
         .reverse()
         .map((m: any) => `${m.sender === 'user' ? 'Клиент' : 'Бот'}: ${m.message_text}`)
         .join('\n');
     }
 
-    // 7. Загружаем настройки (кешированные)
-    const settings = await getCachedSettings();
+    // 7. Настройки языка
     const chatLang = getSetting(settings, 'instagram_agent_chat_lang', 'auto');
 
-    // 8. Векторный RAG-поиск релевантных товаров (кешированные продукты)
-    const activeProducts = await getActiveProducts();
+    // 8. Векторный и ключевой RAG-поиск релевантных товаров
     const relevantProducts = await getRelevantProducts(sanitizedMessage, activeProducts, MAX_RELEVANT_PRODUCTS);
     const catalog = await formatCatalogProducts(relevantProducts);
 
@@ -157,9 +165,8 @@ export async function POST(request: NextRequest) {
       langInstruction = 'ВНИМАНИЕ: Определи язык последнего сообщения клиента. Если клиент написал на таджикском языке, ты обязан отвечать СТРОГО на таджикском. Если на русском — СТРОГО на русском. Язык ответа должен ВСЕГДА совпадать с языком вопроса клиента.';
     }
 
-    // 10. Подгружаем активный A/B промпт или используем системную инструкцию
-    const { data: activePrompts } = await supabaseAdmin.from('agent_prompts').select('id, prompt_text').eq('is_active', true);
-
+    // 10. Активный A/B промпт
+    const activePrompts = promptsRes.data;
     let selectedPromptId: string | null = null;
     let customPromptText: string | null = null;
 
@@ -282,16 +289,16 @@ ${historyText}
       }
     }
 
-    // 14. Сохраняем ответ бота в базу (с ID промпта для A/B аналитики)
-    await supabaseAdmin.from('agent_messages').insert({
-      chat_id: currentChatId,
-      sender: 'bot',
-      message_text: reply,
-      ...(selectedPromptId ? { metadata: { prompt_id: selectedPromptId } } : {})
-    });
-
-    // Обновляем метку времени чата
-    await supabaseAdmin.from('agent_chats').update({ updated_at: new Date().toISOString() }).eq('id', currentChatId);
+    // 14. Сохраняем ответ бота в базу и обновляем статус чата параллельно
+    await Promise.all([
+      supabaseAdmin.from('agent_messages').insert({
+        chat_id: currentChatId,
+        sender: 'bot',
+        message_text: reply,
+        prompt_id_used: selectedPromptId
+      }),
+      supabaseAdmin.from('agent_chats').update({ updated_at: new Date().toISOString() }).eq('id', currentChatId)
+    ]);
 
     return NextResponse.json({
       success: true,
