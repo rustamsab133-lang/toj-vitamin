@@ -73,6 +73,11 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
     setSearch('');
   };
 
+  const handleClearSearch = () => {
+    setSearch('');
+    searchInputRef.current?.focus();
+  };
+
   return (
     <div className={`fixed top-0 left-0 w-full z-[100] flex justify-center px-3 pt-3 sm:px-4 sm:pt-4 pointer-events-none transition-all duration-1000 ${isImmersiveMode ? 'opacity-0 -translate-y-12' : 'opacity-100 translate-y-0'}`}>
       <motion.header
@@ -91,17 +96,30 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-3 w-full"
+              className="flex items-center gap-2.5 sm:gap-3 w-full"
             >
               <Search size={20} className="text-[#1D1D1F]/40 shrink-0" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={lang === 'ru' ? 'Поиск витаминов...' : 'Ҷустуҷӯи витаминҳо...'}
-                className="flex-1 bg-transparent text-[16px] sm:text-[18px] font-bold text-[#1D1D1F] outline-none font-outfit placeholder:text-[#1D1D1F]/20 min-w-0"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              <div className="flex-1 relative flex items-center min-w-0">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={lang === 'ru' ? 'Поиск витаминов...' : 'Ҷустуҷӯи витаминҳо...'}
+                  className="w-full bg-transparent text-[16px] sm:text-[18px] font-bold text-[#1D1D1F] outline-none font-outfit placeholder:text-[#1D1D1F]/20 pr-8 min-w-0"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-0 w-7 h-7 rounded-full bg-black/[0.07] hover:bg-black/[0.14] text-[#1D1D1F]/60 hover:text-[#1D1D1F] flex items-center justify-center transition-all active:scale-90"
+                    title={lang === 'ru' ? 'Очистить' : 'Тоза кардан'}
+                    aria-label={lang === 'ru' ? 'Очистить поле' : 'Тоза кардани майдон'}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
               {search && (
                 <span className="shrink-0 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider hidden sm:block">
                   {lang === 'ru' ? 'Результаты ниже ↓' : 'Натиҷа дар поён ↓'}
@@ -110,9 +128,11 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
               <button
                 type="button"
                 onClick={handleCloseSearch}
-                className="shrink-0 w-9 h-9 rounded-full bg-black/[0.06] hover:bg-black hover:text-white text-[#1D1D1F] flex items-center justify-center transition-all active:scale-90"
+                className="shrink-0 h-9 px-3.5 rounded-full bg-black/[0.06] hover:bg-black hover:text-white text-[#1D1D1F] text-[12px] sm:text-[13px] font-bold flex items-center justify-center transition-all active:scale-90 font-outfit select-none"
+                title={lang === 'ru' ? 'Закрыть поиск' : 'Пӯшидани ҷустуҷӯ'}
+                aria-label={lang === 'ru' ? 'Закрыть поиск' : 'Пӯшидани ҷустуҷӯ'}
               >
-                <X size={16} />
+                <span>{lang === 'ru' ? 'Закрыть' : 'Пӯшидан'}</span>
               </button>
             </motion.div>
           ) : (

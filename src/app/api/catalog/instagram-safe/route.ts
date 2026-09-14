@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
           }
         }
         const safeDesc = sanitizeDescription(rawDesc || '', safeTitle);
-        const productUrl = `${baseUrl}/product/${slugify(product.name)}`;
+        const productUrl = `${baseUrl}/product/${slugify(safeTitle)}`;
         const imageUrl = product.image_url || `${baseUrl}/og-image.png`;
         const priceFormatted = `${Number(product.price).toFixed(2)} TJS`;
 
@@ -113,7 +113,7 @@ ${products.map(product => {
         }
       }
       const safeDesc = sanitizeDescription(rawDesc || '', safeTitle);
-      const productUrl = `${baseUrl}/product/${slugify(product.name)}`;
+      const productUrl = `${baseUrl}/product/${slugify(safeTitle)}`;
       const imageUrl = product.image_url || `${baseUrl}/og-image.png`;
 
       return `    <item>

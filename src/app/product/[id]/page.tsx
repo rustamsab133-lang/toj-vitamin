@@ -18,11 +18,16 @@ interface Props {
 }
 
 import { findEnrichmentForProduct, getProductsWithMarkup } from '@/lib/products';
+import { sanitizeTitle } from '@/lib/catalogSanitizer';
 
 async function getProduct(id: string): Promise<Product | null> {
   const products = await getProductsWithMarkup();
   const targetSlug = decodeURIComponent(id).toLowerCase().trim();
-  return products.find(p => slugify(p.name) === targetSlug) || null;
+  return products.find(p => 
+    slugify(p.name) === targetSlug || 
+    slugify(sanitizeTitle(p.name)) === targetSlug ||
+    String(p.id) === targetSlug
+  ) || null;
 }
 
 export async function generateStaticParams() {

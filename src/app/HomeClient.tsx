@@ -115,14 +115,17 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         setIsSearchOpen(true);
       }
       if (e.key === 'Escape' && isSearchOpen) {
-        setIsSearchOpen(false);
-        setSearch('');
+        if (search) {
+          setSearch('');
+        } else {
+          setIsSearchOpen(false);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen, setIsSearchOpen, setSearch]);
+  }, [isSearchOpen, setIsSearchOpen, setSearch, search]);
 
   // Global Product Loading — single source of truth
   const setAllProducts = useCart(state => state.setAllProducts);
