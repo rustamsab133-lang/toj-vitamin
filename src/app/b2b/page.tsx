@@ -26,9 +26,6 @@ export default function B2BStorefrontPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
-  const [customerAddress, setCustomerAddress] = useState('');
-  const [notes, setNotes] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,9 +125,9 @@ export default function B2BStorefrontPage() {
       const payload = {
         phone: fullPhone,
         pharmacy_name: customerDisplayName,
-        address: customerAddress.trim(),
-        notes: notes.trim(),
-        delivery_date: deliveryDate || null,
+        address: '',
+        notes: '',
+        delivery_date: null,
         items: cartItems.map(item => ({
           product_id: item.product.id,
           quantity: item.quantity
@@ -153,25 +150,19 @@ export default function B2BStorefrontPage() {
       setSubmittedTotal(totalAmount);
       setSubmittedCustomerPhone(fullPhone);
       
-      // Construct the WhatsApp message with items list, address and contact details
+      // Construct the WhatsApp message with items list and contact details
       const orderIdShort = data.order_id.slice(0, 8).toUpperCase();
       const clientLine = customerName.trim()
         ? `Клиент: ${customerName.trim()} (${fullPhone})`
         : `Телефон: ${fullPhone}`;
-      const addressLine = customerAddress.trim() ? `\nАдрес: ${customerAddress.trim()}` : '';
-      const dateLine = deliveryDate ? `\nЖелаемая дата доставки: ${deliveryDate}` : '';
-      const notesLine = notes.trim() ? `\nПримечание: ${notes.trim()}` : '';
       const itemsText = cartItems
         .map((item, idx) => `${idx + 1}. ${item.product.name} — ${item.quantity} шт. (${item.product.price * item.quantity} смн)`)
         .join('\n');
-      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}${addressLine}${dateLine}${notesLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
+      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
       setSubmittedWaMessage(msg);
 
-      // Reset cart and optional fields without forced redirect
+      // Reset cart without forced redirect
       setCart({});
-      setNotes('');
-      setDeliveryDate('');
-      setCustomerAddress('');
       setIsCartMobileOpen(false);
     } catch (err: any) {
       alert(err.message || 'Не удалось оформить заказ');
@@ -415,7 +406,7 @@ export default function B2BStorefrontPage() {
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                    Аптека или контактное лицо <span className="text-slate-400 font-normal">(необязательно)</span>
+                    Аптека или ваше имя <span className="text-slate-400 font-normal">(необязательно)</span>
                   </label>
                   <input
                     type="text"
@@ -424,45 +415,6 @@ export default function B2BStorefrontPage() {
                     onChange={e => setCustomerName(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
                   />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                    Адрес доставки / аптеки <span className="text-slate-400 font-normal">(город, улица)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Например: г. Душанбе, ул. Рудаки 45"
-                    value={customerAddress}
-                    onChange={e => setCustomerAddress(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
-                      Желаемая дата
-                    </label>
-                    <input
-                      type="date"
-                      value={deliveryDate}
-                      onChange={e => setDeliveryDate(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
-                      Примечание
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Вход со двора..."
-                      value={notes}
-                      onChange={e => setNotes(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -610,45 +562,6 @@ export default function B2BStorefrontPage() {
                     onChange={e => setCustomerName(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
                   />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                    Адрес доставки / аптеки <span className="text-slate-400 font-normal">(город, улица)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Например: г. Душанбе, ул. Рудаки 45"
-                    value={customerAddress}
-                    onChange={e => setCustomerAddress(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-0.5">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
-                      Желаемая дата
-                    </label>
-                    <input
-                      type="date"
-                      value={deliveryDate}
-                      onChange={e => setDeliveryDate(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs font-medium text-slate-700 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">
-                      Примечание
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Вход со двора..."
-                      value={notes}
-                      onChange={e => setNotes(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs font-medium text-slate-700 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
                 </div>
               </div>
 
