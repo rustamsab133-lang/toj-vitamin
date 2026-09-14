@@ -193,7 +193,7 @@ async function main() {
     }
 
     // Ссылка на товар и фото
-    const productUrl = `${baseUrl}/product/${slugify(originalTitle)}`;
+    const productUrl = `${baseUrl}/product/${slugify(safeTitle)}`;
     const imageUrl = product.image_url || 'https://www.toj-vitamin.tj/og-image.png';
 
     // Строка для Meta Commerce CSV
