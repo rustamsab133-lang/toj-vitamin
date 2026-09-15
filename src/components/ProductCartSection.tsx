@@ -15,7 +15,7 @@ interface ProductPageHeaderProps {
 }
 
 export function ProductPageHeader({ lang }: ProductPageHeaderProps) {
-  const { setIsOpen: setIsCartOpen, totalItems, cartAnimationKey } = useCart();
+  const { setIsOpen: setIsCartOpen, totalItems } = useCart();
   const totalCartItems = totalItems();
 
   return (
@@ -32,34 +32,18 @@ export function ProductPageHeader({ lang }: ProductPageHeaderProps) {
         </Link>
         
         {/* Shopping Cart Button */}
-        <motion.button
-          key={`product-header-cart-${cartAnimationKey}`}
-          animate={cartAnimationKey > 0 ? {
-            scale: [1, 1.25, 0.95, 1]
-          } : {}}
-          transition={{ duration: 0.4 }}
+        <button
           onClick={() => setIsCartOpen(true)}
           className="h-10 w-10 flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 backdrop-blur-sm active:scale-90 relative pointer-events-auto"
           aria-label="Cart"
         >
           <ShoppingBag size={17} />
           {totalCartItems > 0 && (
-            <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#1E40AF] text-[9px] font-bold text-white flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#1E40AF] text-[9px] font-bold text-white flex items-center justify-center">
               {totalCartItems}
             </span>
           )}
-          {cartAnimationKey > 0 && (
-            <motion.span
-              key={`prod-header-plus-one-${cartAnimationKey}`}
-              initial={{ y: 0, opacity: 1, scale: 0.8 }}
-              animate={{ y: -35, opacity: 0, scale: 1.1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full pointer-events-none shadow-md z-[100]"
-            >
-              +1
-            </motion.span>
-          )}
-        </motion.button>
+        </button>
       </div>
     </div>
   );

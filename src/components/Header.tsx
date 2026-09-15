@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
   
   const { client, isAuth } = useClient();
-  const { totalItems, setIsOpen: setIsCartOpen, cartAnimationKey } = useCart();
+  const { totalItems, setIsOpen: setIsCartOpen } = useCart();
   
   const [isCabinetOpen, setIsCabinetOpen] = useState(false);
   
@@ -221,37 +221,18 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 </button>
 
                 {/* Shopping Cart Button */}
-                <motion.button
-                  key={`header-cart-${cartAnimationKey}`}
-                  animate={cartAnimationKey > 0 ? {
-                    scale: [1, 1.25, 0.95, 1]
-                  } : {}}
-                  transition={{ duration: 0.4 }}
+                <button
                   onClick={() => setIsCartOpen(true)}
                   className="h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 md:backdrop-blur-sm active:scale-90 relative"
-                  style={{ transform: 'translate3d(0,0,0)' }} // Force GPU
+                  aria-label={lang === 'ru' ? 'Корзина' : 'Сабад'}
                 >
                   <ShoppingBag size={17} />
                   {totalCartItems > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center">
                       {totalCartItems}
                     </span>
                   )}
-
-                  {/* GPU-Accelerated Floating +1 indicator on desktop */}
-                  {cartAnimationKey > 0 && (
-                    <motion.span
-                      key={`header-plus-one-${cartAnimationKey}`}
-                      initial={{ y: 0, opacity: 1, scale: 0.8 }}
-                      animate={{ y: -40, opacity: 0, scale: 1.1 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                      className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full pointer-events-none shadow-md z-[100]"
-                      style={{ transform: 'translate3d(0,0,0)' }} // Force GPU
-                    >
-                      +1
-                    </motion.span>
-                  )}
-                </motion.button>
+                </button>
               </div>
             </motion.div>
           )}
