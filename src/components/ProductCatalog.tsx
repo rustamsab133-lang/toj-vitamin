@@ -370,45 +370,45 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                               </h3>
 
                               <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">
-                                 {/* Standard View: Price & Clinical Info */}
-                                 <div className="absolute inset-y-0 left-0 right-12 flex items-center transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0 pr-2">
-                                   <div className="flex flex-col gap-0.5">
-                                     <div className="flex items-center gap-1.5 mb-1">
-                                        <ShieldCheck size={10} className="text-[#1E40AF]" />
-                                        <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.15em] whitespace-nowrap">
-                                          {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
-                                        </span>
-                                     </div>
-                                     <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
-                                       {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
-                                     </p>
-                                   </div>
-                                 </div>
+                                  {/* Standard View: Price & Clinical Info */}
+                                  <div className="absolute inset-y-0 left-0 right-0 flex items-center transition-all duration-500 ease-[0.2,0.8,0.2,1] group-hover:-translate-y-full opacity-100 group-hover:opacity-0 pr-1">
+                                    <div className="flex flex-col gap-0.5 w-full">
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                         <ShieldCheck size={10} className="text-[#1E40AF] shrink-0" />
+                                         <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.12em] whitespace-nowrap">
+                                           {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
+                                         </span>
+                                      </div>
+                                      <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
+                                        {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
+                                      </p>
+                                    </div>
+                                  </div>
 
-                                 {/* Hover View: Details Button */}
-                                 <div 
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onTouchStart={(e) => e.stopPropagation()}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      setSelectedProduct(product);
-                                    }}
-                                    className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2 cursor-pointer pointer-events-auto z-20"
-                                  >
-                                     <div className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-none text-[11px] uppercase tracking-[0.15em]">
-                                       <ArrowRight size={14} />
-                                       <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
-                                     </div>
-                                 </div>
-                              </div>
+                                  {/* Hover View: Details Button */}
+                                  <div 
+                                     onPointerDown={(e) => e.stopPropagation()}
+                                     onMouseDown={(e) => e.stopPropagation()}
+                                     onTouchStart={(e) => e.stopPropagation()}
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       e.preventDefault();
+                                       setSelectedProduct(product);
+                                     }}
+                                     className="absolute inset-y-0 left-0 right-12 flex items-center translate-y-full group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100 ease-[0.2,0.8,0.2,1] pr-2 cursor-pointer pointer-events-auto z-20"
+                                   >
+                                      <div className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-none text-[11px] uppercase tracking-[0.15em]">
+                                        <ArrowRight size={14} />
+                                        <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
+                                      </div>
+                                  </div>
+                               </div>
                             </div>
                           </div>
                         </motion.a>
 
                         {/* Direct Buy Button (Always visible on the right, positioned relative to the outer card container) */}
-                        <div className="absolute bottom-[36px] right-[24px] z-30 flex items-center pointer-events-auto">
+                        <div className="absolute bottom-[22px] right-[20px] z-30 flex items-center pointer-events-auto">
                           {(() => {
                             const isAdded = !!addedProductIds[product.id];
                             return (
@@ -437,7 +437,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                     setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
                                   }, 1500);
                                 }}
-                                className={`h-11 w-11 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto relative touch-manipulation select-none after:content-[''] after:absolute after:-inset-2.5 after:rounded-full ${
+                                className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center shadow-md transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto relative touch-manipulation select-none after:content-[''] after:absolute after:-inset-2.5 after:rounded-full ${
                                   isAdded
                                     ? 'bg-green-600 text-white'
                                     : 'bg-[#1E40AF] text-white hover:bg-black'
@@ -456,7 +456,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                       transition={{ duration: 0.2 }}
                                       className="absolute inset-0 flex items-center justify-center"
                                     >
-                                      <Check size={18} />
+                                      <Check size={16} />
                                     </motion.span>
                                   ) : (
                                     <motion.span
@@ -467,7 +467,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                       transition={{ duration: 0.2 }}
                                       className="absolute inset-0 flex items-center justify-center"
                                     >
-                                      <Plus size={18} />
+                                      <Plus size={16} />
                                     </motion.span>
                                   )}
                                 </AnimatePresence>
