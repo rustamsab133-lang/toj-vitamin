@@ -408,14 +408,13 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                         </motion.a>
 
                         {/* Direct Buy Button (Always visible on the right, positioned relative to the outer card container) */}
-                        <div className="absolute bottom-[36px] right-[24px] z-30 flex items-center">
+                        <div className="absolute bottom-[36px] right-[24px] z-30 flex items-center pointer-events-auto">
                           {(() => {
                             const isAdded = !!addedProductIds[product.id];
                             return (
                               <button
+                                type="button"
                                 onPointerDown={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onTouchStart={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
@@ -438,13 +437,14 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                     setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
                                   }, 1500);
                                 }}
-                                className={`h-11 w-11 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto interactive-child overflow-hidden relative ${
+                                className={`h-11 w-11 rounded-full flex items-center justify-center shadow-lg transition-colors duration-300 active:scale-90 shrink-0 pointer-events-auto relative touch-manipulation select-none after:content-[''] after:absolute after:-inset-2.5 after:rounded-full ${
                                   isAdded
                                     ? 'bg-green-600 text-white'
                                     : 'bg-[#1E40AF] text-white hover:bg-black'
                                 }`}
                                 title={lang === 'ru' ? 'Купить' : 'Харид'}
-                                style={{ touchAction: 'manipulation', transform: 'translate3d(0,0,0)' }}
+                                aria-label={lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}
+                                style={{ touchAction: 'manipulation' }}
                               >
                                 <AnimatePresence mode="wait" initial={false}>
                                   {isAdded ? (

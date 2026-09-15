@@ -66,8 +66,7 @@ button,
 }
 
 /* Ensure images/overlays inside buttons don't block interaction */
-button > *, 
-.apple-shelf-item > * {
+button > * {
   pointer-events: none;
 }
 
