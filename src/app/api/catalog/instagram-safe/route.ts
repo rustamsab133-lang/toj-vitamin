@@ -8,6 +8,7 @@ import {
   sanitizeTitle, 
   sanitizeDescription, 
   escapeCsvField,
+  getProductDescription,
   MANDATORY_SUPPLEMENT_DISCLAIMER 
 } from '@/lib/catalogSanitizer';
 
@@ -54,16 +55,7 @@ export async function GET(request: NextRequest) {
 
       const rows = products.map(product => {
         const safeTitle = sanitizeTitle(product.name);
-        
-        let rawDesc = product.description;
-        if (!rawDesc || rawDesc.includes('Купить') || rawDesc.length < 30) {
-          const pKey = product.name.toLowerCase().trim();
-          const match = (enrichedData as Record<string, any>)[pKey];
-          if (match?.properties?.length > 0) {
-            rawDesc = match.properties.join('. ');
-          }
-        }
-        const safeDesc = sanitizeDescription(rawDesc || '', safeTitle);
+        const safeDesc = getProductDescription(product, enrichedData as Record<string, any>);
         const productUrl = `${baseUrl}/product/${slugify(safeTitle)}`;
         const imageUrl = product.image_url || `${baseUrl}/og-image.png`;
         const priceFormatted = `${Number(product.price).toFixed(2)} TJS`;
@@ -104,15 +96,7 @@ export async function GET(request: NextRequest) {
     <description>Безопасный каталог витаминов и БАД GLS для Instagram и Meta Commerce</description>
 ${products.map(product => {
       const safeTitle = sanitizeTitle(product.name);
-      let rawDesc = product.description;
-      if (!rawDesc || rawDesc.includes('Купить') || rawDesc.length < 30) {
-        const pKey = product.name.toLowerCase().trim();
-        const match = (enrichedData as Record<string, any>)[pKey];
-        if (match?.properties?.length > 0) {
-          rawDesc = match.properties.join('. ');
-        }
-      }
-      const safeDesc = sanitizeDescription(rawDesc || '', safeTitle);
+      const safeDesc = getProductDescription(product, enrichedData as Record<string, any>);
       const productUrl = `${baseUrl}/product/${slugify(safeTitle)}`;
       const imageUrl = product.image_url || `${baseUrl}/og-image.png`;
 

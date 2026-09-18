@@ -4,7 +4,7 @@ import { slugify } from '@/lib/slugify';
 import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
 import { getHiddenProductIds, filterVisibleProducts } from '@/lib/hiddenProducts';
 import enrichedData from '@/data/enriched_gls_products.json';
-import { sanitizeTitle, sanitizeDescription } from '@/lib/catalogSanitizer';
+import { sanitizeTitle, sanitizeDescription, getProductDescription } from '@/lib/catalogSanitizer';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -38,16 +38,7 @@ ${products?.map((product) => {
       const safeTitle = sanitizeTitle(product.name);
       const safeSlug = slugify(safeTitle);
       const productUrl = `${baseUrl}/product/${safeSlug}`;
-      
-      let rawDesc = product.description;
-      if (!rawDesc || rawDesc.includes('Купить') || rawDesc.length < 30) {
-        const pKey = product.name.toLowerCase().trim();
-        const match = (enrichedData as Record<string, any>)[pKey];
-        if (match?.properties?.length > 0) {
-          rawDesc = match.properties.join('. ');
-        }
-      }
-      const description = sanitizeDescription(rawDesc || '', safeTitle);
+      const description = getProductDescription(product, enrichedData as Record<string, any>);
       
       return `    <item>
       <g:id>prod_${product.id}</g:id>

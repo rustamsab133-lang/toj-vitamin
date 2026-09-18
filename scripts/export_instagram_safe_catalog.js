@@ -24,6 +24,7 @@ const {
   sanitizeDescription, 
   checkMetaSafety, 
   escapeCsvField, 
+  getProductDescription,
   MANDATORY_SUPPLEMENT_DISCLAIMER 
 } = require('../src/lib/catalogSanitizer.ts');
 
@@ -166,20 +167,9 @@ async function main() {
       });
     }
 
-    // 2. Очистка описания
-    let rawDesc = product.description;
-    // Если описание пустое или шаблонное, смотрим свойства из RAG
-    if (!rawDesc || rawDesc.includes('Купить') || rawDesc.length < 30) {
-      const pKey = originalTitle.toLowerCase().trim();
-      const match = enrichedData[pKey];
-      if (match?.properties?.length > 0) {
-        rawDesc = match.properties.join('. ');
-      }
-    }
-    const safeDescription = sanitizeDescription(rawDesc || '', safeTitle);
-    if (safeDescription !== rawDesc) {
-      sanitizedDescCount++;
-    }
+    // 2. Очистка и получение подробного описания
+    const safeDescription = getProductDescription(product, enrichedData);
+    sanitizedDescCount++;
 
     // 3. Проверка безопасности Meta
     const titleCheck = checkMetaSafety(safeTitle);

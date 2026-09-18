@@ -54,6 +54,20 @@ export async function GET(request: Request) {
       } catch (e) {}
     }
 
+    const customPricesSetting = settingsData?.find((s: any) => s.key === 'custom_retail_prices');
+    let customPrices: Record<string, number> = {};
+    if (customPricesSetting?.value) {
+      try {
+        const parsed = JSON.parse(customPricesSetting.value);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          Object.entries(parsed).forEach(([k, v]) => {
+            const num = Number(v);
+            if (!isNaN(num) && num > 0) customPrices[String(k)] = num;
+          });
+        }
+      } catch (e) {}
+    }
+
     if (token) {
       // Ищем аптеку по токену
       const { data: pharmacy, error: pharmError } = await supabaseAdmin
@@ -70,14 +84,21 @@ export async function GET(request: Request) {
       // Пересчитываем товары со скидкой аптеки
       const b2bProducts = products.map((p: any) => {
         const baseWholesale = Number(p.price) || 0;
+        const pId = String(p.id);
+        const customRetail = customPrices[pId] || (p.retail_price ? Number(p.retail_price) : undefined);
         
-        let retail = baseWholesale;
-        if (markupSettings.percent > 0) retail = retail * (1 + markupSettings.percent / 100);
-        retail = retail + markupSettings.flat;
-        const retailPrice = Math.round(retail);
+        let retailPrice: number;
+        if (customRetail && customRetail > 0) {
+          retailPrice = Math.round(customRetail);
+        } else {
+          let retail = baseWholesale;
+          if (markupSettings.percent > 0) retail = retail * (1 + markupSettings.percent / 100);
+          retail = retail + markupSettings.flat;
+          retailPrice = Math.round(retail);
+        }
 
         const discountPrice = Math.round(baseWholesale * (1 - (Number(pharmacy.discount_percent) || 0) / 100));
-        const isHidden = Boolean(p.is_hidden || hiddenIds.includes(String(p.id)));
+        const isHidden = Boolean(p.is_hidden || hiddenIds.includes(pId));
 
         return {
           id: p.id,

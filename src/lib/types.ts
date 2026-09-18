@@ -14,6 +14,8 @@ export interface Product {
   barcode?: string;
   stock_quantity?: number;
   is_hidden?: boolean;
+  retail_price?: number;
+  wholesale_price?: number;
 }
 
 export interface Complex {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { adminDbQuery } from '@/lib/admin-api';
 import { Product, OfflineCustomer, OfflineOrder } from '@/lib/types';
-import { getMarkupSettings, applyMarkupToProduct, MarkupSettings } from '@/lib/markup';
+import { getMarkupSettings, applyMarkupToProduct, applyMarkupToPrice, MarkupSettings } from '@/lib/markup';
 import { 
   ChevronLeft, Package, Users, ShoppingCart, Clock, Plus, Trash2, 
   Save, X, Search, UserPlus, Edit, RefreshCw, Barcode, 
@@ -72,8 +72,8 @@ export const WarehouseDashboard: React.FC<{
           const qty = Number(p.stock_quantity) || 0;
           const wholesalePrice = Number(p.price) || 0;
           
-          // Calculate retail price using markup helper formula: price * (1 + pct/100) + flat
-          const retailPrice = Math.round(wholesalePrice * (1 + (markup.percent || 0) / 100) + (markup.flat || 0));
+          // Calculate retail price using markup helper formula or custom retail price
+          const retailPrice = applyMarkupToPrice(wholesalePrice, markup, markup.customRetailPrices?.[String(p.id)]);
 
           totalItems += qty;
           wholesaleValue += wholesalePrice * qty;
@@ -377,7 +377,7 @@ const ProductsTab = ({
       csvContent += "ID,Название,Штрихкод,Оптовая цена (смн),Розничная цена (смн),Остаток (шт)\n";
       
       res.data.forEach((p: Product) => {
-        const retailPrice = Math.round(Number(p.price || 0) * (1 + (markupSettings.percent || 0) / 100) + (markupSettings.flat || 0));
+        const retailPrice = applyMarkupToPrice(Number(p.price || 0), markupSettings, markupSettings.customRetailPrices?.[String(p.id)] || p.retail_price);
         const row = [
           `"${p.id}"`,
           `"${p.name.replace(/"/g, '""')}"`,
@@ -459,7 +459,7 @@ const ProductsTab = ({
               </thead>
               <tbody>
                 {products.map(p => {
-                  const retailPrice = Math.round(Number(p.price || 0) * (1 + (markupSettings.percent || 0) / 100) + (markupSettings.flat || 0));
+                  const retailPrice = applyMarkupToPrice(Number(p.price || 0), markupSettings, markupSettings.customRetailPrices?.[String(p.id)] || p.retail_price);
                   const isLow = (p.stock_quantity || 0) < 5;
                   
                   return (
@@ -802,8 +802,8 @@ const PosTab = ({
     const existing = cart.find(i => i.product.id === p.id);
     const inStock = Number(p.stock_quantity) || 0;
     
-    // Apply retail markup
-    const retailPrice = Math.round(Number(p.price || 0) * (1 + (markupSettings.percent || 0) / 100) + (markupSettings.flat || 0));
+    // Apply retail markup or custom retail price
+    const retailPrice = applyMarkupToPrice(Number(p.price || 0), markupSettings, markupSettings.customRetailPrices?.[String(p.id)] || p.retail_price);
 
     if (existing) {
       if (existing.qty >= inStock) return alert(`Недостаточно товара на складе! В наличии всего: ${inStock} шт`);
@@ -876,7 +876,7 @@ const PosTab = ({
             {products.map(p => {
               const inStock = Number(p.stock_quantity) || 0;
               const hasStock = inStock > 0;
-              const retailPrice = Math.round(Number(p.price || 0) * (1 + (markupSettings.percent || 0) / 100) + (markupSettings.flat || 0));
+              const retailPrice = applyMarkupToPrice(Number(p.price || 0), markupSettings, markupSettings.customRetailPrices?.[String(p.id)] || p.retail_price);
               
               return (
                 <div 
