@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { phone } = body;
+    const { phone, pharmacy_name, address, contact_person } = body;
 
     if (!phone) {
       return NextResponse.json({ error: 'Номер телефона обязателен' }, { status: 400 });
@@ -29,40 +29,69 @@ export async function POST(request: Request) {
     const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, '');
 
     if (cleanPhone.length < 7) {
-      return NextResponse.json({ error: 'Неверный формат номера телефона' }, { status: 400 });
+      return NextResponse.json({ error: 'Неверный формат номера телефона (минимум 7-9 цифр)' }, { status: 400 });
     }
 
     // Загружаем все аптеки, чтобы сравнить очищенные номера телефонов
-    // (так как в базе номера могут быть записаны по-разному: с пробелами или кодом страны)
     const { data: pharmacies, error } = await supabaseAdmin
       .from('pharmacies')
-      .select('id, name, phone, token, status')
-      .eq('status', 'active'); // Пропускаем только одобренных партнеров
+      .select('id, name, phone, token, status');
 
-    if (error || !pharmacies) {
+    if (error) {
       throw error || new Error('Ошибка при проверке базы данных');
     }
 
     // Ищем аптеку по совпадению очищенных номеров
-    const matchedPharmacy = pharmacies.find(p => {
+    const matchedPharmacy = pharmacies?.find(p => {
       if (!p.phone) return false;
       const dbCleanPhone = p.phone.replace(/[\s\-\(\)\+]/g, '');
-      // Проверяем, совпадает ли хвост номера (последние 7 цифр) или полный номер
       return dbCleanPhone.endsWith(cleanPhone) || cleanPhone.endsWith(dbCleanPhone);
     });
 
-    if (!matchedPharmacy) {
-      return NextResponse.json({ 
-        error: 'Аптека с таким номером телефона не найдена или еще не одобрена администратором.' 
-      }, { status: 404 });
+    if (matchedPharmacy) {
+      return NextResponse.json({
+        success: true,
+        token: matchedPharmacy.token,
+        name: matchedPharmacy.name
+      });
     }
 
-    // Возвращаем токен для перенаправления
-    return NextResponse.json({
-      success: true,
-      token: matchedPharmacy.token,
-      name: matchedPharmacy.name
-    });
+    // Если аптека еще не зарегистрирована, но указано название — регистрируем в 1 клик
+    if (pharmacy_name && pharmacy_name.trim()) {
+      const { randomUUID } = await import('crypto');
+      const newToken = randomUUID();
+      const formattedPhone = cleanPhone.startsWith('992') ? `+${cleanPhone}` : `+992${cleanPhone}`;
+
+      const { data: newPharm, error: createError } = await supabaseAdmin
+        .from('pharmacies')
+        .insert({
+          name: pharmacy_name.trim(),
+          phone: formattedPhone,
+          address: (address || '').trim(),
+          contact_person: (contact_person || '').trim(),
+          status: 'active',
+          discount_percent: 0,
+          credit_limit: 0,
+          balance: 0,
+          token: newToken
+        })
+        .select('*')
+        .single();
+
+      if (createError) throw createError;
+
+      return NextResponse.json({
+        success: true,
+        token: newPharm.token,
+        name: newPharm.name,
+        is_new: true
+      });
+    }
+
+    return NextResponse.json({ 
+      not_found: true,
+      error: 'Номер телефона не найден в базе. Укажите название вашей аптеки для мгновенного создания кабинета.' 
+    }, { status: 404 });
   } catch (error: any) {
     console.error('B2B Login Error:', error);
     return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });

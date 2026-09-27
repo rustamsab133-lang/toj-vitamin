@@ -13,15 +13,15 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['health', 'shopping', 'lifestyle'],
     icons: [
       {
-        src: '/logo.webp',
+        src: '/icon-192.png',
         sizes: '192x192',
-        type: 'image/webp',
+        type: 'image/png',
         purpose: 'maskable'
       },
       {
-        src: '/logo.webp',
+        src: '/icon.png',
         sizes: '512x512',
-        type: 'image/webp',
+        type: 'image/png',
       }
     ],
   };

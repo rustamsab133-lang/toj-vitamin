@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, Plus, Minus, Check, Loader2, Calendar, MessageSquare, Phone, Info, Copy } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, ShoppingCart, Plus, Minus, Check, Loader2, Calendar, MessageSquare, Phone, Info, Copy, Building2, LogIn, MapPin, User, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface B2BProduct {
@@ -17,7 +18,9 @@ interface B2BProduct {
 }
 
 export default function B2BStorefrontPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isAutoRedirecting, setIsAutoRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<B2BProduct[]>([]);
   const [search, setSearch] = useState('');
@@ -26,6 +29,8 @@ export default function B2BStorefrontPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,10 +39,66 @@ export default function B2BStorefrontPage() {
   const [submittedCustomerPhone, setSubmittedCustomerPhone] = useState('');
   const [submittedWaMessage, setSubmittedWaMessage] = useState('');
   const [isCartMobileOpen, setIsCartMobileOpen] = useState(false);
-  
+
+  // Login Modal State
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginPhone, setLoginPhone] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   useEffect(() => {
+    // Проверяем сохраненную сессию аптеки для автоматического входа
+    if (typeof window !== 'undefined') {
+      const savedToken = localStorage.getItem('toj_b2b_token');
+      if (savedToken) {
+        setIsAutoRedirecting(true);
+        router.replace(`/b2b/${savedToken}`);
+        return;
+      }
+    }
     loadB2BData();
-  }, []);
+  }, [router]);
+
+  const handlePhoneLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    let digits = loginPhone.replace(/\D/g, '');
+    if (digits.startsWith('992') && digits.length > 9) {
+      digits = digits.slice(3);
+    }
+    if (digits.length < 7) {
+      setLoginError('Введите корректный номер телефона (минимум 7-9 цифр)');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const res = await fetch('/api/b2b/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: digits })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Аптека не найдена');
+      }
+
+      if (data.token) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('toj_b2b_token', data.token);
+          if (data.pharmacy_name) {
+            localStorage.setItem('toj_b2b_name', data.pharmacy_name);
+          }
+          document.cookie = `toj_b2b_token=${data.token}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+        router.push(`/b2b/${data.token}`);
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'Ошибка авторизации. Проверьте номер или оставьте заявку.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
 
   const loadB2BData = async () => {
     setLoading(true);
@@ -125,7 +186,8 @@ export default function B2BStorefrontPage() {
       const payload = {
         phone: fullPhone,
         pharmacy_name: customerDisplayName,
-        address: '',
+        address: customerAddress.trim(),
+        contact_person: contactPerson.trim(),
         notes: '',
         delivery_date: null,
         items: cartItems.map(item => ({
@@ -153,12 +215,14 @@ export default function B2BStorefrontPage() {
       // Construct the WhatsApp message with items list and contact details
       const orderIdShort = data.order_id.slice(0, 8).toUpperCase();
       const clientLine = customerName.trim()
-        ? `Клиент: ${customerName.trim()} (${fullPhone})`
+        ? `Аптека: ${customerName.trim()} (${fullPhone})`
         : `Телефон: ${fullPhone}`;
+      const contactLine = contactPerson.trim() ? `\n👤 Контакт: ${contactPerson.trim()}` : '';
+      const addressLine = customerAddress.trim() ? `\n📍 Адрес доставки: ${customerAddress.trim()}` : '';
       const itemsText = cartItems
         .map((item, idx) => `${idx + 1}. ${item.product.name} — ${item.quantity} шт. (${item.product.price * item.quantity} смн)`)
         .join('\n');
-      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
+      const msg = `Здравствуйте! Оформил оптовый заказ #B2B-${orderIdShort} на сумму ${totalAmount} смн.\n${clientLine}${contactLine}${addressLine}\n\nСостав заказа:\n${itemsText}\n\nПожалуйста, подтвердите наличие и согласуйте доставку.`;
       setSubmittedWaMessage(msg);
 
       // Reset cart without forced redirect
@@ -171,6 +235,15 @@ export default function B2BStorefrontPage() {
     }
   };
 
+  if (isAutoRedirecting) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-slate-500 font-sans">
+        <Loader2 className="animate-spin text-emerald-600 mb-4" size={36} />
+        <p className="font-bold text-base text-slate-800">Переход в личный кабинет аптеки...</p>
+        <p className="text-xs text-slate-400 mt-1 font-medium">Загружаем ваши специальные условия и скидки</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -194,12 +267,22 @@ export default function B2BStorefrontPage() {
             <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Оптовые закупки B2B</span>
           </div>
         </div>
-        <Link 
-          href="/opt" 
-          className="text-xs font-bold text-slate-500 hover:text-slate-800 border border-slate-200 hover:border-slate-350 px-4 py-2 rounded-xl transition-all"
-        >
-          Условия работы
-        </Link>
+
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setIsLoginModalOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 px-3.5 py-2 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+          >
+            <LogIn size={14} className="text-emerald-400" />
+            Вход для аптек
+          </button>
+          <Link 
+            href="/opt" 
+            className="text-xs font-bold text-slate-500 hover:text-slate-800 border border-slate-200 hover:border-slate-350 px-3.5 py-2 rounded-xl transition-all hidden sm:inline-block"
+          >
+            Условия работы
+          </Link>
+        </div>
       </header>
 
       {/* Main Grid */}
@@ -211,11 +294,25 @@ export default function B2BStorefrontPage() {
           {/* Custom B2B Banner */}
           <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-3xl p-6 shadow-lg relative overflow-hidden">
             <div className="relative z-10 max-w-lg space-y-3">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Базовый опт</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Базовый опт</span>
+                <span className="text-[10px] font-bold text-slate-400">Прямые поставки со склада</span>
+              </div>
               <h2 className="text-2xl font-bold tracking-tight font-outfit">Быстрый оптовый заказ для аптек</h2>
               <p className="text-xs text-slate-300 leading-relaxed font-medium">
                 Выберите необходимые витамины и БАДы ниже. Быстрое оформление в 1 клик: соберите заказ и отправьте готовый чек напрямую менеджеру в WhatsApp.
               </p>
+              <div className="pt-1 flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/20 active:scale-95"
+                >
+                  <LogIn size={13} /> Войти в свой кабинет аптеки
+                </button>
+                <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                  (для цен с вашей персональной скидкой)
+                </span>
+              </div>
             </div>
           </div>
 
@@ -416,6 +513,32 @@ export default function B2BStorefrontPage() {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
                   />
                 </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Адрес доставки <span className="text-slate-400 font-normal">(город, улица, ориентир)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: г. Душанбе, ул. Рудаки 45"
+                    value={customerAddress}
+                    onChange={e => setCustomerAddress(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Контактное лицо <span className="text-slate-400 font-normal">(провизор / зав. аптекой)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: Фарида"
+                    value={contactPerson}
+                    onChange={e => setContactPerson(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
               </div>
 
               <button
@@ -553,13 +676,39 @@ export default function B2BStorefrontPage() {
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                    Аптека или контактное лицо <span className="text-slate-400 font-normal">(необязательно)</span>
+                    Аптека или ваше имя <span className="text-slate-400 font-normal">(необязательно)</span>
                   </label>
                   <input
                     type="text"
                     placeholder="Например: Аптека «Шифо»"
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Адрес доставки <span className="text-slate-400 font-normal">(город, улица)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: г. Душанбе, ул. Рудаки 45"
+                    value={customerAddress}
+                    onChange={e => setCustomerAddress(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                    Контактное лицо <span className="text-slate-400 font-normal">(зав. аптекой)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: Фарида"
+                    value={contactPerson}
+                    onChange={e => setContactPerson(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
                   />
                 </div>
@@ -673,6 +822,105 @@ export default function B2BStorefrontPage() {
                 >
                   Вернуться в каталог
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Login Modal for Pharmacies */}
+      <AnimatePresence>
+        {isLoginModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                    <Building2 size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base font-outfit">Вход для аптек</h3>
+                    <p className="text-[11px] text-slate-400 font-medium">Персональный кабинет B2B</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLoginModalOpen(false);
+                    setLoginError(null);
+                  }}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="text-xs text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                Введите номер телефона аптеки. Пароль не нужен: сайт сразу откроет ваш личный кабинет и запомнит устройство для будущих заказов.
+              </div>
+
+              <form onSubmit={handlePhoneLogin} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5 block">
+                    Номер телефона аптеки
+                  </label>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 p-1 bg-white focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
+                    <div className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-700 select-none">
+                      +992
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder="90 123 45 67"
+                      value={loginPhone}
+                      onChange={e => {
+                        setLoginError(null);
+                        setLoginPhone(e.target.value);
+                      }}
+                      autoFocus
+                      required
+                      className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-normal"
+                    />
+                  </div>
+                  {loginError && (
+                    <p className="text-[11px] text-red-500 font-semibold mt-1.5 pl-1">
+                      {loginError}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+                >
+                  {loginLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} /> Проверка аптеки...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn size={16} /> Войти в личный кабинет
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="text-center pt-2 border-t border-slate-100">
+                <p className="text-xs text-slate-400">
+                  Еще не зарегистрированы как партнер?{' '}
+                  <Link 
+                    href="/opt" 
+                    onClick={() => setIsLoginModalOpen(false)}
+                    className="text-emerald-600 font-bold hover:underline"
+                  >
+                    Подать заявку
+                  </Link>
+                </p>
               </div>
             </motion.div>
           </div>

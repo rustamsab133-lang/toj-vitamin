@@ -15,11 +15,12 @@ import { CrmDashboard } from './components/CrmDashboard';
 import { PharmacyOrdersDashboard } from './components/PharmacyOrdersDashboard';
 import { BloggerDashboard } from './components/BloggerDashboard';
 import { ComboEditor } from './components/ComboEditor';
+import { DocumentsDashboard } from './components/DocumentsDashboard';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2 } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents';
 
 const MODULES = [
   { id: 'pharmacy-orders' as AdminView, title: 'Закупки аптек', desc: 'B2B заказы, ссылки партнеров', icon: <Building2 size={24} />, color: '#F0FDF4' },
@@ -29,6 +30,7 @@ const MODULES = [
   { id: 'analytics' as AdminView, title: 'Мега-Аналитика', desc: 'Выручка, промокоды, CRM', icon: <BarChart3 size={24} />, color: '#F5F3FF' },
   { id: 'bloggers' as AdminView, title: 'Реклама у Блогеров', desc: 'Статистика UTM и короткие ссылки', icon: <Users size={24} />, color: '#EEF2FF' },
   { id: 'warehouse' as AdminView, title: 'Офлайн-Склад', desc: 'Остатки и касса магазина', icon: <Warehouse size={24} />, color: '#FFF1F2' },
+  { id: 'documents' as AdminView, title: 'Документы и печать', desc: 'Накладные, счета, этикетки', icon: <FileText size={24} />, color: '#EFF6FF' },
   { id: 'feed-issues' as AdminView, title: 'Проблемы фидов', desc: 'Диагностика Meta & Google', icon: <FileWarning size={24} />, color: '#FFFBEB' },
   { id: 'products' as AdminView, title: 'Товары', desc: 'Каталог, цены, фото', icon: <Package size={24} />, color: '#F8FAFC' },
   { id: 'categories' as AdminView, title: 'Умные комплексы', desc: 'Управление подбором', icon: <Layers size={24} />, color: '#F8FAFC' },
@@ -243,6 +245,12 @@ export default function AdminPage() {
           {view === 'bloggers' && (
             <motion.div key="bloggers" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <BloggerDashboard onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'documents' && (
+            <motion.div key="documents" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <DocumentsDashboard onBack={() => setView('dashboard')} />
             </motion.div>
           )}
 

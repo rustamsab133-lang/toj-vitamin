@@ -5,7 +5,8 @@ import { Pharmacy, PharmacyOrder } from '@/lib/types';
 import { 
   ChevronLeft, Building2, TrendingUp, BarChart3, Search, 
   UserPlus, Phone, Calendar, ClipboardList, Trash2, X, Plus, Minus,
-  Edit, Copy, Check, ShoppingCart, Clock, ShieldAlert, Award, Package, RefreshCw
+  Edit, Copy, Check, ShoppingCart, Clock, ShieldAlert, Award, Package, RefreshCw,
+  MessageSquare, MapPin, User, ExternalLink, Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -83,6 +84,61 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
   // General utility states
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [copiedPhoneOrder, setCopiedPhoneOrder] = useState<string | null>(null);
+
+  // Orders tab filter & search
+  const [ordersFilterQuery, setOrdersFilterQuery] = useState('');
+  const [ordersFilterStatus, setOrdersFilterStatus] = useState<string>('all');
+
+  // Fast map lookup for pharmacies
+  const pharmacyMap = useMemo(() => {
+    const map = new Map<string, Pharmacy>();
+    pharmacies.forEach(p => map.set(p.id, p));
+    return map;
+  }, [pharmacies]);
+
+  // Robust resolver for order pharmacy information
+  const getOrderPharmacy = (order: PharmacyOrder): Partial<Pharmacy> => {
+    const joined = Array.isArray(order.pharmacies) ? order.pharmacies[0] : order.pharmacies;
+    const fromMap = order.pharmacy_id ? pharmacyMap.get(order.pharmacy_id) : undefined;
+    return {
+      ...joined,
+      ...fromMap,
+      name: fromMap?.name || joined?.name || 'Удаленная аптека',
+      phone: fromMap?.phone || joined?.phone || '',
+      address: fromMap?.address || joined?.address || '',
+      contact_person: fromMap?.contact_person || joined?.contact_person || '',
+      status: fromMap?.status || joined?.status || 'lead',
+      discount_percent: fromMap?.discount_percent ?? joined?.discount_percent ?? 0
+    };
+  };
+
+  // Filtered orders list
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      // 1. Status filter
+      if (ordersFilterStatus !== 'all') {
+        if (ordersFilterStatus === 'unpaid' && order.payment_status !== 'unpaid') return false;
+        if (ordersFilterStatus === 'paid' && order.payment_status !== 'paid') return false;
+        if (['new', 'confirmed', 'assembled', 'shipped', 'delivered', 'cancelled'].includes(ordersFilterStatus)) {
+          if (order.order_status !== ordersFilterStatus) return false;
+        }
+      }
+
+      // 2. Search query filter
+      if (ordersFilterQuery.trim()) {
+        const q = ordersFilterQuery.toLowerCase().trim();
+        const ph = getOrderPharmacy(order);
+        const orderIdMatch = order.id.toLowerCase().includes(q);
+        const nameMatch = (ph.name || '').toLowerCase().includes(q);
+        const phoneMatch = (ph.phone || '').replace(/[\s\-\(\)\+]/g, '').includes(q.replace(/[\s\-\(\)\+]/g, ''));
+        const notesMatch = (order.notes || '').toLowerCase().includes(q);
+        if (!orderIdMatch && !nameMatch && !phoneMatch && !notesMatch) return false;
+      }
+
+      return true;
+    });
+  }, [orders, ordersFilterQuery, ordersFilterStatus, pharmacyMap]);
 
   // Lock body scroll when pharmacy modal is open
   useEffect(() => {
@@ -118,12 +174,12 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
       });
       if (pharmData) setPharmacies(pharmData);
 
-      // 2. Fetch Orders with pharmacy relation
+      // 2. Fetch Orders with pharmacy relation (including phone, address, contact_person)
       const { data: ordData } = await adminDbQuery({
         action: 'select',
         table: 'pharmacy_orders',
         data: { 
-          columns: '*,pharmacies:pharmacies(name,discount_percent,phone)',
+          columns: '*,pharmacies:pharmacies(id,name,discount_percent,phone,address,contact_person,status)',
           order: { column: 'created_at', ascending: false } 
         }
       });
@@ -610,18 +666,71 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
 
               {/* Orders List */}
               <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
-                <h3 className="text-base font-bold text-slate-800 font-outfit">Лента оптовых заказов</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <h3 className="text-base font-bold text-slate-800 font-outfit">Лента оптовых заказов</h3>
+                  <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
+                    <span>Показано: <strong className="text-slate-700">{filteredOrders.length}</strong> из {orders.length}</span>
+                  </div>
+                </div>
 
-                {orders.length === 0 ? (
+                {/* Search & Status Filters */}
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <div className="relative flex-1">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={ordersFilterQuery}
+                      onChange={e => setOrdersFilterQuery(e.target.value)}
+                      placeholder="Поиск по телефону (+992...), названию аптеки или ID заказа..."
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 outline-none focus:border-slate-800 transition-colors placeholder:text-slate-400"
+                    />
+                    {ordersFilterQuery && (
+                      <button 
+                        onClick={() => setOrdersFilterQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                    {[
+                      { id: 'all', label: 'Все' },
+                      { id: 'new', label: 'Новые' },
+                      { id: 'unpaid', label: 'Не оплачен' },
+                      { id: 'confirmed', label: 'Подтвержден' },
+                      { id: 'delivered', label: 'Доставлен' }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setOrdersFilterStatus(f.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                          ordersFilterStatus === f.id
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {filteredOrders.length === 0 ? (
                   <div className="text-center py-12 text-slate-400 text-sm">
-                    Оптовых заказов от аптек пока не поступало.
+                    {orders.length === 0 ? 'Оптовых заказов от аптек пока не поступало.' : 'Заказов по заданному фильтру не найдено.'}
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {orders.map(order => {
+                    {filteredOrders.map(order => {
                       const statusInfo = ORDER_STATUS_MAP[order.order_status] || ORDER_STATUS_MAP.new;
                       const paymentInfo = PAYMENT_STATUS_MAP[order.payment_status] || PAYMENT_STATUS_MAP.unpaid;
                       const isExpanded = expandedOrderId === order.id;
+
+                      const ph = getOrderPharmacy(order);
+                      const formattedPhone = ph.phone || '';
+                      const cleanPhone = formattedPhone.replace(/[^0-9]/g, '');
 
                       const formattedDate = order.created_at 
                         ? new Date(order.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) 
@@ -640,11 +749,55 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
                         >
                           {/* Row Header */}
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-                            <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-2.5">
                               <span className="font-extrabold text-sm text-slate-800">#{order.id.slice(0, 8).toUpperCase()}</span>
-                              <span className="font-bold text-sm text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg">
-                                {order.pharmacies?.name || 'Удаленная аптека'}
+                              
+                              {/* Pharmacy Name */}
+                              <span className="font-bold text-sm text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                                <Building2 size={13} className="text-slate-500 shrink-0" />
+                                {ph.name || 'Удаленная аптека'}
                               </span>
+
+                              {/* Pharmacy Phone Badge (Direct click to call or WhatsApp) */}
+                              {formattedPhone ? (
+                                <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                  <a
+                                    href={`tel:${formattedPhone}`}
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                                    title="Позвонить аптеке"
+                                  >
+                                    <Phone size={12} className="text-emerald-600 shrink-0" />
+                                    <span>{formattedPhone}</span>
+                                  </a>
+                                  <a
+                                    href={`https://wa.me/${cleanPhone}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-[#25D366] hover:bg-[#20ba59] px-2 py-1 rounded-lg transition-colors shadow-2xs"
+                                    title="Открыть чат WhatsApp"
+                                  >
+                                    <MessageSquare size={11} className="shrink-0" />
+                                    <span>WA</span>
+                                  </a>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(formattedPhone);
+                                      setCopiedPhoneOrder(order.id);
+                                      setTimeout(() => setCopiedPhoneOrder(null), 1500);
+                                    }}
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                                    title="Скопировать номер телефона"
+                                  >
+                                    {copiedPhoneOrder === order.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg font-medium">
+                                  Номер не указан
+                                </span>
+                              )}
+
+                              {/* Status Badges */}
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusInfo.color}`}>
                                 {statusInfo.label}
                               </span>
@@ -652,16 +805,27 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
                                 Оплата: {paymentInfo.label}
                               </span>
                             </div>
-                            <span className="text-[11px] text-slate-400 font-bold">{formattedDate}</span>
+                            <span className="text-[11px] text-slate-400 font-bold shrink-0">{formattedDate}</span>
                           </div>
 
                           {/* Row Body */}
-                          <div className="flex justify-between items-center text-xs">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
                             <p className="text-slate-500 truncate max-w-lg">
                               {order.items.map(i => `${i.name} ×${i.quantity}`).join(', ')}
                             </p>
-                            <span className="font-extrabold text-slate-800 text-sm shrink-0 ml-4">{order.total_amount.toLocaleString()} смн</span>
+                            <span className="font-extrabold text-slate-800 text-sm shrink-0">{order.total_amount.toLocaleString()} смн</span>
                           </div>
+
+                          {/* Quick Address preview in collapsed view */}
+                          {ph.address && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg mt-2 font-medium border border-slate-100/80">
+                              <MapPin size={12} className="text-emerald-600 shrink-0" />
+                              <span className="truncate">Адрес: <strong>{ph.address}</strong></span>
+                              {ph.contact_person && (
+                                <span className="text-slate-400 shrink-0">({ph.contact_person})</span>
+                              )}
+                            </div>
+                          )}
 
                           {/* Expanded content */}
                           <AnimatePresence>
@@ -673,6 +837,86 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
                                 className="mt-4 pt-4 border-t border-slate-100 space-y-4 cursor-default"
                                 onClick={e => e.stopPropagation()}
                               >
+                                {/* Pharmacy / Customer Contact Details Card */}
+                                <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold shrink-0">
+                                        <Building2 size={20} />
+                                      </div>
+                                      <div>
+                                        <div className="flex items-center gap-2">
+                                          <p className="font-extrabold text-slate-900 text-sm sm:text-base">{ph.name || 'Удаленная аптека'}</p>
+                                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                            ph.status === 'lead' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                                          }`}>
+                                            {ph.status === 'lead' ? 'Новая заявка с сайта' : 'Партнер B2B'}
+                                          </span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                          {ph.address ? `Адрес: ${ph.address}` : 'Адрес аптеки не указан'}
+                                          {ph.contact_person ? ` • Контакт: ${ph.contact_person}` : ''}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {formattedPhone && (
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <a 
+                                          href={`tel:${formattedPhone}`} 
+                                          className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-sm"
+                                        >
+                                          <Phone size={14} /> Позвонить
+                                        </a>
+                                        <a 
+                                          href={`https://wa.me/${cleanPhone}`} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-sm"
+                                        >
+                                          <MessageSquare size={14} /> WhatsApp
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                                    <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Номер телефона:</span>
+                                      <span className="font-extrabold text-slate-800 text-sm select-all mt-0.5 block">{formattedPhone || 'Не указан'}</span>
+                                    </div>
+                                    <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Контактное лицо:</span>
+                                      <span className="font-bold text-slate-700 text-xs mt-0.5 block">{ph.contact_person || '—'}</span>
+                                    </div>
+                                    <div className="bg-white p-2.5 rounded-xl border border-slate-100 flex flex-col justify-between">
+                                      <div>
+                                        <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Адрес доставки:</span>
+                                        <span className="font-bold text-slate-700 text-xs mt-0.5 block select-all">{ph.address || '—'}</span>
+                                      </div>
+                                      {ph.address && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const copyText = `Аптека: ${ph.name}\nТелефон: ${ph.phone || ''}\nКонтакт: ${ph.contact_person || ''}\nАдрес доставки: ${ph.address}`;
+                                            navigator.clipboard.writeText(copyText);
+                                            setCopiedId(order.id + '_addr');
+                                            setTimeout(() => setCopiedId(null), 2000);
+                                          }}
+                                          className="mt-1.5 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 self-start cursor-pointer"
+                                        >
+                                          {copiedId === order.id + '_addr' ? <Check size={11} /> : <Copy size={11} />}
+                                          <span>{copiedId === order.id + '_addr' ? 'Скопировано!' : 'Копировать курьеру'}</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Скидка аптеки:</span>
+                                      <span className="font-bold text-emerald-600 text-xs mt-0.5 block">{ph.discount_percent || 0}%</span>
+                                    </div>
+                                  </div>
+                                </div>
+
                                 {/* Items Table */}
                                 <div className="space-y-2">
                                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Состав заказа:</p>

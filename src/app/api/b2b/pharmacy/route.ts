@@ -15,6 +15,30 @@ const supabaseAdmin = createClient(
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+function extractProductBrand(p: any): string {
+  if (p.brand && typeof p.brand === 'string' && p.brand.trim()) {
+    return p.brand.trim();
+  }
+  const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
+  const text = `${p.name || ''} ${p.full_name || ''} ${tagsStr}`.toLowerCase();
+  
+  if (text.includes('gls')) return 'GLS Pharmaceuticals';
+  if (text.includes('now foods') || /\bnow\b/.test(text)) return 'NOW Foods';
+  if (text.includes('solgar') || text.includes('солгар')) return 'Solgar';
+  if (text.includes('doppelherz') || text.includes('доппельгерц')) return 'Doppelherz';
+  if (text.includes('nature') && text.includes('bounty')) return "Nature's Bounty";
+  if (text.includes('california gold') || text.includes('cgn')) return 'California Gold Nutrition';
+  if (text.includes('swanson')) return 'Swanson';
+  if (text.includes('doctor') && text.includes('best')) return "Doctor's Best";
+  if (text.includes('evalar') || text.includes('эвалар')) return 'Эвалар';
+  if (text.includes('21st century')) return '21st Century';
+  if (text.includes('thorne')) return 'Thorne';
+  if (text.includes('life extension')) return 'Life Extension';
+  if (text.includes('nutricost')) return 'Nutricost';
+
+  return 'TOJ-VITAMIN';
+}
+
 /**
  * GET /api/b2b/pharmacy
  * Возвращает каталог товаров с базовыми оптовыми ценами (products.price)
@@ -110,12 +134,20 @@ export async function GET(request: Request) {
           retail_price: retailPrice,
           price: discountPrice,
           discount_percent: pharmacy.discount_percent,
+          brand: extractProductBrand(p),
           is_hidden: isHidden,
           in_stock: !isHidden
         };
       });
 
-      return NextResponse.json({ pharmacy, products: b2bProducts });
+      // Загружаем историю заказов данной аптеки
+      const { data: ordersData } = await supabaseAdmin
+        .from('pharmacy_orders')
+        .select('*')
+        .eq('pharmacy_id', pharmacy.id)
+        .order('created_at', { ascending: false });
+
+      return NextResponse.json({ pharmacy, products: b2bProducts, orders: ordersData || [] });
     }
 
     // Формируем чистые оптовые товары для публичного доступа
@@ -129,6 +161,7 @@ export async function GET(request: Request) {
         image_url: p.image_url,
         icon_type: p.icon_type,
         price: Number(p.price) || 0, // Базовая оптовая цена из базы данных
+        brand: extractProductBrand(p),
         is_hidden: isHidden,
         in_stock: !isHidden
       };
@@ -169,6 +202,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Недействительный токен аптеки' }, { status: 404 });
       }
       pharmacy = pharmData;
+
+      // Если адрес, телефон, контактное лицо или название были переданы или изменены — обновляем профиль аптеки
+      const updateData: any = {};
+      if (address !== undefined && address.trim() && address.trim() !== pharmacy.address) {
+        updateData.address = address.trim();
+      }
+      if (phone !== undefined && phone.trim() && phone.trim() !== pharmacy.phone) {
+        updateData.phone = phone.trim();
+      }
+      if (body.contact_person !== undefined && body.contact_person.trim() && body.contact_person.trim() !== pharmacy.contact_person) {
+        updateData.contact_person = body.contact_person.trim();
+      }
+      if (pharmacy_name !== undefined && pharmacy_name.trim() && pharmacy_name.trim() !== pharmacy.name && pharmacy_name.trim() !== 'Оптовый покупатель') {
+        updateData.name = pharmacy_name.trim();
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await supabaseAdmin.from('pharmacies').update(updateData).eq('id', pharmacy.id);
+        pharmacy = { ...pharmacy, ...updateData };
+      }
     } else {
       // 2. Публичное оформление в один клик
       if (!phone || !pharmacy_name) {
@@ -191,14 +244,34 @@ export async function POST(request: Request) {
         return dbClean.endsWith(cleanPhone) || cleanPhone.endsWith(dbClean);
       });
 
-      // Если аптеки нет, создаем новую запись со статусом 'lead'
-      if (!pharmacy) {
+      // Если аптека уже есть, при необходимости обновляем название и контакты
+      if (pharmacy) {
+        const updateData: any = {};
+        if (pharmacy_name && pharmacy_name !== 'Оптовый покупатель' && (!pharmacy.name || pharmacy.name === 'Оптовый покупатель')) {
+          updateData.name = pharmacy_name.trim();
+        }
+        if (address && address.trim() && address.trim() !== pharmacy.address) {
+          updateData.address = address.trim();
+        }
+        if (body.contact_person && body.contact_person.trim() && body.contact_person.trim() !== pharmacy.contact_person) {
+          updateData.contact_person = body.contact_person.trim();
+        }
+        if (!pharmacy.phone && phone) {
+          updateData.phone = phone.trim();
+        }
+        if (Object.keys(updateData).length > 0) {
+          await supabaseAdmin.from('pharmacies').update(updateData).eq('id', pharmacy.id);
+          pharmacy = { ...pharmacy, ...updateData };
+        }
+      } else {
+        // Если аптеки нет, создаем новую запись со статусом 'lead'
         const { data: newPharm, error: createError } = await supabaseAdmin
           .from('pharmacies')
           .insert({
             name: pharmacy_name.trim(),
             phone: phone.trim(),
             address: (address || '').trim(),
+            contact_person: (body.contact_person || '').trim(),
             status: 'lead', // Помечаем как заявку, чтобы менеджер мог одобрить партнера
             discount_percent: 0, // У лида скидка 0% на первый заказ (идут по базовой оптовой цене)
             credit_limit: 0,
@@ -306,3 +379,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message || 'Ошибка при оформлении заказа' }, { status: 500 });
   }
 }
+
+/**
+ * PATCH /api/b2b/pharmacy
+ * Обновляет реквизиты аптеки (название, телефон, адрес, контактное лицо) по её токену
+ */
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { token, name, phone, address, contact_person } = body;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Токен авторизации обязателен' }, { status: 400 });
+    }
+
+    const { data: existing, error: findError } = await supabaseAdmin
+      .from('pharmacies')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (findError || !existing) {
+      return NextResponse.json({ error: 'Аптека не найдена или ссылка недействительна' }, { status: 404 });
+    }
+
+    const updates: Record<string, any> = {};
+    if (name !== undefined) updates.name = String(name).trim();
+    if (phone !== undefined) updates.phone = String(phone).trim();
+    if (address !== undefined) updates.address = String(address).trim();
+    if (contact_person !== undefined) updates.contact_person = String(contact_person).trim();
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ success: true, pharmacy: existing });
+    }
+
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('pharmacies')
+      .update(updates)
+      .eq('id', existing.id)
+      .select('*')
+      .single();
+
+    if (updateError) throw updateError;
+
+    return NextResponse.json({ success: true, pharmacy: updated });
+  } catch (error: any) {
+    console.error('B2B Pharmacy PATCH Error:', error);
+    return NextResponse.json({ error: error.message || 'Ошибка при обновлении профиля аптеки' }, { status: 500 });
+  }
+}
+

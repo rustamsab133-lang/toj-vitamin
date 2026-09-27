@@ -209,3 +209,50 @@ export interface PharmacyOrder {
   created_at?: string;
   pharmacies?: Pharmacy; // Relationship join name
 }
+
+// ==== DOCUMENT & SUPPLIER TYPES ====
+
+export interface Supplier {
+  id: string;
+  name: string;
+  legal_name?: string;
+  inn?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  contact_person?: string;
+  payment_terms?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export type DocType = 'receipt' | 'write_off' | 'invoice' | 'return';
+export type DocStatus = 'draft' | 'confirmed' | 'cancelled';
+
+export interface WarehouseDocument {
+  id: string;
+  doc_number: string;
+  doc_type: DocType;
+  supplier_id?: string;
+  total_amount: number;
+  status: DocStatus;
+  notes?: string;
+  created_by?: string;
+  confirmed_at?: string;
+  created_at?: string;
+  // Relationships
+  supplier?: Supplier;
+  items?: WarehouseDocumentItem[];
+}
+
+export interface WarehouseDocumentItem {
+  id: string;
+  document_id: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
