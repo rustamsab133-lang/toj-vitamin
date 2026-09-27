@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base routes
   const baseRoutes = [
     '',
+    '/about',
     '/journal',
     '/opt',
     '/b2b',
@@ -24,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
-    priority: route === '' ? 1 : 0.8,
+    priority: route === '' ? 1 : (route === '/about' ? 0.9 : 0.8),
   }));
 
   // Dynamic Product routes (excluding hidden/out of stock products)

@@ -240,98 +240,121 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                     className="w-full h-full object-contain scale-[3.0]" 
                   />
                   </div>
-                  <span className="font-bold text-[16px] text-white font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-[14px] leading-relaxed">
-                    {lang === 'ru'
-                      ? 'TOJ-VITAMIN (Точвитамин) — официальный интернет-магазин качественных витаминов и инновационных решений для здоровья.'
-                      : 'TOJ-VITAMIN (Тоҷвитамин) — мағозаи расмии интернетии витаминҳои босифат ва қарорҳои инноватсионӣ барои саломатӣ.'}
-                  </p>
-                  <p className="text-[12px] text-white/40 leading-relaxed">
-                    {lang === 'ru'
-                      ? 'Ищете ли вы нас как TOJ-VITAMIN, Точвитамин, Тоджвитамин или Таджвитамин — наш интернет-магазин гарантирует 100% оригинальность всей продукции и быструю доставку по всему Таджикистану.'
-                      : 'Новобаста аз он ки шумо моро ҳамчун TOJ-VITAMIN ё Тоҷвитамин меҷӯед — мағозаи интернетии мо сифати маҳсулот ва интиқоли зудро дар тамоми Тоҷикистон кафолат медиҳад.'}
-                  </p>
-                </div>
-              </div>
- 
-              {/* Contact */}
-              <div className="space-y-6">
-                <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit opacity-50">
-                  {lang === 'ru' ? 'Контакты и соцсети' : 'Тамос ва шабакаҳо'}
-                </h4>
- 
-                <div className="flex flex-col gap-3">
-                  {/* WhatsApp Card */}
-                  <a
-                    href={`https://wa.me/${settings.whatsapp_phone}`}
-                    className="group relative flex items-center justify-between p-4 rounded-2xl bg-[#25D366]/5 border border-[#25D366]/10 hover:bg-[#25D366] transition-all duration-500 overflow-hidden"
-                  >
-                    <div className="flex items-center gap-3 relative z-10">
-                      <div className="w-10 h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center shadow-lg group-hover:bg-white group-hover:text-[#25D366] transition-colors">
-                        <MessageCircle size={20} fill="currentColor" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[14px] font-bold text-white group-hover:text-white transition-colors">WhatsApp</span>
-                        <span className="text-[11px] text-[#25D366] font-bold group-hover:text-white/80">+{settings.whatsapp_phone}</span>
-                      </div>
+                    <span className="font-bold text-[16px] text-white font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-[14px] leading-relaxed text-white/90">
+                      {lang === 'ru'
+                        ? 'Toj-Vitamin — специализированное подразделение и цифровая платформа фармацевтического холдинга ООО «Саховати Истаравшан» (на рынке с 2003 года). Прямые поставки сертифицированных витаминов и нутрицевтиков в Таджикистане.'
+                        : 'Toj-Vitamin — бахши тахассусӣ ва платформаи рақамии холдинги фарматсевтии ҶДММ «Саховати Истаравшан» (дар бозор аз соли 2003). Интиқоли мустақими витаминҳо ва иловаҳои сертисификатсияшуда дар Тоҷикистон.'}
+                    </p>
+                    <div className="text-[12px] text-white/60 space-y-1 pt-1 border-t border-white/10">
+                      <p className="font-semibold text-white/80">
+                        {lang === 'ru' ? 'ООО «Саховати Истаравшан» / LLC "Sakhovati Istaravshan"' : 'ҶДММ «Саховати Истаравшан»'}
+                      </p>
+                      <p>
+                        {lang === 'ru' ? 'Головной офис: РТ, г. Худжанд, ул. К. Худжанди 63/3' : 'Дафтари асосӣ: ҶТ, ш. Хуҷанд, кӯч. К. Хуҷандӣ 63/3'}
+                      </p>
+                      <p>
+                        {lang === 'ru' ? 'Склады GDP/GSP: г. Худжанд | г. Душанбе' : 'Анборҳои GDP/GSP: ш. Хуҷанд | ш. Душанбе'}
+                      </p>
+                      <p>
+                        Email: <a href="mailto:ceo@toj-vitamin.tj" className="text-blue-400 hover:underline">ceo@toj-vitamin.tj</a> | Тел: <a href="tel:+992176660707" className="text-white hover:underline">+992 176660707</a>
+                      </p>
                     </div>
-                    <ArrowUpRight size={18} className="text-[#25D366] group-hover:text-white transition-all group-hover:translate-x-1 group-hover:-translate-y-1" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 underline-none" />
-                  </a>
- 
-                  {/* Instagram Card */}
-                  <a
-                    href="https://www.instagram.com/toj_vitamin?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
-                    target="_blank"
-                    className="group relative flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-transparent transition-all duration-500 overflow-hidden"
-                  >
-                    {/* Brand Gradient Overlay */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_bottom_left,_#f9ce34_0%,_#ee2a7b_50%,_#6228d7_100%)]" />
- 
-                    <div className="flex items-center gap-3 relative z-10">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white flex items-center justify-center shadow-lg group-hover:bg-white group-hover:from-white group-hover:to-white group-hover:text-[#ee2a7b] transition-all duration-500">
-                        <Instagram size={20} />
-                      </div>
+                  </div>
+                </div>
+
+                {/* Ecosystem & Partners */}
+                <div className="space-y-4">
+                  <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit opacity-60">
+                    {lang === 'ru' ? 'Экосистема холдинга' : 'Экосистемаи холдинг'}
+                  </h4>
+                  <div className="space-y-2.5">
+                    <a
+                      href="https://sakhovatapteka.tj"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    >
                       <div className="flex flex-col">
-                        <span className="text-[14px] font-bold text-white transition-colors">Instagram</span>
-                        <span className="text-[11px] text-white/50 font-bold group-hover:text-white/80">@toj_vitamin</span>
+                        <span className="text-[13px] font-semibold text-white">Саховат Аптека</span>
+                        <span className="text-[11px] text-white/40">Розничная аптечная сеть</span>
                       </div>
-                    </div>
-                    <ArrowUpRight size={18} className="text-white/30 group-hover:text-white transition-all group-hover:translate-x-1 group-hover:-translate-y-1 relative z-10" />
-                  </a>
- 
+                      <ArrowUpRight size={15} className="text-white/40 group-hover:text-white transition-colors" />
+                    </a>
+                    <a
+                      href="https://aslpharm.tj"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-semibold text-white">ASLPHARM</span>
+                        <span className="text-[11px] text-white/40">Фармацевтическая экосистема</span>
+                      </div>
+                      <ArrowUpRight size={15} className="text-white/40 group-hover:text-white transition-colors" />
+                    </a>
+                  </div>
+
+                  <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit opacity-60 pt-2">
+                    {lang === 'ru' ? 'Контакты' : 'Тамос'}
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {/* WhatsApp */}
+                    <a
+                      href={`https://wa.me/${settings.whatsapp_phone}`}
+                      className="flex items-center gap-2.5 p-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-colors"
+                    >
+                      <MessageCircle size={16} className="text-[#25D366]" />
+                      <span className="text-[12px] font-semibold text-white">WhatsApp: +{settings.whatsapp_phone}</span>
+                    </a>
+                    {/* Instagram */}
+                    <a
+                      href="https://www.instagram.com/toj_vitamin"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 transition-colors"
+                    >
+                      <Instagram size={16} className="text-pink-400" />
+                      <span className="text-[12px] font-semibold text-white">Instagram: @toj_vitamin</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Links */}
+                <div className="space-y-4">
+                  <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit">{lang === 'ru' ? 'Навигация' : 'Навигатсия'}</h4>
+                  <div className="space-y-2.5">
+                    <Link href="/about" className="block text-[14px] text-blue-400 hover:text-blue-300 font-semibold transition-colors text-left">
+                      {lang === 'ru' ? '🏢 О холдинге и дистрибуции' : '🏢 Дар бораи ширкат ва дистрибутсия'}
+                    </Link>
+                    <Link href="/opt" className="block text-[14px] hover:text-white transition-colors text-left">
+                      {lang === 'ru' ? '💼 B2B / Оптовым партнерам' : '💼 Ба шарикони яклухт (B2B)'}
+                    </Link>
+                    <button onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                      {lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ'}
+                    </button>
+                    <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                      {lang === 'ru' ? '💊 Каталог витаминов' : '💊 Каталоги витаминҳо'}
+                    </button>
+                    <Link href="/journal" className="block text-[14px] hover:text-white transition-colors text-left">
+                      {lang === 'ru' ? '🧪 Научный журнал' : '🧪 Журнали илмӣ'}
+                    </Link>
+                  </div>
                 </div>
               </div>
- 
-              {/* Links */}
-              <div className="space-y-4">
-                <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit">{lang === 'ru' ? 'Навигация' : 'Навигатсия'}</h4>
-                <div className="space-y-3">
-                  <button onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
-                    {lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ'}
-                  </button>
-                  <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
-                    {lang === 'ru' ? '💊 Каталог витаминов' : '💊 Каталоги витаминҳо'}
-                  </button>
-                  <Link href="/journal" className="block text-[14px] hover:text-white transition-colors text-left">
-                    {lang === 'ru' ? '🧪 Научный журнал (SEO)' : '🧪 Журнали илмӣ'}
-                  </Link>
-                </div>
+
+              <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                 <p className="text-[12px] text-white/40">
+                   © {new Date().getFullYear()} {settings.brand_name} / ООО «Саховати Истаравшан» (2003–{new Date().getFullYear()}). {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
+                 </p>
+                 <p className="text-[11px] text-white/30 max-w-md text-center sm:text-right">
+                   {lang === 'ru'
+                     ? 'Продукция сертифицирована. Не является лекарственным средством. Перед применением проконсультируйтесь со специалистом.'
+                     : 'Маҳсулот сертисификатсия шудааст. Доруворӣ нест. Пеш аз истифода бо мутахассис маслиҳат намоед.'}
+                 </p>
               </div>
-            </div>
- 
-            <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-               <p className="text-[12px] text-white/30">
-                 © {new Date().getFullYear()} {settings.brand_name} (Точвитамин). {lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.'}
-               </p>
-               <p className="text-[11px] text-white/20 max-w-md text-center sm:text-right">
-                 {lang === 'ru'
-                   ? 'Продукция не является лекарственным средством. Перед применением проконсультируйтесь с врачом.'
-                   : 'Маҳсулот доруворӣ нест. Пеш аз истифода бо духтур маслиҳат намоед.'}
-               </p>
-            </div>
           </div>
         </footer>
   

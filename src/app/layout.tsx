@@ -175,7 +175,9 @@ export default function RootLayout({
               {
                 "@context": "https://schema.org",
                 "@type": "Organization",
-                "name": "toj-vitamin",
+                "name": "Toj-Vitamin (ООО «Саховати Истаравшан»)",
+                "legalName": "ООО «Саховати Истаравшан» / LLC Sakhovati Istaravshan",
+                "foundingDate": "2003",
                 "alternateName": [
                   "tojvitamin", 
                   "тожвитамин", 
@@ -192,27 +194,40 @@ export default function RootLayout({
                   "vitamin tj", 
                   "vitamin.tj", 
                   "витамин тч",
-                  "витамин.тч"
+                  "витамин.тч",
+                  "Саховати Истаравшан",
+                  "Sakhovati Istaravshan"
                 ],
                 "url": "https://www.toj-vitamin.tj",
                 "logo": "https://www.toj-vitamin.tj/logo.webp",
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+992176660707",
-                  "contactType": "customer service",
-                  "areaServed": "TJ",
-                  "availableLanguage": ["ru", "tg"]
+                "email": "ceo@toj-vitamin.tj",
+                "contactPoint": [
+                  {
+                    "@type": "ContactPoint",
+                    "telephone": "+992176660707",
+                    "contactType": "customer service & wholesale",
+                    "areaServed": "TJ",
+                    "availableLanguage": ["ru", "tg", "en"]
+                  }
+                ],
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": "ул. К. Худжанди 63/3",
+                  "addressLocality": "Худжанд",
+                  "addressCountry": "TJ"
                 },
                 "sameAs": [
                   "https://www.instagram.com/toj_vitamin",
+                  "https://sakhovatapteka.tj",
+                  "https://aslpharm.tj"
                 ]
               },
               {
                 "@context": "https://schema.org",
                 "@type": "Store",
                 "name": "toj-vitamin",
-                "alternateName": "Интернет-магазин toj-vitamin",
-                "description": "Интернет-магазин сертифицированных витаминов и БАДов в Таджикистане с быстрой доставкой по Душанбе и регионам.",
+                "alternateName": "Интернет-магазин и дистрибьютор toj-vitamin",
+                "description": "Официальная дистрибуция сертифицированных витаминов и БАД в Республике Таджикистан. Подразделение фармацевтического холдинга ООО «Саховати Истаравшан».",
                 "image": "https://www.toj-vitamin.tj/og-image.png",
                 "@id": "https://www.toj-vitamin.tj/#store",
                 "url": "https://www.toj-vitamin.tj",
