@@ -361,7 +361,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => useThemeStore.getState().setIsQuizOpen(false)}
               className="text-[11px] font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-wider flex items-center gap-1"
             >
               <span>{lang === 'en' ? 'To Catalog' : (lang === 'ru' ? 'В каталог' : 'Ба каталог')}</span>
@@ -700,6 +700,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               </button>
               <button
                 onClick={() => {
+                  useThemeStore.getState().setIsQuizOpen(false);
                   document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="flex items-center gap-2 h-14 px-8 bg-[#1D1D1F] text-white rounded-full text-[15px] font-bold hover:bg-[#1E40AF] transition-all shadow-md active:scale-95"

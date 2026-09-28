@@ -26,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
+  const setIsQuizOpen = useThemeStore(state => state.setIsQuizOpen);
   
   const { client, isAuth } = useClient();
   const { totalItems, setIsOpen: setIsCartOpen } = useCart();
@@ -191,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
 
                {/* KILLER FEATURE CTA: Quiz Link */}
                 <button
-                  onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => setIsQuizOpen(true)}
                   className={`hidden md:flex items-center gap-2 h-10 px-5 rounded-full transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] group ${
                     lastQuizResult 
                       ? 'bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white shadow-[0_0_15px_rgba(30,64,175,0.3)]' 
@@ -206,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                           : (lang === 'ru' 
                             ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
                             : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`))
-                      : (lang === 'en' ? 'Find My Vitamins' : (lang === 'tj' ? 'Витаминҳои маро интихоб кунед' : (settings.hero_cta_text || 'Подобрать мои витамины')))
+                      : (lang === 'en' ? 'Match Synergy' : (lang === 'tj' ? 'Интихоби синергия' : (settings.hero_cta_text || 'Подобрать синергию')))
                     }
                   </span>
                 </button>

@@ -19,6 +19,7 @@ const CartDrawer = dynamic(() => import('@/components/CartDrawer').then(m => m.C
 const OrderSuccessOverlay = dynamic(() => import('@/components/OrderSuccessOverlay').then(m => m.OrderSuccessOverlay), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/SearchOverlay').then(m => m.SearchOverlay), { ssr: false });
 const ChatWidget = dynamic(() => import('@/components/ChatWidget').then(m => m.ChatWidget), { ssr: false });
+const QuizOverlay = dynamic(() => import('@/components/QuizOverlay').then(m => m.QuizOverlay), { ssr: false });
 
 import { ComboBanner } from '@/components/ComboBanner';
 import { MainBackground } from '@/components/MainBackground';
@@ -40,6 +41,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
+  const setIsQuizOpen = useThemeStore(state => state.setIsQuizOpen);
 
   
   // Use settings from server, but allow local override if needed
@@ -67,7 +69,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
     const handleHash = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#quiz' || hash === '#synergy') {
-        setTimeout(() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' }), 100);
+        setIsQuizOpen(true);
       } else if (hash === '#combos' || hash === '#combo') {
         setTimeout(() => document.getElementById('combos')?.scrollIntoView({ behavior: 'smooth' }), 100);
       } else if (hash === '#science') {
@@ -265,11 +267,39 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         </div>
 
         {/* 3. SYNERGY ASSESSMENT */}
-        <section id="quiz" className="scroll-mt-24 py-16 md:py-24 my-6 bg-gradient-to-b from-blue-50/40 via-white to-transparent border-t border-b border-black/[0.04] relative">
-          <QuizEngine 
-            lang={lang} 
-            onImmersiveChange={setIsImmersiveMode} 
-          />
+        {/* 3. SYNERGY LAB PROMO CARD */}
+        <section id="quiz" className="scroll-mt-24 px-4 py-8 max-w-5xl mx-auto w-full">
+          <div className="relative rounded-[40px] bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#1E40AF] text-white p-8 md:p-14 overflow-hidden shadow-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="relative z-10 space-y-4 max-w-xl text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                <span>{lang === 'en' ? 'Synergy Lab 1+1=3' : (lang === 'ru' ? 'Лаборатория синергии 1+1=3' : 'Лабораторияи синергия')}</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-outfit leading-tight">
+                {lang === 'en' ? 'Personalized Clinical Vitamin Match' : (lang === 'ru' ? 'Персональный подбор синергии витаминов' : 'Интихоби инфиродии витаминҳо')}
+              </h2>
+              <p className="text-white/70 text-sm sm:text-base leading-relaxed">
+                {lang === 'en'
+                  ? 'Answer 3 quick questions. Our clinical algorithm calculates exact nutrient synergies that amplify each other in your body.'
+                  : (lang === 'ru'
+                    ? 'Ответьте на 3 коротких вопроса. Клинический алгоритм рассчитает связки препаратов, которые взаимно усиливают эффект друг друга.'
+                    : 'Ба 3 саволи кӯтоҳ ҷавоб диҳед. Алгоритм маҷмӯаи витаминҳоро таҳлил мекунад.')}
+              </p>
+            </div>
+            <div className="relative z-10 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsQuizOpen(true)}
+                className="h-14 px-8 rounded-full bg-white text-[#0F172A] hover:bg-blue-50 text-base font-bold shadow-xl hover:scale-105 active:scale-95 transition-all font-outfit flex items-center gap-3"
+              >
+                <span>🧬</span>
+                <span>{lang === 'en' ? 'Start Assessment' : (lang === 'ru' ? 'Подобрать синергию' : 'Оғози интихоб')}</span>
+              </button>
+            </div>
+            {/* Background ambient glow */}
+            <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+            <div className="absolute -left-20 -top-20 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
+          </div>
         </section>
 
         {/* 4. SCIENCE GRID */}
@@ -389,7 +419,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                     <Link href="/opt" className="block text-[14px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors text-left">
                       {lang === 'en' ? '🤝 Become a Partner (Wholesale B2B)' : (lang === 'ru' ? '🤝 Стать партнером (Опт B2B)' : '🤝 Шарик шудан (B2B Яклухт)')}
                     </Link>
-                    <button onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => setIsQuizOpen(true)} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '🧬 Vitamin Assessment' : (lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ')}
                     </button>
                     <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
@@ -449,6 +479,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         )}
       </AnimatePresence>
 
+      <QuizOverlay lang={lang} />
       <SearchOverlay lang={lang} />
       <ChatWidget lang={lang} />
     </main>
