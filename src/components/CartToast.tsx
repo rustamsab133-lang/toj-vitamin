@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, ArrowRight, X, Check } from 'lucide-react';
 import { useCart } from '@/store/useCart';
 import { Lang } from '@/lib/types';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 
 interface CartToastProps {
   lang: Lang;
@@ -45,7 +46,7 @@ export const CartToast: React.FC<CartToastProps> = ({ lang }) => {
               {toastItem.product.image_url ? (
                 <Image
                   src={toastItem.product.image_url}
-                  alt={toastItem.product.name}
+                  alt={getLocalizedProductName(toastItem.product.name, lang)}
                   width={44}
                   height={44}
                   className="object-contain w-full h-full p-1"
@@ -65,7 +66,7 @@ export const CartToast: React.FC<CartToastProps> = ({ lang }) => {
                 </span>
               </div>
               <p className="text-[13px] font-bold text-white truncate font-outfit mt-0.5">
-                {toastItem.product.name}
+                {getLocalizedProductName(toastItem.product.name, lang)}
               </p>
             </div>
           </div>

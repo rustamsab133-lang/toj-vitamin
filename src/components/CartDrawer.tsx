@@ -8,6 +8,7 @@ import { Lang, Product } from '@/lib/types';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { getMarkupSettings, applyMarkupToPrice } from '@/lib/markup';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 
 interface CartItem extends Product {
   quantity: number;
@@ -211,9 +212,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
       // Min amount check
       if (currentTotal < Number(data.min_order_amount)) {
-        setPromoError(lang === 'ru'
-          ? `Минимальная сумма заказа для этого промокода: ${data.min_order_amount} смн`
-          : `Маблағи ҳадди ақал барои ин промокод: ${data.min_order_amount} смн`
+        setPromoError(lang === 'en'
+          ? `Minimum order amount for this promo code: ${data.min_order_amount} TJS`
+          : (lang === 'ru'
+            ? `Минимальная сумма заказа для этого промокода: ${data.min_order_amount} смн`
+            : `Маблағи ҳадди ақал барои ин промокод: ${data.min_order_amount} смн`)
         );
         setShakePromo(true);
         return;
@@ -495,11 +498,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                         className="w-full p-3.5 rounded-2xl bg-white border border-[#E8E8ED] hover:border-blue-200 hover:shadow-md transition-all flex items-center gap-3.5 group"
                       >
                         <div className="w-11 h-11 rounded-xl bg-[#FAFAFA] flex items-center justify-center p-1.5 border border-[#F0F0F5] relative overflow-hidden">
-                          <CartProductImage src={p.image_url} alt={p.name} sizeIcon={16} />
+                          <CartProductImage src={p.image_url} alt={getLocalizedProductName(p.name, lang)} sizeIcon={16} />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-bold text-[13px] text-[#1D1D1F] font-outfit line-clamp-1">{p.name}</p>
-                          <p className="text-[12px] font-bold text-blue-600">{p.price} смн</p>
+                          <p className="font-bold text-[13px] text-[#1D1D1F] font-outfit line-clamp-1">{getLocalizedProductName(p.name, lang)}</p>
+                          <p className="text-[12px] font-bold text-blue-600">{p.price} {lang === 'en' ? 'TJS' : 'смн'}</p>
                         </div>
                         <div className="w-8 h-8 rounded-full bg-[#F0F0F5] group-hover:bg-[#1D1D1F] group-hover:text-white transition-all flex items-center justify-center text-[#86868B]">
                           <Plus size={14} />
@@ -526,13 +529,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       >
                         <div className="flex gap-4">
                           <div className="w-[72px] h-[72px] rounded-xl bg-[#FAFAFA] border border-[#F0F0F5] flex-shrink-0 p-2 group-hover:scale-[1.03] transition-transform duration-500 relative overflow-hidden">
-                            <CartProductImage src={item.image_url} alt={item.name} sizeIcon={24} />
+                            <CartProductImage src={item.image_url} alt={getLocalizedProductName(item.name, lang)} sizeIcon={24} />
                           </div>
 
                           <div className="flex-1 flex flex-col justify-between min-w-0">
                             <div className="flex justify-between items-start gap-2">
                               <h4 className="text-[14px] font-bold text-[#1D1D1F] leading-[1.3] line-clamp-2 font-outfit">
-                                {item.name}
+                                {getLocalizedProductName(item.name, lang)}
                               </h4>
                               {/* DELETE BUTTON — always red */}
                               <button 
@@ -550,7 +553,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                                 <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 rounded-lg hover:bg-[#1D1D1F] hover:text-white transition-all flex items-center justify-center text-[#86868B]"><Plus size={13} /></button>
                               </div>
                               <p className="text-[16px] font-bold text-[#1D1D1F] font-outfit">
-                                {item.price * item.quantity} <span className="text-[10px] text-[#94A3B8]">смн</span>
+                                {item.price * item.quantity} <span className="text-[10px] text-[#94A3B8]">{lang === 'en' ? 'TJS' : 'смн'}</span>
                               </p>
                             </div>
                           </div>
@@ -566,15 +569,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                             <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
                               <div className="flex items-center gap-1.5 mb-2">
                                 <Zap size={12} className="text-blue-600" fill="currentColor" />
-                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Синергия</p>
+                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{lang === 'en' ? 'Synergy' : (lang === 'ru' ? 'Синергия' : 'Синергия')}</p>
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 border border-blue-100 relative overflow-hidden">
-                                  <CartProductImage src={synergyProduct.image_url} alt={synergyProduct.name} sizeIcon={14} />
+                                  <CartProductImage src={synergyProduct.image_url} alt={getLocalizedProductName(synergyProduct.name, lang)} sizeIcon={14} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[12px] font-bold text-[#1D1D1F] line-clamp-1 font-outfit">{synergyProduct.name}</p>
-                                  <p className="text-[11px] font-bold text-blue-600">{synergyProduct.price} смн</p>
+                                  <p className="text-[12px] font-bold text-[#1D1D1F] line-clamp-1 font-outfit">{getLocalizedProductName(synergyProduct.name, lang)}</p>
+                                  <p className="text-[11px] font-bold text-blue-600">{synergyProduct.price} {lang === 'en' ? 'TJS' : 'смн'}</p>
                                 </div>
                                 <button 
                                   onClick={() => addItem(synergyProduct)}
@@ -648,7 +651,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                         <div className="flex items-center gap-2 text-[12px] font-bold text-emerald-700 font-outfit">
                           <Gift size={14} className="text-emerald-500" />
                           <span>
-                            {appliedPromo.code} ({appliedPromo.discount_type === 'percentage' ? `-${appliedPromo.discount_value}%` : `-${appliedPromo.discount_value} смн`})
+                            {appliedPromo.code} ({appliedPromo.discount_type === 'percentage' ? `-${appliedPromo.discount_value}%` : `-${appliedPromo.discount_value} ${lang === 'en' ? 'TJS' : 'смн'}`})
                           </span>
                         </div>
                         <button
@@ -703,8 +706,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                     <div className="flex items-center justify-between text-[13px] font-bold font-outfit px-1 text-[#64748B] pt-1">
                       <span>{lang === 'en' ? 'Promo discount:' : (lang === 'ru' ? 'Скидка по промокоду:' : 'Тахфиф бо промокод:')}</span>
                       <div className="flex items-center gap-1.5">
-                        <span className="line-through text-slate-400 font-medium">{currentTotal} смн</span>
-                        <span className="text-emerald-600">−{discountAmount} смн</span>
+                        <span className="line-through text-slate-400 font-medium">{currentTotal} {lang === 'en' ? 'TJS' : 'смн'}</span>
+                        <span className="text-emerald-600">−{discountAmount} {lang === 'en' ? 'TJS' : 'смн'}</span>
                       </div>
                     </div>
                   )}
@@ -723,9 +726,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       <span>{isVerifying ? (lang === 'en' ? 'Processing...' : (lang === 'ru' ? 'Оформление...' : 'Фармоиш...')) : (lang === 'en' ? 'Place Order' : (lang === 'ru' ? 'Оформить заказ' : 'Фармоиш додан'))}</span>
                       <span className="text-white/50">•</span>
                       {appliedPromo ? (
-                        <span className="font-extrabold">{discountedTotal} смн</span>
+                        <span className="font-extrabold">{discountedTotal} {lang === 'en' ? 'TJS' : 'смн'}</span>
                       ) : (
-                        <span className="font-extrabold">{currentTotal} смн</span>
+                        <span className="font-extrabold">{currentTotal} {lang === 'en' ? 'TJS' : 'смн'}</span>
                       )}
                       {!isVerifying && <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />}
                     </div>

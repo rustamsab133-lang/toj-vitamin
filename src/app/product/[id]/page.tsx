@@ -19,6 +19,7 @@ interface Props {
 
 import { findEnrichmentForProduct, getProductsWithMarkup } from '@/lib/products';
 import { sanitizeTitle } from '@/lib/catalogSanitizer';
+import { getLocalizedProductName, getLocalizedProductTag } from '@/lib/productLocalization';
 
 async function getProduct(id: string): Promise<Product | null> {
   const products = await getProductsWithMarkup();
@@ -147,7 +148,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const lang = (searchParams?.lang === 'tj' ? 'tj' : 'ru') as Lang;
+  const lang: Lang = searchParams?.lang === 'en' ? 'en' : (searchParams?.lang === 'tj' ? 'tj' : 'ru');
 
   const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`;
   const productReviews = getDynamicReviews(product.name, enriched?.tags || []);
@@ -254,7 +255,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
             {product.image_url ? (
               <img
                 src={product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`}
-                alt={product.name}
+                alt={getLocalizedProductName(product.name, lang)}
                 className="w-full max-h-[320px] object-contain group-hover:scale-[1.03] transition-transform duration-700 ease-out relative z-10"
               />
             ) : (
@@ -266,10 +267,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
           <div className="space-y-6">
             <div className="space-y-3">
               <p className="text-[#94A3B8] text-[12px] font-bold uppercase tracking-[0.25em]">
-                Интернет-магазин toj-vitamin
+                {lang === 'en' ? 'Online Store toj-vitamin' : (lang === 'ru' ? 'Интернет-магазин toj-vitamin' : 'Мағозаи интернетии toj-vitamin')}
               </p>
               <h1 className="text-[36px] md:text-[48px] font-bold text-[#1D1D1F] leading-[1.1] tracking-tight font-outfit">
-                {product.name}
+                {getLocalizedProductName(product.name, lang)}
               </h1>
             </div>
 
@@ -277,7 +278,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                <div className="flex gap-2 flex-wrap pt-1">
                  {displayProduct.tags.map((tag: string, i: number) => (
                    <span key={i} className="px-4 py-1.5 rounded-full bg-[#1E40AF]/10 text-[11px] font-bold text-[#1E40AF] uppercase tracking-widest">
-                     {tag}
+                     {getLocalizedProductTag(tag, lang)}
                    </span>
                  ))}
                </div>
@@ -288,15 +289,19 @@ export default async function ProductPage({ params, searchParams }: Props) {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-baseline gap-2">
                   <span className="text-[36px] font-bold text-[#1D1D1F] font-outfit">{product.price}</span>
-                  <span className="text-[16px] text-[#475569] font-medium">TJS / сомони</span>
+                  <span className="text-[16px] text-[#475569] font-medium">{lang === 'en' ? 'TJS' : 'TJS / сомони'}</span>
                 </div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#E8F5E9] text-[#2E7D32] rounded-full text-[13px] font-bold w-fit">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#4CAF50] animate-pulse" />
-                  В наличии. Оригинал GLS
+                  {lang === 'en' ? 'In Stock. Certified GLS' : (lang === 'ru' ? 'В наличии. Оригинал GLS' : 'Дар анбор. Асли GLS')}
                 </div>
               </div>
               <p className="text-[15px] text-[#64748B] leading-relaxed">
-                Сертифицированные нутрицевтики высочайшей биологической ценности. Бесплатная консультация нашего эксперта и экспресс-доставка по всему Таджикистану.
+                {lang === 'en'
+                  ? 'Certified nutraceuticals of the highest biological value. Free consultation with our medical expert and express delivery across Tajikistan.'
+                  : (lang === 'ru'
+                    ? 'Сертифицированные нутрицевтики высочайшей биологической ценности. Бесплатная консультация нашего эксперта и экспресс-доставка по всему Таджикистану.'
+                    : 'Маҳсулоти сертификатсияшуда бо арзиши баланди биологӣ. Машварати ройгони коршинос ва интиқоли фаврӣ дар саросари Тоҷикистон.')}
               </p>
             </div>
 

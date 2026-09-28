@@ -8,6 +8,7 @@ import { useCart } from '@/store/useCart';
 import { slugify } from '@/lib/slugify';
 import Image from 'next/image';
 import { ProductDetailModal } from './ProductDetailModal';
+import { getLocalizedProductName, getLocalizedProductTag } from '@/lib/productLocalization';
 
 interface SearchOverlayProps {
   lang: Lang;
@@ -89,38 +90,44 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
     // 1. Filter products using typo-tolerant fuzzy matching
     const matches = allProducts.filter(p => {
       const name = p.name || '';
+      const nameEn = getLocalizedProductName(name, 'en');
       const fullName = p.full_name || '';
       const tags = Array.isArray(p.tags) 
         ? p.tags.map(t => typeof t === 'string' ? t : '') 
         : [];
+      const tagsEn = tags.map(t => getLocalizedProductTag(t, 'en'));
       const description = p.description || '';
       
       return isFuzzyMatch(query, name) || 
+             isFuzzyMatch(query, nameEn) || 
              isFuzzyMatch(query, fullName) || 
              isFuzzyMatch(query, description) ||
-             tags.some(t => isFuzzyMatch(query, t));
+             tags.some(t => isFuzzyMatch(query, t)) ||
+             tagsEn.some(t => isFuzzyMatch(query, t));
     });
 
     // 2. Sort: prioritizing direct matches (3), then fuzzy name matches (2), then description matches (1)
     return matches.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
+      const aNameEn = getLocalizedProductName(a.name || '', 'en').toLowerCase();
       const aFullName = (a.full_name || '').toLowerCase();
       const bName = (b.name || '').toLowerCase();
+      const bNameEn = getLocalizedProductName(b.name || '', 'en').toLowerCase();
       const bFullName = (b.full_name || '').toLowerCase();
 
       // Priority scores for A
       let aScore = 1;
-      if (aName.includes(query) || aFullName.includes(query)) {
+      if (aName.includes(query) || aNameEn.includes(query) || aFullName.includes(query)) {
         aScore = 3;
-      } else if (isFuzzyMatch(query, aName) || isFuzzyMatch(query, aFullName)) {
+      } else if (isFuzzyMatch(query, aName) || isFuzzyMatch(query, aNameEn) || isFuzzyMatch(query, aFullName)) {
         aScore = 2;
       }
 
       // Priority scores for B
       let bScore = 1;
-      if (bName.includes(query) || bFullName.includes(query)) {
+      if (bName.includes(query) || bNameEn.includes(query) || bFullName.includes(query)) {
         bScore = 3;
-      } else if (isFuzzyMatch(query, bName) || isFuzzyMatch(query, bFullName)) {
+      } else if (isFuzzyMatch(query, bName) || isFuzzyMatch(query, bNameEn) || isFuzzyMatch(query, bFullName)) {
         bScore = 2;
       }
 
@@ -232,7 +239,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                            {product.image_url ? (
                             <Image 
                               src={product.image_url} 
-                              alt={product.name} 
+                              alt={getLocalizedProductName(product.name, lang)} 
                               fill 
                               unoptimized
                               className="object-contain p-6 transition-transform duration-700 group-hover:scale-110" 
@@ -243,7 +250,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                           <div className="absolute top-6 left-6 flex flex-wrap gap-1.5">
                             {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag, i) => (
                               <span key={i} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-wider">
-                                {tag}
+                                {getLocalizedProductTag(tag, lang)}
                               </span>
                             ))}
                           </div>
@@ -252,7 +259,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                         {/* Content */}
                         <div className="p-6 flex-1 flex flex-col">
                           <h3 className="text-[17px] font-bold text-[#1D1D1F] mb-4 font-outfit line-clamp-2 h-[44px] group-hover:text-[#1E40AF] transition-colors">
-                            {product.name}
+                            {getLocalizedProductName(product.name, lang)}
                           </h3>
                           
                           <div className="mt-auto pt-4 border-t border-black/5 flex items-center justify-between">

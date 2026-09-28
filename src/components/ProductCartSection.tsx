@@ -29,7 +29,7 @@ export function ProductPageHeader({ lang }: ProductPageHeaderProps) {
           >
             <ArrowLeft size={16} />
             <span className="font-outfit hidden sm:inline">
-              {lang === 'ru' ? 'Вернуться в каталог' : 'Бозгашт ба каталог'}
+              {lang === 'en' ? 'Back to Catalog' : (lang === 'ru' ? 'Вернуться в каталог' : 'Бозгашт ба каталог')}
             </span>
           </Link>
           

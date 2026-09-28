@@ -23,6 +23,7 @@ import { ProductDetailModal } from './ProductDetailModal';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { slugify } from '@/lib/slugify';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 import { BackgroundGlow } from './BackgroundGlow';
 import { trackEvent } from '@/lib/analytics';
 
@@ -344,7 +345,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                 >
                                   <Image
                                     src={product.image_url}
-                                    alt={product.name}
+                                    alt={getLocalizedProductName(product.name, lang)}
                                     fill
                                     sizes="(max-width: 640px) 250px, 300px"
                                     className="object-contain p-4"
@@ -366,7 +367,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                             {/* 4. CONTENT & ACTIONS */}
                             <div className="flex-1 flex flex-col relative z-10 px-1 text-[#1D1D1F]">
                               <h3 className="text-[17px] font-bold leading-[1.3] mb-4 font-outfit line-clamp-2 h-[44px] group-hover:text-[#1E40AF] transition-colors duration-500">
-                                {product.name}
+                                {getLocalizedProductName(product.name, lang)}
                               </h3>
 
                               <div className="mt-auto pt-5 border-t border-[#F1F5F9] relative h-16 overflow-hidden">

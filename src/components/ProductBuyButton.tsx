@@ -46,14 +46,14 @@ export const ProductBuyButton = ({ product, lang }: { product: Product, lang: La
           <>
             <Check size={24} className="stroke-[3]" />
             <span className="font-outfit">
-              {lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд'}
+              {lang === 'en' ? 'Added to Cart' : (lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд')}
             </span>
           </>
         ) : (
           <>
             <ShoppingBag size={24} fill="currentColor" />
             <span className="font-outfit">
-              {lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}
+              {lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад')}
             </span>
           </>
         )}

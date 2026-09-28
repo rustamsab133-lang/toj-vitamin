@@ -7,6 +7,7 @@ import { useCart } from '@/store/useCart';
 import Image from 'next/image';
 
 import { trackEvent } from '@/lib/analytics';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 
 interface SynergyCardProps {
   synergy: QuizSynergy;
@@ -41,7 +42,7 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
       if (fullProducts.length > 0) {
         addMultiple(fullProducts);
         triggerAnimation();
-        triggerToast(fullProducts[0], lang === 'ru' ? 'Комплекс добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+        triggerToast(fullProducts[0], lang === 'en' ? 'Stack added to cart' : (lang === 'ru' ? 'Комплекс добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд'));
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2500);
       }
@@ -77,7 +78,7 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
           <div className="flex items-center gap-2 bg-black/[0.03] px-4 py-2 rounded-full border border-black/[0.05]">
             <Sparkles size={14} className="text-[#94A3B8]" />
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8]">
-              {lang === 'ru' ? 'Формула 1+1=3' : 'Формулаи 1+1=3'}
+              {lang === 'en' ? '1+1=3 Synergy Formula' : (lang === 'ru' ? 'Формула 1+1=3' : 'Формулаи 1+1=3')}
             </span>
           </div>
         </div>
@@ -104,7 +105,7 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
                 >
                   <div className="relative w-16 h-16 shrink-0 bg-white rounded-2xl border border-black/[0.03] p-1 overflow-hidden shadow-sm group-hover/item:scale-105 transition-transform flex items-center justify-center">
                     {p.image_url ? (
-                      <Image src={p.image_url} alt={p.name} fill className="object-contain p-2" />
+                      <Image src={p.image_url} alt={getLocalizedProductName(p.name, lang)} fill className="object-contain p-2" />
                     ) : (
                       <div className="w-full h-full rounded-xl bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] flex items-center justify-center">
                         <span className="text-[24px] font-bold text-[#4F46E5] uppercase">
@@ -116,10 +117,10 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
                   
                   <div className="flex-1 min-w-0">
                     <h4 className="text-[17px] font-bold text-[#1D1D1F] leading-snug">
-                      {p.name}
+                      {getLocalizedProductName(p.name, lang)}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">
-                       <span className="text-[14px] font-bold text-[#1E40AF]">{p.price} смн</span>
+                       <span className="text-[14px] font-bold text-[#1E40AF]">{p.price} {lang === 'en' ? 'TJS' : 'смн'}</span>
                        <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest bg-black/[0.03] px-2 py-0.5 rounded">
                          {p.marketing_hooks?.[0] || 'expert'}
                        </span>
@@ -140,7 +141,9 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
                     <div className="h-px bg-black/[0.05]" />
                     {p.expert_description && (
                       <div className="space-y-2">
-                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Роль в синергии</p>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
+                           {lang === 'en' ? 'Role in Synergy' : (lang === 'ru' ? 'Роль в синергии' : 'Нақш дар синергия')}
+                         </p>
                          <p className="text-[15px] text-[#475569] leading-relaxed font-medium">{p.expert_description}</p>
                       </div>
                     )}

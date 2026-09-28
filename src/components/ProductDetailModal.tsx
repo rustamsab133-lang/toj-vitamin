@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { ShareButton } from './ShareButton';
 import { slugify } from '@/lib/slugify';
 import { useCart } from '@/store/useCart';
+import { getLocalizedProductName, getLocalizedProductTag } from '@/lib/productLocalization';
 
 // Cache for journal articles to load them once per session
 let cachedArticles: Article[] | null = null;
@@ -430,7 +431,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         {lang === 'en' ? 'Exclusive Collection' : (lang === 'ru' ? 'Эксклюзивная коллекция' : 'Коллексияи эксклюзивӣ')}
                       </p>
                       <h2 className="text-[34px] md:text-[40px] font-bold text-[#1D1D1F] leading-tight font-outfit tracking-tight">
-                        {product.name}
+                        {getLocalizedProductName(product.name, lang)}
                       </h2>
                    </div>
                    
@@ -445,7 +446,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                      <div className="flex flex-wrap gap-2">
                        {product.tags.map((tag, idx) => (
                          <span key={idx} className="px-4 py-1.5 rounded-full bg-black/[0.04] text-[10px] font-bold text-[#1D1D1F] uppercase tracking-widest">
-                           {tag}
+                           {getLocalizedProductTag(tag, lang)}
                          </span>
                        ))}
                      </div>
@@ -525,25 +526,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             <div key={idx} className="relative bg-white border border-black/[0.06] rounded-[32px] p-6 hover:shadow-xl hover:shadow-black/[0.02] transition-all group overflow-hidden">
                                <div className="flex items-center gap-5">
                                   <div className="w-20 h-20 bg-[#FBFBFB] rounded-[24px] flex items-center justify-center p-3 group-hover:scale-110 transition-transform duration-700 shrink-0 border border-black/[0.02] relative overflow-hidden">
-                                    <Image src={synProd.image_url || ''} alt={synProd.name} fill sizes="80px" className="object-contain" />
+                                    <Image src={synProd.image_url || ''} alt={getLocalizedProductName(synProd.name, lang)} fill sizes="80px" className="object-contain" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 text-[#1E40AF]">
                                        <ShieldCheck size={14} className="opacity-50" />
                                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8]">
-                                         {lang === 'ru' ? 'Клиническая пара' : 'Ҷуфти клиникӣ'}
+                                         {lang === 'en' ? 'Clinical Pair' : (lang === 'ru' ? 'Клиническая пара' : 'Ҷуфти клиникӣ')}
                                        </span>
                                     </div>
-                                    <h5 className="font-bold text-[#1D1D1F] text-[17px] mb-1 truncate">{synProd.name}</h5>
+                                    <h5 className="font-bold text-[#1D1D1F] text-[17px] mb-1 truncate">{getLocalizedProductName(synProd.name, lang)}</h5>
                                     <p className="text-[12px] text-[#64748B] mb-4 line-clamp-1">{link.reason}</p>
                                     <div className="flex items-center justify-between">
-                                      <p className="font-bold text-[#1D1D1F] text-[16px]">{synProd.price} {'смн'}</p>
+                                      <p className="font-bold text-[#1D1D1F] text-[16px]">{synProd.price} {lang === 'en' ? 'TJS' : 'смн'}</p>
                                       <button 
                                         type="button"
                                         onClick={() => {
                                           addMultiple([product, synProd]);
                                           triggerAnimation();
-                                          triggerToast(synProd, lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+                                          triggerToast(synProd, lang === 'en' ? 'Bundle added to cart' : (lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд'));
                                           setAddedBundles(prev => ({ ...prev, [synProd.id]: true }));
                                           setTimeout(() => {
                                             setAddedBundles(prev => ({ ...prev, [synProd.id]: false }));
@@ -558,12 +559,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                                         {addedBundles[synProd.id] ? (
                                           <>
                                             <Check size={14} className="stroke-[3]" />
-                                            {lang === 'ru' ? 'Набор добавлен' : 'Маҷмӯа илова шуд'}
+                                            {lang === 'en' ? 'Bundle Added' : (lang === 'ru' ? 'Набор добавлен' : 'Маҷмӯа илова шуд')}
                                           </>
                                         ) : (
                                           <>
                                             <ShoppingBag size={14} />
-                                            {lang === 'ru' ? 'Купить набор' : 'Харидани маҷмӯа'}
+                                            {lang === 'en' ? 'Get Bundle' : (lang === 'ru' ? 'Купить набор' : 'Харидани маҷмӯа')}
                                           </>
                                         )}
                                       </button>
@@ -585,14 +586,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             <div className="flex items-center gap-2 mb-2 opacity-80 text-white">
                                <ShieldCheck size={16} />
                                <span className="text-[10px] font-bold uppercase tracking-widest">
-                                 {lang === 'ru' ? 'toj-vitamin Экспертиза' : 'toj-vitamin Экспертиза'}
+                                 {lang === 'en' ? 'Toj-Vitamin Expertise' : 'toj-vitamin Экспертиза'}
                                </span>
                             </div>
                             <h4 className="text-[18px] sm:text-[20px] font-bold text-white font-outfit mb-1">
                               {lang === 'en' ? 'Science Journal' : (lang === 'ru' ? 'Научный Журнал' : 'Маҷаллаи Илмӣ')}
                             </h4>
                             <p className="text-[#94A3B8] text-[13px] leading-relaxed">
-                              {lang === 'ru' ? 'Узнайте больше о составах, исследованиях и правилах приема в нашем медицинском блоге.' : 'Дар бораи таркибҳо ва тадқиқотҳо дар блоги мо бештар хонед.'}
+                              {lang === 'en' ? 'Learn more about ingredients, clinical research, and protocols in our medical journal.' : (lang === 'ru' ? 'Узнайте больше о составах, исследованиях и правилах приема в нашем медицинском блоге.' : 'Дар бораи таркибҳо ва тадқиқотҳо дар блоги мо бештар хонед.')}
                             </p>
                          </div>
                          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white shrink-0 group-hover:bg-white group-hover:text-black transition-colors">
@@ -644,7 +645,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     setIsCartOpen(true);
                   }}
                   className="h-[56px] sm:h-[64px] px-4 sm:px-6 rounded-[24px] bg-black/[0.05] hover:bg-black/[0.1] active:scale-[0.97] text-[#1D1D1F] text-[13px] sm:text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0"
-                  title={lang === 'ru' ? 'Открыть корзину' : 'Кушодани сабад'}
+                  title={lang === 'en' ? 'Open Cart' : (lang === 'ru' ? 'Открыть корзину' : 'Кушодани сабад')}
                 >
                   <ShoppingBag size={17} />
                   <span className="hidden sm:inline">{lang === 'en' ? 'Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад')}</span>
