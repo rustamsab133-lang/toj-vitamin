@@ -57,7 +57,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       ? `${localizedName} | Харид дар мағозаи интернетии toj-vitamin (Тоҷикистон)`
       : `${product.name} | Купить в интернет-магазине toj-vitamin (Таджикистан)`);
 
-  const description = enriched?.properties?.slice(0, 3).join('. ') || (
+  const description = (lang === 'en' ? enriched?.properties_en?.slice(0, 3).join('. ') : enriched?.properties?.slice(0, 3).join('. ')) || (
     lang === 'en'
       ? `Order ${localizedName} for ${product.price} TJS with fast delivery at toj-vitamin.`
       : (lang === 'tj'
@@ -319,6 +319,19 @@ export default async function ProductPage({ params, searchParams }: Props) {
     ...product
   };
 
+  const isEn = lang === 'en';
+  const propertiesList: string[] = (isEn && displayProduct.properties_en && displayProduct.properties_en.length > 0)
+    ? displayProduct.properties_en
+    : (displayProduct.properties || (displayProduct.description ? [displayProduct.description] : []));
+
+  const marketingHooksList: string[] = (isEn && displayProduct.marketing_hooks_en && displayProduct.marketing_hooks_en.length > 0)
+    ? displayProduct.marketing_hooks_en
+    : (displayProduct.marketing_hooks || []);
+
+  const instructionsData = (isEn && displayProduct.instructions_en)
+    ? displayProduct.instructions_en
+    : displayProduct.instructions;
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-32">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -402,7 +415,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        {displayProduct.properties && displayProduct.properties.length > 0 && (
+        {propertiesList.length > 0 && (
           <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03]">
              <h2 className="text-[20px] font-bold text-[#1D1D1F] mb-8 flex items-center gap-3 font-outfit">
                <ShieldCheck className="text-[#1E40AF]" size={28} />
@@ -411,7 +424,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                  : (lang === 'ru' ? 'Свойства и клиническое действие' : 'Хусусиятҳо ва Таъсир')}
              </h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {displayProduct.properties.map((prop: string, i: number) => (
+               {propertiesList.map((prop: string, i: number) => (
                  <div key={i} className="flex gap-4 group">
                    <div className="w-8 h-8 rounded-full bg-[#F0FDF4] text-green-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
                      <CheckCircle2 size={16} />
@@ -423,7 +436,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           </div>
         )}
 
-        {displayProduct.marketing_hooks && displayProduct.marketing_hooks.length > 0 && (
+        {marketingHooksList.length > 0 && (
           <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03]">
              <h2 className="text-[20px] font-bold text-[#1D1D1F] mb-8 font-outfit uppercase tracking-widest text-sm text-[#94A3B8]">
                {lang === 'en' 
@@ -431,11 +444,42 @@ export default async function ProductPage({ params, searchParams }: Props) {
                  : (lang === 'ru' ? 'Для кого это важно' : 'Барои кӣ муҳим аст')}
              </h2>
              <div className="space-y-4">
-               {displayProduct.marketing_hooks.map((hook: string, i: number) => (
+               {marketingHooksList.map((hook: string, i: number) => (
                  <p key={i} className="text-[17px] text-[#1D1D1F] font-medium leading-relaxed pl-4 border-l-4 border-black/10">
                    {hook}
                  </p>
                ))}
+             </div>
+          </div>
+        )}
+
+        {instructionsData && (instructionsData.usage || instructionsData.course || instructionsData.contraindications) && (
+          <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03] space-y-6">
+             <h2 className="text-[20px] font-bold text-[#1D1D1F] flex items-center gap-3 font-outfit">
+               <CheckCircle2 className="text-[#1E40AF]" size={28} />
+               {lang === 'en' 
+                 ? 'Administration & Dosage' 
+                 : (lang === 'ru' ? 'Инструкция по применению и дозировка' : 'Дастурамал ва меъёри қабул')}
+             </h2>
+             <div className="space-y-4">
+               {instructionsData.usage && (
+                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 text-[16px] text-[#475569]">
+                   <span className="font-bold text-[#1D1D1F] min-w-[140px] shrink-0">{lang === 'en' ? 'Directions:' : (lang === 'ru' ? 'Как принимать:' : 'Тарзи истеъмол:')}</span>
+                   <p className="leading-relaxed">{instructionsData.usage}</p>
+                 </div>
+               )}
+               {instructionsData.course && (
+                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 text-[16px] text-[#475569]">
+                   <span className="font-bold text-[#1D1D1F] min-w-[140px] shrink-0">{lang === 'en' ? 'Course Duration:' : (lang === 'ru' ? 'Курс приема:' : 'Давомнокии курс:')}</span>
+                   <p className="leading-relaxed">{instructionsData.course}</p>
+                 </div>
+               )}
+               {instructionsData.contraindications && (
+                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 text-[15px] text-[#64748B] italic pt-2 border-t border-black/[0.05]">
+                   <span className="font-bold text-[#475569] not-italic min-w-[140px] shrink-0">{lang === 'en' ? 'Contraindications:' : (lang === 'ru' ? 'Противопоказания:' : 'Гайринишондодҳо:')}</span>
+                   <p className="leading-relaxed">{instructionsData.contraindications}</p>
+                 </div>
+               )}
              </div>
           </div>
         )}

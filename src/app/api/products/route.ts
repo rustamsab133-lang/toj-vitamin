@@ -34,8 +34,12 @@ export async function GET() {
       const markedUpProduct = applyMarkupToProduct(p, markupSettings);
       const enrichment = findEnrichmentForProduct(p.name, enrichedMap);
       return {
+        ...markedUpProduct,
         ...enrichment,
-        ...markedUpProduct
+        id: markedUpProduct.id,
+        name: markedUpProduct.name,
+        price: markedUpProduct.price,
+        image_url: markedUpProduct.image_url || enrichment?.image_url,
       };
     });
 

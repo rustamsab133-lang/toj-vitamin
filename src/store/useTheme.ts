@@ -1,6 +1,8 @@
 "use client";
 import { create } from 'zustand';
 
+export type MainBlock = 'catalog' | 'synergy' | 'combos' | 'science';
+
 interface ThemeState {
   activeZone: string;
   setActiveZone: (zone: string) => void;
@@ -8,6 +10,8 @@ interface ThemeState {
   setSearch: (query: string) => void;
   isSearchOpen: boolean;
   setIsSearchOpen: (open: boolean) => void;
+  activeBlock: MainBlock;
+  setActiveBlock: (block: MainBlock) => void;
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
@@ -17,4 +21,6 @@ export const useThemeStore = create<ThemeState>((set) => ({
   setSearch: (query) => set({ search: query }),
   isSearchOpen: false,
   setIsSearchOpen: (open) => set({ isSearchOpen: open }),
+  activeBlock: 'catalog',
+  setActiveBlock: (block) => set({ activeBlock: block }),
 }));

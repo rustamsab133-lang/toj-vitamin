@@ -76,6 +76,20 @@ export async function getProductByIdWithMarkup(id: string | number): Promise<Pro
 export function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>): any {
   if (!pName || !enrichedData) return {};
   const name = pName.toLowerCase().trim();
+
+  // Priority specific formulas & aliases
+  if (name.includes('максиферт') || name.includes('инозитол')) return enrichedData['инозитол (максиферт)'] || {};
+  if (name.includes('термо')) return enrichedData['термо комплекс'] || {};
+  if (name.includes('глюко баланс') || name.includes('глюкобаланс')) return enrichedData['глюко баланс'] || {};
+  if (name.includes('климмикс')) return enrichedData['климмикс'] || {};
+  if (name.includes('хлорофил')) return enrichedData['жидкий хлорофил'] || enrichedData['хлорофилл'] || {};
+  if (name.includes('карнитин')) return enrichedData['л-карнитин'] || {};
+  if (name.includes('аргинин')) return enrichedData['аргинин 1000'] || enrichedData['л аргинин'] || {};
+  if (name.includes('мужчин') && (name.includes('комплекс') || name.includes('формула'))) return enrichedData['мужская формула'] || {};
+  if (name.includes('женская формула') || (name.includes('женщин') && name.includes('формула'))) return enrichedData['женская формула'] || {};
+  if (name.includes('коллаген') && name.includes('сустав')) return enrichedData['коллаген для суставов с мартинией'] || enrichedData['коллаген'] || {};
+  if (name.includes('коллаген')) return enrichedData['коллаген'] || {};
+  if (name.includes('в-комплекс') || name.includes('b-complex') || (name.includes('комплекс') && name.includes('в'))) return enrichedData['в-комплекс'] || {};
   
   // 1. Try exact match
   if (enrichedData[name]) return enrichedData[name];
@@ -104,7 +118,7 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
   // 4. Try normalized match on cleaned string
   for (const key of keys) {
     const keyNorm = normalize(key);
-    if (keyNorm.length > 2 && (cleanedNorm.includes(keyNorm) || keyNorm.includes(cleanedNorm))) {
+    if (keyNorm.length > 3 && (cleanedNorm.includes(keyNorm) || keyNorm.includes(cleanedNorm))) {
       return enrichedData[key];
     }
   }
@@ -126,11 +140,6 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
       const firstTwo = firstWord + ' ' + words[1];
       if (enrichedData[firstTwo]) return enrichedData[firstTwo];
     }
-  }
-
-  // 7. Special cases
-  if (name.includes('максиферт') || name.includes('инозитол')) {
-    return enrichedData['инозитол (максиферт)'] || {};
   }
 
   return {};

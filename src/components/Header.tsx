@@ -26,6 +26,8 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
+  const activeBlock = useThemeStore(state => state.activeBlock);
+  const setActiveBlock = useThemeStore(state => state.setActiveBlock);
   
   const { client, isAuth } = useClient();
   const { totalItems, setIsOpen: setIsCartOpen } = useCart();
@@ -149,7 +151,13 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                {/* Logo & Brand Section */}
                <div
                  className="flex items-center gap-4 cursor-pointer group shrink-0"
-                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                 onClick={() => {
+                    setActiveBlock('catalog');
+                    if (typeof window !== 'undefined') {
+                      window.history.replaceState(null, '', '#catalog');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                >
                   <div className="w-12 h-12 md:w-13 md:h-13 rounded-2xl bg-white shadow-sm border border-black/[0.03] flex items-center justify-center p-0 transition-all group-hover:scale-110 group-active:scale-95 duration-500 overflow-hidden shrink-0">
                     <Image 
@@ -191,14 +199,27 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
 
                {/* KILLER FEATURE CTA: Quiz Link */}
                <button
-                 onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
+                 onClick={() => {
+                    if (activeBlock === 'synergy') {
+                      setActiveBlock('catalog');
+                      if (typeof window !== 'undefined') {
+                        window.history.replaceState(null, '', '#catalog');
+                      }
+                    } else {
+                      setActiveBlock('synergy');
+                      if (typeof window !== 'undefined') {
+                        window.history.replaceState(null, '', '#quiz');
+                      }
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                  className={`hidden md:flex items-center gap-2 h-10 px-5 rounded-full transition-all text-[11px] font-bold uppercase tracking-[0.15em] shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-[0.97] group ${
                    lastQuizResult 
                      ? 'bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white shadow-[0_0_15px_rgba(30,64,175,0.3)]' 
                      : 'bg-[#1D1D1F] text-white hover:bg-[#1E40AF]'
                  }`}
                >
-                 <Dna size={14} className={lastQuizResult ? 'group-hover:animate-[spin_2s_linear_infinite] transition-transform duration-500' : ''} />
+                 <Dna size={14} className={(activeBlock === 'synergy' || lastQuizResult) ? 'group-hover:animate-[spin_2s_linear_infinite] transition-transform duration-500' : ''} />
                  <span>
                    {lastQuizResult 
                      ? (lang === 'en'
@@ -206,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                          : (lang === 'ru' 
                            ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
                            : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`))
-                     : (lang === 'en' ? 'Find My Vitamins' : (lang === 'tj' ? 'Витаминҳои маро интихоб кунед' : (settings.hero_cta_text || 'Подобрать мои витамины')))
+                     : (activeBlock === 'synergy' ? (lang === 'en' ? '💊 To Catalog' : (lang === 'ru' ? '💊 В каталог' : '💊 Ба каталог')) : (lang === 'en' ? 'Find My Vitamins' : (lang === 'tj' ? 'Витаминҳои маро интихоб кунед' : (settings.hero_cta_text || 'Подобрать мои витамины'))))
                    }
                  </span>
                </button>

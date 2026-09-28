@@ -21,6 +21,7 @@ const SearchOverlay = dynamic(() => import('@/components/SearchOverlay').then(m 
 const ChatWidget = dynamic(() => import('@/components/ChatWidget').then(m => m.ChatWidget), { ssr: false });
 
 import { ComboBanner } from '@/components/ComboBanner';
+import { MainBlockSwitcher } from '@/components/MainBlockSwitcher';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
 import { CartToast } from '@/components/CartToast';
@@ -40,6 +41,8 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
+  const activeBlock = useThemeStore(state => state.activeBlock);
+  const setActiveBlock = useThemeStore(state => state.setActiveBlock);
 
   
   // Use settings from server, but allow local override if needed
@@ -63,6 +66,22 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   // Splash screen timer + quiz scroll observer (stable, runs once)
   useEffect(() => {
     setIsMounted(true);
+
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#quiz' || hash === '#synergy') {
+        setActiveBlock('synergy');
+      } else if (hash === '#combos' || hash === '#combo') {
+        setActiveBlock('combos');
+      } else if (hash === '#science') {
+        setActiveBlock('science');
+      } else if (hash === '#catalog') {
+        setActiveBlock('catalog');
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+
 
     // URL search param handling (runs once on mount)
     const params = new URLSearchParams(window.location.search);
@@ -222,25 +241,70 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
           </Link>
         </div>
 
-        <ComboBanner 
-          lang={lang} 
-          settings={settings}
-          onOrderSuccess={() => setIsOrderSuccess(true)}
-        />
+        <MainBlockSwitcher lang={lang} />
 
-        {/* CATALOG CONTENT */}
-        <div id="catalog">
-          <ProductCatalog lang={lang} />
-        </div>
+        {/* MUTUALLY EXCLUSIVE BLOCK VIEWS */}
+        <AnimatePresence mode="wait">
+          {activeBlock === 'catalog' && (
+            <motion.div
+              key="catalog-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              id="catalog"
+            >
+              <ProductCatalog lang={lang} />
+            </motion.div>
+          )}
 
-        <div id="quiz" className={`${isImmersiveMode ? 'min-h-[90vh] flex items-center pt-0' : 'pb-24 pt-10'}`}>
-          <QuizEngine 
-            lang={lang} 
-            onImmersiveChange={setIsImmersiveMode} 
-          />
-        </div>
+          {activeBlock === 'synergy' && (
+            <motion.div
+              key="synergy-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              id="quiz"
+              className={`w-full ${isImmersiveMode ? 'min-h-[85vh] flex items-center pt-2' : 'pb-24 pt-4'}`}
+            >
+              <QuizEngine 
+                lang={lang} 
+                onImmersiveChange={setIsImmersiveMode} 
+              />
+            </motion.div>
+          )}
 
-        <ScienceGrid lang={lang} />
+          {activeBlock === 'combos' && (
+            <motion.div
+              key="combos-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="pb-24 pt-2"
+            >
+              <ComboBanner 
+                lang={lang} 
+                settings={settings}
+                onOrderSuccess={() => setIsOrderSuccess(true)}
+              />
+            </motion.div>
+          )}
+
+          {activeBlock === 'science' && (
+            <motion.div
+              key="science-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="pb-24 pt-6"
+            >
+              <ScienceGrid lang={lang} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <footer className="w-full bg-[#1D1D1F] text-white/60 relative z-20">
@@ -354,11 +418,33 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                     <Link href="/opt" className="block text-[14px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors text-left">
                       {lang === 'en' ? '🤝 Become a Partner (Wholesale B2B)' : (lang === 'ru' ? '🤝 Стать партнером (Опт B2B)' : '🤝 Шарик шудан (B2B Яклухт)')}
                     </Link>
-                    <button onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => {
+                      setActiveBlock('synergy');
+                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#quiz');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '🧬 Vitamin Assessment' : (lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ')}
                     </button>
-                    <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => {
+                      setActiveBlock('catalog');
+                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#catalog');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '💊 Vitamin Catalog' : (lang === 'ru' ? '💊 Каталог витаминов' : '💊 Каталоги витаминҳо')}
+                    </button>
+                    <button onClick={() => {
+                      setActiveBlock('combos');
+                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#combos');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} className="block text-[14px] hover:text-white transition-colors text-left">
+                      {lang === 'en' ? '🎁 Ready Sets (Combos)' : (lang === 'ru' ? '🎁 Готовые сеты' : '🎁 Маҷмӯаҳои тайёр')}
+                    </button>
+                    <button onClick={() => {
+                      setActiveBlock('science');
+                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#science');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} className="block text-[14px] hover:text-white transition-colors text-left">
+                      {lang === 'en' ? '🔬 Science & Quality' : (lang === 'ru' ? '🔬 Наука и стандарты' : '🔬 Илм ва стандартҳо')}
                     </button>
                     <Link href="/journal" className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '🧪 Science Journal' : (lang === 'ru' ? '🧪 Научный журнал' : '🧪 Журнали илмӣ')}

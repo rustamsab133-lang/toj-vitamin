@@ -24,6 +24,7 @@ import {
 import { MedicalDisclaimer } from './MedicalDisclaimer';
 import { trackEvent } from '@/lib/analytics';
 import { useClient } from '@/store/useClient';
+import { useThemeStore } from '@/store/useTheme';
 import { getLocalizedQuizCategory, getLocalizedQuizOption, getLocalizedSynergyType, getLocalizedDosage } from '@/lib/quizLocalization';
 import { getLocalizedProductName } from '@/lib/productLocalization';
 
@@ -175,37 +176,43 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
       .order('sort_order');
     
     if (synData) {
-      // 1. Собираем все ID продуктов из всех синергий этого вопроса
-      const allProductIds = synData.flatMap(syn => (syn.products_data || []).map((p: any) => p.id)).filter(Boolean);
-      
-      // 2. Делаем ОДИН запрос к таблице products по всем ID (максимальная скорость)
+      // Запрашиваем полный каталог продуктов для гарантированного поиска фото и актуальных цен
       const { data: dbProducts } = await supabase
         .from('products')
-        .select('*')
-        .in('id', allProductIds);
+        .select('*');
       
       const markupSettings = await getMarkupSettings();
+      const normalize = (s: string) => (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
       
       const fullSynergies = synData.map((syn: any) => {
         const localizedProducts = (syn.products_data || []).map((p: any) => {
-          // Ищем продукт в базе по ID или по имени (для обратной совместимости)
-          const dbProd = dbProducts?.find(dp => dp.id === p.id) || 
-                         dbProducts?.find(dp => dp.name.toLowerCase().includes(p.name?.toLowerCase()));
-          
-          if (!dbProd) return p;
+          const pNorm = normalize(p.name);
+          const pWords = (p.name || '').toLowerCase().split(/[\s,.-]+/).filter((w: string) => w.length > 2);
 
-          const markedPrice = applyMarkupToPrice(Number(dbProd.price) || 0, markupSettings);
+          const dbProd = dbProducts?.find(dp => String(dp.id) === String(p.id)) || 
+                         dbProducts?.find(dp => {
+                           const dpNorm = normalize(dp.name);
+                           return dpNorm.includes(pNorm) || pNorm.includes(dpNorm);
+                         }) ||
+                         dbProducts?.find(dp => {
+                           const dpLower = dp.name.toLowerCase();
+                           return pWords.length > 0 && pWords.some((w: string) => dpLower.includes(w));
+                         });
+
+          const markedPrice = dbProd 
+            ? applyMarkupToPrice(Number(dbProd.price) || 0, markupSettings)
+            : (p.price || 0);
 
           return { 
             ...p, 
-            id: dbProd.id,
-            name: dbProd.name,
+            id: dbProd ? dbProd.id : p.id,
+            name: dbProd ? dbProd.name : p.name,
             price: markedPrice, 
-            image_url: dbProd.image_url,
-            marketing_hooks: dbProd.marketing_hooks || [],
-            tags: dbProd.tags || [],
-            expert_description: dbProd.description || '',
-            properties: dbProd.tags || []
+            image_url: dbProd?.image_url || p.image_url || null,
+            marketing_hooks: dbProd?.marketing_hooks || p.marketing_hooks || [],
+            tags: dbProd?.tags || p.tags || [],
+            expert_description: p.expert_description || dbProd?.description || '',
+            properties: dbProd?.tags || p.properties || []
           };
         });
 
@@ -668,6 +675,17 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               >
                 <span>🔁</span>
                 <span>{lang === 'en' ? 'Start Over' : (lang === 'ru' ? 'Пройти заново' : 'Дубора')}</span>
+              </button>
+              <button
+                onClick={() => {
+                  useThemeStore.getState().setActiveBlock('catalog');
+                  if (typeof window !== 'undefined') window.history.replaceState(null, '', '#catalog');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="flex items-center gap-2 h-14 px-8 bg-[#1D1D1F] text-white rounded-full text-[15px] font-bold hover:bg-[#1E40AF] transition-all shadow-md active:scale-95"
+              >
+                <span>💊</span>
+                <span>{lang === 'en' ? 'Browse Catalog' : (lang === 'ru' ? 'В каталог товаров' : 'Ба каталог')}</span>
               </button>
             </div>
 

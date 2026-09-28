@@ -14,6 +14,29 @@ interface SynergyCardProps {
   lang: Lang;
 }
 
+const SynergyProductImage: React.FC<{ imageUrl?: string | null; name: string; lang: Lang }> = ({ imageUrl, name, lang }) => {
+  const [error, setError] = React.useState(false);
+  if (imageUrl && !error) {
+    return (
+      <Image
+        src={imageUrl}
+        alt={getLocalizedProductName(name, lang)}
+        fill
+        unoptimized
+        sizes="64px"
+        onError={() => setError(true)}
+        className="object-contain p-1.5"
+      />
+    );
+  }
+  return (
+    <div className="w-full h-full rounded-xl bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] flex items-center justify-center">
+      <span className="text-[20px] font-bold text-[#4F46E5] uppercase">
+        {name.charAt(0)}
+      </span>
+    </div>
+  );
+};
 export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
   const total = synergy.total_price || 0;
   
@@ -104,15 +127,7 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
                   className="w-full flex items-center gap-6 p-5 text-left"
                 >
                   <div className="relative w-16 h-16 shrink-0 bg-white rounded-2xl border border-black/[0.03] p-1 overflow-hidden shadow-sm group-hover/item:scale-105 transition-transform flex items-center justify-center">
-                    {p.image_url ? (
-                      <Image src={p.image_url} alt={getLocalizedProductName(p.name, lang)} fill className="object-contain p-2" />
-                    ) : (
-                      <div className="w-full h-full rounded-xl bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] flex items-center justify-center">
-                        <span className="text-[24px] font-bold text-[#4F46E5] uppercase">
-                          {p.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
+                    <SynergyProductImage imageUrl={p.image_url} name={p.name} lang={lang} />
                   </div>
                   
                   <div className="flex-1 min-w-0">

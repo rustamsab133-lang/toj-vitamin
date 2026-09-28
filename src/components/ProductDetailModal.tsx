@@ -11,6 +11,8 @@ import { ShareButton } from './ShareButton';
 import { slugify } from '@/lib/slugify';
 import { useCart } from '@/store/useCart';
 import { getLocalizedProductName, getLocalizedProductTag } from '@/lib/productLocalization';
+import enrichedData from '@/data/enriched_gls_products.json';
+import { findEnrichmentForProduct } from '@/lib/products';
 
 // Cache for journal articles to load them once per session
 let cachedArticles: Article[] | null = null;
@@ -276,10 +278,30 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   if (!product || !mounted) return null;
 
-  // Prefer clinical properties from enriched data, fallback to database description
-  const descriptionLines: string[] = (product as any).properties && (product as any).properties.length > 0
-    ? (product as any).properties
-    : (product.description ? product.description.split('\n').filter((line: string) => line.trim().length > 0) : []);
+  const isEn = lang === 'en';
+  const enrichment = findEnrichmentForProduct(product.name, enrichedData as any);
+  const fullProduct = { ...enrichment, ...product };
+
+  const propertiesList: string[] = (isEn && fullProduct.properties_en && fullProduct.properties_en.length > 0)
+    ? fullProduct.properties_en
+    : (fullProduct.properties || []);
+
+  const marketingHooksList: string[] = (isEn && fullProduct.marketing_hooks_en && fullProduct.marketing_hooks_en.length > 0)
+    ? fullProduct.marketing_hooks_en
+    : (fullProduct.marketing_hooks || []);
+
+  const instructionsData = (isEn && fullProduct.instructions_en)
+    ? fullProduct.instructions_en
+    : fullProduct.instructions;
+
+  const rawDescription = fullProduct.description || '';
+  const fallbackEnDesc = rawDescription.includes('GLS')
+    ? 'Premium certified GLS nutraceutical formula designed for comprehensive health support and cellular vitality.'
+    : 'Premium certified TOJ-VITAMIN nutraceutical formula designed for comprehensive health support and cellular vitality.';
+
+  const descriptionLines: string[] = propertiesList.length > 0
+    ? propertiesList
+    : (rawDescription ? (isEn ? [fallbackEnDesc] : rawDescription.split('\n').filter((line: string) => line.trim().length > 0)) : []);
 
 
 
@@ -483,13 +505,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <div className="h-px bg-black/[0.05]" />
 
                 {/* 2. Marketing Strategy: Benefits List */}
-                {product.marketing_hooks && product.marketing_hooks.length > 0 && (
+                {marketingHooksList.length > 0 && (
                   <div className="space-y-6">
                     <h4 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.2em] font-outfit">
                       {lang === 'en' ? 'Key Benefits' : (lang === 'ru' ? 'Преимущества' : 'Бартариятҳо')}
                     </h4>
                     <div className="grid gap-5">
-                      {product.marketing_hooks.map((hook, idx) => (
+                      {marketingHooksList.map((hook, idx) => (
                         <div key={idx} className="flex items-start gap-4 group">
                           <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center shrink-0 mt-0.5 shadow-lg group-hover:scale-110 transition-transform">
                             <CheckCircle2 size={13} />
@@ -520,7 +542,36 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </div>
                 </div>
 
-                {/* 4. Compatibility (Clean Row Style) */}
+                {/* 4. Administration & Instructions */}
+                {instructionsData && (instructionsData.usage || instructionsData.course || instructionsData.contraindications) && (
+                  <div className="pt-2">
+                    <div className="bg-[#F8FAFC] rounded-[32px] p-6 sm:p-8 border border-black/[0.04] space-y-3">
+                      <div className="flex items-center gap-2.5 text-[#1D1D1F] mb-3">
+                        <CheckCircle2 size={16} className="text-[#1E40AF]" />
+                        <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] font-outfit">
+                          {lang === 'en' ? 'Administration & Course' : (lang === 'ru' ? 'Рекомендации по приему' : 'Тарзи қабул ва дастур')}
+                        </h4>
+                      </div>
+                      {instructionsData.usage && (
+                        <p className="text-[14px] text-[#475569] leading-relaxed">
+                          <strong className="text-[#1D1D1F]">{lang === 'en' ? 'Usage:' : (lang === 'ru' ? 'Как принимать:' : 'Тарзи қабул:')}</strong> {instructionsData.usage}
+                        </p>
+                      )}
+                      {instructionsData.course && (
+                        <p className="text-[14px] text-[#475569] leading-relaxed">
+                          <strong className="text-[#1D1D1F]">{lang === 'en' ? 'Course Duration:' : (lang === 'ru' ? 'Курс приема:' : 'Давомнокии курс:')}</strong> {instructionsData.course}
+                        </p>
+                      )}
+                      {instructionsData.contraindications && (
+                        <p className="text-[13px] text-[#64748B] leading-relaxed italic pt-1 border-t border-black/[0.04]">
+                          <strong className="text-[#475569] not-italic">{lang === 'en' ? 'Contraindications:' : (lang === 'ru' ? 'Противопоказания:' : 'Гайринишондодҳо:')}</strong> {instructionsData.contraindications}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Compatibility (Clean Row Style) */}
                 {product.med_interactions && product.med_interactions.length > 0 && (
                    <div className="pt-4">
                       <div className="bg-[#FAFAFA] rounded-[32px] p-8 border border-black/[0.03]">
@@ -539,7 +590,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                    </div>
                 )}
 
-                {/* 5. Smart Synergies (Clean Recommendations) */}
+                {/* 6. Smart Synergies (Clean Recommendations) */}
                 {synergies.length > 0 && (
                    <div className="space-y-8 pt-4">
                       <h4 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.2em] font-outfit text-center">
@@ -563,7 +614,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                                        </span>
                                     </div>
                                     <h5 className="font-bold text-[#1D1D1F] text-[17px] mb-1 truncate">{getLocalizedProductName(synProd.name, lang)}</h5>
-                                    <p className="text-[12px] text-[#64748B] mb-4 line-clamp-1">{link.reason}</p>
+                                    <p className="text-[12px] text-[#64748B] mb-4 line-clamp-1">
+                                      {isEn && fullProduct.synergies_en?.[idx] ? fullProduct.synergies_en[idx] : link.reason}
+                                    </p>
                                     <div className="flex items-center justify-between">
                                       <p className="font-bold text-[#1D1D1F] text-[16px]">{synProd.price} {lang === 'en' ? 'TJS' : 'смн'}</p>
                                       <button 
