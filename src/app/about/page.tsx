@@ -31,7 +31,7 @@ const CONTENT = {
     // 4 ключевые плашки
     stats: [
       { number: "20+ лет", label: "Безупречной работы", sub: "На фармацевтическом рынке" },
-      { number: "500+", label: "Аптек-партнеров", sub: "И медицинских учреждений" },
+      { number: "700+", label: "Аптек-партнеров", sub: "И медицинских учреждений" },
       { number: "250+", label: "Сотрудников в штате", sub: "Команда специалистов" },
       { number: "100%", label: "Национальный охват", sub: "Душанбе, Согд и регионы РТ" }
     ],
@@ -135,7 +135,7 @@ const CONTENT = {
       {
         icon: Activity,
         title: "Услуги для глобальных производителей (NOW Foods и др.)",
-        desc: "Прямой внешнеэкономический импорт (ВЭД), белое таможенное оформление под ключ, дистрибуция через 500+ аптек и защита бренда от контрафакта."
+        desc: "Прямой внешнеэкономический импорт (ВЭД), белое таможенное оформление под ключ, дистрибуция через 700+ аптек и защита бренда от контрафакта."
       }
     ],
 
@@ -179,7 +179,7 @@ const CONTENT = {
     // 4 Key Stats
     stats: [
       { number: "20+ Years", label: "Of Proven Excellence", sub: "On the pharmaceutical market" },
-      { number: "500+", label: "Partner Pharmacies", sub: "& Healthcare institutions" },
+      { number: "700+", label: "Partner Pharmacies", sub: "& Healthcare institutions" },
       { number: "250+", label: "Employees on Staff", sub: "Licensed pharmaceutical team" },
       { number: "100%", label: "National Coverage", sub: "Dushanbe, Sughd & regions of RT" }
     ],
@@ -283,7 +283,7 @@ const CONTENT = {
       {
         icon: Activity,
         title: "Full-Cycle Services for Global Brands (NOW Foods, etc.)",
-        desc: "Direct foreign trade import, turnkey customs clearance, retail distribution across 500+ pharmacies, and robust anti-counterfeit brand protection."
+        desc: "Direct foreign trade import, turnkey customs clearance, retail distribution across 700+ pharmacies, and robust anti-counterfeit brand protection."
       }
     ],
 
@@ -326,7 +326,7 @@ const CONTENT = {
 
     stats: [
       { number: "20+ сол", label: "Фаъолияти бенуқсон", sub: "Дар бозори фарматсевтӣ" },
-      { number: "500+", label: "Дорухонаҳои шарик", sub: "Ва муассисаҳои тиббӣ" },
+      { number: "700+", label: "Дорухонаҳои шарик", sub: "Ва муассисаҳои тиббӣ" },
       { number: "250+", label: "Кормандон дар штат", sub: "Дастаи мутахассисон" },
       { number: "100%", label: "Фарогирии миллӣ", sub: "Душанбе, Суғд ва минтақаҳои ҶТ" }
     ],
@@ -430,7 +430,7 @@ const CONTENT = {
       {
         icon: Activity,
         title: "Хизматрасониҳо барои истеҳсолкунандагони ҷаҳонӣ",
-        desc: "Воридоти мустақими хориҷӣ, барасмиятдарории гумрукӣ, паҳнкунӣ дар 500+ дорухона ва ҳифзи бренд аз маҳсулоти қалбакӣ."
+        desc: "Воридоти мустақими хориҷӣ, барасмиятдарории гумрукӣ, паҳнкунӣ дар 700+ дорухона ва ҳифзи бренд аз маҳсулоти қалбакӣ."
       }
     ],
 

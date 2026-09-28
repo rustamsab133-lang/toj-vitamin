@@ -2,7 +2,7 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Dna, Globe, User, ShoppingBag, Building2 } from 'lucide-react';
+import { Search, X, Dna, Globe, User, ShoppingBag, Building2, Store } from 'lucide-react';
 import { useThemeStore } from '@/store/useTheme';
 import { ZONE_THEMES } from '@/lib/theme';
 import { Lang } from '@/lib/types';
@@ -171,14 +171,23 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                  </div>
                </div>
 
-               {/* Corporate / About Us Link */}
-               <Link
-                 href="/about"
-                 className="hidden xl:flex items-center gap-1.5 h-10 px-4 rounded-full bg-white/75 hover:bg-white text-[#1D1D1F] border border-white/50 text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm"
-               >
-                 <Building2 size={13} className="text-blue-600" />
-                 <span>{lang === 'ru' ? 'О холдинге' : 'Дар бораи ширкат'}</span>
-               </Link>
+               {/* Main Navigation Links: "О нас" & "Стать партнером" */}
+               <div className="hidden lg:flex items-center gap-2">
+                 <Link
+                   href="/about"
+                   className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-white/80 hover:bg-white text-[#1D1D1F] border border-black/10 text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm"
+                 >
+                   <Building2 size={13} className="text-blue-600" />
+                   <span>{lang === 'ru' ? 'О нас' : 'Дар бораи мо'}</span>
+                 </Link>
+                 <Link
+                   href="/opt"
+                   className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm"
+                 >
+                   <Store size={13} className="text-emerald-600" />
+                   <span>{lang === 'ru' ? 'Стать партнером' : 'Шарик шудан'}</span>
+                 </Link>
+               </div>
 
                {/* KILLER FEATURE CTA: Quiz Link */}
                <button

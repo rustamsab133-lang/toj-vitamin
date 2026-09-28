@@ -6,7 +6,7 @@ import { ScienceGrid } from '@/components/ScienceGrid';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { Lang } from '@/lib/types';
-import { Globe, ShoppingBag, Search, X, Instagram, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { Globe, ShoppingBag, Search, X, Instagram, MessageCircle, ArrowUpRight, Building2, Store } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ZONE_THEMES } from '@/lib/theme';
@@ -204,6 +204,24 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
 
  
       <div className="relative z-10 flex flex-col">
+        {/* Mobile & Tablet Quick Bar: 'О нас' & 'Стать партнером' */}
+        <div className="flex lg:hidden items-center justify-center gap-2.5 px-4 pt-20 pb-1 max-w-md mx-auto w-full">
+          <Link
+            href="/about"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-white/90 text-slate-800 border border-black/10 text-xs font-bold shadow-sm active:scale-95 transition-all text-center"
+          >
+            <Building2 size={13} className="text-blue-600 shrink-0" />
+            <span>{lang === 'ru' ? 'О нас' : 'Дар бораи мо'}</span>
+          </Link>
+          <Link
+            href="/opt"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-600/20 active:scale-95 transition-all text-center"
+          >
+            <Store size={13} className="text-white shrink-0" />
+            <span>{lang === 'ru' ? 'Стать партнером' : 'Шарик шудан'}</span>
+          </Link>
+        </div>
+
         <ComboBanner 
           lang={lang} 
           settings={settings}
@@ -327,10 +345,10 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                   <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit">{lang === 'ru' ? 'Навигация' : 'Навигатсия'}</h4>
                   <div className="space-y-2.5">
                     <Link href="/about" className="block text-[14px] text-blue-400 hover:text-blue-300 font-semibold transition-colors text-left">
-                      {lang === 'ru' ? '🏢 О холдинге и дистрибуции' : '🏢 Дар бораи ширкат ва дистрибутсия'}
+                      {lang === 'ru' ? '🏢 О нас / Холдинг «Саховати Истаравшан»' : '🏢 Дар бораи мо / Холдинг'}
                     </Link>
-                    <Link href="/opt" className="block text-[14px] hover:text-white transition-colors text-left">
-                      {lang === 'ru' ? '💼 B2B / Оптовым партнерам' : '💼 Ба шарикони яклухт (B2B)'}
+                    <Link href="/opt" className="block text-[14px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors text-left">
+                      {lang === 'ru' ? '🤝 Стать партнером (Опт B2B)' : '🤝 Шарик шудан (B2B Яклухт)'}
                     </Link>
                     <button onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ'}

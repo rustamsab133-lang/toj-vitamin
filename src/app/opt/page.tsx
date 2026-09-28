@@ -1,40 +1,36 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { 
-  Building2, ShieldCheck, Truck, Download, 
+  Building2, ShieldCheck, Truck,
   HelpCircle, ChevronDown, Star, ArrowRight, X,
-  Lock, FileSpreadsheet, Warehouse,
-  Check, Store, Sparkles, UserPlus, CheckCircle2, AlertCircle
+  Warehouse, Store, Sparkles, CheckCircle2, AlertCircle,
+  MessageCircle, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Lang = 'ru' | 'en';
-type AuthMode = 'register' | 'login';
 
 const CONTENT = {
   ru: {
     brandName: 'TOJ-VITAMIN',
     brandTagline: 'DISTRIBUTION',
     navAbout: 'О центре',
-    navBrands: 'Прайс-лист GLS',
+    navBrands: 'Ассортимент GLS',
     navAdvantages: 'Преимущества',
     navReviews: 'Отзывы',
-    navFaq: 'FAQ',
-    navRegister: 'Регистрация аптеки',
-    navLogin: 'Вход',
+    navFaq: 'Вопросы и ответы',
+    navPartnerBtn: 'Стать партнером',
 
     heroChip: 'Официальный дистрибьютор GLS Pharmaceuticals в Таджикистане',
     heroTitle: 'Прямые оптовые поставки витаминов и БАД GLS в аптечные сети Таджикистана',
-    heroSubtitle: 'Дистрибьюторский центр TOJ-VITAMIN — надежный поставщик фармацевтического ритейла. Прямые поставки с завода, свежие сроки годности, собственные климатические склады и оперативная доставка по всей республике.',
-    heroBtnRegister: 'Регистрация аптеки / Вход в B2B',
-    heroBtnPrice: 'Скачать оптовый прайс GLS (.CSV)',
+    heroSubtitle: 'Дистрибьюторский центр TOJ-VITAMIN (холдинг ООО «Саховати Истаравшан») — надежный национальный поставщик фармацевтического ритейла. Прямые поставки с завода, свежие сроки годности, собственные климатические склады GDP/GSP и оперативная доставка по всей республике.',
+    heroBtnPartner: 'Стать партнером',
 
     trustBadges: [
       {
         icon: 'building',
-        title: '500+ аптек-партнеров',
+        title: '700+ аптек-партнеров',
         desc: 'Регулярное снабжение аптечных сетей в Душанбе, Согде, Хатлоне и РРП.'
       },
       {
@@ -44,25 +40,28 @@ const CONTENT = {
       },
       {
         icon: 'warehouse',
-        title: 'Современный складской комплекс',
-        desc: 'Собственные современные склады с контролем температуры (15–25°C) и влажности для правильного хранения витаминов и БАД.'
+        title: 'Склады стандартов GDP/GSP',
+        desc: 'Собственные климатические складские комплексы в Худжанде и Душанбе с постоянным термоконтролем (15–25°C).'
       },
       {
         icon: 'truck',
-        title: 'Экспресс-логистика',
-        desc: 'Доставка день-в-день по Душанбе, до 24 часов в регионы Республики Таджикистан.'
+        title: 'Экспресс-логистика по РТ',
+        desc: 'Доставка день-в-день по Душанбе и Худжанду, до 24 часов в регионы Республики Таджикистан.'
       }
     ],
 
-    brandSectionTitle: 'Официальный прайс-лист GLS Pharmaceuticals',
-    brandSectionSubtitle: 'Скачайте актуальный оптовый прайс-лист с ценами в сомони (TJS) и описанием форм выпуска',
-    glsTitle: 'GLS Pharmaceuticals — Инновационные витамины и нутрицевтики',
-    glsDesc: 'Один из самых востребованных брендов витаминов и БАД в аптеках Таджикистана. Более 80 сертифицированных позиций: Витамин D3, Омега-3 высокой концентрации, Магний B6, Цинк, Коллаген, детские комплексы и специализированные добавки.',
-    glsTag: 'Эксклюзивный ассортимент',
-    downloadPriceBtn: 'Скачать прайс-лист GLS (.CSV / Excel)',
+    brandSectionTitle: 'Официальный ассортимент GLS Pharmaceuticals',
+    brandSectionSubtitle: 'Сертифицированная линейка инновационных витаминов и нутрицевтиков с подтвержденной эффективностью',
+    glsTitle: 'GLS Pharmaceuticals — Премиальное качество и доказанный спрос',
+    glsDesc: 'Один из самых востребованных брендов витаминов и БАД в аптеках Таджикистана. Более 80 сертифицированных позиций: Витамин D3, Омега-3 высокой концентрации, Магний B6, Цинк Хелат, Морской Коллаген, детские комплексы и специализированные добавки.',
+    glsTag: 'Официальный контракт',
+    glsBestSellersTitle: 'Топ продаж в партнерских аптеках:',
+    glsBestSellers: 'D3 2000/5000 ME • Омега-3 35% и 70% • Магний B6 • Цинк Хелат • Морской Коллаген • Селен • Железо Хелат',
+    brandCtaBtn: 'Стать партнером и получить оптовые условия',
+    brandCtaNotice: 'Оптовые прайс-листы и специальные коммерческие условия предоставляются сертифицированным аптекам и медицинским центрам по запросу.',
 
     advantagesTitle: 'Почему аптечные сети выбирают TOJ-VITAMIN',
-    advantagesSubtitle: 'Обеспечиваем аптекам максимальную рентабельность и бесперебойную доступность товара на полках',
+    advantagesSubtitle: 'Обеспечиваем аптекам высокую рентабельность, бесперебойную доступность товара на полках и безупречную юридическую чистоту',
     advantages: [
       {
         num: '01',
@@ -71,23 +70,23 @@ const CONTENT = {
       },
       {
         num: '02',
-        title: 'Постоянный запас на складе в Душанбе',
-        desc: 'Никаких перебоев и ожидания поставок. Популярные сезонные позиции (D3, Омега, Цинк, Магний) всегда есть в наличии в нужном объеме.'
+        title: 'Постоянный неснижаемый остаток на складах',
+        desc: 'Никаких перебоев и задержек. Топовые сезонные позиции (D3, Омега, Цинк, Магний) всегда есть в наличии на складах в Душанбе и Худжанде.'
       },
       {
         num: '03',
-        title: 'Полный комплект документов в каждой поставке',
-        desc: 'К каждому заказу прилагаются официальные сертификаты соответствия МЗСЗН РТ, накладные и счета-фактуры. 100% готовность к любым проверкам.'
+        title: 'Полный комплект документов к каждой партии',
+        desc: 'К каждой поставке прилагаются официальные сертификаты соответствия МЗСЗН РТ, накладные и электронные счета-фактуры. 100% готовность к любым проверкам.'
       },
       {
         num: '04',
-        title: 'Табличный Matrix-заказ в личном кабинете',
-        desc: 'Экономьте время: удобный бланк быстрого ввода количества по всему ассортименту без долгих поисков по каталогу.'
+        title: 'Персональный менеджер и быстрая обработка',
+        desc: 'Индивидуальное сопровождение, помощь в формировании оптимальной аптечной матрицы и оперативное оформление отгрузок.'
       }
     ],
 
     reviewsTitle: 'Отзывы аптек-партнеров',
-    reviewsSubtitle: 'Более 500 аптек доверяют TojVitamin регулярное снабжение полок продукцией GLS',
+    reviewsSubtitle: 'Более 700 аптек доверяют TojVitamin регулярное снабжение полок продукцией GLS',
     reviews: [
       {
         name: 'Аптечная сеть «Шифо»',
@@ -116,7 +115,7 @@ const CONTENT = {
       {
         name: 'Аптека «Сино»',
         city: 'г. Истаравшан',
-        text: 'Отличный сервис и внимательное отношение к аптекам. Очень удобно делать оптовый заказ прямо через сайт — накладные формируются моментально.',
+        text: 'Отличный сервис и внимательное отношение к аптекам. Заявки обрабатываются моментально, накладные соответствуют всем требованиям.',
         rating: 5
       },
       {
@@ -128,67 +127,93 @@ const CONTENT = {
     ],
 
     faqTitle: 'Часто задаваемые вопросы (FAQ)',
-    faqSubtitle: 'Условия оптового сотрудничества с дистрибьюторским центром TojVitamin',
+    faqSubtitle: 'Условия оптового сотрудничества, поставки и расчеты с дистрибьюторским центром TojVitamin',
     faqs: [
       {
         q: 'Какова минимальная сумма оптового заказа?',
         a: 'Минимальная сумма оптового заказа составляет **1 000 сомони**. Это позволяет аптекам любого масштаба комфортно формировать закупки без избыточного давления на оборотный капитал.'
       },
       {
-        q: 'Предоставляете ли вы сертификаты качества?',
-        a: 'Да, на каждую партию товара предоставляется полный комплект официальных документов: сертификаты соответствия Службы государственного надзора за фармацевтической деятельностью Республики Таджикистан и паспорта завода GLS.'
+        q: 'Предоставляете ли вы сертификаты качества и регистрационные документы?',
+        a: 'Да, на каждую партию товара предоставляется полный комплект официальных документов: сертификаты соответствия Службы государственного надзора за фармацевтической деятельностью Республики Таджикистан, паспорта завода GLS, товарно-транспортные накладные и счета-фактуры.'
       },
       {
-        q: 'Как быстро осуществляется доставка?',
-        a: 'По Душанбе доставка осуществляется день-в-день при подтверждении заявки до 14:00. В регионы (Худжанд, Бохтар, Куляб, Истаравшан и др.) доставка занимает до 24 часов специализированным транспортом.'
+        q: 'Как получить актуальный оптовый прайс-лист?',
+        a: 'В целях защиты коммерческих интересов наших партнеров-аптек оптовые цены не публикуются в открытом доступе. Нажмите кнопку **«Стать партнером»** на этой странице и оставьте краткую анкету, либо напишите нам в WhatsApp. Наш менеджер оптового отдела свяжется с вами и предоставит персонализированный оптовый прайс-лист в сомони (TJS).'
       },
       {
-        q: 'Есть ли у вас отсрочка платежа?',
-        a: 'Условия отсрочки платежа **обсуждаются индивидуально** с постоянными надежными партнерами после успешного выполнения первых заказов и согласования кредитного лимита.'
+        q: 'Как быстро осуществляется доставка по городам и регионам?',
+        a: 'По Душанбе и Худжанду доставка осуществляется **день-в-день** при согласовании заявки до 14:00. В регионы РТ (Бохтар, Куляб, Истаравшан, Исфара, Канибадам, Турсунзаде и др.) доставка занимает **до 24 часов** специализированным транспортом холдинга.'
+      },
+      {
+        q: 'Есть ли у вас отсрочка платежа для аптек?',
+        a: 'Да, условия отсрочки платежа **обсуждаются индивидуально** с постоянными надежными партнерами после успешного выполнения первых заказов и согласования кредитного лимита.'
+      },
+      {
+        q: 'Какие температурные условия соблюдаются при хранении и доставке?',
+        a: 'Холдинг располагает современными складскими комплексами стандартов **GDP/GSP** в Худжанде и Душанбе с непрерывным контролем температуры (15–25°C) и влажности. Транспортировка осуществляется с соблюдением всех нормативов холодовой и климатической цепи.'
+      },
+      {
+        q: 'Какие формы оплаты доступны?',
+        a: 'Мы работаем полностью официально: безналичный расчет на банковский расчетный счет с предоставлением всех бухгалтерских документов (счета-фактуры, акты, накладные), а также иные согласованные формы расчетов в национальной валюте (сомони).'
+      },
+      {
+        q: 'Каков остаточный срок годности поставляемых витаминов?',
+        a: 'Вся продукция поступает напрямую с завода свежими партиями. Остаточный срок годности на момент отгрузки составляет **от 75% до 100%** (как правило, 1,5–3 года), что гарантирует спокойную реализацию в аптечной рознице.'
+      },
+      {
+        q: 'Предоставляете ли вы маркетинговые материалы и консультации провизоров?',
+        a: 'Да. Мы снабжаем аптеки фирменными POS-материалами (подставки, рекламные буклеты, каталоги для покупателей), а наши медицинские представители проводят презентации и консультации фармацевтов по особенностям состава и преимуществам линейки GLS.'
+      },
+      {
+        q: 'Что делать при обнаружении повреждения упаковки или брака при приемке?',
+        a: 'При приеме товара составляется стандартный акт. В случае обнаружения дефекта упаковки или боя мы производим **100% замену позиции за наш счет** со следующей доставкой либо производим мгновенную корректировку накладной.'
       }
     ],
 
-    modalRegTitle: 'Регистрация аптеки в B2B кабинете',
-    modalRegSubtitle: 'Заполните данные для мгновенного доступа к оптовым ценам и бланку заказа',
-    modalLoginTitle: 'Вход в B2B кабинет аптеки',
-    modalLoginSubtitle: 'Введите номер телефона вашей зарегистрированной аптеки',
-    modalFieldPharmName: 'Название аптеки / сети:',
-    modalPlaceholderPharmName: 'Например, Аптека «Саломат» или ИП Каримов',
-    modalFieldCity: 'Город / Район:',
-    modalPlaceholderCity: 'Например, Душанбе, Худжанд, Бохтар...',
+    bottomCtaTitle: 'Подключите вашу аптеку к прямым поставкам GLS',
+    bottomCtaSubtitle: 'Заполните простую анкету партнера для получения оптовых цен, персонального прайс-листа и закрепления персонального менеджера.',
+    bottomCtaBtn: 'Стать партнером',
+
+    modalTitle: 'Анкета оптового партнера',
+    modalSubtitle: 'Заполните краткую информацию о вашей аптеке или клинике. Наш менеджер оптового отдела свяжется с вами и предоставит персональные коммерческие условия и каталог.',
+    modalFieldPharmName: 'Название аптеки или сети:',
+    modalPlaceholderPharmName: 'Например, Аптека «Саломат» или Сеть «Шифо»',
+    modalFieldCity: 'Город / Регион:',
+    modalPlaceholderCity: 'Душанбе, Худжанд, Бохтар, Куляб, Истаравшан...',
     modalFieldContact: 'Контактное лицо (провизор / управляющий):',
     modalPlaceholderContact: 'ФИО контактного лица',
     modalFieldPhone: 'Номер телефона (WhatsApp):',
-    modalPhoneNote: 'Введите 9 цифр номера без кода страны',
-    modalBtnRegister: 'Зарегистрировать аптеку и открыть каталог',
-    modalBtnLogin: 'Войти в личный кабинет',
-    modalSwitchToLogin: 'Уже зарегистрированы? Войти по номеру телефона',
-    modalSwitchToReg: 'Новая аптека? Пройти быструю регистрацию',
-    modalRedirecting: 'Успешно! Открываем личный B2B кабинет...',
+    modalPhoneNote: 'Введите 9 цифр номера без кода страны (например, 900 12 3456)',
+    modalFieldComment: 'Комментарий или интересующие позиции (необязательно):',
+    modalPlaceholderComment: 'Укажите количество точек, потребность или пожелания...',
+    modalBtnSubmit: 'Отправить анкету',
+    modalSuccessTitle: 'Анкета успешно принята!',
+    modalSuccessDesc: 'Благодарим за интерес к сотрудничеству! Наш менеджер по работе с аптеками свяжется с вами в течение рабочего дня с индивидуальным предложением и каталогом.',
+    modalDirectWhatsApp: 'Написать напрямую в WhatsApp',
+    modalClose: 'Закрыть',
 
-    footerRights: 'Все права защищены. Официальная дистрибьюция GLS Pharmaceuticals в Республике Таджикистан.'
+    footerRights: 'Все права защищены. Официальная дистрибьюция сертифицированной фармацевтической продукции и БАД в Республике Таджикистан.'
   },
   en: {
     brandName: 'TOJ-VITAMIN',
     brandTagline: 'DISTRIBUTION',
     navAbout: 'About Hub',
-    navBrands: 'GLS Price List',
+    navBrands: 'GLS Portfolio',
     navAdvantages: 'Advantages',
     navReviews: 'Reviews',
     navFaq: 'FAQ',
-    navRegister: 'Pharmacy Registration',
-    navLogin: 'Sign In',
+    navPartnerBtn: 'Become a Partner',
 
     heroChip: 'Official GLS Pharmaceuticals Distributor in Tajikistan',
     heroTitle: 'Direct Wholesale Supply of GLS Vitamins & Supplements to Tajikistan Pharmacies',
-    heroSubtitle: 'TOJ-VITAMIN Distribution Hub is the premier wholesale partner for licensed retail pharmacies. Direct factory supply, continuous stock availability, modern climate-controlled warehouses, and rapid nationwide delivery.',
-    heroBtnRegister: 'Pharmacy Registration / B2B Portal',
-    heroBtnPrice: 'Download GLS Wholesale Price (.CSV)',
+    heroSubtitle: 'TOJ-VITAMIN Distribution Hub (part of LLC Sakhovati Istaravshan holding) is the leading national wholesale supplier for licensed retail pharmacies. Direct factory contracts, verified batch freshness, GDP/GSP climate warehouses, and express delivery nationwide.',
+    heroBtnPartner: 'Become a Partner',
 
     trustBadges: [
       {
         icon: 'building',
-        title: '500+ Partner Pharmacies',
+        title: '700+ Partner Pharmacies',
         desc: 'Consistent wholesale fulfillment for pharmacy chains across Dushanbe, Sughd, Khatlon, and RRP.'
       },
       {
@@ -198,22 +223,25 @@ const CONTENT = {
       },
       {
         icon: 'warehouse',
-        title: 'Modern Climate-Controlled Storage',
-        desc: 'Dedicated modern warehouses with strict 15–25°C thermal and humidity monitoring for supplement preservation.'
+        title: 'GDP/GSP Climate Storage',
+        desc: 'Dedicated warehouse complexes in Khujand and Dushanbe with strict 15–25°C thermal and humidity monitoring.'
       },
       {
         icon: 'truck',
-        title: 'Express Logistics',
-        desc: 'Same-day delivery in Dushanbe, under 24 hours across all provinces of Tajikistan.'
+        title: 'Express Nationwide Logistics',
+        desc: 'Same-day delivery in Dushanbe and Khujand, under 24 hours across all provinces of Tajikistan.'
       }
     ],
 
-    brandSectionTitle: 'Official GLS Pharmaceuticals Price List',
-    brandSectionSubtitle: 'Download the current wholesale price list in Tajik Somoni (TJS) with product specifications',
-    glsTitle: 'GLS Pharmaceuticals — Premium Health & Nutrition',
-    glsDesc: 'A top-selling dietary supplement brand across Central Asia. Over 80 certified SKUs including Vitamin D3, high-potency Omega-3, Magnesium B6, Zinc Glycinate, Collagen, and pediatric formulas.',
-    glsTag: 'Direct Factory Allocation',
-    downloadPriceBtn: 'Download GLS Price Sheet (.CSV / Excel)',
+    brandSectionTitle: 'Official GLS Pharmaceuticals Portfolio',
+    brandSectionSubtitle: 'Certified line of innovative vitamins and premium nutraceuticals with proven market demand',
+    glsTitle: 'GLS Pharmaceuticals — Premium Quality & High Retail Margin',
+    glsDesc: 'A top-selling dietary supplement brand across Central Asia. Over 80 certified SKUs including Vitamin D3, high-potency Omega-3, Magnesium B6, Zinc Glycinate, Marine Collagen, and pediatric formulas.',
+    glsTag: 'Official Master Contract',
+    glsBestSellersTitle: 'Top Pharmacy Best-Sellers:',
+    glsBestSellers: 'D3 2000/5000 IU • Omega-3 35% & 70% • Magnesium B6 • Zinc Chelate • Marine Collagen • Selenium • Iron Chelate',
+    brandCtaBtn: 'Become a Partner & Request Wholesale Rates',
+    brandCtaNotice: 'Wholesale price lists and commercial agreements are provided to licensed pharmacies and clinics upon request.',
 
     advantagesTitle: 'Why Pharmacy Chains Partner with TOJ-VITAMIN',
     advantagesSubtitle: 'Delivering superior retail margins, steady stock reliability, and seamless compliance',
@@ -225,7 +253,7 @@ const CONTENT = {
       },
       {
         num: '02',
-        title: 'Permanent Stock in Dushanbe',
+        title: 'Permanent Stock in Dushanbe & Khujand',
         desc: 'Zero fulfillment delays. High-velocity seasonal essentials (D3, Omega, Zinc, Magnesium) are always in stock.'
       },
       {
@@ -235,13 +263,13 @@ const CONTENT = {
       },
       {
         num: '04',
-        title: 'Fast Matrix Bulk Order Portal',
-        desc: 'Save time with our rapid tabular order entry form tailored specifically for high-volume pharmacy replenishment.'
+        title: 'Dedicated Account Manager',
+        desc: 'Personalized support, assortment recommendations, and swift replenishment processing.'
       }
     ],
 
     reviewsTitle: 'Partner Pharmacy Testimonials',
-    reviewsSubtitle: 'Over 500 pharmacies rely on TojVitamin Distribution for regular GLS inventory supply',
+    reviewsSubtitle: 'Over 700 pharmacies rely on TojVitamin Distribution for regular GLS inventory supply',
     reviews: [
       {
         name: 'Pharmacy Chain «Shifo»',
@@ -270,7 +298,7 @@ const CONTENT = {
       {
         name: '«Sino» Pharmacy',
         city: 'Istaravshan',
-        text: 'Exceptional service and supportive account managers. Ordering directly through the B2B portal takes under two minutes.',
+        text: 'Exceptional service and supportive account managers. Order processing and official documentation are always prompt.',
         rating: 5
       },
       {
@@ -282,79 +310,97 @@ const CONTENT = {
     ],
 
     faqTitle: 'Frequently Asked Questions (FAQ)',
-    faqSubtitle: 'Commercial partnership guidelines with TojVitamin Distribution',
+    faqSubtitle: 'Commercial partnership guidelines, order fulfillment, and logistics with TojVitamin',
     faqs: [
       {
         q: 'What is the minimum wholesale order amount?',
-        a: 'The minimum wholesale order amount is **1,000 TJS** (~$95 USD). This allows pharmacies of any scale to replenish stock smoothly without tying up capital.'
+        a: 'The minimum wholesale order amount is **1,000 TJS**. This allows pharmacies of any scale to replenish stock smoothly without tying up excess capital.'
       },
       {
         q: 'Do you provide authentic quality certificates?',
-        a: 'Yes, every dispatch includes complete regulatory documentation: Certificates of Conformity from the Ministry of Health of Tajikistan and manufacturer batch release reports.'
+        a: 'Yes, every dispatch includes complete regulatory documentation: Certificates of Conformity from the Ministry of Health of Tajikistan, factory batch release sheets, and invoices.'
       },
       {
-        q: 'What is the delivery turnaround time?',
-        a: 'Same-day delivery in Dushanbe for orders placed by 2:00 PM. Regional delivery across Tajikistan takes under 24 hours via dedicated freight.'
+        q: 'How can I obtain the current wholesale price list?',
+        a: 'To safeguard our retail pharmacy partners commercial interests, wholesale pricing is not published openly. Click **«Become a Partner»** on this page to submit a brief inquiry or contact us via WhatsApp to receive the complete price sheet in TJS.'
+      },
+      {
+        q: 'What is the delivery turnaround time across Tajikistan?',
+        a: 'Same-day delivery in Dushanbe and Khujand for orders confirmed by 2:00 PM. Regional delivery across Tajikistan takes **under 24 hours** via dedicated fleet.'
       },
       {
         q: 'Are deferred payment terms available?',
-        a: 'Credit and deferred payment terms are **discussed individually** with verified recurring partners following initial deliveries.'
+        a: 'Credit and deferred payment terms are **discussed individually** with verified recurring partners following initial deliveries and credit evaluation.'
+      },
+      {
+        q: 'What storage conditions are maintained?',
+        a: 'We operate modern **GDP/GSP compliant** warehouses in Khujand and Dushanbe featuring 24/7 climate and humidity control (15–25°C).'
+      },
+      {
+        q: 'What payment methods are accepted?',
+        a: 'All transactions are conducted legally via official bank wire transfer with full accounting records (invoices, acceptance certificates) in Tajik Somoni (TJS).'
+      },
+      {
+        q: 'What is the shelf life of dispatched products?',
+        a: 'Shipments come directly from the manufacturer with **75% to 100%** remaining shelf life (typically 1.5 to 3 years).'
+      },
+      {
+        q: 'Do you provide marketing and pharmacist training materials?',
+        a: 'Yes, we supply partner pharmacies with branded POS displays, product leaflets, and consumer guides, alongside medical representative training sessions.'
+      },
+      {
+        q: 'What happens if a damaged box is detected during handover?',
+        a: 'A standard receipt inspection act is signed upon arrival. Any defective item is **replaced 100% at our expense** or instantly credited.'
       }
     ],
 
-    modalRegTitle: 'B2B Pharmacy Portal Registration',
-    modalRegSubtitle: 'Submit your pharmacy details for instant access to wholesale rates and order matrix',
-    modalLoginTitle: 'B2B Pharmacy Portal Sign In',
-    modalLoginSubtitle: 'Enter your registered pharmacy phone number to enter',
-    modalFieldPharmName: 'Pharmacy / Retail Chain Name:',
-    modalPlaceholderPharmName: 'e.g. Salomat Pharmacy or Karimov LLC',
+    bottomCtaTitle: 'Connect your pharmacy to direct GLS fulfillment',
+    bottomCtaSubtitle: 'Submit a simple partner application to receive wholesale rates, personalized catalog, and dedicated manager assistance.',
+    bottomCtaBtn: 'Become a Partner',
+
+    modalTitle: 'Partner Application Form',
+    modalSubtitle: 'Please provide brief details about your pharmacy or healthcare organization. Our wholesale division will reach out promptly with tailored terms and pricing.',
+    modalFieldPharmName: 'Pharmacy / Healthcare Entity Name:',
+    modalPlaceholderPharmName: 'e.g. Salomat Pharmacy or Shifo Chain',
     modalFieldCity: 'City / Region:',
-    modalPlaceholderCity: 'e.g. Dushanbe, Khujand, Bokhtar...',
-    modalFieldContact: 'Contact Person (Pharmacist / Manager):',
+    modalPlaceholderCity: 'Dushanbe, Khujand, Bokhtar, Kulob, Istaravshan...',
+    modalFieldContact: 'Contact Person (Pharmacist / Director):',
     modalPlaceholderContact: 'Full name of contact person',
     modalFieldPhone: 'Phone Number (WhatsApp):',
-    modalPhoneNote: 'Enter 9 digits without country code',
-    modalBtnRegister: 'Register Pharmacy & Enter Portal',
-    modalBtnLogin: 'Sign In to Portal',
-    modalSwitchToLogin: 'Already registered? Sign in with phone number',
-    modalSwitchToReg: 'New pharmacy? Quick registration',
-    modalRedirecting: 'Authorized! Opening your B2B workspace...',
+    modalPhoneNote: 'Enter 9 digits without country code (e.g. 900 12 3456)',
+    modalFieldComment: 'Additional notes or requirements (optional):',
+    modalPlaceholderComment: 'Number of locations, requested items, or questions...',
+    modalBtnSubmit: 'Submit Application',
+    modalSuccessTitle: 'Application Successfully Received!',
+    modalSuccessDesc: 'Thank you for your interest in partnering with TojVitamin. Our regional wholesale representative will contact you within business hours.',
+    modalDirectWhatsApp: 'Message Directly on WhatsApp',
+    modalClose: 'Close',
 
-    footerRights: 'All rights reserved. Official GLS Pharmaceuticals distribution in the Republic of Tajikistan.'
+    footerRights: 'All rights reserved. Official distribution of certified pharmaceuticals and dietary supplements in the Republic of Tajikistan.'
   }
 };
 
 export default function OptDistributionPage() {
-  const router = useRouter();
   const [lang, setLang] = useState<Lang>('ru');
   const [modalOpen, setModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<AuthMode>('register'); // По умолчанию сначала РЕГИСТРАЦИЯ!
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Form fields
   const [pharmacyName, setPharmacyName] = useState('');
   const [city, setCity] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [phoneDigits, setPhoneDigits] = useState('');
+  const [comment, setComment] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const t = CONTENT[lang];
 
-  // Проверяем, есть ли уже сохраненный токен B2B
-  const handleOpenB2B = (initialMode: AuthMode = 'register') => {
-    if (typeof window !== 'undefined') {
-      const existingToken = localStorage.getItem('toj_b2b_token');
-      if (existingToken && existingToken.length > 5) {
-        router.push(`/b2b/${existingToken}`);
-        return;
-      }
-    }
-    setAuthMode(initialMode);
+  const handleOpenPartnerModal = () => {
     setErrorMsg('');
-    setSuccessMsg('');
+    setIsSubmitted(false);
     setModalOpen(true);
   };
 
@@ -374,56 +420,40 @@ export default function OptDistributionPage() {
       return;
     }
 
-    if (authMode === 'register' && !pharmacyName.trim()) {
+    if (!pharmacyName.trim()) {
       setErrorMsg(lang === 'ru' ? 'Укажите название вашей аптеки' : 'Please provide pharmacy name');
       return;
     }
 
     setLoading(true);
     setErrorMsg('');
-    setSuccessMsg('');
 
     const fullPhone = `+992${phoneDigits}`;
+    const fullAddress = comment.trim() 
+      ? `${city.trim()} [Инфо: ${comment.trim()}]`
+      : city.trim();
 
     try {
-      const res = await fetch('/api/b2b/login', {
+      const res = await fetch('/api/b2b/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: fullPhone,
-          pharmacy_name: authMode === 'register' ? pharmacyName.trim() : undefined,
-          contact_person: authMode === 'register' ? contactPerson.trim() : undefined,
-          address: authMode === 'register' ? city.trim() : undefined
+          name: pharmacyName.trim(),
+          contact_person: contactPerson.trim() || undefined,
+          address: fullAddress || undefined
         })
       });
 
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        if (data.not_found && authMode === 'login') {
-          setErrorMsg(lang === 'ru' 
-            ? 'Номер не найден в базе. Пожалуйста, пройдите регистрацию аптеки.' 
-            : 'Phone number not registered. Please sign up first.');
-          setAuthMode('register');
-          setLoading(false);
-          return;
-        }
-        throw new Error(data.error || (lang === 'ru' ? 'Ошибка обработки запроса' : 'Request failed'));
+        throw new Error(data.error || (lang === 'ru' ? 'Ошибка отправки заявки' : 'Submission failed'));
       }
 
-      if (data.token) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('toj_b2b_token', data.token);
-          localStorage.setItem('toj_b2b_pharmacy_name', data.name || pharmacyName || 'Партнерская аптека');
-          document.cookie = `toj_b2b_token=${data.token}; path=/; max-age=2592000`;
-        }
-        setSuccessMsg(t.modalRedirecting);
-        setTimeout(() => {
-          router.push(`/b2b/${data.token}`);
-        }, 600);
-      }
+      setIsSubmitted(true);
     } catch (err: any) {
-      setErrorMsg(err.message || (lang === 'ru' ? 'Ошибка связи с сервером' : 'Server error'));
+      setErrorMsg(err.message || (lang === 'ru' ? 'Ошибка связи с сервером' : 'Server communication error'));
     } finally {
       setLoading(false);
     }
@@ -466,7 +496,7 @@ export default function OptDistributionPage() {
             <a href="#faq" className="hover:text-emerald-700 transition-colors">{t.navFaq}</a>
           </nav>
 
-          {/* Right actions: Lang switcher + Registration button */}
+          {/* Right actions: Lang switcher + Single 'Стать партнером' button */}
           <div className="flex items-center gap-3">
             {/* RU / EN switcher */}
             <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 text-xs font-bold">
@@ -484,13 +514,13 @@ export default function OptDistributionPage() {
               </button>
             </div>
 
-            {/* Registration & Login button */}
+            {/* ONLY ONE BUTTON: 'Стать партнером' */}
             <button
-              onClick={() => handleOpenB2B('register')}
+              onClick={handleOpenPartnerModal}
               className="px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>{t.navRegister}</span>
+              <Store className="w-4 h-4" />
+              <span>{t.navPartnerBtn}</span>
             </button>
           </div>
         </div>
@@ -498,7 +528,7 @@ export default function OptDistributionPage() {
 
       {/* MAIN CONTENT */}
       <main className="relative z-10">
-        {/* HERO SECTION (Light, Fresh, Ultra-Modern) */}
+        {/* HERO SECTION */}
         <section className="pt-16 pb-20 md:pt-24 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
           {/* Top chip */}
           <motion.div 
@@ -540,33 +570,25 @@ export default function OptDistributionPage() {
             {t.heroSubtitle}
           </motion.p>
 
-          {/* Action buttons (Registration first!) */}
+          {/* Action button: ONLY ONE CTA 'Стать партнером' */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-4 max-w-lg mx-auto"
+            className="flex items-center justify-center max-w-md mx-auto"
           >
             <button
-              onClick={() => handleOpenB2B('register')}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/25 active:scale-[0.98] transition-all"
+              onClick={handleOpenPartnerModal}
+              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-base flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/25 active:scale-[0.98] transition-all"
             >
               <Store className="w-5 h-5" />
-              <span>{t.heroBtnRegister}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{t.heroBtnPartner}</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
-
-            <a
-              href="#brands"
-              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm transition-all"
-            >
-              <Download className="w-4 h-4 text-emerald-600" />
-              <span>{t.heroBtnPrice}</span>
-            </a>
           </motion.div>
         </section>
 
-        {/* TRUST BADGES SECTION (Clean, Honest, No fake Customs Union) */}
+        {/* TRUST BADGES SECTION (700+ аптек-партнеров) */}
         <section id="trust" className="py-14 border-y border-slate-200/80 bg-white/70 backdrop-blur-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -598,11 +620,11 @@ export default function OptDistributionPage() {
           </div>
         </section>
 
-        {/* GLS PHARMACEUTICALS BRAND & PRICE SECTION (Dedicated to GLS) */}
+        {/* GLS PHARMACEUTICALS BRAND SECTION (No public price download, only 'Стать партнером') */}
         <section id="brands" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 mb-3">
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <Warehouse className="w-3.5 h-3.5 text-emerald-600" />
               <span>OFFICIAL B2B CATALOGUE</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">
@@ -634,37 +656,32 @@ export default function OptDistributionPage() {
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                    {lang === 'ru' ? 'Топ продаж в аптеках:' : 'Top Pharmacy Best-Sellers:'}
+                    {t.glsBestSellersTitle}
                   </span>
                   <span className="text-xs sm:text-sm text-slate-800 font-semibold">
-                    D3 2000/5000 ME • Омега-3 35% и 70% • Магний B6 • Цинк Хелат • Морской Коллаген • Селен • Железо
+                    {t.glsBestSellers}
                   </span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
-                <a
-                  href="/api/b2b/export-price"
-                  download
-                  className="px-6 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all text-center"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{t.downloadPriceBtn}</span>
-                </a>
-
+              {/* Single CTA: 'Стать партнером и запросить оптовый прайс' */}
+              <div className="flex flex-col gap-3 w-full md:w-auto shrink-0 max-w-xs text-center">
                 <button
-                  onClick={() => handleOpenB2B('register')}
-                  className="px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all text-center"
+                  onClick={handleOpenPartnerModal}
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all text-center"
                 >
-                  <Store className="w-4 h-4 text-emerald-400" />
-                  <span>{lang === 'ru' ? 'Открыть Matrix-бланк заказа' : 'Open Matrix Bulk Order'}</span>
+                  <Store className="w-5 h-5" />
+                  <span>{t.brandCtaBtn}</span>
                 </button>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  {t.brandCtaNotice}
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ADVANTAGES SECTION (Clean, Solid, No fake email boxes) */}
+        {/* ADVANTAGES SECTION */}
         <section id="advantages" className="py-20 border-y border-slate-200/80 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14">
@@ -695,7 +712,7 @@ export default function OptDistributionPage() {
           </div>
         </section>
 
-        {/* REVIEWS FROM REAL PHARMACIES */}
+        {/* REVIEWS FROM REAL PHARMACIES (700+ аптек) */}
         <section id="reviews" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 mb-3">
@@ -749,7 +766,7 @@ export default function OptDistributionPage() {
           </div>
         </section>
 
-        {/* FAQ SECTION (Min Order 1000 TJS & Individual Deferred Payment) */}
+        {/* EXPANDED FAQ SECTION (10 In-Depth Questions) */}
         <section id="faq" className="py-20 border-t border-slate-200/80 bg-slate-100/50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
@@ -777,13 +794,18 @@ export default function OptDistributionPage() {
                       onClick={() => setOpenFaq(isOpen ? null : idx)}
                       className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-slate-900 hover:text-emerald-700 transition-colors"
                     >
-                      <span>{faq.q}</span>
+                      <span className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 text-xs flex items-center justify-center font-mono shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span>{faq.q}</span>
+                      </span>
                       <ChevronDown className={`w-5 h-5 text-emerald-600 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {isOpen && (
-                      <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                      <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 ml-9">
                         <div dangerouslySetInnerHTML={{ 
-                          __html: faq.a.replace(/\*\*(.*?)\*\*/g, '<strong class="text-emerald-700 font-bold">$1</strong>') 
+                          __html: faq.a.replace(/\*\*(.*?)\*\*/g, '<strong class="text-emerald-800 font-bold">$1</strong>') 
                         }} />
                       </div>
                     )}
@@ -799,21 +821,19 @@ export default function OptDistributionPage() {
           <div className="p-10 md:p-16 rounded-3xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-xl">
             <div className="max-w-2xl mx-auto space-y-6">
               <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
-                {lang === 'ru' 
-                  ? 'Подключите вашу аптеку к прямым поставкам GLS' 
-                  : 'Connect your pharmacy to direct GLS fulfillment'}
+                {t.bottomCtaTitle}
               </h2>
               <p className="text-sm sm:text-base text-emerald-100 leading-relaxed">
-                {lang === 'ru'
-                  ? 'Пройдите быструю регистрацию для открытия доступа к оптовым ценам, бланку быстрого заказа и истории поставок.'
-                  : 'Register your pharmacy now to unlock wholesale pricing, Matrix Bulk Order desks, and continuous inventory fulfillment.'}
+                {t.bottomCtaSubtitle}
               </p>
               <div className="pt-2">
                 <button
-                  onClick={() => handleOpenB2B('register')}
-                  className="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-950 font-black text-sm sm:text-base shadow-lg active:scale-95 transition-all"
+                  onClick={handleOpenPartnerModal}
+                  className="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-950 font-black text-sm sm:text-base shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2.5 mx-auto"
                 >
-                  {t.heroBtnRegister}
+                  <Store className="w-5 h-5 text-emerald-600" />
+                  <span>{t.bottomCtaBtn}</span>
+                  <ArrowRight className="w-4 h-4 text-slate-900" />
                 </button>
               </div>
             </div>
@@ -829,19 +849,19 @@ export default function OptDistributionPage() {
               TV
             </div>
             <div>
-              <p className="font-bold text-slate-800">TOJ-VITAMIN DISTRIBUTION</p>
-              <p className="text-[11px] text-slate-500">Республика Таджикистан, г. Душанбе</p>
+              <p className="font-bold text-slate-800">TOJ-VITAMIN DISTRIBUTION / ООО «Саховати Истаравшан»</p>
+              <p className="text-[11px] text-slate-500">Республика Таджикистан, г. Худжанд | г. Душанбе</p>
             </div>
           </div>
 
           <div className="text-center md:text-right space-y-1">
             <p>© {new Date().getFullYear()} TOJ-VITAMIN DISTRIBUTION. {t.footerRights}</p>
-            <p className="text-[11px] text-slate-400">Официальный дистрибьютор продукции GLS Pharmaceuticals</p>
+            <p className="text-[11px] text-slate-400">Официальный дистрибьютор продукции GLS Pharmaceuticals в Таджикистане</p>
           </div>
         </div>
       </footer>
 
-      {/* MODAL: REGISTRATION FIRST / LOGIN (Hardcoded +992) */}
+      {/* MODAL: SIMPLE PARTNER QUESTIONNAIRE (АНКЕТА СТАТЬ ПАРТНЕРОМ) */}
       <AnimatePresence>
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -849,58 +869,73 @@ export default function OptDistributionPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 sm:p-8 text-slate-900"
+              className="relative w-full max-w-lg rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 sm:p-8 text-slate-900 max-h-[90vh] overflow-y-auto"
             >
               {/* Close button */}
               <button 
                 onClick={() => {
                   setModalOpen(false);
                   setErrorMsg('');
-                  setSuccessMsg('');
+                  setIsSubmitted(false);
                 }}
                 className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Mode Tabs */}
-              <div className="flex rounded-xl bg-slate-100 p-1 mb-6 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('register');
-                    setErrorMsg('');
-                  }}
-                  className={`flex-1 py-2 rounded-lg transition-all ${authMode === 'register' ? 'bg-white text-emerald-800 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800'}`}
-                >
-                  {lang === 'ru' ? 'Регистрация аптеки' : 'New Registration'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('login');
-                    setErrorMsg('');
-                  }}
-                  className={`flex-1 py-2 rounded-lg transition-all ${authMode === 'login' ? 'bg-white text-emerald-800 shadow-sm font-black' : 'text-slate-500 hover:text-slate-800'}`}
-                >
-                  {lang === 'ru' ? 'Вход по номеру' : 'Sign In'}
-                </button>
-              </div>
+              {isSubmitted ? (
+                /* SUCCESS STATE */
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-inner">
+                    <CheckCircle2 className="w-9 h-9" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900">
+                    {t.modalSuccessTitle}
+                  </h3>
+                  <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+                    {t.modalSuccessDesc}
+                  </p>
 
-              {/* Modal Header */}
-              <div className="mb-5">
-                <h3 className="text-xl font-black text-slate-900 mb-1">
-                  {authMode === 'register' ? t.modalRegTitle : t.modalLoginTitle}
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {authMode === 'register' ? t.modalRegSubtitle : t.modalLoginSubtitle}
-                </p>
-              </div>
+                  <div className="pt-4 flex flex-col gap-3 max-w-xs mx-auto">
+                    <a
+                      href="https://wa.me/992176660707"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-white" />
+                      <span>{t.modalDirectWhatsApp}</span>
+                    </a>
+                    <button
+                      onClick={() => {
+                        setModalOpen(false);
+                        setIsSubmitted(false);
+                      }}
+                      className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition-all"
+                    >
+                      {t.modalClose}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* QUESTIONNAIRE FORM */
+                <div>
+                  {/* Modal Header */}
+                  <div className="mb-6 pr-6">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold mb-2">
+                      <Store className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>B2B PARTNERSHIP</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {t.modalTitle}
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                      {t.modalSubtitle}
+                    </p>
+                  </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-3.5">
-                {authMode === 'register' && (
-                  <>
+                  {/* Form */}
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Pharmacy Name */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -919,10 +954,11 @@ export default function OptDistributionPage() {
                     {/* City */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
-                        {t.modalFieldCity}
+                        {t.modalFieldCity} <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
+                        required
                         placeholder={t.modalPlaceholderCity}
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
@@ -933,88 +969,82 @@ export default function OptDistributionPage() {
                     {/* Contact Person */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
-                        {t.modalFieldContact}
+                        {t.modalFieldContact} <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
+                        required
                         placeholder={t.modalPlaceholderContact}
                         value={contactPerson}
                         onChange={(e) => setContactPerson(e.target.value)}
                         className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-900 text-sm font-medium focus:bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                       />
                     </div>
-                  </>
-                )}
 
-                {/* Phone with hardcoded +992 */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t.modalFieldPhone} <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="flex items-center rounded-xl bg-slate-50 border border-slate-200 focus-within:bg-white focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all overflow-hidden">
-                    <div className="px-3.5 py-2.5 bg-slate-100 text-slate-900 font-bold text-sm select-none border-r border-slate-200 flex items-center gap-1.5 shrink-0">
-                      <span>🇹🇯</span>
-                      <span>+992</span>
+                    {/* Phone with hardcoded +992 */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {t.modalFieldPhone} <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="flex items-center rounded-xl bg-slate-50 border border-slate-200 focus-within:bg-white focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all overflow-hidden">
+                        <div className="px-3 py-2.5 bg-slate-100 text-slate-900 font-bold text-sm select-none border-r border-slate-200 flex items-center gap-1.5 shrink-0">
+                          <span>🇹🇯</span>
+                          <span>+992</span>
+                        </div>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="900 12 3456"
+                          value={phoneDigits}
+                          onChange={handlePhoneChange}
+                          className="w-full bg-transparent px-3 py-2.5 text-slate-900 text-sm font-semibold tracking-wider placeholder:text-slate-400 focus:outline-none"
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        {t.modalPhoneNote}
+                      </p>
                     </div>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="900 12 3456"
-                      value={phoneDigits}
-                      onChange={handlePhoneChange}
-                      className="w-full bg-transparent px-3 py-2.5 text-slate-900 text-sm font-semibold tracking-wider placeholder:text-slate-400 focus:outline-none"
-                    />
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    {t.modalPhoneNote}
-                  </p>
+
+                    {/* Comment (Optional) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {t.modalFieldComment}
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder={t.modalPlaceholderComment}
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2 text-slate-900 text-sm font-medium focus:bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"
+                      />
+                    </div>
+
+                    {/* Error message */}
+                    {errorMsg && (
+                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                        <span>{errorMsg}</span>
+                      </div>
+                    )}
+
+                    {/* Submit button */}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-black text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 mt-2"
+                    >
+                      {loading ? (
+                        <span>Подождите...</span>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>{t.modalBtnSubmit}</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
                 </div>
-
-                {/* Error message */}
-                {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                {/* Success message */}
-                {successMsg && (
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>{successMsg}</span>
-                  </div>
-                )}
-
-                {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-black text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 mt-2"
-                >
-                  {loading ? (
-                    <span>Подождите...</span>
-                  ) : authMode === 'register' ? (
-                    <span>{t.modalBtnRegister}</span>
-                  ) : (
-                    <span>{t.modalBtnLogin}</span>
-                  )}
-                </button>
-              </form>
-
-              {/* Mode switch link */}
-              <div className="mt-5 pt-3 border-t border-slate-100 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode(authMode === 'register' ? 'login' : 'register');
-                    setErrorMsg('');
-                  }}
-                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
-                >
-                  {authMode === 'register' ? t.modalSwitchToLogin : t.modalSwitchToReg}
-                </button>
-              </div>
+              )}
             </motion.div>
           </div>
         )}

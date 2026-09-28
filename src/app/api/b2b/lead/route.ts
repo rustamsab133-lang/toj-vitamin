@@ -26,7 +26,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Название аптеки и номер телефона обязательны' }, { status: 400 });
     }
 
-    // Сохраняем лид в таблицу pharmacies со статусом 'lead'
+    // Проверяем, существует ли уже запись с таким телефоном
+    const { data: existing } = await supabaseAdmin
+      .from('pharmacies')
+      .select('id, name')
+      .eq('phone', phone)
+      .maybeSingle();
+
+    if (existing) {
+      const { data: updated, error: updateError } = await supabaseAdmin
+        .from('pharmacies')
+        .update({
+          name: name || existing.name,
+          address: address || undefined,
+          contact_person: contact_person || undefined
+        })
+        .eq('id', existing.id)
+        .select('id, name')
+        .single();
+
+      if (updateError) {
+        console.error('B2B Lead update error:', updateError);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Заявка успешно принята',
+        lead: updated || existing
+      });
+    }
+
+    // Сохраняем новый лид в таблицу pharmacies со статусом 'lead'
     const { data, error } = await supabaseAdmin
       .from('pharmacies')
       .insert({
@@ -34,10 +64,10 @@ export async function POST(request: Request) {
         phone,
         address: address || '',
         contact_person: contact_person || '',
-        status: 'lead', // Устанавливаем статус лида
-        discount_percent: 0, // По умолчанию скидка 0%
+        status: 'lead',
+        discount_percent: 0,
         balance: 0,
-        credit_limit: 0 // По умолчанию лимит долга 0 сомони
+        credit_limit: 0
       })
       .select('id, name')
       .single();
