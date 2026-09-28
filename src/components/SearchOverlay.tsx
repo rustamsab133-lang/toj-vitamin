@@ -314,7 +314,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
         onBuy={async (product, synergy) => {
           if (synergy) {
             addMultiple([product, synergy]);
-            triggerToast(synergy, lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+            triggerToast(synergy, lang === 'en' ? 'Bundle added to cart' : (lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд'));
           } else {
             addItem(product);
             triggerToast(product);

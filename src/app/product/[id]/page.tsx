@@ -40,17 +40,31 @@ export async function generateStaticParams() {
     .filter((p) => Boolean(p.id && p.id.trim().length > 0));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const product = await getProduct(params.id);
   const nameToMatch = product ? product.name : decodeURIComponent(params.id);
   const enriched = findEnrichmentForProduct(nameToMatch, enrichedData);
+  const lang: Lang = searchParams?.lang === 'en' ? 'en' : (searchParams?.lang === 'tj' ? 'tj' : 'ru');
 
   if (!product) {
-    return { title: 'Товар не найден' };
+    return { title: lang === 'en' ? 'Product not found' : (lang === 'tj' ? 'Маҳсулот ёфт нашуд' : 'Товар не найден') };
   }
 
-  const title = `${product.name} | Купить в интернет-магазине toj-vitamin (Таджикистан)`;
-  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`;
+  const localizedName = getLocalizedProductName(product.name, lang);
+  const title = lang === 'en'
+    ? `${localizedName} | Buy online at toj-vitamin (Tajikistan)`
+    : (lang === 'tj'
+      ? `${localizedName} | Харид дар мағозаи интернетии toj-vitamin (Тоҷикистон)`
+      : `${product.name} | Купить в интернет-магазине toj-vitamin (Таджикистан)`);
+
+  const description = enriched?.properties?.slice(0, 3).join('. ') || (
+    lang === 'en'
+      ? `Order ${localizedName} for ${product.price} TJS with fast delivery at toj-vitamin.`
+      : (lang === 'tj'
+        ? `Фармоиши ${localizedName} бо нархи ${product.price} смн бо интиқоли фаврӣ дар мағозаи интернетии toj-vitamin.`
+        : `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`)
+  );
+
   const imageUrl = product.image_url ? 
     (product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`) : 
     'https://www.toj-vitamin.tj/og-large-logo.png';
@@ -67,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: product.name,
+          alt: localizedName,
         },
       ],
       siteName: 'toj-vitamin.tj',
@@ -83,40 +97,97 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: {
         'ru-TJ': `/product/${slugify(product.name)}?lang=ru`,
         'tg-TJ': `/product/${slugify(product.name)}?lang=tj`,
+        'en-TJ': `/product/${slugify(product.name)}?lang=en`,
       }
     }
   };
 }
 
-const REVIEW_TEMPLATES: Record<string, Array<{ author: string; body: string }>> = {
-  sport: [
-    { author: 'Амир', body: 'Отличный аминокислотный профиль, выносливость на тренировках выросла!' },
-    { author: 'Дильшод', body: 'Беру уже второй раз для зала. Доставка в Душанбе очень быстрая, оригинал GLS.' },
-    { author: 'Сухроб', body: 'Рабочий спортпит. Улучшилось восстановление мышц после тяжелых сетов.' }
-  ],
-  brain: [
-    { author: 'Парвиз', body: 'Улучшилась концентрация и фокус при умственной работе. Меньше тумана в голове.' },
-    { author: 'Мадина', body: 'Стала лучше спать, просыпаюсь бодрой и отдохнувшей. Очень советую!' },
-    { author: 'Фаррух', body: 'Помогает сохранять продуктивность во время сессии и дедлайнов. Отличный ноотроп.' }
-  ],
-  beauty: [
-    { author: 'Нигина', body: 'Кожа стала заметно чище и более сияющей уже через две недели приема. Супер!' },
-    { author: 'Тахмина', body: 'Укрепились ногти и волосы стали меньше выпадать. Оригинал Green Leaf!' },
-    { author: 'Зухра', body: 'Очень довольна результатом, пьем вместе с сестрой. Будем заказывать еще!' }
-  ],
-  immune: [
-    { author: 'Шохин', body: 'Отличный комплекс для иммунитета. Перестал простужаться в сезон гриппа.' },
-    { author: 'Баходур', body: 'Высокое качество витаминов. Помогает поддерживать тонус и защитные силы организма.' },
-    { author: 'Заррина', body: 'Быстрая экспресс-доставка. Упаковано герметично, срок годности отличный.' }
-  ],
-  default: [
-    { author: 'Алишер', body: 'Отличное качество, помогло уже через неделю приема.' },
-    { author: 'Фируз', body: 'Оригинальный качественный продукт, очень быстрая доставка по Таджикистану от toj-vitamin.' },
-    { author: 'Лола', body: 'Заказывала по совету нутрициолога, результат очень радует. Рекомендую!' }
-  ]
+const REVIEW_TEMPLATES: Record<Lang, Record<string, Array<{ author: string; body: string }>>> = {
+  ru: {
+    sport: [
+      { author: 'Амир', body: 'Отличный аминокислотный профиль, выносливость на тренировках выросла!' },
+      { author: 'Дильшод', body: 'Беру уже второй раз для зала. Доставка в Душанбе очень быстрая, оригинал GLS.' },
+      { author: 'Сухроб', body: 'Рабочий спортпит. Улучшилось восстановление мышц после тяжелых сетов.' }
+    ],
+    brain: [
+      { author: 'Парвиз', body: 'Улучшилась концентрация и фокус при умственной работе. Меньше тумана в голове.' },
+      { author: 'Мадина', body: 'Стала лучше спать, просыпаюсь бодрой и отдохнувшей. Очень советую!' },
+      { author: 'Фаррух', body: 'Помогает сохранять продуктивность во время сессии и дедлайнов. Отличный ноотроп.' }
+    ],
+    beauty: [
+      { author: 'Нигина', body: 'Кожа стала заметно чище и более сияющей уже через две недели приема. Супер!' },
+      { author: 'Тахмина', body: 'Укрепились ногти и волосы стали меньше выпадать. Оригинал Green Leaf!' },
+      { author: 'Зухра', body: 'Очень довольна результатом, пьем вместе с сестрой. Будем заказывать еще!' }
+    ],
+    immune: [
+      { author: 'Шохин', body: 'Отличный комплекс для иммунитета. Перестал простужаться в сезон гриппа.' },
+      { author: 'Баходур', body: 'Высокое качество витаминов. Помогает поддерживать тонус и защитные силы организма.' },
+      { author: 'Заррина', body: 'Быстрая экспресс-доставка. Упаковано герметично, срок годности отличный.' }
+    ],
+    default: [
+      { author: 'Алишер', body: 'Отличное качество, помогло уже через неделю приема.' },
+      { author: 'Фируз', body: 'Оригинальный качественный продукт, очень быстрая доставка по Таджикистану от toj-vitamin.' },
+      { author: 'Лола', body: 'Заказывала по совету нутрициолога, результат очень радует. Рекомендую!' }
+    ]
+  },
+  tj: {
+    sport: [
+      { author: 'Амир', body: 'Таркиби аълои аминокислотаҳо, тобоварӣ ҳангоми машқҳо хеле беҳтар шуд!' },
+      { author: 'Дилшод', body: 'Бори дуюм барои толори варзиш фармоиш додам. Интиқоли хеле зуд дар Душанбе, асли GLS.' },
+      { author: 'Сӯҳроб', body: 'Ғизои варзишии босифат. Барқароршавии мушакҳо пас аз машқ тезтар шуд.' }
+    ],
+    brain: [
+      { author: 'Парвиз', body: 'Диққат ва тамаркуз ҳангоми кори зеҳнӣ хеле беҳтар шуд. Фикр равшан шуд.' },
+      { author: 'Мадина', body: 'Хобам ором шуд, саҳар бардаму болидаруҳ бедор мешавам. Маслиҳат медиҳам!' },
+      { author: 'Фаррух', body: 'Дар давраи имтиҳонҳо ва корҳои зиёд маҳсулнокиро баланд нигоҳ медорад.' }
+    ],
+    beauty: [
+      { author: 'Нигина', body: 'Пӯст пас аз ду ҳафтаи истифода тозаву дурахшон шуд. Олӣ!' },
+      { author: 'Таҳмина', body: 'Нохунҳо мустаҳкам шуданд ва рехтани мӯй кам шуд. Маҳсулоти аслии GLS!' },
+      { author: 'Зӯҳро', body: 'Аз натиҷа хеле шодам, ҳамроҳи апаам қабул мекунем. Боз фармоиш медиҳем!' }
+    ],
+    immune: [
+      { author: 'Шоҳин', body: 'Маҷмӯи олиҷаноб барои масуният. Дар мавсими сармо бемор нашудам.' },
+      { author: 'Баҳодур', body: 'Сифати баланди витаминҳо. Қувваи муҳофизатии баданро дастгирӣ мекунад.' },
+      { author: 'Заррина', body: 'Интиқоли фаврӣ. Бастабандии маҳкам ва мӯҳлати истифодаи хуб.' }
+    ],
+    default: [
+      { author: 'Алишер', body: 'Сифати аъло, пас аз як ҳафта натиҷааш ҳис карда шуд.' },
+      { author: 'Фирӯз', body: 'Маҳсулоти аслӣ ва босифат, интиқоли хеле фаврӣ дар Тоҷикистон.' },
+      { author: 'Лола', body: 'Бо тавсияи мутахассис харидам, натиҷа хеле хуб аст. Тавсия медиҳам!' }
+    ]
+  },
+  en: {
+    sport: [
+      { author: 'Amir', body: 'Excellent amino acid profile, workouts stamina increased substantially!' },
+      { author: 'Dilshod', body: 'Ordering for the second time for the gym. Very fast delivery in Dushanbe, authentic GLS product.' },
+      { author: 'Sukhrob', body: 'Effective sports nutrition. Muscle recovery after heavy training is noticeably faster.' }
+    ],
+    brain: [
+      { author: 'Parviz', body: 'Improved focus and mental clarity during office hours. Brain fog is completely gone.' },
+      { author: 'Madina', body: 'Sleep quality improved significantly, waking up refreshed and energetic. Highly recommend!' },
+      { author: 'Farrukh', body: 'Helps maintain productivity during deadlines and exams. Outstanding nootropic formulation.' }
+    ],
+    beauty: [
+      { author: 'Nigina', body: 'Skin became visibly clearer and glowing after just two weeks of use. Excellent!' },
+      { author: 'Tahmina', body: 'Stronger nails and noticeable reduction in hair loss. Genuine GLS quality!' },
+      { author: 'Zukhra', body: 'Very satisfied with the results, taking it together with my sister. Will order again!' }
+    ],
+    immune: [
+      { author: 'Shohin', body: 'Great immune support complex. No seasonal colds this year.' },
+      { author: 'Bakhodur', body: 'High quality vitamins. Supports overall vitality and natural body defenses.' },
+      { author: 'Zarrina', body: 'Fast express delivery. Sealed tight and long shelf life.' }
+    ],
+    default: [
+      { author: 'Alisher', body: 'Premium quality nutraceutical, felt positive results within a week of use.' },
+      { author: 'Firuz', body: 'Original certified product, remarkably fast delivery across Tajikistan by toj-vitamin.' },
+      { author: 'Lola', body: 'Ordered following my nutritionist recommendation, wonderful results. Highly recommended!' }
+    ]
+  }
 };
 
-function getDynamicReviews(productName: string, tags: string[] = []): Array<{ author: string; body: string }> {
+function getDynamicReviews(productName: string, tags: string[] = [], lang: Lang = 'ru'): Array<{ author: string; body: string }> {
   const normName = productName.toLowerCase();
   let category = 'default';
   
@@ -130,7 +201,8 @@ function getDynamicReviews(productName: string, tags: string[] = []): Array<{ au
     category = 'immune';
   }
   
-  const templates = REVIEW_TEMPLATES[category];
+  const langKey: Lang = lang === 'en' ? 'en' : (lang === 'tj' ? 'tj' : 'ru');
+  const templates = REVIEW_TEMPLATES[langKey][category] || REVIEW_TEMPLATES.ru[category];
   const charCodeSum = productName.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
   
   return [
@@ -150,16 +222,23 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   const lang: Lang = searchParams?.lang === 'en' ? 'en' : (searchParams?.lang === 'tj' ? 'tj' : 'ru');
 
-  const description = enriched?.properties?.slice(0, 3).join('. ') || `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`;
-  const productReviews = getDynamicReviews(product.name, enriched?.tags || []);
+  const localizedName = getLocalizedProductName(product.name, lang);
+  const description = enriched?.properties?.slice(0, 3).join('. ') || (
+    lang === 'en'
+      ? `Order ${localizedName} for ${product.price} TJS with fast delivery at toj-vitamin.`
+      : (lang === 'tj'
+        ? `Фармоиши ${localizedName} бо нархи ${product.price} смн бо интиқоли фаврӣ дар мағозаи интернетии toj-vitamin.`
+        : `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`)
+  );
+  const productReviews = getDynamicReviews(product.name, enriched?.tags || [], lang);
 
   const jsonLd = [
     {
       "@context": "https://schema.org/",
       "@type": "Product",
-      "name": product.name,
+      "name": localizedName,
       "image": product.image_url ? [product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`] : [],
-      "description": enriched?.properties?.join('. ') || product.description || product.name,
+      "description": enriched?.properties?.join('. ') || product.description || localizedName,
       "brand": {
         "@type": "Brand",
         "name": "GLS"
@@ -216,19 +295,19 @@ export default async function ProductPage({ params, searchParams }: Props) {
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Главная",
+          "name": lang === 'en' ? 'Home' : (lang === 'tj' ? 'Асосӣ' : 'Главная'),
           "item": "https://www.toj-vitamin.tj"
         },
         {
           "@type": "ListItem",
           "position": 2,
-          "name": "Каталог",
+          "name": lang === 'en' ? 'Catalog' : (lang === 'tj' ? 'Каталог' : 'Каталог'),
           "item": "https://www.toj-vitamin.tj#catalog"
         },
         {
           "@type": "ListItem",
           "position": 3,
-          "name": product.name,
+          "name": localizedName,
           "item": `https://www.toj-vitamin.tj/product/${slugify(product.name)}`
         }
       ]
@@ -259,7 +338,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 className="w-full max-h-[320px] object-contain group-hover:scale-[1.03] transition-transform duration-700 ease-out relative z-10"
               />
             ) : (
-              <div className="text-[#94A3B8] text-sm">Изображение товара</div>
+              <div className="text-[#94A3B8] text-sm">
+                {lang === 'en' ? 'Product image' : (lang === 'tj' ? 'Тасвири маҳсулот' : 'Изображение товара')}
+              </div>
             )}
           </div>
 
@@ -312,7 +393,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
               </div>
               <ShareButton
                 url={`/product/${params.id}`}
-                title={product.name}
+                title={localizedName}
                 description={description}
                 variant="primary"
                 lang={lang}
@@ -325,7 +406,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
           <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03]">
              <h2 className="text-[20px] font-bold text-[#1D1D1F] mb-8 flex items-center gap-3 font-outfit">
                <ShieldCheck className="text-[#1E40AF]" size={28} />
-               Свойства и клиническое действие
+               {lang === 'en' 
+                 ? 'Properties & Clinical Action' 
+                 : (lang === 'ru' ? 'Свойства и клиническое действие' : 'Хусусиятҳо ва Таъсир')}
              </h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                {displayProduct.properties.map((prop: string, i: number) => (
@@ -343,7 +426,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
         {displayProduct.marketing_hooks && displayProduct.marketing_hooks.length > 0 && (
           <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03]">
              <h2 className="text-[20px] font-bold text-[#1D1D1F] mb-8 font-outfit uppercase tracking-widest text-sm text-[#94A3B8]">
-               Для кого это важно
+               {lang === 'en' 
+                 ? 'Key Indications' 
+                 : (lang === 'ru' ? 'Для кого это важно' : 'Барои кӣ муҳим аст')}
              </h2>
              <div className="space-y-4">
                {displayProduct.marketing_hooks.map((hook: string, i: number) => (
@@ -359,7 +444,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
           <div className="bg-[#FFF7ED] rounded-[40px] p-8 md:p-12 border border-[#FB923C]/20 shadow-sm">
              <h2 className="text-[20px] font-bold text-[#C2410C] mb-8 flex items-center gap-3 font-outfit">
                <AlertCircle size={24} />
-               Медицинские взаимодействия
+               {lang === 'en' 
+                 ? 'Medical Interactions & Safety' 
+                 : (lang === 'ru' ? 'Медицинские взаимодействия' : 'Дастур ва бехатарӣ')}
              </h2>
              <div className="space-y-4">
                {displayProduct.med_interactions.map((interaction: string, i: number) => (
@@ -375,7 +462,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
         {/* Dynamic Customer Reviews Section */}
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-black/[0.03] space-y-8">
           <h2 className="text-[22px] font-bold text-[#1D1D1F] font-outfit tracking-tight">
-            Отзывы о продукте ({productReviews.length})
+            {lang === 'en' 
+              ? `Product Reviews (${productReviews.length})` 
+              : (lang === 'ru' ? `Отзывы о продукте (${productReviews.length})` : `Тақризҳо дар бораи маҳсулот (${productReviews.length})`)}
           </h2>
           <div className="space-y-6">
             {productReviews.map((rev, i) => (
@@ -387,7 +476,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
                     </div>
                     <div>
                       <p className="font-bold text-sm text-[#1D1D1F]">{rev.author}</p>
-                      <p className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest">Проверенный покупатель</p>
+                      <p className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest">
+                        {lang === 'en' ? 'Verified Buyer' : (lang === 'ru' ? 'Проверенный покупатель' : 'Харидори санҷидашуда')}
+                      </p>
                     </div>
                   </div>
                   <div className="flex text-amber-400 gap-0.5">

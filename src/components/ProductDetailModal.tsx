@@ -162,10 +162,15 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 }) => {
   const { addItem, addMultiple, setIsOpen: setIsCartOpen, triggerAnimation, triggerToast } = useCart();
   const [isAdded, setIsAdded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [addedBundles, setAddedBundles] = useState<Record<string, boolean>>({});
   const [synergies, setSynergies] = useState<SynergyLink[]>([]);
   const [loadingSynergies, setLoadingSynergies] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [product?.id]);
 
   useEffect(() => {
     setMounted(true);
@@ -348,9 +353,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         },
         "author": {
           "@type": "Person",
-          "name": "Алишер"
+          "name": lang === 'en' ? 'Alisher' : 'Алишер'
         },
-        "reviewBody": "Отличное качество, помогло уже через неделю приема. Рекомендую!"
+        "reviewBody": lang === 'en' 
+          ? 'Excellent quality, felt positive results within a week of use. Highly recommend!' 
+          : (lang === 'tj' 
+            ? 'Сифати аъло, пас аз як ҳафта натиҷааш ҳис карда шуд. Тавсия медиҳам!' 
+            : 'Отличное качество, помогло уже через неделю приема. Рекомендую!')
       }
     ]
   };
@@ -378,11 +387,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0.5 }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="w-full sm:w-[580px] max-h-[100dvh] sm:max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[44px] shadow-[0_40px_100px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden will-change-transform transform-gpu"
+            className="w-full sm:w-[620px] md:w-[940px] lg:w-[1020px] max-h-[100dvh] sm:max-h-[94vh] md:h-[86vh] bg-white rounded-t-[32px] sm:rounded-[40px] shadow-[0_40px_100px_rgba(0,0,0,0.18)] relative flex flex-col md:flex-row overflow-hidden will-change-transform transform-gpu"
             style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           >
             {/* ACTIONS: Share + Close */}
-            <div className="absolute right-6 sm:right-8 flex items-center gap-2 z-50" style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}>
+            <div className="absolute right-4 sm:right-6 top-4 sm:top-6 flex items-center gap-2 z-50">
               <ShareButton
                 url={`/product/${slugify(product.name || '')}`}
                 title={product.name}
@@ -392,66 +401,84 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               />
               <button 
                 onClick={handleSmartClose}
-                className="w-12 h-12 bg-white/90 backdrop-blur-md border border-black/10 text-[#1D1D1F] rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-[0_8px_16px_rgba(0,0,0,0.1)]"
+                className="w-10 h-10 sm:w-11 sm:h-11 bg-white/90 backdrop-blur-md border border-black/10 text-[#1D1D1F] rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* PURE IMAGE STUDIO */}
-            <div className="shrink-0 w-full h-[320px] sm:h-[380px] bg-[#F8FAFC] flex items-center justify-center p-8 relative overflow-hidden transform-gpu">
+            {/* 1. LEFT COLUMN: PURE IMAGE STUDIO */}
+            <div className="shrink-0 w-full md:w-[400px] lg:w-[460px] h-[240px] sm:h-[280px] md:h-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 relative overflow-hidden transform-gpu border-b md:border-b-0 md:border-r border-black/[0.04]">
                {/* Background Studio Glow */}
                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#F8FAFC_0%,_#FFFFFF_70%)] opacity-50" />
                
-               <div className="relative w-full h-full transform-gpu">
-                 {product.image_url ? (
+               <div className="relative w-full h-full max-h-[200px] sm:max-h-[240px] md:max-h-[380px] transform-gpu flex items-center justify-center">
+                 {product.image_url && !imageError ? (
                    <Image 
                      src={product.image_url} 
                      alt={product.name} 
                      fill
                      priority
-                     sizes="(max-width: 640px) 100vw, 500px"
-                     className="object-contain sm:drop-shadow-[0_10px_30px_rgba(0,0,0,0.05)]"
+                     unoptimized
+                     onError={() => setImageError(true)}
+                     sizes="(max-width: 768px) 100vw, 460px"
+                     className="object-contain sm:drop-shadow-[0_12px_36px_rgba(0,0,0,0.06)]"
                     />
                  ) : (
-                    <ShoppingBag size={100} strokeWidth={0.5} className="text-[#E2E8F0] mx-auto h-full" />
+                    <div className="flex flex-col items-center justify-center text-center p-6 space-y-2">
+                      <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-400">
+                        <ShoppingBag size={30} strokeWidth={1.2} />
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-outfit">
+                        TOJ-VITAMIN
+                      </span>
+                    </div>
                  )}
+               </div>
+
+               {/* Desktop Quality Standard */}
+               <div className="hidden md:flex items-center gap-2 mt-4 text-[#64748B] text-[11px] font-medium tracking-wide">
+                  <ShieldCheck size={14} className="text-[#1E40AF]" />
+                  <span>{lang === 'en' ? '100% Original GLS Pharmaceuticals' : (lang === 'ru' ? '100% Оригинал GLS Pharmaceuticals' : '100% Асл GLS Pharmaceuticals')}</span>
                </div>
             </div>
 
-            {/* SCROLLABLE CONTENT BODY (Stabilized) */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden apple-shelf-scroll overscroll-contain px-8 sm:px-12 pb-12 will-change-scroll">
+            {/* 2. RIGHT COLUMN: SCROLLABLE CONTENT BODY + STICKY FOOTER */}
+            <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative">
               
-              <div className="space-y-12">
+              {/* SCROLLABLE CONTENT BODY (Stabilized) */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden apple-shelf-scroll overscroll-contain px-6 sm:px-10 md:px-12 pt-6 sm:pt-8 md:pt-10 pb-8 will-change-scroll">
                 
-                {/* 1. Main Info: Title & Price */}
-                <div className="space-y-6 pt-2">
-                   <div className="space-y-2">
-                      <p className="text-[#94A3B8] text-[12px] font-bold uppercase tracking-[0.25em] font-outfit">
-                        {lang === 'en' ? 'Exclusive Collection' : (lang === 'ru' ? 'Эксклюзивная коллекция' : 'Коллексияи эксклюзивӣ')}
-                      </p>
-                      <h2 className="text-[34px] md:text-[40px] font-bold text-[#1D1D1F] leading-tight font-outfit tracking-tight">
-                        {getLocalizedProductName(product.name, lang)}
-                      </h2>
-                   </div>
-                   
-                   <div className="flex items-baseline gap-2">
-                      <span className="text-[38px] font-bold text-[#1D1D1F] font-outfit tracking-tighter">
-                        {product.price}
-                      </span>
-                      <span className="text-[16px] text-[#94A3B8] font-bold tracking-widest uppercase">{lang === 'en' ? 'TJS' : 'смн'}</span>
-                   </div>
-
-                   {product.tags && product.tags.length > 0 && (
-                     <div className="flex flex-wrap gap-2">
-                       {product.tags.map((tag, idx) => (
-                         <span key={idx} className="px-4 py-1.5 rounded-full bg-black/[0.04] text-[10px] font-bold text-[#1D1D1F] uppercase tracking-widest">
-                           {getLocalizedProductTag(tag, lang)}
-                         </span>
-                       ))}
+                <div className="space-y-8 md:space-y-10">
+                  
+                  {/* 1. Main Info: Title & Price */}
+                  <div className="space-y-4 md:space-y-5 pt-1 md:pr-12">
+                     <div className="space-y-1.5">
+                        <p className="text-[#94A3B8] text-[11px] md:text-[12px] font-bold uppercase tracking-[0.25em] font-outfit">
+                          {lang === 'en' ? 'Exclusive Collection' : (lang === 'ru' ? 'Эксклюзивная коллекция' : 'Коллексияи эксклюзивӣ')}
+                        </p>
+                        <h2 className="text-[26px] sm:text-[32px] md:text-[36px] font-bold text-[#1D1D1F] leading-tight font-outfit tracking-tight">
+                          {getLocalizedProductName(product.name, lang)}
+                        </h2>
                      </div>
-                   )}
-                </div>
+                     
+                     <div className="flex items-baseline gap-2">
+                        <span className="text-[32px] md:text-[36px] font-bold text-[#1D1D1F] font-outfit tracking-tighter">
+                          {product.price}
+                        </span>
+                        <span className="text-[15px] md:text-[16px] text-[#94A3B8] font-bold tracking-widest uppercase">{lang === 'en' ? 'TJS' : 'смн'}</span>
+                     </div>
+
+                     {product.tags && product.tags.length > 0 && (
+                       <div className="flex flex-wrap gap-2">
+                         {product.tags.map((tag, idx) => (
+                           <span key={idx} className="px-3.5 py-1 rounded-full bg-black/[0.04] text-[10px] font-bold text-[#1D1D1F] uppercase tracking-widest">
+                             {getLocalizedProductTag(tag, lang)}
+                           </span>
+                         ))}
+                       </div>
+                     )}
+                  </div>
 
                 <div className="h-px bg-black/[0.05]" />
 
@@ -526,7 +553,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             <div key={idx} className="relative bg-white border border-black/[0.06] rounded-[32px] p-6 hover:shadow-xl hover:shadow-black/[0.02] transition-all group overflow-hidden">
                                <div className="flex items-center gap-5">
                                   <div className="w-20 h-20 bg-[#FBFBFB] rounded-[24px] flex items-center justify-center p-3 group-hover:scale-110 transition-transform duration-700 shrink-0 border border-black/[0.02] relative overflow-hidden">
-                                    <Image src={synProd.image_url || ''} alt={getLocalizedProductName(synProd.name, lang)} fill sizes="80px" className="object-contain" />
+                                    <Image src={synProd.image_url || ''} alt={getLocalizedProductName(synProd.name, lang)} fill unoptimized sizes="80px" className="object-contain" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 text-[#1E40AF]">
@@ -603,57 +630,57 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                    </Link>
                 </div>
 
-                {/* BOTTOM SAFETY ZONE */}
-                <div className="h-44" />
+                {/* BOTTOM SPACING */}
+                <div className="h-6" />
               </div>
             </div>
 
-            {/* PREMIUM STICKY FOOTER: Glassmorphism */}
-            <div className="shrink-0 p-4 sm:p-6 bg-white/80 backdrop-blur-2xl border-t border-black/[0.05] z-40 relative">
-              <div className="max-w-xl mx-auto flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    addItem(product);
-                    triggerAnimation();
-                    triggerToast(product);
-                    setIsAdded(true);
-                    setTimeout(() => setIsAdded(false), 2500);
-                  }}
-                  className={`flex-1 h-[56px] sm:h-[64px] rounded-[24px] text-[15px] sm:text-[16px] font-bold flex items-center justify-center gap-2.5 transition-all duration-300 shadow-lg active:scale-[0.97] ${
-                    isAdded
-                      ? 'bg-emerald-600 text-white shadow-emerald-600/30'
-                      : 'bg-[#1D1D1F] text-white hover:bg-indigo-600 hover:scale-[1.01]'
-                  }`}
-                >
-                  {isAdded ? (
-                    <>
-                      <Check size={20} className="stroke-[3]" />
-                      <span>{lang === 'en' ? 'Added to Cart' : (lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={18} />
-                      <span>{lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад')}</span>
-                    </>
-                  )}
-                </button>
+            {/* PREMIUM STICKY FOOTER IN RIGHT COLUMN */}
+              <div className="shrink-0 p-4 sm:p-5 md:p-6 bg-white/95 backdrop-blur-md border-t border-black/[0.05] z-30">
+                <div className="w-full flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addItem(product);
+                      triggerAnimation();
+                      triggerToast(product);
+                      setIsAdded(true);
+                      setTimeout(() => setIsAdded(false), 2500);
+                    }}
+                    className={`flex-1 h-[52px] sm:h-[58px] rounded-[22px] text-[15px] sm:text-[16px] font-bold flex items-center justify-center gap-2.5 transition-all duration-300 shadow-lg active:scale-[0.97] ${
+                      isAdded
+                        ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+                        : 'bg-[#1D1D1F] text-white hover:bg-indigo-600 hover:scale-[1.01]'
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <Check size={20} className="stroke-[3]" />
+                        <span>{lang === 'en' ? 'Added to Cart' : (lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={18} />
+                        <span>{lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад')}</span>
+                      </>
+                    )}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCartOpen(true);
-                  }}
-                  className="h-[56px] sm:h-[64px] px-4 sm:px-6 rounded-[24px] bg-black/[0.05] hover:bg-black/[0.1] active:scale-[0.97] text-[#1D1D1F] text-[13px] sm:text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0"
-                  title={lang === 'en' ? 'Open Cart' : (lang === 'ru' ? 'Открыть корзину' : 'Кушодани сабад')}
-                >
-                  <ShoppingBag size={17} />
-                  <span className="hidden sm:inline">{lang === 'en' ? 'Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад')}</span>
-                  <ArrowRight size={15} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCartOpen(true);
+                    }}
+                    className="h-[52px] sm:h-[58px] px-4 sm:px-6 rounded-[22px] bg-black/[0.05] hover:bg-black/[0.1] active:scale-[0.97] text-[#1D1D1F] text-[13px] sm:text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0"
+                    title={lang === 'en' ? 'Open Cart' : (lang === 'ru' ? 'Открыть корзину' : 'Кушодани сабад')}
+                  >
+                    <ShoppingBag size={17} />
+                    <span className="hidden sm:inline">{lang === 'en' ? 'Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад')}</span>
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
               </div>
             </div>
-            
           </motion.div>
         </div>
       )}

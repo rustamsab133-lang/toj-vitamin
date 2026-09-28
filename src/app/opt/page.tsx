@@ -491,7 +491,9 @@ export default function OptDistributionPage() {
                   {t.brandTagline}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 hidden sm:block">Официальный дистрибьютор GLS Pharmaceuticals в РТ</p>
+              <p className="text-[11px] text-slate-500 hidden sm:block">
+                {lang === 'en' ? 'Official distributor of GLS Pharmaceuticals in RT' : 'Официальный дистрибьютор GLS Pharmaceuticals в РТ'}
+              </p>
             </div>
           </Link>
 
@@ -651,7 +653,9 @@ export default function OptDistributionPage() {
                   <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
                     {t.glsTag}
                   </span>
-                  <span className="text-xs font-bold text-slate-500">Производство: Россия • Стандарты GMP/ISO</span>
+                  <span className="text-xs font-bold text-slate-500">
+                    {lang === 'en' ? 'Made in Russia • GMP/ISO Standards' : 'Производство: Россия • Стандарты GMP/ISO'}
+                  </span>
                 </div>
 
                 <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
@@ -863,14 +867,20 @@ export default function OptDistributionPage() {
               />
             </div>
             <div>
-              <p className="font-bold text-slate-800">TOJ-VITAMIN DISTRIBUTION / ООО «Саховати Истаравшан»</p>
-              <p className="text-[11px] text-slate-500">Республика Таджикистан, г. Худжанд | г. Душанбе</p>
+              <p className="font-bold text-slate-800">TOJ-VITAMIN DISTRIBUTION / {lang === 'en' ? 'LLC "Sakhovati Istaravshan"' : 'ООО «Саховати Истаравшан»'}</p>
+              <p className="text-[11px] text-slate-500">
+                {lang === 'en' ? 'Republic of Tajikistan, Khujand | Dushanbe' : 'Республика Таджикистан, г. Худжанд | г. Душанбе'}
+              </p>
             </div>
           </div>
 
           <div className="text-center md:text-right space-y-1">
             <p>© {new Date().getFullYear()} TOJ-VITAMIN DISTRIBUTION. {t.footerRights}</p>
-            <p className="text-[11px] text-slate-400">Официальный дистрибьютор продукции GLS Pharmaceuticals в Таджикистане</p>
+            <p className="text-[11px] text-slate-400">
+              {lang === 'en' 
+                ? 'Official distributor of GLS Pharmaceuticals in Tajikistan' 
+                : 'Официальный дистрибьютор продукции GLS Pharmaceuticals в Таджикистане'}
+            </p>
           </div>
         </div>
       </footer>
@@ -1048,7 +1058,7 @@ export default function OptDistributionPage() {
                       className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-black text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 mt-2"
                     >
                       {loading ? (
-                        <span>Подождите...</span>
+                        <span>{lang === 'en' ? 'Please wait...' : 'Подождите...'}</span>
                       ) : (
                         <>
                           <Send className="w-4 h-4" />

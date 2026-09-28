@@ -696,7 +696,11 @@ export default function CorporateAboutPage() {
               </div>
               <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center text-[12px] font-bold text-blue-600">
                 <CheckCircle2 size={16} className="mr-1.5" />
-                <span>Мировые стандарты качества</span>
+                <span>
+                  {lang === 'en' 
+                    ? 'Global Quality Standards' 
+                    : (lang === 'ru' ? 'Мировые стандарты качества' : 'Стандартҳои ҷаҳонии сифат')}
+                </span>
               </div>
             </div>
 
@@ -715,7 +719,11 @@ export default function CorporateAboutPage() {
               </div>
               <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center text-[12px] font-bold text-emerald-700">
                 <CheckCircle2 size={16} className="mr-1.5" />
-                <span>Превентивная медицина & B2B/D2C</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Preventive Medicine & B2B/D2C'
+                    : (lang === 'ru' ? 'Превентивная медицина & B2B/D2C' : 'Тибби пешгирикунанда & B2B/D2C')}
+                </span>
               </div>
             </div>
           </div>
@@ -854,7 +862,11 @@ export default function CorporateAboutPage() {
                   : (lang === 'ru' ? 'Доставка: 24 часа Душанбе и Худжанд • До 48 часов по всей республике' : 'Интиқол: 24 соат Душанбе ва Хуҷанд • То 48 соат дар саросари ҷумҳурӣ')}
               </h4>
               <p className="text-[13px] text-white/70 max-w-xl">
-                Душанбе • Худжанд • Бохтар • Куляб • Истаравшан • Пенджикент • Исфара • Турсунзаде
+                {lang === 'en' 
+                  ? 'Dushanbe • Khujand • Bokhtar • Kulob • Istaravshan • Panjakent • Isfara • Tursunzoda' 
+                  : (lang === 'ru' 
+                    ? 'Душанбе • Худжанд • Бохтар • Куляб • Истаравшан • Пенджикент • Исфара • Турсунзаде' 
+                    : 'Душанбе • Хуҷанд • Бохтар • Кӯлоб • Истаравшан • Панҷакент • Исфара • Турсунзода')}
               </p>
             </div>
             <Link
@@ -1005,7 +1017,9 @@ export default function CorporateAboutPage() {
                   {t.hqVal}
                 </p>
                 <span className="text-[12px] text-[#1D1D1F]/60 block mt-1">
-                  Головной офис, центральный складской комплекс и руководство
+                  {lang === 'en'
+                    ? 'Headquarters, central logistics complex, and executive management'
+                    : (lang === 'ru' ? 'Головной офис, центральный складской комплекс и руководство' : 'Дафтари асосӣ, маркази логистикӣ ва роҳбарият')}
                 </span>
               </div>
 
@@ -1020,7 +1034,9 @@ export default function CorporateAboutPage() {
                   {t.dushanbeVal}
                 </p>
                 <span className="text-[12px] text-[#1D1D1F]/60 block mt-1">
-                  Кросс-докинг и экспресс-доставка по Душанбе, Хатлону и РРП
+                  {lang === 'en'
+                    ? 'Cross-docking and express delivery across Dushanbe, Khatlon, and RRP'
+                    : (lang === 'ru' ? 'Кросс-докинг и экспресс-доставка по Душанбе, Хатлону и РРП' : 'Кросс-докинг ва интиқоли фаврӣ ба Душанбе ва Хатлон')}
                 </span>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { MessageSquare, X, Send, ShoppingCart, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/store/useCart';
 import { Product, Lang } from '@/lib/types';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 import './ChatWidget.css';
 
 interface Message {
@@ -334,7 +335,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleClearHistory}
-                  title={lang === 'ru' ? 'Очистить историю' : 'Тоза кардани таърих'}
+                  title={lang === 'en' ? 'Clear history' : (lang === 'ru' ? 'Очистить историю' : 'Тоза кардани таърих')}
                   className="chat-close-btn text-[10px] uppercase font-bold tracking-widest px-2"
                 >
                   {lang === 'en' ? 'Reset' : (lang === 'ru' ? 'Сброс' : 'Тоза')}
@@ -379,13 +380,13 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                               <div className="chat-product-img-wrapper">
                                 <img 
                                   src={p.image_url || '/logo-square.webp'} 
-                                  alt={p.name} 
+                                  alt={getLocalizedProductName(p.name, lang)} 
                                   className="chat-product-img" 
                                 />
                               </div>
                               <div className="chat-product-details">
-                                <span className="chat-product-name" title={p.name}>{p.name}</span>
-                                <span className="chat-product-price">{p.price} сомони</span>
+                                <span className="chat-product-name" title={getLocalizedProductName(p.name, lang)}>{getLocalizedProductName(p.name, lang)}</span>
+                                <span className="chat-product-price">{p.price} {lang === 'en' ? 'TJS' : (lang === 'ru' ? 'сомони' : 'сомонӣ')}</span>
                               </div>
                               <button
                                 onClick={() => handleAddToCart(p)}
@@ -435,7 +436,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={lang === 'ru' ? 'Напишите сообщение...' : 'Паём нависед...'}
+                  placeholder={lang === 'en' ? 'Type your message...' : (lang === 'ru' ? 'Напишите сообщение...' : 'Паём нависед...')}
                   disabled={isLoading}
                   className="chat-input-field"
                 />

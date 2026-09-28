@@ -24,6 +24,8 @@ import {
 import { MedicalDisclaimer } from './MedicalDisclaimer';
 import { trackEvent } from '@/lib/analytics';
 import { useClient } from '@/store/useClient';
+import { getLocalizedQuizCategory, getLocalizedQuizOption, getLocalizedSynergyType, getLocalizedDosage } from '@/lib/quizLocalization';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 
 interface QuizEngineProps {
   lang: Lang;
@@ -61,9 +63,9 @@ const CATEGORY_ICONS: Record<string, any> = {
 // Progress step index
 const STEP_ORDER: Step[] = ['category', 'option', 'loading', 'result'];
 const STEP_DISPLAY_LABELS = [
-  { ru: 'Категория', tj: 'Категория' },
-  { ru: 'Вопрос', tj: 'Савол' },
-  { ru: 'Результат', tj: 'Натиҷа' },
+  { ru: 'Категория', tj: 'Категория', en: 'Category' },
+  { ru: 'Вопрос', tj: 'Савол', en: 'Question' },
+  { ru: 'Результат', tj: 'Натиҷа', en: 'Result' },
 ];
 
 
@@ -91,16 +93,19 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
       .order('sort_order');
 
     if (catError) {
-      setError(lang === 'ru' ? 'Не удалось загрузить данные. Попробуйте снова.' : 'Маълумотро бор кардан нашуд.');
+      setError(lang === 'en' ? 'Failed to load assessment data. Please try again.' : (lang === 'ru' ? 'Не удалось загрузить данные. Попробуйте снова.' : 'Маълумотро бор кардан нашуд.'));
       return;
     }
 
     if (catData) {
-      const localizedCats = catData.map(c => ({
-        ...c,
-        title: c.title_lang?.[lang] || c.title,
-        question: c.question_lang?.[lang] || c.question
-      }));
+      const localizedCats = catData.map(c => {
+        const rawCat = {
+          ...c,
+          title: c.title_lang?.[lang] || c.title,
+          question: c.question_lang?.[lang] || c.question
+        };
+        return getLocalizedQuizCategory(rawCat, lang);
+      });
       setCategories(localizedCats);
     }
   }, [lang]);
@@ -142,10 +147,13 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
       .order('sort_order');
 
     if (optData) {
-      const localizedOpts = optData.map(o => ({
-        ...o,
-        text: o.text_lang?.[lang] || o.text
-      }));
+      const localizedOpts = optData.map(o => {
+        const rawOpt = {
+          ...o,
+          text: o.text_lang?.[lang] || o.text
+        };
+        return getLocalizedQuizOption(rawOpt, lang);
+      });
       setOptions(localizedOpts);
     }
     setStep('option');
@@ -184,7 +192,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
           const dbProd = dbProducts?.find(dp => dp.id === p.id) || 
                          dbProducts?.find(dp => dp.name.toLowerCase().includes(p.name?.toLowerCase()));
           
-          if (!dbProd) return p; // Если не нашли, оставляем как есть (заглушка)
+          if (!dbProd) return p;
 
           const markedPrice = applyMarkupToPrice(Number(dbProd.price) || 0, markupSettings);
 
@@ -197,7 +205,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
             marketing_hooks: dbProd.marketing_hooks || [],
             tags: dbProd.tags || [],
             expert_description: dbProd.description || '',
-            properties: dbProd.tags || [] // Используем теги как свойства для краткости
+            properties: dbProd.tags || []
           };
         });
 
@@ -205,8 +213,8 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
         
         return { 
           ...syn, 
-          type: syn.type_lang?.[lang] || syn.type,
-          dosage: syn.dosage_lang?.[lang] || syn.dosage,
+          type: getLocalizedSynergyType(syn.type_lang?.[lang] || syn.type, lang),
+          dosage: getLocalizedDosage(syn.dosage_lang?.[lang] || syn.dosage, lang),
           rule: syn.rule_lang?.[lang] || syn.rule,
           products: localizedProducts, 
           total_price: totalPrice 
@@ -600,9 +608,9 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               </div>
               <div className="space-y-4">
                 {[
-                  { label: lang === 'ru' ? 'Иммунитет' : 'Иммунитет', score: 85 },
-                  { label: lang === 'ru' ? 'Энергия' : 'Энергия', score: 60 },
-                  { label: lang === 'ru' ? 'Дефицит (устраняем)' : 'Норасоӣ (барқарор мекунем)', score: 35, alert: true }
+                  { label: lang === 'en' ? 'Immunity' : (lang === 'ru' ? 'Иммунитет' : 'Иммунитет'), score: 85 },
+                  { label: lang === 'en' ? 'Energy & Vitality' : (lang === 'ru' ? 'Энергия' : 'Энергия'), score: 60 },
+                  { label: lang === 'en' ? 'Targeted Deficiency (recovering)' : (lang === 'ru' ? 'Дефицит (устраняем)' : 'Норасоӣ (барқарор мекунем)'), score: 35, alert: true }
                 ].map((item, i) => (
                   <div key={i} className="space-y-2">
                     <div className="flex justify-between text-[13px] font-bold">
@@ -641,10 +649,12 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               <button
                 onClick={() => {
                   const catTitle = selectedCat?.title || '';
-                  const productList = synergies[0]?.products?.map((p: any) => p.name).join(', ') || '';
-                  const text = lang === 'ru'
-                    ? `Здравствуйте! Я прошёл тест на toj-vitamin.tj. Моя категория: ${catTitle}. Подобрано: ${productList}. Пройдите тест: https://toj-vitamin.tj/#quiz`
-                    : `Салом! Ман тестро дар toj-vitamin.tj гузаштам. Категория: ${catTitle}. Тавсия: ${productList}.`;
+                  const productList = synergies[0]?.products?.map((p: any) => getLocalizedProductName(p.name, lang)).join(', ') || '';
+                  const text = lang === 'en'
+                    ? `Hello! I completed the health assessment on toj-vitamin.tj. My focus: ${catTitle}. Recommended stack: ${productList}. Take the test: https://toj-vitamin.tj/#quiz`
+                    : (lang === 'ru'
+                      ? `Здравствуйте! Я прошёл тест на toj-vitamin.tj. Моя категория: ${catTitle}. Подобрано: ${productList}. Пройдите тест: https://toj-vitamin.tj/#quiz`
+                      : `Салом! Ман тестро дар toj-vitamin.tj гузаштам. Категория: ${catTitle}. Тавсия: ${productList}.`);
                   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                 }}
                 className="flex items-center gap-3 h-14 px-8 bg-[#25D366] text-white rounded-full text-[15px] font-bold hover:bg-[#1fad52] transition-all shadow-lg hover:scale-[1.03] active:scale-[0.97]"

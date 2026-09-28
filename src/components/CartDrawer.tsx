@@ -189,7 +189,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
       const result = await response.json();
 
       if (!response.ok || !result.found) {
-        setPromoError(lang === 'ru' ? 'Неверный или неактивный промокод' : 'Промокод нодуруст аст');
+        setPromoError(lang === 'en' ? 'Invalid or inactive promo code' : (lang === 'ru' ? 'Неверный или неактивный промокод' : 'Промокод нодуруст аст'));
         setShakePromo(true);
         return;
       }
@@ -198,14 +198,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
       // Expiry check
       if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        setPromoError(lang === 'ru' ? 'Срок действия промокода истек' : 'Мӯҳлати промокод гузаштааст');
+        setPromoError(lang === 'en' ? 'Promo code has expired' : (lang === 'ru' ? 'Срок действия промокода истек' : 'Мӯҳлати промокод гузаштааст'));
         setShakePromo(true);
         return;
       }
 
       // Limit check
       if (data.usage_limit && data.usage_count >= data.usage_limit) {
-        setPromoError(lang === 'ru' ? 'Этот промокод больше недоступен' : 'Ин промокод дигар дастрас нест');
+        setPromoError(lang === 'en' ? 'This promo code is no longer available' : (lang === 'ru' ? 'Этот промокод больше недоступен' : 'Ин промокод дигар дастрас нест'));
         setShakePromo(true);
         return;
       }
@@ -249,7 +249,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
     } catch (err) {
       console.error("Failed to check promo", err);
-      setPromoError(lang === 'ru' ? 'Ошибка проверки промокода' : 'Хатои санҷиши промокод');
+      setPromoError(lang === 'en' ? 'Error verifying promo code' : (lang === 'ru' ? 'Ошибка проверки промокода' : 'Хатои санҷиши промокод'));
       setShakePromo(true);
     } finally {
       setIsCheckingPromo(false);
@@ -268,7 +268,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
     const cleanPhone = clientPhone.replace(/\D/g, '');
     if (cleanPhone.length < 9) {
-      alert(lang === 'ru' ? 'Введите корректный номер телефона (9 цифр)' : 'Рақами телефони дурустро ворид кунед (9 рақам)');
+      alert(lang === 'en' ? 'Please enter a valid phone number (9 digits)' : (lang === 'ru' ? 'Введите корректный номер телефона (9 цифр)' : 'Рақами телефони дурустро ворид кунед (9 рақам)'));
       setIsVerifying(false);
       return;
     }
@@ -362,9 +362,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
       if (orderErr) {
         console.error("Failed to insert order in DB:", orderErr);
-        alert(lang === 'ru' 
-          ? 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз.' 
-          : 'Ҳангоми сабти фармоиш хатогӣ рӯй дод. Лутфан, дубора кӯшиш кунед.'
+        alert(lang === 'en'
+          ? 'An error occurred while placing the order. Please try again.'
+          : (lang === 'ru' 
+            ? 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз.' 
+            : 'Ҳангоми сабти фармоиш хатогӣ рӯй дод. Лутфан, дубора кӯшиш кунед.')
         );
         setIsVerifying(false);
         return;
@@ -452,7 +454,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       </div>
                       <span className="text-[12px] font-bold text-[#1D1D1F] font-outfit">
                         {discountedTotal >= FREE_DELIVERY_LIMIT 
-                          ? (lang === 'ru' ? '🎉 Бесплатная доставка!' : '🎉 Расонидани ройгон!')
+                          ? (lang === 'en' ? '🎉 Free Delivery!' : (lang === 'ru' ? '🎉 Бесплатная доставка!' : '🎉 Расонидани ройгон!'))
                           : (lang === 'en' ? `Add ${remainingForFree} TJS for free delivery` : (lang === 'ru' ? `Ещё ${remainingForFree} смн до бесплатной доставки` : `${remainingForFree} смн то расонидани ройгон`))
                         }
                       </span>
@@ -485,9 +487,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                     {lang === 'en' ? 'Cart is empty' : (lang === 'ru' ? 'Корзина пуста' : 'Сабад холӣ')}
                   </h3>
                   <p className="text-[14px] text-[#86868B] mb-10 max-w-xs font-medium px-4">
-                    {lang === 'ru'
-                      ? 'Посмотрите наши бестселлеры:'
-                      : 'Беҳтарин маҳсулоти мо:'}
+                    {lang === 'en'
+                      ? 'Discover our bestsellers:'
+                      : (lang === 'ru'
+                        ? 'Посмотрите наши бестселлеры:'
+                        : 'Беҳтарин маҳсулоти мо:')}
                   </p>
 
                   <div className="w-full space-y-2.5">
@@ -619,7 +623,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                   <div className="space-y-2">
                     <label className="flex items-center gap-1.5 text-[12px] font-bold text-[#555] font-outfit px-0.5">
                       <Phone size={13} className="text-blue-500" />
-                      {lang === 'ru' ? 'Телефон для подтверждения' : 'Телефон барои тасдиқ'}
+                      {lang === 'en' ? 'Phone number for confirmation' : (lang === 'ru' ? 'Телефон для подтверждения' : 'Телефон барои тасдиқ')}
                     </label>
                     <div className="flex items-center gap-2">
                       <div className="shrink-0 h-11 px-3.5 bg-[#E8E8ED] rounded-xl flex items-center justify-center">

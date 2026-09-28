@@ -166,7 +166,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                      {settings.brand_name}
                    </span>
                     <span className="text-[8px] md:text-[9px] font-bold tracking-[0.2em] text-[#1D1D1F]/30 uppercase leading-tight font-outfit">
-                      ЗДОРОВЬЕ И ЭНЕРГИЯ
+                      {lang === 'en' ? 'HEALTH & VITALITY' : (lang === 'ru' ? 'ЗДОРОВЬЕ И ЭНЕРГИЯ' : 'САЛОМАТӢ ВА ҚУВВАТ')}
                     </span>
                  </div>
                </div>
@@ -201,9 +201,11 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                  <Dna size={14} className={lastQuizResult ? 'group-hover:animate-[spin_2s_linear_infinite] transition-transform duration-500' : ''} />
                  <span>
                    {lastQuizResult 
-                     ? (lang === 'ru' 
-                         ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
-                         : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`)
+                     ? (lang === 'en'
+                         ? `My Stack: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
+                         : (lang === 'ru' 
+                           ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
+                           : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`))
                      : (settings.hero_cta_text || (lang === 'en' ? 'Vitamin Match' : (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин')))
                    }
                  </span>

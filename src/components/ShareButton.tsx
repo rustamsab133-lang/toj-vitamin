@@ -51,9 +51,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   }, [isOpen]);
 
   const fullUrl = url.startsWith('http') ? url : `https://www.toj-vitamin.tj${url}`;
-  const shareText = lang === 'ru'
-    ? `Посмотри ${title} на toj-vitamin.tj 💊`
-    : `${title}-ро дар toj-vitamin.tj бинед 💊`;
+  const shareText = lang === 'en'
+    ? `Check out ${title} on toj-vitamin.tj 💊`
+    : (lang === 'ru'
+      ? `Посмотри ${title} на toj-vitamin.tj 💊`
+      : `${title}-ро дар toj-vitamin.tj бинед 💊`);
 
   const handleShare = async () => {
     // Try native Web Share API first (mobile)
@@ -137,7 +139,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         <Share2 size={isPrimary ? 20 : 18} className={isPrimary ? "group-hover:rotate-12 transition-transform" : ""} />
         {isPrimary && (
           <span className="font-outfit">
-            {lang === 'ru' ? 'Поделиться' : 'Мубодила'}
+            {lang === 'en' ? 'Share' : (lang === 'ru' ? 'Поделиться' : 'Мубодила')}
           </span>
         )}
       </motion.button>
@@ -155,7 +157,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-2 pb-3 mb-1">
               <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.2em]">
-                {lang === 'ru' ? 'Поделиться' : 'Мубодила кунед'}
+                {lang === 'en' ? 'Share' : (lang === 'ru' ? 'Поделиться' : 'Мубодила кунед')}
               </span>
               <button
                 onClick={() => setIsOpen(false)}
@@ -176,8 +178,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-bold text-[#1D1D1F]">
                   {copied
-                    ? (lang === 'ru' ? 'Скопировано!' : 'Нусхабардорӣ шуд!')
-                    : (lang === 'ru' ? 'Копировать ссылку' : 'Нусхабардории истинод')}
+                    ? (lang === 'en' ? 'Copied!' : (lang === 'ru' ? 'Скопировано!' : 'Нусхабардорӣ шуд!'))
+                    : (lang === 'en' ? 'Copy Link' : (lang === 'ru' ? 'Копировать ссылку' : 'Нусхабардории истинод'))}
                 </p>
                 {!copied && (
                   <p className="text-[11px] text-[#94A3B8] truncate">{fullUrl}</p>
@@ -199,7 +201,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
               <div>
                 <p className="text-[14px] font-bold text-[#1D1D1F]">WhatsApp</p>
                 <p className="text-[11px] text-[#94A3B8]">
-                  {lang === 'ru' ? 'Отправить другу' : 'Ба дӯст фиристодан'}
+                  {lang === 'en' ? 'Send to a friend' : (lang === 'ru' ? 'Отправить другу' : 'Ба дӯст фиристодан')}
                 </p>
               </div>
             </button>
@@ -215,7 +217,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
               <div>
                 <p className="text-[14px] font-bold text-[#1D1D1F]">Telegram</p>
                 <p className="text-[11px] text-[#94A3B8]">
-                  {lang === 'ru' ? 'Отправить в Telegram' : 'Ба Telegram фиристодан'}
+                  {lang === 'en' ? 'Send to Telegram' : (lang === 'ru' ? 'Отправить в Telegram' : 'Ба Telegram фиристодан')}
                 </p>
               </div>
             </button>

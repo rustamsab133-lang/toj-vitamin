@@ -75,9 +75,11 @@ export const OrderSuccessOverlay: React.FC<OrderSuccessOverlayProps> = ({ isVisi
                 transition={{ delay: 0.5 }}
                 className="text-white/60 text-[15px] leading-relaxed"
               >
-                {lang === 'ru' 
-                  ? 'Наш менеджер свяжется с вами в ближайшее время для подтверждения деталей.' 
-                  : 'Менеҷери мо ба наздикӣ бо шумо барои тасдиқи тафсилот тамос мегирад.'}
+                {lang === 'en'
+                  ? 'Our manager will contact you shortly to confirm the details.'
+                  : (lang === 'ru' 
+                    ? 'Наш менеджер свяжется с вами в ближайшее время для подтверждения деталей.' 
+                    : 'Менеҷери мо ба наздикӣ бо шумо барои тасдиқи тафсилот тамос мегирад.')}
               </motion.p>
             </div>
 

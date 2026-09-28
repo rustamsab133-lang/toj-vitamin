@@ -118,13 +118,13 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
     const formattedPhone = '+992' + phone.replace(/\D/g, '');
 
     if (formattedPhone.length < 9) {
-      setErrorMsg(lang === 'ru' ? 'Введите корректный номер телефона' : 'Рақами телефони дурустро ворид кунед');
+      setErrorMsg(lang === 'en' ? 'Please enter a valid phone number' : (lang === 'ru' ? 'Введите корректный номер телефона' : 'Рақами телефони дурустро ворид кунед'));
       setLoading(false);
       return;
     }
 
     if (password.length < 4) {
-      setErrorMsg(lang === 'ru' ? 'Пароль должен быть не менее 4 символов' : 'Рамз бояд на камтар аз 4 аломат бошад');
+      setErrorMsg(lang === 'en' ? 'Password must be at least 4 characters' : (lang === 'ru' ? 'Пароль должен быть не менее 4 символов' : 'Рамз бояд на камтар аз 4 аломат бошад'));
       setLoading(false);
       return;
     }
@@ -146,7 +146,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
       const resData = await response.json();
 
       if (!response.ok || !resData.success) {
-        setErrorMsg(resData.error || (lang === 'ru' ? 'Произошла ошибка. Попробуйте позже.' : 'Хатогӣ рух дод. Баъдтар кӯшиш кунед.'));
+        setErrorMsg(resData.error || (lang === 'en' ? 'An error occurred. Please try again later.' : (lang === 'ru' ? 'Произошла ошибка. Попробуйте позже.' : 'Хатогӣ рух дод. Баъдтар кӯшиш кунед.')));
         setLoading(false);
         return;
       }
@@ -154,7 +154,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
       setClient(resData.client);
     } catch (err: any) {
       console.error("Auth error:", err);
-      setErrorMsg(lang === 'ru' ? 'Произошла ошибка. Попробуйте позже.' : 'Хатогӣ рух дод. Баъдтар кӯшиш кунед.');
+      setErrorMsg(lang === 'en' ? 'An error occurred. Please try again later.' : (lang === 'ru' ? 'Произошла ошибка. Попробуйте позже.' : 'Хатогӣ рух дод. Баъдтар кӯшиш кунед.'));
     } finally {
       setLoading(false);
     }
@@ -237,14 +237,14 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                   </div>
                   <h2 className="text-[28px] font-bold text-[#1D1D1F] tracking-tight font-outfit">
                     {isRegister 
-                      ? (lang === 'ru' ? 'Регистрация' : 'Сабти ном') 
-                      : (lang === 'ru' ? 'Личный кабинет' : 'Кабинети инфиродӣ')
+                      ? (lang === 'en' ? 'Create Account' : (lang === 'ru' ? 'Регистрация' : 'Сабти ном')) 
+                      : (lang === 'en' ? 'Client Portal' : (lang === 'ru' ? 'Личный кабинет' : 'Кабинети инфиродӣ'))
                     }
                   </h2>
                   <p className="text-[14px] text-[#86868B] mt-1 font-medium">
                     {isRegister
-                      ? (lang === 'ru' ? 'Создайте профиль для отслеживания заказов' : 'Барои пайгирии фармоишҳо профил созед')
-                      : (lang === 'ru' ? 'Войдите для просмотра ваших заказов и рецептов' : 'Барои дидани фармоишҳо ва нусхаҳои худ ворид шавед')
+                      ? (lang === 'en' ? 'Create a profile to track orders and save your stacks' : (lang === 'ru' ? 'Создайте профиль для отслеживания заказов' : 'Барои пайгирии фармоишҳо профил созед'))
+                      : (lang === 'en' ? 'Sign in to access your orders and personalized protocols' : (lang === 'ru' ? 'Войдите для просмотра ваших заказов и рецептов' : 'Барои дидани фармоишҳо ва нусхаҳои худ ворид шавед'))
                     }
                   </p>
                 </div>
@@ -255,7 +255,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                       <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="text"
-                        placeholder={lang === 'ru' ? 'Ваше имя' : 'Номи шумо'}
+                        placeholder={lang === 'en' ? 'Your Name' : (lang === 'ru' ? 'Ваше имя' : 'Номи шумо')}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white/60 border border-black/[0.05] focus:border-black outline-none font-bold text-[15px] transition-all font-outfit"
@@ -285,7 +285,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                     <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="password"
-                      placeholder={lang === 'ru' ? 'Пароль' : 'Рамз'}
+                      placeholder={lang === 'en' ? 'Password' : (lang === 'ru' ? 'Пароль' : 'Рамз')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white/60 border border-black/[0.05] focus:border-black outline-none font-bold text-[15px] transition-all font-outfit"
@@ -316,8 +316,8 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                         <UserCheck size={18} />
                         <span>
                           {isRegister 
-                            ? (lang === 'ru' ? 'Зарегистрироваться' : 'Бақайдгирӣ') 
-                            : (lang === 'ru' ? 'Войти в кабинет' : 'Ворид шудан')
+                            ? (lang === 'en' ? 'Register' : (lang === 'ru' ? 'Зарегистрироваться' : 'Бақайдгирӣ')) 
+                            : (lang === 'en' ? 'Sign In' : (lang === 'ru' ? 'Войти в кабинет' : 'Ворид шудан'))
                           }
                         </span>
                       </>
@@ -331,8 +331,8 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                     className="text-[13px] font-bold text-blue-600 hover:text-blue-800 hover:underline transition-all"
                   >
                     {isRegister
-                      ? (lang === 'ru' ? 'Уже есть аккаунт? Войдите' : 'Аллакай профил доред? Ворид шавед')
-                      : (lang === 'ru' ? 'Нет аккаунта? Зарегистрироваться за 10 сек' : 'Профил надоред? Сабти ном кунед')
+                      ? (lang === 'en' ? 'Already have an account? Sign In' : (lang === 'ru' ? 'Уже есть аккаунт? Войдите' : 'Аллакай профил доред? Ворид шавед'))
+                      : (lang === 'en' ? 'No account yet? Register in 10s' : (lang === 'ru' ? 'Нет аккаунта? Зарегистрироваться за 10 сек' : 'Профил надоред? Сабти ном кунед'))
                     }
                   </button>
                 </div>
@@ -358,7 +358,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                   <button
                     onClick={() => { logout(); onClose(); }}
                     className="w-10 h-10 rounded-xl hover:bg-red-50 hover:text-red-600 text-slate-400 transition-colors flex items-center justify-center"
-                    title={lang === 'ru' ? 'Выйти' : 'Баромадан'}
+                    title={lang === 'en' ? 'Log Out' : (lang === 'ru' ? 'Выйти' : 'Баромадан')}
                   >
                     <LogOut size={18} />
                   </button>
@@ -374,7 +374,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                         : 'text-slate-500 hover:bg-black/[0.03] hover:text-black'
                     }`}
                   >
-                    {lang === 'ru' ? 'Профиль и Рецепты' : 'Профил ва Нусхаҳо'}
+                    {lang === 'en' ? 'Profile & Stacks' : (lang === 'ru' ? 'Профиль и Рецепты' : 'Профил ва Нусхаҳо')}
                   </button>
                   <button
                     onClick={() => setActiveTab('orders')}
@@ -384,7 +384,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                         : 'text-slate-500 hover:bg-black/[0.03] hover:text-black'
                     }`}
                   >
-                    {lang === 'ru' ? 'Мои заказы' : 'Фармоишҳои ман'}
+                    {lang === 'en' ? 'My Orders' : (lang === 'ru' ? 'Мои заказы' : 'Фармоишҳои ман')}
                     {orders.length > 0 && (
                       <span className="absolute top-1.5 right-2 w-4 h-4 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center">
                         {orders.length}
@@ -418,7 +418,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                                   value={editName}
                                   onChange={(e) => setEditName(e.target.value)}
                                   className="w-full h-10 px-3 rounded-xl border border-black/[0.1] font-bold text-[16px] outline-none focus:border-blue-500 font-outfit"
-                                  placeholder={lang === 'ru' ? 'Ваше имя' : 'Номи шумо'}
+                                  placeholder={lang === 'en' ? 'Your Name' : (lang === 'ru' ? 'Ваше имя' : 'Номи шумо')}
                                 />
                               ) : (
                                 <h4 className="text-[18px] font-bold text-slate-800 leading-tight font-outfit">
@@ -436,14 +436,14 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                                 disabled={loading}
                                 className="flex-1 h-10 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-black transition-colors flex items-center justify-center"
                               >
-                                {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (lang === 'ru' ? 'Сохранить' : 'Сабт кардан')}
+                                {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (lang === 'en' ? 'Save' : (lang === 'ru' ? 'Сохранить' : 'Сабт кардан'))}
                               </button>
                               <button
                                 onClick={() => setIsEditingProfile(false)}
                                 disabled={loading}
                                 className="px-4 h-10 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-200 transition-colors"
                               >
-                                {lang === 'ru' ? 'Отмена' : 'Бекор'}
+                                {lang === 'en' ? 'Cancel' : (lang === 'ru' ? 'Отмена' : 'Бекор')}
                               </button>
                             </div>
                           ) : (
@@ -454,7 +454,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                               }}
                               className="w-full h-10 bg-slate-50 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors"
                             >
-                              {lang === 'ru' ? 'Редактировать профиль' : 'Таҳрири профил'}
+                              {lang === 'en' ? 'Edit Profile' : (lang === 'ru' ? 'Редактировать профиль' : 'Таҳрири профил')}
                             </button>
                           )}
                         </div>
@@ -463,7 +463,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                         {client?.quiz_results && (
                           <div className="space-y-3">
                             <h4 className="text-[12px] font-bold text-[#1D1D1F] uppercase tracking-[0.2em] px-1">
-                              {lang === 'ru' ? 'Ваши рекомендации' : 'Тавсияҳои шумо'}
+                              {lang === 'en' ? 'Your Recommendations' : (lang === 'ru' ? 'Ваши рекомендации' : 'Тавсияҳои шумо')}
                             </h4>
                             <div className="p-5 rounded-3xl bg-blue-500/5 border border-blue-500/10 space-y-3">
                               <h5 className="font-bold text-[15px] text-slate-800 font-outfit leading-tight">
@@ -481,7 +481,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                                 }}
                                 className="h-9 px-4 mt-2 rounded-xl bg-blue-600 text-white font-bold text-[11px] uppercase tracking-wider hover:bg-black transition-colors w-full"
                               >
-                                {lang === 'ru' ? 'Подобрать комплекс' : 'Интихоби маҷмӯа'}
+                                {lang === 'en' ? 'Match a Stack' : (lang === 'ru' ? 'Подобрать комплекс' : 'Интихоби маҷмӯа')}
                               </button>
                             </div>
                           </div>
@@ -499,16 +499,18 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                         {loadingOrders ? (
                           <div className="flex flex-col items-center py-16 space-y-3">
                             <span className="w-8 h-8 border-3 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{lang === 'ru' ? 'Загрузка...' : 'Боргирӣ...'}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{lang === 'en' ? 'Loading...' : (lang === 'ru' ? 'Загрузка...' : 'Боргирӣ...')}</p>
                           </div>
                         ) : orders.length === 0 ? (
                           <div className="text-center py-16 text-slate-300 bg-white rounded-3xl border border-black/[0.02] p-8 shadow-sm">
                             <ShoppingBag size={48} strokeWidth={1} className="mx-auto mb-4 text-[#C1C9D2]" />
-                            <h5 className="font-bold text-[16px] text-slate-800 font-outfit mb-1">{lang === 'ru' ? 'Заказов пока нет' : 'Фармоиш нест'}</h5>
+                            <h5 className="font-bold text-[16px] text-slate-800 font-outfit mb-1">{lang === 'en' ? 'No orders yet' : (lang === 'ru' ? 'Заказов пока нет' : 'Фармоиш нест')}</h5>
                             <p className="text-[13px] text-slate-400 max-w-xs mx-auto leading-relaxed mb-6">
-                              {lang === 'ru' 
-                                ? 'Соберите корзину лучших витаминов, примените промокод и сделайте ваш первый заказ!'
-                                : 'Сабади витаминҳоро ҷамъ кунед ва аввалин фармоиши худро сабт кунед!'}
+                              {lang === 'en' 
+                                ? 'Fill your cart with premium vitamins, apply a promo code, and place your first order!'
+                                : (lang === 'ru' 
+                                  ? 'Соберите корзину лучших витаминов, примените промокод и сделайте ваш первый заказ!'
+                                  : 'Сабади витаминҳоро ҷамъ кунед ва аввалин фармоиши худро сабт кунед!')}
                             </p>
                             <button
                               onClick={() => {
@@ -517,7 +519,7 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                               }}
                               className="h-10 px-5 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-blue-600 active:scale-95 transition-all"
                             >
-                              {lang === 'ru' ? 'В каталог' : 'Ба каталог'}
+                              {lang === 'en' ? 'To Catalog' : (lang === 'ru' ? 'В каталог' : 'Ба каталог')}
                             </button>
                           </div>
                         ) : (
@@ -550,10 +552,10 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                                     <p className="text-[13px] text-slate-500 font-medium line-clamp-1 max-w-[250px]">
                                       {Array.isArray(order.items) 
                                         ? order.items.map((i: any) => `${i.name} ×${i.quantity}`).join(', ') 
-                                        : 'Товары'}
+                                        : (lang === 'en' ? 'Items' : (lang === 'ru' ? 'Товары' : 'Молҳо'))}
                                     </p>
                                     <p className="font-extrabold text-slate-800 font-outfit text-base">
-                                      {order.total} <span className="text-[11px] font-bold text-slate-400">смн</span>
+                                      {order.total} <span className="text-[11px] font-bold text-slate-400">{lang === 'en' ? 'TJS' : 'смн'}</span>
                                     </p>
                                   </div>
 
@@ -566,21 +568,23 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                                         exit={{ opacity: 0, height: 0 }}
                                         className="mt-4 pt-4 border-t border-black/[0.05] space-y-3 overflow-hidden"
                                       >
-                                        <h6 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Состав заказа:</h6>
+                                        <h6 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                          {lang === 'en' ? 'Order items:' : (lang === 'ru' ? 'Состав заказа:' : 'Таркиби фармоиш:')}
+                                        </h6>
                                         {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
                                           <div key={idx} className="flex items-center justify-between text-xs font-bold text-slate-700">
                                             <span className="font-medium text-slate-600">
                                               {item.name} <span className="text-slate-400 text-[10px]">×{item.quantity}</span>
                                             </span>
-                                            <span className="font-outfit">{item.price * item.quantity} смн</span>
+                                            <span className="font-outfit">{item.price * item.quantity} {lang === 'en' ? 'TJS' : 'смн'}</span>
                                           </div>
                                         ))}
 
                                         {/* Promocode details if applied */}
                                         {order.promocode && (
                                           <div className="flex items-center justify-between text-[11px] font-bold text-green-600 bg-green-500/5 p-2.5 rounded-xl border border-green-500/10">
-                                            <span>Промокод: {order.promocode}</span>
-                                            <span>-{order.discount} смн</span>
+                                            <span>{lang === 'en' ? 'Promo code:' : 'Промокод:'} {order.promocode}</span>
+                                            <span>-{order.discount} {lang === 'en' ? 'TJS' : 'смн'}</span>
                                           </div>
                                         )}
                                       </motion.div>

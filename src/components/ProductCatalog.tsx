@@ -28,18 +28,18 @@ import { BackgroundGlow } from './BackgroundGlow';
 import { trackEvent } from '@/lib/analytics';
 
 const CATEGORIES = [
-  { id: 'all', label: { ru: 'Все', tj: 'Ҳама' }, icon: ShoppingBag },
-  { id: 'brain', label: { ru: 'Мозг и сон', tj: 'Мағзи сар ва хоб' }, icon: Brain },
-  { id: 'energy', label: { ru: 'Энергия', tj: 'Энергия' }, icon: Zap },
-  { id: 'immune', label: { ru: 'Иммунитет', tj: 'Иммунитет' }, icon: Shield },
-  { id: 'joints', label: { ru: 'Кости и Суставы', tj: 'Устухон ва Буғумҳо' }, icon: Activity },
-  { id: 'women', label: { ru: 'Женское здоровье', tj: 'Саломатии занон' }, icon: HeartPulse },
-  { id: 'men', label: { ru: 'Мужское здоровье', tj: 'Саломатии мардон' }, icon: ShieldCheck },
-  { id: 'beauty', label: { ru: 'Красота', tj: 'Зебоӣ' }, icon: Sparkles },
-  { id: 'heart', label: { ru: 'Сердце', tj: 'Дил' }, icon: Heart },
-  { id: 'sport', label: { ru: 'Спорт', tj: 'Варзиш' }, icon: Dumbbell },
-  { id: 'detox', label: { ru: 'Похудение и Детокс', tj: 'Лоғаршавӣ ва Детокс' }, icon: Wind },
-  { id: 'vitamins', label: { ru: 'Витамины и БАДы', tj: 'Витаминҳо ва БАД' }, icon: Sparkles },
+  { id: 'all', label: { ru: 'Все', tj: 'Ҳама', en: 'All' }, icon: ShoppingBag },
+  { id: 'brain', label: { ru: 'Мозг и сон', tj: 'Мағзи сар ва хоб', en: 'Brain & Sleep' }, icon: Brain },
+  { id: 'energy', label: { ru: 'Энергия', tj: 'Энергия', en: 'Energy & Vitality' }, icon: Zap },
+  { id: 'immune', label: { ru: 'Иммунитет', tj: 'Иммунитет', en: 'Immunity' }, icon: Shield },
+  { id: 'joints', label: { ru: 'Кости и Суставы', tj: 'Устухон ва Буғумҳо', en: 'Bones & Joints' }, icon: Activity },
+  { id: 'women', label: { ru: 'Женское здоровье', tj: 'Саломатии занон', en: "Women's Health" }, icon: HeartPulse },
+  { id: 'men', label: { ru: 'Мужское здоровье', tj: 'Саломатии мардон', en: "Men's Health" }, icon: ShieldCheck },
+  { id: 'beauty', label: { ru: 'Красота', tj: 'Зебоӣ', en: 'Beauty & Glow' }, icon: Sparkles },
+  { id: 'heart', label: { ru: 'Сердце', tj: 'Дил', en: 'Heart & Cardio' }, icon: Heart },
+  { id: 'sport', label: { ru: 'Спорт', tj: 'Варзиш', en: 'Sports Nutrition' }, icon: Dumbbell },
+  { id: 'detox', label: { ru: 'Похудение и Детокс', tj: 'Лоғаршавӣ ва Детокс', en: 'Weight & Detox' }, icon: Wind },
+  { id: 'vitamins', label: { ru: 'Витамины и БАДы', tj: 'Витаминҳо ва БАД', en: 'Vitamins & Supplements' }, icon: Sparkles },
 ];
 
 const ICON_MAP: Record<string, string> = {
@@ -347,6 +347,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                     src={product.image_url}
                                     alt={getLocalizedProductName(product.name, lang)}
                                     fill
+                                    unoptimized
                                     sizes="(max-width: 640px) 250px, 300px"
                                     className="object-contain p-4"
                                   />

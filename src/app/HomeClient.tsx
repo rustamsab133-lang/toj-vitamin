@@ -262,13 +262,15 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                   </div>
                   <div className="space-y-3">
                     <p className="text-[14px] leading-relaxed text-white/90">
-                      {lang === 'ru'
-                        ? 'Toj-Vitamin — специализированное подразделение и цифровая платформа фармацевтического холдинга ООО «Саховати Истаравшан» (на рынке с 2003 года). Прямые поставки сертифицированных витаминов и нутрицевтиков в Таджикистане.'
-                        : 'Toj-Vitamin — бахши тахассусӣ ва платформаи рақамии холдинги фарматсевтии ҶДММ «Саховати Истаравшан» (дар бозор аз соли 2003). Интиқоли мустақими витаминҳо ва иловаҳои сертисификатсияшуда дар Тоҷикистон.'}
+                      {lang === 'en'
+                        ? 'Toj-Vitamin is the specialized nutraceutical division and digital platform of the Sakhovati Istaravshan pharmaceutical holding (established in 2003). Direct supply of certified vitamins and supplements across Tajikistan.'
+                        : (lang === 'ru'
+                          ? 'Toj-Vitamin — специализированное подразделение и цифровая платформа фармацевтического холдинга ООО «Саховати Истаравшан» (на рынке с 2003 года). Прямые поставки сертифицированных витаминов и нутрицевтиков в Таджикистане.'
+                          : 'Toj-Vitamin — бахши тахассусӣ ва платформаи рақамии холдинги фарматсевтии ҶДММ «Саховати Истаравшан» (дар бозор аз соли 2003). Интиқоли мустақими витаминҳо ва иловаҳои сертисификатсияшуда дар Тоҷикистон.')}
                     </p>
                     <div className="text-[12px] text-white/60 space-y-1 pt-1 border-t border-white/10">
                       <p className="font-semibold text-white/80">
-                        {lang === 'ru' ? 'ООО «Саховати Истаравшан» / LLC "Sakhovati Istaravshan"' : 'ҶДММ «Саховати Истаравшан»'}
+                        {lang === 'en' ? 'LLC "Sakhovati Istaravshan" / Toj-Vitamin Distribution' : (lang === 'ru' ? 'ООО «Саховати Истаравшан» / LLC "Sakhovati Istaravshan"' : 'ҶДММ «Саховати Истаравшан»')}
                       </p>
                       <p>
                         {lang === 'en' ? 'Headquarters: 63/3 K. Khujandi St., Khujand, Republic of Tajikistan' : (lang === 'ru' ? 'Головной офис: РТ, г. Худжанд, ул. К. Худжанди 63/3' : 'Дафтари асосӣ: ҶТ, ш. Хуҷанд, кӯч. К. Хуҷандӣ 63/3')}
@@ -277,7 +279,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                         {lang === 'en' ? 'Warehouses: Khujand | Dushanbe' : (lang === 'ru' ? 'Склады: г. Худжанд | г. Душанбе' : 'Анборҳо: ш. Хуҷанд | ш. Душанбе')}
                       </p>
                       <p>
-                        Email: <a href="mailto:ceo@toj-vitamin.tj" className="text-blue-400 hover:underline">ceo@toj-vitamin.tj</a> | Тел: <a href="tel:+992176660707" className="text-white hover:underline">+992 176660707</a>
+                        Email: <a href="mailto:ceo@toj-vitamin.tj" className="text-blue-400 hover:underline">ceo@toj-vitamin.tj</a> | {lang === 'en' ? 'Tel:' : 'Тел:'} <a href="tel:+992176660707" className="text-white hover:underline">+992 176660707</a>
                       </p>
                     </div>
                   </div>
@@ -296,7 +298,9 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                       className="group flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex flex-col">
-                        <span className="text-[13px] font-semibold text-white">Саховат Аптека</span>
+                        <span className="text-[13px] font-semibold text-white">
+                          {lang === 'en' ? 'Sakhovat Pharmacy' : 'Саховат Аптека'}
+                        </span>
                         <span className="text-[11px] text-white/40">{lang === 'en' ? 'Retail pharmacy chain' : (lang === 'ru' ? 'Розничная аптечная сеть' : 'Шабакаи дорухонаҳои чакана')}</span>
                       </div>
                       <ArrowUpRight size={15} className="text-white/40 group-hover:text-white transition-colors" />
@@ -368,9 +372,11 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                    © {new Date().getFullYear()} {settings.brand_name} / ООО «Саховати Истаравшан» (2003–{new Date().getFullYear()}). {lang === 'en' ? 'All rights reserved.' : (lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.')}
                  </p>
                  <p className="text-[11px] text-white/30 max-w-md text-center sm:text-right">
-                   {lang === 'ru'
-                     ? 'Продукция сертифицирована. Не является лекарственным средством. Перед применением проконсультируйтесь со специалистом.'
-                     : 'Маҳсулот сертисификатсия шудааст. Доруворӣ нест. Пеш аз истифода бо мутахассис маслиҳат намоед.'}
+                   {lang === 'en'
+                     ? 'Products are certified dietary supplements, not medicinal drugs. Please consult a healthcare professional before use.'
+                     : (lang === 'ru'
+                       ? 'Продукция сертифицирована. Не является лекарственным средством. Перед применением проконсультируйтесь со специалистом.'
+                       : 'Маҳсулот сертисификатсия шудааст. Доруворӣ нест. Пеш аз истифода бо мутахассис маслиҳат намоед.')}
                  </p>
               </div>
           </div>

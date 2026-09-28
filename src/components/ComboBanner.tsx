@@ -196,7 +196,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
 
   const theme = THEME_PRESETS[currentCombo.preset_theme] || THEME_PRESETS.slate;
 
-  const badge = lang === 'en' ? (currentCombo.badge_ru || 'GLS Best-Seller') : (lang === 'ru' ? currentCombo.badge_ru : currentCombo.badge_tg);
+  const badge = lang === 'en' ? 'GLS Bestseller' : (lang === 'ru' ? currentCombo.badge_ru : currentCombo.badge_tg);
   const title = lang === 'en' ? (currentCombo.id === 'default-pms' ? 'Balance & Vitality' : currentCombo.title_ru) : (lang === 'ru' ? currentCombo.title_ru : currentCombo.title_tg);
   const subtitle = lang === 'en' ? (currentCombo.id === 'default-pms' ? '& Pure Serenity' : currentCombo.subtitle_ru) : (lang === 'ru' ? currentCombo.subtitle_ru : currentCombo.subtitle_tg);
   const desc = lang === 'en' ? (currentCombo.id === 'default-pms' ? 'Restore harmony and calm with our clinical duo.' : currentCombo.desc_ru) : (lang === 'ru' ? currentCombo.desc_ru : currentCombo.desc_tg);
@@ -290,7 +290,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
                       className="text-[14px] font-semibold uppercase opacity-50"
                       style={{ color: theme.priceColor }}
                     >
-                      смн
+                      {lang === 'en' ? 'TJS' : 'смн'}
                     </span>
                   </div>
 
@@ -310,7 +310,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
                     {isAdded ? (
                       <>
                         <Check size={18} className="stroke-[3]" />
-                        <span>{lang === 'ru' ? 'Добавлено' : 'Илова шуд'}</span>
+                        <span>{lang === 'en' ? 'Added' : (lang === 'ru' ? 'Добавлено' : 'Илова шуд')}</span>
                       </>
                     ) : (
                       btnLabel
@@ -323,7 +323,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
               <div className="w-full md:w-[44%] relative flex items-center justify-center z-10 pb-4 md:pb-0">
                 {currentProducts.length === 0 ? (
                   <span className="text-[12px] font-semibold italic" style={{ color: theme.descColor }}>
-                    Загрузка продуктов...
+                    {lang === 'en' ? 'Loading products...' : (lang === 'ru' ? 'Загрузка продуктов...' : 'Боргирии маҳсулот...')}
                   </span>
                 ) : (
                   <div className="relative flex items-end justify-center px-4 py-4 md:py-6 w-full">
