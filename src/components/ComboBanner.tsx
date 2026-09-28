@@ -14,12 +14,16 @@ interface ComboBannerConfig {
   product_ids: string[];
   badge_ru: string;
   badge_tg: string;
+  badge_en?: string;
   title_ru: string;
   title_tg: string;
+  title_en?: string;
   subtitle_ru: string;
   subtitle_tg: string;
+  subtitle_en?: string;
   desc_ru: string;
   desc_tg: string;
+  desc_en?: string;
 }
 
 interface ComboBannerProps {
@@ -140,6 +144,14 @@ const COMBO_EN_TRANSLATIONS: Record<string, { badge: string; title: string; subt
 
 function getLocalizedCombo(combo: ComboBannerConfig, lang: Lang) {
   if (lang === 'en') {
+    if (combo.title_en) {
+      return {
+        badge: combo.badge_en || 'GLS BESTSELLER',
+        title: combo.title_en,
+        subtitle: combo.subtitle_en || '',
+        desc: combo.desc_en || ''
+      };
+    }
     const en = COMBO_EN_TRANSLATIONS[combo.id];
     if (en) return en;
     const lower = (combo.title_ru || '').toLowerCase();
