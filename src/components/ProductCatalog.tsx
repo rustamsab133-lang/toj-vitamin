@@ -23,7 +23,7 @@ import { ProductDetailModal } from './ProductDetailModal';
 import { useCart } from '@/store/useCart';
 import { useThemeStore } from '@/store/useTheme';
 import { slugify } from '@/lib/slugify';
-import { getLocalizedProductName } from '@/lib/productLocalization';
+import { getLocalizedProductName, getLocalizedProductTag } from '@/lib/productLocalization';
 import { BackgroundGlow } from './BackgroundGlow';
 import { trackEvent } from '@/lib/analytics';
 
@@ -322,7 +322,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                             <div className="absolute top-7 left-7 z-20 flex flex-wrap gap-1.5 pointer-events-none">
                                {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag: string, idx: number) => (
                                  <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
-                                   {tag}
+                                   {getLocalizedProductTag(tag, lang)}
                                  </span>
                                ))}
                              </div>
@@ -378,7 +378,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                       <div className="flex items-center gap-1.5 mb-1">
                                          <ShieldCheck size={10} className="text-[#1E40AF] shrink-0" />
                                          <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.12em] whitespace-nowrap">
-                                           {lang === 'en' ? 'Clinical standard' : (lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ')}
+                                           {lang === 'en' ? '100% Original GLS' : (lang === 'ru' ? '100% Оригинал GLS' : '100% Асл GLS')}
                                          </span>
                                       </div>
                                       <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
