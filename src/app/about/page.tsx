@@ -7,411 +7,456 @@ import {
   Building2, ShieldCheck, Truck, Warehouse, Globe, 
   CheckCircle2, ArrowRight, Phone, Mail, MapPin, 
   ExternalLink, FileText, Award, Users, ChevronRight,
-  TrendingUp, Layers, Check, ArrowUpRight, MessageCircle
+  TrendingUp, Layers, Check, ArrowUpRight, MessageCircle,
+  Clock, HeartHandshake, Sparkles, Store, ThermometerSnowflake,
+  Activity, BadgeCheck, Stethoscope
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Lang = 'en' | 'ru' | 'tj';
 
 const CONTENT = {
-  en: {
-    metaTitle: "National Pharmaceutical & Dietary Supplements Distribution | Toj-Vitamin (LLC Sakhovati Istaravshan)",
-    metaDesc: "Specialized dietary supplements division of pharmaceutical holding LLC 'Sakhovati Istaravshan' (est. 2003). Official GDP-compliant warehousing, logistics, and distribution across Tajikistan.",
-    badge: "Official National Distributor in the Republic of Tajikistan",
-    heroTitle: "National Pharmaceutical & Dietary Supplements Distribution",
-    heroSubtitle: "A specialized division and digital ecosystem of the licensed pharmaceutical holding LLC 'Sakhovati Istaravshan' (operating since 2003). Direct supply to 500+ pharmacies, healthcare facilities, and consumers nationwide.",
-    ctaB2B: "For Pharmacies & B2B Partners",
-    ctaCatalog: "Explore Product Catalog",
-    ctaContact: "Contact Distribution Desk",
-
-    langLabel: "Language",
-
-    // Section 1: Facts & Infrastructure
-    infraTag: "SCALE & OPERATIONAL CAPABILITY",
-    infraTitle: "Pharmaceutical Infrastructure & Logistics (GDP / GSP)",
-    infraDesc: "We provide global manufacturers with transparent, fully licensed, and audit-ready supply chain operations across the Republic of Tajikistan.",
-    
-    stats: [
-      { number: "20+", label: "Years on Market", sub: "Established in 2003" },
-      { number: "500+", label: "Partner Pharmacies", sub: "Nationwide retail reach" },
-      { number: "2", label: "GDP Warehouses", sub: "Khujand & Dushanbe" },
-      { number: "100%", label: "Batch Inspection", sub: "Strict climate control" }
-    ],
-
-    infraPillars: [
-      {
-        icon: Warehouse,
-        title: "Licensed GDP/GSP Warehousing",
-        desc: "Equipped pharmaceutical warehouse complexes in Khujand and Dushanbe featuring 24/7 temperature (15–25°C) and humidity data-logging, certified for sensitive nutraceutical storage."
-      },
-      {
-        icon: Truck,
-        title: "Dedicated Logistics Fleet",
-        desc: "In-house temperature-controlled vehicle fleet ensuring scheduled delivery routes across Dushanbe, Sughd region, Khatlon region, and Regions of Republican Subordination (RRP)."
-      },
-      {
-        icon: Users,
-        title: "Specialized Field Team",
-        desc: "Over 50 experienced medical representatives, licensed pharmacists, and account managers conducting ongoing product education and pharmacy merchandising."
-      },
-      {
-        icon: ShieldCheck,
-        title: "Comprehensive Quality Control",
-        desc: "Zero tolerance for counterfeits: 100% inbound batch verification, inspection of analytical certificates, and compliance with the Ministry of Health of Tajikistan."
-      }
-    ],
-
-    // Section 2: Holding Ecosystem
-    ecosystemTag: "SYNERGY & OMNICHANNEL PRESENCE",
-    ecosystemTitle: "Integrated Holding Ecosystem",
-    ecosystemDesc: "Combining wholesale reach, brick-and-mortar retail presence, and proprietary digital healthcare technology.",
-    
-    ecosystemItems: [
-      {
-        name: "Sakhovati Istaravshan LLC",
-        role: "Parent Pharmaceutical Holding",
-        period: "Since 2003",
-        desc: "Licensed national pharmaceutical importer and distributor supplying medicines, medical equipment, and health products across Tajikistan for over two decades.",
-        linkText: "Parent Entity",
-        badge: "Holding HQ"
-      },
-      {
-        name: "Sakhovat Apteka",
-        role: "Retail Pharmacy Chain",
-        period: "Retail Network",
-        desc: "Modern chain of neighborhood pharmacies providing patient consultations, certified drug dispensing, and prime shelf placement for partner brands.",
-        url: "https://sakhovatapteka.tj",
-        linkText: "Visit sakhovatapteka.tj",
-        badge: "Brick & Mortar"
-      },
-      {
-        name: "ASLPHARM",
-        role: "Digital Pharmaceutical Platform",
-        period: "Tech Ecosystem",
-        desc: "Proprietary digital mobile and web application connecting patients with pharmaceutical availability, transparent pricing, and instant drug reservations.",
-        url: "https://aslpharm.tj",
-        linkText: "Visit aslpharm.tj",
-        badge: "Digital App"
-      },
-      {
-        name: "TOJ-VITAMIN",
-        role: "Vitamins & D2C Marketplace",
-        period: "Digital Flagship",
-        desc: "E-commerce storefront and B2B ordering portal providing direct-to-consumer educational marketing, algorithmic health quizzes, and brand visibility.",
-        url: "https://www.toj-vitamin.tj",
-        linkText: "Current Platform",
-        badge: "E-Commerce"
-      }
-    ],
-
-    // Section 3: For Global Brands & Manufacturers (NOW Foods compliance)
-    partnerTag: "INTERNATIONAL COMPLIANCE & EXPANSION",
-    partnerTitle: "Full-Cycle Services for Global Brands & Manufacturers",
-    partnerSubtitle: "Tailored to international compliance standards. We act as your reliable authorized importer, regulatory sponsor, and national brand builder in Tajikistan.",
-    
-    partnerServices: [
-      {
-        title: "State Registration & Regulatory Compliance",
-        desc: "Full legal sponsorship and dossier submission for dietary supplements registration, notification, and state certification with the State Service for Pharmaceutical Surveillance under the Ministry of Health of Tajikistan."
-      },
-      {
-        title: "Turnkey Customs Clearance & Foreign Trade (FEA)",
-        desc: "Direct official importation under international contracts, compliant customs declaration, tariff classification, bank compliance, and complete legal chain of custody."
-      },
-      {
-        title: "Product Localization & Labeling Compliance",
-        desc: "Design and application of compliant consumer stickers and package inserts in Tajik and Russian languages adhering to national consumer protection and labeling legislation."
-      },
-      {
-        title: "Multi-Channel Marketing & Pharmacy Placement",
-        desc: "Medical representative visits, training webinars for pharmacists, prime shelf positioning across 500+ pharmacies, targeted digital marketing, and influencer partnerships."
-      }
-    ],
-
-    authTitle: "100% Genuine & Certified Guarantee",
-    authDesc: "We never compromise on product integrity. Every unit in our portfolio has an unbroken chain of custody directly from the manufacturer to the customer.",
-
-    // Section 5: Legal Information & Contacts
-    contactTitle: "Official Corporate Credentials & Contacts",
-    contactSubtitle: "For foreign audit inquiries, vendor onboarding, or B2B contracts, contact our executive team directly.",
-    legalEntityLabel: "Legal Entity",
-    legalEntityVal: "LLC 'Sakhovati Istaravshan' (ООО «Саховати Истаравшан»)",
-    hqAddressLabel: "Headquarters & Central Hub",
-    hqAddressVal: "63/3 K. Khujandi Street, Khujand, Sughd Region, Republic of Tajikistan, 735700",
-    dushanbeHubLabel: "Dushanbe Distribution Hub",
-    dushanbeHubVal: "Dushanbe Logistics Center, Republic of Tajikistan",
-    emailLabel: "Corporate Email (Executive & Compliance)",
-    phoneLabel: "Distribution & B2B Phone",
-    licenseLabel: "Pharmaceutical License",
-    licenseVal: "State License for Pharmaceutical Activity No. 0001859 (issued by the Ministry of Health of RT)",
-    whatsappBtn: "Chat via WhatsApp",
-    callBtn: "Call Reception",
-    backHome: "Back to Home",
-    b2bPortalBtn: "Open B2B Ordering Portal"
-  },
-
   ru: {
-    metaTitle: "Национальная дистрибуция фармацевтической продукции и БАД | Toj-Vitamin (ООО «Саховати Истаравшан»)",
-    metaDesc: "Специализированное подразделение фармацевтического холдинга ООО «Саховати Истаравшан» (с 2003 г.). Собственные склады GDP/GSP, лицензированная логистика и прямые поставки по Таджикистану.",
+    metaTitle: "Фармацевтический холдинг ООО «Саховати Истаравшан» и платформа Toj-Vitamin",
+    metaDesc: "Официальный национальный импортер, дистрибьютор фармацевтической продукции, витаминов и БАД в Республике Таджикистан с 2003 года.",
     badge: "Официальный национальный дистрибьютор в Республике Таджикистан",
-    heroTitle: "Официальная дистрибуция сертифицированных витаминов, БАД и товаров для здоровья",
-    heroSubtitle: "Специализированное подразделение и цифровая платформа фармацевтического холдинга ООО «Саховати Истаравшан» (на рынке с 2003 года). Прямые поставки в аптечные сети, медицинские учреждения и розничным клиентам по всей стране.",
+    
+    // Блок 1. Первый экран (Hero Section)
+    heroTitle: "Фармацевтический холдинг ООО «Саховати Истаравшан» и специализированная платформа Toj-Vitamin",
+    heroSubtitle: "Официальный национальный импортер, дистрибьютор фармацевтической продукции, витаминов и БАД в Республике Таджикистан с 2003 года.",
     ctaB2B: "Для аптек и оптовых партнеров (B2B)",
     ctaCatalog: "Каталог продукции",
     ctaContact: "Связаться с отделом дистрибуции",
 
-    langLabel: "Язык",
-
-    infraTag: "МАСШТАБ И ОПЕРАЦИОННАЯ БАЗА",
-    infraTitle: "Фармацевтическая инфраструктура и логистика (GDP / GSP)",
-    infraDesc: "Мы предоставляем международным производителям прозрачные, полностью лицензированные и готовые к международному аудиту цепочки поставок по всему Таджикистану.",
-
+    // 4 ключевые плашки
     stats: [
-      { number: "20+ лет", label: "На рынке РТ", sub: "Основана в 2003 году" },
-      { number: "500+", label: "Аптек-партнеров", sub: "Поставка по всей республике" },
-      { number: "2 хаба", label: "Склады GDP/GSP", sub: "Худжанд и Душанбе" },
-      { number: "100%", label: "Входной контроль", sub: "Температурный мониторинг" }
+      { number: "20+ лет", label: "Безупречной работы", sub: "На фармацевтическом рынке" },
+      { number: "500+", label: "Аптек-партнеров", sub: "И медицинских учреждений" },
+      { number: "250+", label: "Сотрудников в штате", sub: "Команда специалистов" },
+      { number: "100%", label: "Национальный охват", sub: "Душанбе, Согд и регионы РТ" }
     ],
 
-    infraPillars: [
+    // Блок 2. История и миссия компании
+    historyMissionTag: "КОРПОРАТИВНЫЙ ПРОФИЛЬ И ЦЕННОСТИ",
+    historyMissionTitle: "История и миссия компании",
+    historyMissionSubtitle: "Более двух десятилетий лидерства, развития оптовой фармацевтической инфраструктуры и заботы о здоровье нации.",
+    
+    historyTitle: "История развития",
+    historyDesc: "Основанная в 2003 году, компания ООО «Саховати Истаравшан» прошла путь от регионального дистрибьютора до одного из ведущих национальных операторов оптового фармацевтического рынка Таджикистана с развитой логистической базой и прямыми контрактами.",
+
+    missionTitle: "Миссия холдинга",
+    missionDesc: "Обеспечение населения и системы здравоохранения Таджикистана оригинальными, высококачественными сертифицированными лекарственными средствами, витаминами и нутрицевтиками мирового стандарта.",
+
+    roleTitle: "Роль Toj-Vitamin",
+    roleDesc: "Выделенное специализированное подразделение и цифровая платформа холдинга, сфокусированная исключительно на формировании цивилизованного рынка биологически активных добавок, развитии превентивной медицины и культуры здорового образа жизни.",
+
+    // Блок 3. Экосистема бизнеса
+    ecosystemTag: "БИЗНЕС-СИНЕРГИЯ ХОЛДИНГА",
+    ecosystemTitle: "Экосистема бизнеса: от опта до конечного потребителя",
+    ecosystemSubtitle: "Бесшовная интеграция оптовых поставок, развитой собственной розницы и цифровых медицинских технологий.",
+
+    ecosystemBranches: [
       {
-        icon: Warehouse,
-        title: "Лицензированные фармацевтические склады",
-        desc: "Складские комплексы в Худжанде и Душанбе с круглосуточным климат-контролем (15–25°C), автоматическим мониторингом влажности и стандартами надлежащей складской практики (GSP)."
+        icon: Building2,
+        badge: "B2B Фармация",
+        title: "Оптовая дистрибуция (B2B Pharma)",
+        desc: "Прямые контракты на поставку с национальными и региональными аптечными сетями, независимыми аптеками, клиниками и медицинскими учреждениями по всей стране. Бесперебойное снабжение и гибкие коммерческие условия.",
+        linkText: "Оптовый B2B портал",
+        url: "/opt"
+      },
+      {
+        icon: Store,
+        badge: "Аптечный ритейл",
+        title: "Собственные розничные сети ASLPHARM и САХОВАТ",
+        desc: "Сеть собственных аптек, обеспечивающая прямой контакт с розничным покупателем, профессиональное консультирование провизорами и гарантированное наличие ключевых брендов на полках.",
+        linkText: "Сеть Саховат (sakhovatapteka.tj) • ASLPHARM (aslpharm.tj)",
+        url: "https://sakhovatapteka.tj",
+        secondaryUrl: "https://aslpharm.tj"
+      },
+      {
+        icon: Globe,
+        badge: "Цифровой флагман",
+        title: "Цифровая платформа Toj-Vitamin (B2B / D2C)",
+        desc: "Высокотехнологичный онлайн-сервис с персональным научным подбором витаминов, образовательной базой знаний, прямым контактом с потребителем и личным кабинетом заказа для аптек.",
+        linkText: "Перейти к каталогу Toj-Vitamin",
+        url: "/#catalog"
+      }
+    ],
+
+    // Блок 4. Складская логистика и соответствие стандартам (GDP / GSP)
+    logisticsTag: "ИНФРАСТРУКТУРА И ЛОГИСТИКА",
+    logisticsTitle: "Складская логистика и соответствие стандартам (GDP Compliance)",
+    logisticsSubtitle: "Современные складские мощности и строгий температурный контроль, отвечающие международным требованиям фармацевтического хранения.",
+
+    logisticsFeatures: [
+      {
+        icon: ThermometerSnowflake,
+        title: "Контроль параметров хранения",
+        desc: "Круглосуточный автоматизированный мониторинг температурного режима и влажности: холодовая цепь 2–8°C и контролируемые сухие зоны 15–25°C. Лицензированные фармацевтические склады в Худжанде и Душанбе."
       },
       {
         icon: Truck,
-        title: "Собственный логистический автопарк",
-        desc: "Специализированный транспорт с температурным контролем, обеспечивающий регулярные маршруты доставки по Душанбе, Согдийской области, Хатлонской области и РРП."
+        title: "Собственный автопарк и экспресс-доставка",
+        desc: "Специализированный транспорт, обеспечивающий доставку заказов в аптеки Душанбе и Худжанда в течение 24 часов, а в удаленные регионы Республики Таджикистан — до 48 часов."
       },
       {
-        icon: Users,
-        title: "Квалифицированный штат специалистов",
-        desc: "Команда медицинских представителей, провизоров, фармацевтов и логистов, обеспечивающих постоянное обучение персонала аптек и продвижение брендов."
+        icon: Warehouse,
+        title: "Стандарты надлежащей практики (GDP / GSP)",
+        desc: "Зонирование складов, карантинные зоны, цифровой учет партий и серий, строгая прослеживаемость и соблюдение правил санитарного и температурного контроля."
       },
       {
         icon: ShieldCheck,
-        title: "Строгий контроль качества партий",
-        desc: "100% входной контроль, проверка сертификатов анализов и соответствия требованиям Государственной службы надзора за фармацевтической деятельностью Минздрава РТ."
+        title: "100% Входной контроль качества",
+        desc: "Обязательная проверка сопроводительной документации, сертификатов анализа и соответствия Службы надзора за фармдеятельностью Минздрава РТ."
       }
     ],
 
-    ecosystemTag: "СИНЕРГИЯ И ОХВАТ",
-    ecosystemTitle: "Собственная экосистема холдинга",
-    ecosystemDesc: "Объединение масштабного оптового распределения, собственной аптечной розницы и современных IT-решений в медицине.",
+    // Блок 5. Опыт в категории БАД и портфель брендов
+    trackRecordTag: "ЭКСПЕРТИЗА И ПОРТФЕЛЬ БРЕНДОВ",
+    trackRecordTitle: "Опыт в категории БАД и портфель брендов (Category Track Record)",
+    trackRecordSubtitle: "Подтвержденная коммерческая компетентность, статус надежного дистрибьютора и передовые маркетинговые инструменты.",
 
-    ecosystemItems: [
+    trackItems: [
       {
-        name: "ООО «Саховати Истаравшан»",
-        role: "Материнский фармацевтический холдинг",
-        period: "С 2003 года",
-        desc: "Национальный импортер и дистрибьютор лекарственных средств, медицинских изделий и нутрицевтиков с непрерывным стажем работы на рынке Таджикистана более 20 лет.",
-        linkText: "Головная компания",
-        badge: "Холдинг"
+        icon: Award,
+        title: "Официальный дистрибьютор бренда GLS Pharmaceuticals",
+        desc: "Подтвержденный опыт вывода на рынок Таджикистана и масштабной дистрибуции ведущих линеек витаминов и нутрицевтиков. Полноценная представленность в рознице и e-commerce."
       },
       {
-        name: "Саховат Аптека",
-        role: "Собственная аптечная розница",
-        period: "Розничная сеть",
-        desc: "Сеть современных аптек шаговой доступности с профессиональными провизорами, прямым отпуском препаратов и приоритетным размещением продукции брендов-партнеров.",
-        url: "https://sakhovatapteka.tj",
-        linkText: "Перейти на sakhovatapteka.tj",
-        badge: "Аптечная розница"
+        icon: Stethoscope,
+        title: "Комплексный подход к продвижению",
+        desc: "Системное взаимодействие с профильными врачами (терапевты, эндокринологи, педиатры), нутрициологами, лидерами мнений (UGC / инфлюенсер-маркетинг) и обучающие программы для первостольников аптек."
       },
       {
-        name: "ASLPHARM",
-        role: "Цифровая фармацевтическая экосистема",
-        period: "IT-платформа",
-        desc: "Инновационная экосистема и мобильное приложение для поиска медикаментов, мониторинга наличия в аптеках Таджикистана и быстрого онлайн-бронирования.",
-        url: "https://aslpharm.tj",
-        linkText: "Перейти на aslpharm.tj",
-        badge: "Приложение & Web"
+        icon: FileText,
+        title: "Госрегистрация и локализация упаковки",
+        desc: "Полное юридическое сопровождение регистрации БАД в уполномоченных органах Минздрава РТ, нанесение обязательной маркировки и стикеров на государственном и русском языках."
       },
       {
-        name: "TOJ-VITAMIN",
-        role: "Платформа витаминов и добавок",
-        period: "Флагман D2C / B2B",
-        desc: "Специализированная интернет-платформа с экспертным подбором витаминов, образовательным контентом и цифровым кабинетом для оптовых аптек-партнеров.",
-        url: "https://www.toj-vitamin.tj",
-        linkText: "Текущий сайт",
-        badge: "E-Commerce"
+        icon: Activity,
+        title: "Услуги для глобальных производителей (NOW Foods и др.)",
+        desc: "Прямой внешнеэкономический импорт (ВЭД), белое таможенное оформление под ключ, дистрибуция через 500+ аптек и защита бренда от контрафакта."
       }
     ],
 
-    partnerTag: "МЕЖДУНАРОДНЫМ ПРОИЗВОДИТЕЛЯМ",
-    partnerTitle: "Услуги для мировых брендов и производителей БАД",
-    partnerSubtitle: "Специально разработано для комплаенс-требований глобальных партнеров. Мы выступаем вашим официальным импортером, регуляторным спонсором и оператором рынка в РТ.",
+    // Блок 6. Юридическая информация и лицензии
+    legalTag: "ПРАВОВАЯ ЧИСТОТА И РЕКВИЗИТЫ",
+    legalTitle: "Юридическая информация и лицензии (Compliance & Credentials)",
+    legalSubtitle: "Официальные реквизиты, подтвержденные лицензии и прямые контакты руководства компании.",
 
-    partnerServices: [
-      {
-        title: "Государственная регистрация и комплаенс",
-        desc: "Полное юридическое сопровождение, формирование регистрационных досье, сертификация и нотификация биологически активных добавок в уполномоченных органах Минздрава РТ."
-      },
-      {
-        title: "Таможенное оформление и прямой ВЭД-импорт",
-        desc: "Прямые внешнеэкономические контракты, декларирование 'под ключ', валютный контроль, соблюдение таможенных регламентов и прозрачная белая цепочка поставок."
-      },
-      {
-        title: "Локализация упаковки и маркировка",
-        desc: "Разработка и нанесение стикеров с переводом на таджикский и русский языки в строгом соответствии с Законом РТ «О защите прав потребителей»."
-      },
-      {
-        title: "Комплексное маркетинговое продвижение",
-        desc: "Работа с врачебным сообществом, обучение фармацевтов, мерчандайзинг на лучших полках 500+ аптек, digital-кампании и e-commerce продажи."
-      }
-    ],
+    legalNameLabel: "Полное наименование юридического лица",
+    legalNameVal: "Общество с ограниченной ответственностью «Саховати Истаравшан» (LLC \"Sakhovati Istaravshan\")",
+    
+    hqLabel: "Юридический и фактический адрес головного офиса и центрального склада",
+    hqVal: "Республика Таджикистан, Согдийская область, г. Худжанд, ул. К. Худжанди 63/3, индекс 735700",
 
-    authTitle: "100% Оригинальная продукция без компромиссов",
-    authDesc: "Мы гарантируем абсолютную подлинность каждой упаковки. Прямые поставки от заводов-изготовителей исключают серые схемы и фальсификат.",
+    dushanbeLabel: "Логистический хаб в г. Душанбе",
+    dushanbeVal: "Логистический центр Душанбе, Республика Таджикистан (обеспечивает поставки в Хатлон и РРП)",
 
-    contactTitle: "Официальные реквизиты и контакты",
-    contactSubtitle: "Для аудиторских проверок, заключения дистрибьюторских соглашений и B2B-закупок.",
-    legalEntityLabel: "Юридическое лицо",
-    legalEntityVal: "ООО «Саховати Истаравшан» / LLC 'Sakhovati Istaravshan'",
-    hqAddressLabel: "Головной офис и складской комплекс",
-    hqAddressVal: "Республика Таджикистан, г. Худжанд, ул. К. Худжанди 63/3, 735700",
-    dushanbeHubLabel: "Логистический хаб в г. Душанбе",
-    dushanbeHubVal: "Логистический центр Душанбе, Республика Таджикистан",
-    emailLabel: "Корпоративный email (приемная / комплаенс)",
-    phoneLabel: "Отдел оптовых продаж и дистрибуции",
-    licenseLabel: "Лицензия на фармацевтическую деятельность",
-    licenseVal: "Государственная лицензия на фармацевтическую деятельность № 0001859 (выдана Минздравом РТ)",
+    licenseLabel: "Государственная лицензия на фармацевтическую деятельность",
+    licenseVal: "Лицензия № 0001859, выдана Государственной службой надзора за фармацевтической деятельностью Министерства здравоохранения и социальной защиты населения Республики Таджикистан",
+
+    emailLabel: "Приемная / Corporate Email",
+    phoneLabel: "Телефон приемной с международным кодом",
+    phoneVal: "+992 176660707",
     whatsappBtn: "Написать в WhatsApp",
     callBtn: "Позвонить в приемную",
-    backHome: "На главную страницу",
-    b2bPortalBtn: "Открыть B2B-портал для аптек"
+    backHome: "На главную страницу"
+  },
+
+  en: {
+    metaTitle: "Pharmaceutical Holding LLC 'Sakhovati Istaravshan' & Toj-Vitamin Platform",
+    metaDesc: "Official national importer and distributor of pharmaceutical products, vitamins, and dietary supplements in the Republic of Tajikistan since 2003.",
+    badge: "Official National Distributor in the Republic of Tajikistan",
+    
+    // Block 1. Hero Section
+    heroTitle: "Pharmaceutical Holding LLC \"Sakhovati Istaravshan\" & Specialized Platform Toj-Vitamin",
+    heroSubtitle: "Official national importer and distributor of pharmaceutical products, vitamins, and dietary supplements in the Republic of Tajikistan since 2003.",
+    ctaB2B: "For Pharmacies & B2B Partners",
+    ctaCatalog: "Explore Product Catalog",
+    ctaContact: "Contact Distribution Desk",
+
+    // 4 Key Stats
+    stats: [
+      { number: "20+ Years", label: "Of Proven Excellence", sub: "On the pharmaceutical market" },
+      { number: "500+", label: "Partner Pharmacies", sub: "& Healthcare institutions" },
+      { number: "250+", label: "Employees on Staff", sub: "Licensed pharmaceutical team" },
+      { number: "100%", label: "National Coverage", sub: "Dushanbe, Sughd & regions of RT" }
+    ],
+
+    // Block 2. Corporate Background & Mission
+    historyMissionTag: "CORPORATE PROFILE & VALUES",
+    historyMissionTitle: "Corporate Background & Mission",
+    historyMissionSubtitle: "Over two decades of continuous leadership, healthcare supply chain development, and nation-building.",
+
+    historyTitle: "Corporate History",
+    historyDesc: "Founded in 2003, LLC 'Sakhovati Istaravshan' has grown from a regional distributor into one of Tajikistan's leading national operators in the wholesale pharmaceutical market, backed by modern logistics and direct contracts.",
+
+    missionTitle: "Corporate Mission",
+    missionDesc: "Providing the population and healthcare infrastructure of Tajikistan with genuine, premium certified medicines, vitamins, and nutraceuticals meeting international standards.",
+
+    roleTitle: "The Role of Toj-Vitamin",
+    roleDesc: "A dedicated specialized division and digital ecosystem of the holding, focused exclusively on developing an authorized dietary supplements market, promoting preventive medicine, and cultivating health literacy.",
+
+    // Block 3. Business Ecosystem
+    ecosystemTag: "ENTERPRISE SYNERGY",
+    ecosystemTitle: "Business Ecosystem: From Wholesale to End-Consumer",
+    ecosystemSubtitle: "Seamless synergy across wholesale pharma supply, proprietary retail pharmacy chains, and healthtech platforms.",
+
+    ecosystemBranches: [
+      {
+        icon: Building2,
+        badge: "B2B Pharma",
+        title: "Wholesale Distribution (B2B Pharma)",
+        desc: "Direct supply agreements with national and regional pharmacy chains, independent drugstores, hospitals, and clinics across Tajikistan. Guaranteed supply continuity and flexible commercial terms.",
+        linkText: "B2B Wholesale Portal",
+        url: "/opt"
+      },
+      {
+        icon: Store,
+        badge: "Pharmacy Retail",
+        title: "Proprietary Retail Networks ASLPHARM & SAKHOVAT",
+        desc: "In-house brick-and-mortar pharmacy chain providing direct patient engagement, expert pharmacist dispensing, and guaranteed prime shelf space for strategic partner brands.",
+        linkText: "Sakhovat Chain (sakhovatapteka.tj) • ASLPHARM (aslpharm.tj)",
+        url: "https://sakhovatapteka.tj",
+        secondaryUrl: "https://aslpharm.tj"
+      },
+      {
+        icon: Globe,
+        badge: "Digital Platform",
+        title: "Digital Platform Toj-Vitamin (B2B / D2C)",
+        desc: "High-tech consumer e-commerce platform offering algorithmic nutrient selection, medical content, direct consumer feedback, and online order management for pharmacies.",
+        linkText: "Visit Toj-Vitamin Catalog",
+        url: "/#catalog"
+      }
+    ],
+
+    // Block 4. Warehousing & GDP Compliance
+    logisticsTag: "SUPPLY CHAIN & COLD-CHAIN LOGISTICS",
+    logisticsTitle: "Warehousing & GDP Compliance",
+    logisticsSubtitle: "State-of-the-art storage facilities and automated climate monitoring meeting international Good Distribution Practice standards.",
+
+    logisticsFeatures: [
+      {
+        icon: ThermometerSnowflake,
+        title: "Automated Storage Parameter Control",
+        desc: "24/7 automated temperature and humidity monitoring: certified cold-chain (2–8°C) and controlled ambient zones (15–25°C). Licensed GDP warehouse complexes in Khujand and Dushanbe."
+      },
+      {
+        icon: Truck,
+        title: "Dedicated Fleet & Express Deliveries",
+        desc: "Temperature-controlled logistics fleet ensuring delivery to pharmacies in Dushanbe and Khujand within 24 hours, and up to 48 hours to remote mountainous regions of Tajikistan."
+      },
+      {
+        icon: Warehouse,
+        title: "Good Distribution Practice (GDP / GSP)",
+        desc: "Strict warehouse segregation, quarantine zones, batch serial tracking, and full compliance with sanitary and environmental standards."
+      },
+      {
+        icon: ShieldCheck,
+        title: "100% Inbound Quality Inspection",
+        desc: "Rigorous verification of batch certificates, analytical documentation, and compliance with the Ministry of Health of the Republic of Tajikistan."
+      }
+    ],
+
+    // Block 5. Category Track Record
+    trackRecordTag: "PROVEN EXPERTISE & BRAND PORTFOLIO",
+    trackRecordTitle: "Category Track Record in Dietary Supplements",
+    trackRecordSubtitle: "Proven commercial execution, authorized distributor credentials, and multi-channel brand growth.",
+
+    trackItems: [
+      {
+        icon: Award,
+        title: "Authorized Distributor of GLS Pharmaceuticals",
+        desc: "Proven track record in brand launch, localization, and nationwide market expansion of major nutraceutical lines with comprehensive retail and online presence."
+      },
+      {
+        icon: Stethoscope,
+        title: "Omnichannel Promotion & Medical Engagement",
+        desc: "Systematic collaboration with healthcare practitioners (general practitioners, endocrinologists, pediatricians), nutritionists, digital KOLs (UGC), and continuous pharmacist education."
+      },
+      {
+        icon: FileText,
+        title: "State Registration & Packaging Compliance",
+        desc: "End-to-end legal support for supplement registration with the Ministry of Health of RT, mandatory localization, and labeling in Tajik and Russian languages."
+      },
+      {
+        icon: Activity,
+        title: "Full-Cycle Services for Global Brands (NOW Foods, etc.)",
+        desc: "Direct foreign trade import, turnkey customs clearance, retail distribution across 500+ pharmacies, and robust anti-counterfeit brand protection."
+      }
+    ],
+
+    // Block 6. Compliance & Credentials
+    legalTag: "COMPLIANCE, LEGAL ENTITY & CONTACTS",
+    legalTitle: "Corporate Credentials & Licensing (Compliance)",
+    legalSubtitle: "Official corporate details, government licenses, and direct executive contact channels.",
+
+    legalNameLabel: "Full Legal Entity Name",
+    legalNameVal: "LLC \"Sakhovati Istaravshan\" (Общество с ограниченной ответственностью «Саховати Истаравшан»)",
+    
+    hqLabel: "Headquarters & Central Distribution Warehouse",
+    hqVal: "63/3 K. Khujandi Street, Khujand, Sughd Region, Republic of Tajikistan, Postal Code 735700",
+
+    dushanbeLabel: "Dushanbe Logistics Hub",
+    dushanbeVal: "Dushanbe Logistics Center, Republic of Tajikistan (supplying Khatlon and RRP regions)",
+
+    licenseLabel: "State Pharmaceutical Activity License",
+    licenseVal: "State License No. 0001859 issued by the State Service for Pharmaceutical Surveillance under the Ministry of Health and Social Protection of the Republic of Tajikistan",
+
+    emailLabel: "Corporate & Compliance Email",
+    phoneLabel: "Executive Office Phone (International)",
+    phoneVal: "+992 176660707",
+    whatsappBtn: "Chat via WhatsApp",
+    callBtn: "Call Reception",
+    backHome: "Back to Home"
   },
 
   tj: {
-    metaTitle: "Дистрибутсияи миллии маҳсулоти фарматсевтӣ ва иловаҳои биологӣ | Toj-Vitamin (ҶДММ «Саховати Истаравшан»)",
-    metaDesc: "Бахши тахассусии холдинги фарматсевтии ҶДММ «Саховати Истаравшан» (аз соли 2003). Анборҳои GDP/GSP, логистика ва интиқоли мустақим дар саросари Тоҷикистон.",
+    metaTitle: "Холдинги фарматсевтии ҶДММ «Саховати Истаравшан» ва платформаи Toj-Vitamin",
+    metaDesc: "Воридкунанда ва дистрибютори расмии миллии маҳсулоти фарматсевтӣ, витаминҳо ва иловаҳои биологӣ дар Ҷумҳурии Тоҷикистон аз соли 2003.",
     badge: "Дистрибютори расмии миллӣ дар Ҷумҳурии Тоҷикистон",
-    heroTitle: "Дистрибутсияи расмии витаминҳо ва иловаҳои биологӣ дар Тоҷикистон",
-    heroSubtitle: "Бахши тахассусӣ ва платформаи рақамии ширкати фарматсевтии ҶДММ «Саховати Истаравшан» (дар бозор аз соли 2003). Интиқоли мустақим ба шабакаҳои дорухонаҳо, муассисаҳои тиббӣ ва мизоҷон дар саросари кишвар.",
+    
+    // Блок 1. Hero
+    heroTitle: "Холдинги фарматсевтии ҶДММ «Саховати Истаравшан» ва платформаи тахассусии Toj-Vitamin",
+    heroSubtitle: "Воридкунанда ва дистрибютори расмии миллии маҳсулоти фарматсевтӣ, витаминҳо ва иловаҳои биологӣ дар Ҷумҳурии Тоҷикистон аз соли 2003.",
     ctaB2B: "Барои дорухонаҳо ва шарикони яклухт (B2B)",
     ctaCatalog: "Каталоги маҳсулот",
     ctaContact: "Тамос бо шуъбаи дистрибутсия",
 
-    langLabel: "Забон",
-
-    infraTag: "МИҚЁС ВА БАЗАИ АМАЛИЁТӢ",
-    infraTitle: "Инфрасохтори фарматсевтӣ ва логистика (GDP / GSP)",
-    infraDesc: "Мо ба истеҳсолкунандагони ҷаҳонӣ занҷири таъминоти шаффоф, комилан литсензияшуда ва омодаи аудити байналмилалиро дар саросари Тоҷикистон пешниҳод менамоем.",
-
     stats: [
-      { number: "20+ сол", label: "Дар бозор", sub: "Аз соли 2003" },
-      { number: "500+", label: "Дорухонаҳои шарик", sub: "Дар саросари кишвар" },
-      { number: "2 марказ", label: "Анборҳои GDP/GSP", sub: "Хуҷанд ва Душанбе" },
-      { number: "100%", label: "Назорати сифат", sub: "Мониторинги ҳарорат" }
+      { number: "20+ сол", label: "Фаъолияти бенуқсон", sub: "Дар бозори фарматсевтӣ" },
+      { number: "500+", label: "Дорухонаҳои шарик", sub: "Ва муассисаҳои тиббӣ" },
+      { number: "250+", label: "Кормандон дар штат", sub: "Дастаи мутахассисон" },
+      { number: "100%", label: "Фарогирии миллӣ", sub: "Душанбе, Суғд ва минтақаҳои ҶТ" }
     ],
 
-    infraPillars: [
+    // Блок 2. Таърих ва рисолат
+    historyMissionTag: "ПРОФИЛИ КОРПОРАТИВӢ ВА АРЗИШҲО",
+    historyMissionTitle: "Таърих ва рисолати ширкат",
+    historyMissionSubtitle: "Зиёда аз ду даҳсолаи пешсафӣ, рушди инфрасохтори яклухти фарматсевтӣ ва ғамхорӣ ба саломатии мардум.",
+
+    historyTitle: "Таърихи ширкат",
+    historyDesc: "Ширкати ҶДММ «Саховати Истаравшан», ки соли 2003 таъсис ёфтааст, аз як паҳнкунандаи минтақавӣ то ба яке аз пешсафони миллии бозори яклухти фарматсевтии Тоҷикистон рушд намуд.",
+
+    missionTitle: "Рисолати холдинг",
+    missionDesc: "Таъмини аҳолӣ ва низоми тандурустии Тоҷикистон бо дорувории аслӣ, босифат, сертификатсияшуда, витаминҳо ва иловаҳои биологии сатҳи ҷаҳонӣ.",
+
+    roleTitle: "Нақши Toj-Vitamin",
+    roleDesc: "Бахши тахассусӣ ва платформаи рақамии холдинг, ки махсус барои ташаккули бозори тамаддунофари иловаҳои биологӣ ва тарғиби тарзи ҳаёти солим нигаронида шудааст.",
+
+    // Блок 3. Экосистема
+    ecosystemTag: "СИНЕРГИЯИ БИЗНЕСИ ХОЛДИНГ",
+    ecosystemTitle: "Экосистемаи тиҷорат: аз яклухт то истеъмолкунанда",
+    ecosystemSubtitle: "Ҳамгироии бефосилаи таъминоти яклухт, шабакаи чакана ва технологияҳои тиббии рақамӣ.",
+
+    ecosystemBranches: [
       {
-        icon: Warehouse,
-        title: "Анборҳои литсензияшудаи фарматсевтӣ",
-        desc: "Маҷмааҳои анборӣ дар Хуҷанд ва Душанбе бо назорати шабонарӯзии ҳарорат (15–25°C) ва намии ҳаво мувофиқи стандартҳои GDP/GSP."
+        icon: Building2,
+        badge: "B2B Фарматсия",
+        title: "Дистрибутсияи яклухт (B2B Pharma)",
+        desc: "Шартномаҳои мустақим бо шабакаҳои дорухонаҳо, дорухонаҳои мустақил ва беморхонаҳо дар саросари кишвар. Таъминоти мунтазам ва шартҳои мусоид.",
+        linkText: "Портали яклухти B2B",
+        url: "/opt"
+      },
+      {
+        icon: Store,
+        badge: "Чаканаи дорухона",
+        title: "Шабакаҳои дорухонаи ASLPHARM ва САХОВАТ",
+        desc: "Шабакаи дорухонаҳои хусусӣ, ки алоқаи мустақимро бо харидор ва мавҷудияти кафолатноки маҳсулотро дар рафҳо таъмин мекунад.",
+        linkText: "Шабакаи Саховат (sakhovatapteka.tj) • ASLPHARM (aslpharm.tj)",
+        url: "https://sakhovatapteka.tj",
+        secondaryUrl: "https://aslpharm.tj"
+      },
+      {
+        icon: Globe,
+        badge: "Флагмани рақамӣ",
+        title: "Платформаи рақамии Toj-Vitamin (B2B / D2C)",
+        desc: "Хизматрасонии онлайни баландтехнологӣ бо интихоби инфиродии витаминҳо, мақолаҳои илмӣ ва бахши фармоиш барои дорухонаҳо.",
+        linkText: "Ба каталоги Toj-Vitamin гузаред",
+        url: "/#catalog"
+      }
+    ],
+
+    // Блок 4. Логистика
+    logisticsTag: "ИНФРАСОХТОР ВА ЛОГИСТИКА",
+    logisticsTitle: "Логистикаи анборӣ ва риояи стандартҳо (GDP Compliance)",
+    logisticsSubtitle: "Иқтидорҳои муосири анборӣ ва назорати қатъии ҳарорат тибқи талаботи байналмилалии фарматсевтӣ.",
+
+    logisticsFeatures: [
+      {
+        icon: ThermometerSnowflake,
+        title: "Назорати нигоҳдории маҳсулот",
+        desc: "Мониторинги худкори шабонарӯзии ҳарорат ва намӣ: занҷири сард 2–8°C ва минтақаҳои назоратшавандаи 15–25°C. Анборҳои литсензияшуда дар Хуҷанд ва Душанбе."
       },
       {
         icon: Truck,
-        title: "Автопарки махсуси логистикӣ",
-        desc: "Нақлиёти махсусгардонидашуда бо назорати ҳарорат, ки интиқоли мунтазамро ба Душанбе, вилояти Суғд, вилояти Хатлон ва НТҶ таъмин менамояд."
+        title: "Автопарки махсус ва интиқоли фаврӣ",
+        desc: "Нақлиёти махсус, ки интиқоли фармоишҳоро ба дорухонаҳои Душанбе ва Хуҷанд дар давоми 24 соат ва ба минтақаҳои дурдаст то 48 соат таъмин менамояд."
       },
       {
-        icon: Users,
-        title: "Ҳайати баландихтисоси мутахассисон",
-        desc: "Дастаи намояндагони тиббӣ, дорусозон ва логистҳо, ки омӯзиши пайвастаи кормандони дорухонаҳоро таъмин менамоянд."
+        icon: Warehouse,
+        title: "Стандартҳои таҷрибаи хуб (GDP / GSP)",
+        desc: "Минтақабандии анборҳо, ҷудокунии карантинӣ, баҳисобгирии рақамии силсилаҳо ва риояи меъёрҳои санитарӣ."
       },
       {
         icon: ShieldCheck,
-        title: "Назорати қатъии сифати маҳсулот",
-        desc: "100% санҷиши ҳар як партия, сертификатҳои мутобиқат ва риояи талаботи Хадамоти назорати давлатии фаъолияти фарматсевтии Вазорати тандурустии ҶТ."
+        title: "100% Санҷиши сифати воридот",
+        desc: "Санҷиши ҳатмии ҳуҷҷатҳои ҳамроҳкунанда, сертификатҳои таҳлил ва мутобиқат бо Хадамоти назорати фаъолияти фарматсевтии Вазорати тандурустии ҶТ."
       }
     ],
 
-    ecosystemTag: "СИНЕРГИЯ ВА МАСОҲАТИ БОЗОР",
-    ecosystemTitle: "Экосистемаи холдинг",
-    ecosystemDesc: "Якҷоя кардани дистрибутсияи яклухт, шабакаи дорухонаҳо ва технологияҳои муосири тиббии рақамӣ.",
+    // Блок 5. Таҷриба
+    trackRecordTag: "ТАҶРИБА ВА САНДУҚИ БРЕНДҲО",
+    trackRecordTitle: "Таҷриба дар бахши иловаҳои биологӣ (Category Track Record)",
+    trackRecordSubtitle: "Салоҳияти исботшудаи тиҷоратӣ, мақоми дистрибютори боэътимод ва роҳҳои муосири пешбурди маҳсулот.",
 
-    ecosystemItems: [
+    trackItems: [
       {
-        name: "ҶДММ «Саховати Истаравшан»",
-        role: "Холдинги фарматсевтии асосӣ",
-        period: "Аз соли 2003",
-        desc: "Воридкунанда ва паҳнкунандаи миллии доруворӣ ва маҳсулоти солимӣ бо таҷрибаи зиёда аз 20-сола дар бозори Тоҷикистон.",
-        linkText: "Ширкати асосӣ",
-        badge: "Холдинг"
+        icon: Award,
+        title: "Дистрибютори расмии бренди GLS Pharmaceuticals",
+        desc: "Таҷрибаи муваффақи ба бозори Тоҷикистон ворид намудан ва дистрибутсияи васеи витаминҳо ва иловаҳои биологӣ дар дорухонаҳо ва онлайн."
       },
       {
-        name: "Саховат Аптека",
-        role: "Шабакаи чаканаи дорухонаҳо",
-        period: "Шабакаи дорухона",
-        desc: "Шабакаи дорухонаҳои муосир бо мутахассисони касбӣ ва пешниҳоди аввалиндараҷаи маҳсулоти шарикон.",
-        url: "https://sakhovatapteka.tj",
-        linkText: "Гузариш ба sakhovatapteka.tj",
-        badge: "Дорухонаҳо"
+        icon: Stethoscope,
+        title: "Муносибати ҳамаҷониба ба пешбурд",
+        desc: "Ҳамкории доимӣ бо табибони соҳавӣ, нутритсиологҳо, блогерон (UGC) ва барномаҳои омӯзишӣ барои дорусозони дорухонаҳо."
       },
       {
-        name: "ASLPHARM",
-        role: "Экосистемаи рақамии фарматсевтӣ",
-        period: "Платформаи IT",
-        desc: "Барномаи мобилӣ барои дарёфти доруворӣ, тафтиши мавҷудият дар дорухонаҳо ва фармоиши фаврӣ.",
-        url: "https://aslpharm.tj",
-        linkText: "Гузариш ба aslpharm.tj",
-        badge: "Барнома & Web"
+        icon: FileText,
+        title: "Бақайдгирии давлатӣ ва нишонагузорӣ",
+        desc: "Дастгирии пурраи бақайдгирии иловаҳо дар Вазорати тандурустии ҶТ, гузоштани тамғакоғазҳо ва дастурҳо бо забонҳои тоҷикӣ ва русӣ."
       },
       {
-        name: "TOJ-VITAMIN",
-        role: "Платформаи витаминҳо ва иловаҳо",
-        period: "Флагмани D2C / B2B",
-        desc: "Мағозаи расмии интернетӣ бо интихоби инфиродӣ, маълумоти илмӣ ва бахши яклухт барои дорухонаҳо.",
-        url: "https://www.toj-vitamin.tj",
-        linkText: "Сомонаи ҷорӣ",
-        badge: "E-Commerce"
+        icon: Activity,
+        title: "Хизматрасониҳо барои истеҳсолкунандагони ҷаҳонӣ",
+        desc: "Воридоти мустақими хориҷӣ, барасмиятдарории гумрукӣ, паҳнкунӣ дар 500+ дорухона ва ҳифзи бренд аз маҳсулоти қалбакӣ."
       }
     ],
 
-    partnerTag: "БАРОИ ИСТЕҲСОЛКУНАНДАГОНИ БАЙНАЛМИЛАЛӢ",
-    partnerTitle: "Хизматрасониҳо барои брендҳои ҷаҳонӣ",
-    partnerSubtitle: "Мувофиқи стандартҳои комплаенси байналмилалӣ. Мо воридкунандаи расмӣ ва намояндаи боэътимоди шумо дар Тоҷикистон мебошем.",
+    // Блок 6. Маълумоти ҳуқуқӣ
+    legalTag: "ШАФФОФИЯТИ ҲУҚУҚӢ ВА РЕКВИЗИТҲО",
+    legalTitle: "Маълумоти ҳуқуқӣ ва литсензияҳо (Compliance & Credentials)",
+    legalSubtitle: "Реквизитҳои расмӣ, литсензияҳои тасдиқшуда ва алоқаи мустақим бо роҳбарияти ширкат.",
 
-    partnerServices: [
-      {
-        title: "Бақайдгирии давлатӣ ва комплаенс",
-        desc: "Дастгирии пурраи ҳуқуқӣ, омодасозии ҳуҷҷатҳо ва сертификатсия дар мақомоти Вазорати тандурустии ҶТ."
-      },
-      {
-        title: "Барасмиятдарории гумрукӣ ва воридоти мустақим",
-        desc: "Шартномаҳои мустақими хориҷӣ, эъломияи гумрукӣ ва занҷири комилан қонунии интиқол."
-      },
-      {
-        title: "Маҳалликунонии банду баст ва нишонагузорӣ",
-        desc: "Омодасозӣ ва часпонидани тамғакоғазҳо бо забонҳои тоҷикӣ ва русӣ мутобиқи қонунгузории ҶТ."
-      },
-      {
-        title: "Пешбурди маркетингӣ ва фурӯш",
-        desc: "Кор бо ҷомеаи табибон, омӯзиши дорусозон, ҷойгиркунии афзалиятнок дар 500+ дорухона ва пешбурди рақамӣ."
-      }
-    ],
+    legalNameLabel: "Номи пурраи шахси ҳуқуқӣ",
+    legalNameVal: "Ҷамъияти дорои масъулияти маҳдуди «Саховати Истаравшан» (LLC \"Sakhovati Istaravshan\")",
+    
+    hqLabel: "Нишонии ҳуқуқӣ ва воқеии дафтари марказӣ ва анбор",
+    hqVal: "Ҷумҳурии Тоҷикистон, вилояти Суғд, шаҳри Хуҷанд, кӯчаи К. Хуҷандӣ 63/3, индекси 735700",
 
-    authTitle: "100% Маҳсулоти асил ва сертификатсияшуда",
-    authDesc: "Мо аслияти ҳар як маҳсулотро кафолат медиҳем. Интиқоли мустақим аз корхонаҳо воридшавии моли қалбакиро комилан истисно мекунад.",
+    dushanbeLabel: "Маркази логистикӣ дар шаҳри Душанбе",
+    dushanbeVal: "Маркази логистикии Душанбе, Ҷумҳурии Тоҷикистон (таъминот ба вилояти Хатлон ва НТҶ)",
 
-    contactTitle: "Маълумоти расмӣ ва тамос",
-    contactSubtitle: "Барои санҷишҳои аудитӣ, бастани шартномаҳои дистрибутсия ва хариди яклухт.",
-    legalEntityLabel: "Шахси ҳуқуқӣ",
-    legalEntityVal: "ҶДММ «Саховати Истаравшан» / LLC 'Sakhovati Istaravshan'",
-    hqAddressLabel: "Дафтари марказӣ ва маҷмааи анборӣ",
-    hqAddressVal: "Ҷумҳурии Тоҷикистон, шаҳри Хуҷанд, кӯчаи К. Хуҷандӣ 63/3, 735700",
-    dushanbeHubLabel: "Маркази логистикӣ дар ш. Душанбе",
-    dushanbeHubVal: "Маркази логистикии Душанбе, Ҷумҳурии Тоҷикистон",
-    emailLabel: "Почтаи корпоративӣ (қабулгоҳ / комплаенс)",
-    phoneLabel: "Шуъбаи дистрибутсия ва фурӯши яклухт",
-    licenseLabel: "Литсензияи фаъолияти фарматсевтӣ",
-    licenseVal: "Литсензияи давлатӣ барои фаъолияти фарматсевтӣ № 0001859 (аз ҷониби Вазорати тандурустии ҶТ)",
+    licenseLabel: "Литсензияи давлатӣ барои фаъолияти фарматсевтӣ",
+    licenseVal: "Литсензияи № 0001859, аз ҷониби Хадамоти назорати давлатии фаъолияти фарматсевтии Вазорати тандурустӣ ва ҳифзи иҷтимоии аҳолии ҶТ дода шудааст",
+
+    emailLabel: "Почтаи корпоративӣ / Қабулгоҳ",
+    phoneLabel: "Телефони қабулгоҳ бо рамзи байналмилалӣ",
+    phoneVal: "+992 176660707",
     whatsappBtn: "Муроҷиат тавассути WhatsApp",
-    callBtn: "Занг задан ба қабулгоҳ",
-    backHome: "Ба саҳифаи асосӣ",
-    b2bPortalBtn: "Кушодани бахши B2B барои дорухонаҳо"
+    callBtn: "Занг ба қабулгоҳ",
+    backHome: "Ба саҳифаи асосӣ"
   }
 };
 
@@ -419,7 +464,6 @@ export default function CorporateAboutPage() {
   const [lang, setLang] = useState<Lang>('ru');
 
   useEffect(() => {
-    // Check url search params for lang=en
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlLang = params.get('lang') as Lang | null;
@@ -434,7 +478,7 @@ export default function CorporateAboutPage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1D1D1F] selection:bg-blue-600 selection:text-white font-sans">
       {/* Top Floating Navigation Bar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-black/[0.06] transition-all">
+      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/85 border-b border-black/[0.06] transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white shadow-sm border border-black/[0.05] p-1 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
@@ -447,28 +491,31 @@ export default function CorporateAboutPage() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-[16px] sm:text-[18px] tracking-tight text-[#1D1D1F] font-outfit">
+              <span className="font-extrabold text-[15px] sm:text-[18px] tracking-tight text-[#1D1D1F] font-outfit leading-tight">
                 TOJ-VITAMIN
               </span>
-              <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 tracking-wider uppercase">
-                LLC Sakhovati Istaravshan
+              <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 tracking-wider uppercase leading-tight">
+                ООО «Саховати Истаравшан»
               </span>
             </div>
           </Link>
 
-          {/* Center Links (Desktop) */}
-          <div className="hidden lg:flex items-center gap-6 text-[13px] font-semibold text-[#1D1D1F]/70">
-            <a href="#infrastructure" className="hover:text-blue-600 transition-colors">
-              {lang === 'en' ? 'Infrastructure' : (lang === 'ru' ? 'Инфраструктура' : 'Инфрасохтор')}
+          {/* Center Navigation Links (Desktop) */}
+          <div className="hidden xl:flex items-center gap-6 text-[13px] font-semibold text-[#1D1D1F]/70">
+            <a href="#mission" className="hover:text-blue-600 transition-colors">
+              {lang === 'en' ? 'History & Mission' : (lang === 'ru' ? 'История и миссия' : 'Таърих ва рисолат')}
             </a>
             <a href="#ecosystem" className="hover:text-blue-600 transition-colors">
-              {lang === 'en' ? 'Holding Ecosystem' : (lang === 'ru' ? 'Экосистема' : 'Экосистема')}
+              {lang === 'en' ? 'Ecosystem' : (lang === 'ru' ? 'Экосистема' : 'Экосистема')}
             </a>
-            <a href="#manufacturers" className="hover:text-blue-600 transition-colors">
-              {lang === 'en' ? 'For Global Brands' : (lang === 'ru' ? 'Производителям' : 'Истеҳсолкунандагон')}
+            <a href="#logistics" className="hover:text-blue-600 transition-colors">
+              {lang === 'en' ? 'Logistics & GDP' : (lang === 'ru' ? 'Логистика и GDP' : 'Логистика ва GDP')}
             </a>
-            <a href="#credentials" className="hover:text-blue-600 transition-colors">
-              {lang === 'en' ? 'Credentials & Contacts' : (lang === 'ru' ? 'Контакты' : 'Тамос')}
+            <a href="#track-record" className="hover:text-blue-600 transition-colors">
+              {lang === 'en' ? 'Track Record' : (lang === 'ru' ? 'Опыт и бренды' : 'Таҷриба')}
+            </a>
+            <a href="#compliance" className="hover:text-blue-600 transition-colors">
+              {lang === 'en' ? 'Credentials' : (lang === 'ru' ? 'Реквизиты' : 'Маълумоти ҳуқуқӣ')}
             </a>
           </div>
 
@@ -502,9 +549,10 @@ export default function CorporateAboutPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* ======================================================== */}
+      {/* БЛОК 1. ПЕРВЫЙ ЭКРАН (HERO SECTION)                     */}
+      {/* ======================================================== */}
       <section className="relative pt-12 sm:pt-20 pb-16 sm:pb-24 overflow-hidden border-b border-black/[0.05]">
-        {/* Subtle Background Glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-blue-500/10 via-emerald-500/10 to-transparent blur-3xl -z-10 pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -519,17 +567,17 @@ export default function CorporateAboutPage() {
             <span>{t.badge}</span>
           </motion.div>
 
-          {/* Main Title */}
+          {/* Main Title: exact required headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1D1D1F] font-outfit leading-[1.15] max-w-4xl mx-auto"
+            className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#1D1D1F] font-outfit leading-[1.2] max-w-4xl mx-auto"
           >
             {t.heroTitle}
           </motion.h1>
 
-          {/* Subtitle */}
+          {/* Subtitle: exact required subheadline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -563,7 +611,7 @@ export default function CorporateAboutPage() {
             </Link>
 
             <a
-              href="#credentials"
+              href="#compliance"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-700 font-bold text-[14px] hover:bg-blue-100 transition-all active:scale-95"
             >
               <Mail size={16} />
@@ -572,18 +620,18 @@ export default function CorporateAboutPage() {
           </motion.div>
         </div>
 
-        {/* Stats Strip */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 sm:mt-20">
+        {/* Ключевые показатели: Инфографика в 4 плашках */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-14 sm:mt-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {t.stats.map((stat, idx) => (
               <div 
                 key={idx}
-                className="p-5 sm:p-6 rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] text-center flex flex-col justify-center"
+                className="p-5 sm:p-6 rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] text-center flex flex-col justify-center hover:border-blue-500/30 transition-all"
               >
                 <span className="text-3xl sm:text-4xl font-extrabold text-blue-600 font-outfit tracking-tight">
                   {stat.number}
                 </span>
-                <span className="text-[13px] sm:text-[14px] font-bold text-[#1D1D1F] mt-1">
+                <span className="text-[13px] sm:text-[14px] font-bold text-[#1D1D1F] mt-1.5 leading-snug">
                   {stat.label}
                 </span>
                 <span className="text-[11px] text-[#1D1D1F]/50 mt-0.5">
@@ -595,24 +643,179 @@ export default function CorporateAboutPage() {
         </div>
       </section>
 
-      {/* Section 1: Infrastructure & Logistics (GDP/GSP) */}
-      <section id="infrastructure" className="py-16 sm:py-24 bg-white border-b border-black/[0.05]">
+      {/* ======================================================== */}
+      {/* БЛОК 2. ИСТОРИЯ И МИССИЯ КОМПАНИИ (BACKGROUND & MISSION) */}
+      {/* ======================================================== */}
+      <section id="mission" className="py-16 sm:py-24 bg-white border-b border-black/[0.05]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-              {t.infraTag}
+              {t.historyMissionTag}
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D1D1F] font-outfit mt-2 tracking-tight">
-              {t.infraTitle}
+              {t.historyMissionTitle}
             </h2>
             <p className="mt-3 text-[15px] sm:text-base text-[#1D1D1F]/70">
-              {t.infraDesc}
+              {t.historyMissionSubtitle}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Карточка 1: История */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-5">
+                  <Clock size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1D1D1F] font-outfit">
+                  {t.historyTitle}
+                </h3>
+                <p className="mt-3 text-[14px] sm:text-[15px] text-[#1D1D1F]/70 leading-relaxed">
+                  {t.historyDesc}
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center text-[12px] font-bold text-amber-700">
+                <CheckCircle2 size={16} className="mr-1.5" />
+                <span>2003 – {new Date().getFullYear()}</span>
+              </div>
+            </div>
+
+            {/* Карточка 2: Миссия */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-5">
+                  <HeartHandshake size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1D1D1F] font-outfit">
+                  {t.missionTitle}
+                </h3>
+                <p className="mt-3 text-[14px] sm:text-[15px] text-[#1D1D1F]/70 leading-relaxed">
+                  {t.missionDesc}
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center text-[12px] font-bold text-blue-600">
+                <CheckCircle2 size={16} className="mr-1.5" />
+                <span>Мировые стандарты качества</span>
+              </div>
+            </div>
+
+            {/* Карточка 3: Роль Toj-Vitamin */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center mb-5">
+                  <Sparkles size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1D1D1F] font-outfit">
+                  {t.roleTitle}
+                </h3>
+                <p className="mt-3 text-[14px] sm:text-[15px] text-[#1D1D1F]/70 leading-relaxed">
+                  {t.roleDesc}
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center text-[12px] font-bold text-emerald-700">
+                <CheckCircle2 size={16} className="mr-1.5" />
+                <span>Превентивная медицина & B2B/D2C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* БЛОК 3. ЭКОСИСТЕМА БИЗНЕСА: ОТ ОПТА ДО ПОТРЕБИТЕЛЯ       */}
+      {/* ======================================================== */}
+      <section id="ecosystem" className="py-16 sm:py-24 bg-[#FDFBF7] border-b border-black/[0.05]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[0.2em]">
+              {t.ecosystemTag}
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D1D1F] font-outfit mt-2 tracking-tight">
+              {t.ecosystemTitle}
+            </h2>
+            <p className="mt-3 text-[15px] sm:text-base text-[#1D1D1F]/70">
+              {t.ecosystemSubtitle}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {t.ecosystemBranches.map((branch, idx) => {
+              const IconComp = branch.icon;
+              return (
+                <div
+                  key={idx}
+                  className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:shadow-xl transition-all group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/50">
+                        {branch.badge}
+                      </span>
+                    </div>
+
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                      <IconComp size={24} />
+                    </div>
+
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1D1D1F] font-outfit">
+                      {branch.title}
+                    </h3>
+
+                    <p className="mt-3 text-[14px] text-[#1D1D1F]/70 leading-relaxed">
+                      {branch.desc}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-black/[0.05] space-y-2">
+                    {branch.url.startsWith('http') ? (
+                      <div className="flex flex-col gap-1.5">
+                        <a
+                          href={branch.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                          <span>{branch.linkText}</span>
+                          <ArrowUpRight size={14} />
+                        </a>
+                      </div>
+                    ) : (
+                      <Link
+                        href={branch.url}
+                        className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <span>{branch.linkText}</span>
+                        <ArrowRight size={14} />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* БЛОК 4. СКЛАДСКАЯ ЛОГИСТИКА И GDP COMPLIANCE             */}
+      {/* ======================================================== */}
+      <section id="logistics" className="py-16 sm:py-24 bg-white border-b border-black/[0.05]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[0.2em]">
+              {t.logisticsTag}
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D1D1F] font-outfit mt-2 tracking-tight">
+              {t.logisticsTitle}
+            </h2>
+            <p className="mt-3 text-[15px] sm:text-base text-[#1D1D1F]/70">
+              {t.logisticsSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {t.infraPillars.map((pillar, idx) => {
-              const IconComp = pillar.icon;
+            {t.logisticsFeatures.map((feat, idx) => {
+              const IconComp = feat.icon;
               return (
                 <div
                   key={idx}
@@ -623,15 +826,15 @@ export default function CorporateAboutPage() {
                       <IconComp size={24} />
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold text-[#1D1D1F] font-outfit">
-                      {pillar.title}
+                      {feat.title}
                     </h3>
                     <p className="mt-2.5 text-[14px] sm:text-[15px] text-[#1D1D1F]/70 leading-relaxed">
-                      {pillar.desc}
+                      {feat.desc}
                     </p>
                   </div>
                   <div className="mt-5 pt-4 border-t border-black/[0.04] flex items-center text-[12px] font-bold text-blue-600">
                     <CheckCircle2 size={16} className="mr-1.5" />
-                    <span>Verified Compliance (GSP/GDP)</span>
+                    <span>GDP / GSP Certified Standard</span>
                   </div>
                 </div>
               );
@@ -646,179 +849,121 @@ export default function CorporateAboutPage() {
               </span>
               <h4 className="text-xl sm:text-2xl font-bold font-outfit">
                 {lang === 'en' 
-                  ? 'Scheduled Cold-Chain Routes Across All Regions' 
-                  : (lang === 'ru' ? 'Регулярные рейсы во все регионы Республики Таджикистан' : 'Интиқоли мунтазам ба тамоми минтақаҳои Тоҷикистон')}
+                  ? 'Delivery: 24h Dushanbe & Khujand • Up to 48h Nationwide' 
+                  : (lang === 'ru' ? 'Доставка: 24 часа Душанбе и Худжанд • До 48 часов по всей республике' : 'Интиқол: 24 соат Душанбе ва Хуҷанд • То 48 соат дар саросари ҷумҳурӣ')}
               </h4>
               <p className="text-[13px] text-white/70 max-w-xl">
-                {lang === 'en'
-                  ? 'Dushanbe • Khujand • Bokhtar • Kulob • Istaravshan • Panjakent • Isfara • Tursunzoda'
-                  : 'Душанбе • Худжанд • Бохтар • Куляб • Истаравшан • Пенджикент • Исфара • Турсунзаде'}
+                Душанбе • Худжанд • Бохтар • Куляб • Истаравшан • Пенджикент • Исфара • Турсунзаде
               </p>
             </div>
             <Link
               href="/opt"
               className="shrink-0 px-6 py-3 rounded-2xl bg-white text-[#1D1D1F] font-bold text-[13px] hover:bg-blue-50 transition-colors shadow-md"
             >
-              {t.b2bPortalBtn}
+              {lang === 'en' ? 'Open B2B Portal' : (lang === 'ru' ? 'Открыть B2B-портал для аптек' : 'Кушодани бахши B2B')}
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Section 2: Integrated Holding Ecosystem */}
-      <section id="ecosystem" className="py-16 sm:py-24 bg-[#FDFBF7] border-b border-black/[0.05]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-              {t.ecosystemTag}
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D1D1F] font-outfit mt-2 tracking-tight">
-              {t.ecosystemTitle}
-            </h2>
-            <p className="mt-3 text-[15px] sm:text-base text-[#1D1D1F]/70">
-              {t.ecosystemDesc}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {t.ecosystemItems.map((item, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:shadow-lg transition-shadow"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/50">
-                      {item.badge}
-                    </span>
-                    <span className="text-[11px] font-semibold text-[#1D1D1F]/40">
-                      {item.period}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-bold text-[#1D1D1F] font-outfit mt-2">
-                    {item.name}
-                  </h3>
-                  <span className="text-[12px] font-bold text-blue-600 block mb-3">
-                    {item.role}
-                  </span>
-                  <p className="text-[13px] text-[#1D1D1F]/70 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-black/[0.05]">
-                  {item.url ? (
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      <span>{item.linkText}</span>
-                      <ArrowUpRight size={14} />
-                    </a>
-                  ) : (
-                    <span className="text-[12px] font-bold text-[#1D1D1F]/60">
-                      {item.linkText}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 3: For Global Brands & Manufacturers (NOW Foods & Audits) */}
-      <section id="manufacturers" className="py-16 sm:py-24 bg-white border-b border-black/[0.05]">
+      {/* ======================================================== */}
+      {/* БЛОК 5. ОПЫТ В КАТЕГОРИИ БАД И ПОРТФЕЛЬ БРЕНДОВ          */}
+      {/* ======================================================== */}
+      <section id="track-record" className="py-16 sm:py-24 bg-[#FDFBF7] border-b border-black/[0.05]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-[0.2em]">
-              {t.partnerTag}
+              {t.trackRecordTag}
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D1D1F] font-outfit mt-2 tracking-tight">
-              {t.partnerTitle}
+              {t.trackRecordTitle}
             </h2>
             <p className="mt-3 text-[15px] sm:text-base text-[#1D1D1F]/70">
-              {t.partnerSubtitle}
+              {t.trackRecordSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {t.partnerServices.map((srv, idx) => (
-              <div
-                key={idx}
-                className="p-6 sm:p-8 rounded-3xl bg-[#F8FAF9] border border-emerald-900/10 hover:border-emerald-500/30 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-[14px]">
-                      0{idx + 1}
+            {t.trackItems.map((item, idx) => {
+              const IconComp = item.icon;
+              return (
+                <div
+                  key={idx}
+                  className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.06] hover:border-emerald-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center font-bold">
+                        <IconComp size={20} />
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-bold text-[#1D1D1F] font-outfit">
+                        {item.title}
+                      </h3>
                     </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-[#1D1D1F] font-outfit">
-                      {srv.title}
-                    </h3>
+                    <p className="text-[14px] sm:text-[15px] text-[#1D1D1F]/70 leading-relaxed">
+                      {item.desc}
+                    </p>
                   </div>
-                  <p className="text-[14px] sm:text-[15px] text-[#1D1D1F]/70 leading-relaxed">
-                    {srv.desc}
-                  </p>
+                  <div className="mt-5 pt-4 border-t border-black/[0.05] flex items-center text-[12px] font-semibold text-emerald-700">
+                    <Check size={16} className="mr-1.5" />
+                    <span>Commercial Competence & Brand Growth</span>
+                  </div>
                 </div>
-                <div className="mt-5 pt-4 border-emerald-900/5 flex items-center text-[12px] font-semibold text-emerald-700">
-                  <Check size={16} className="mr-1.5" />
-                  <span>Full Regulatory Compliance</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Compliance & Quality Assurance Callout */}
+          {/* Compliance Callout Banner */}
           <div className="mt-10 p-6 sm:p-8 rounded-3xl bg-blue-50/70 border border-blue-200/60 flex flex-col sm:flex-row items-center gap-6">
             <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0">
               <Award size={28} />
             </div>
             <div className="flex-1 text-center sm:text-left">
               <h4 className="text-lg font-bold text-[#1D1D1F] font-outfit">
-                {t.authTitle}
+                {lang === 'en' ? 'Direct Gateway for Global Manufacturers' : (lang === 'ru' ? 'Прямой шлюз для международных производителей' : 'Дарвозаи мустақим барои истеҳсолкунандагони ҷаҳонӣ')}
               </h4>
               <p className="text-[14px] text-[#1D1D1F]/70 mt-1">
-                {t.authDesc}
+                {lang === 'en'
+                  ? 'We act as your authorized national sponsor, handling customs, regulatory dossiers, localization, and omnichannel sales across Tajikistan.'
+                  : (lang === 'ru' ? 'Мы выступаем вашим официальным импортером, обеспечивая таможню, регистрацию в Минздраве РТ, локализацию и продажи во всех регионах.' : 'Мо воридкунандаи расмии шумо буда, гумрук, бақайдгирӣ дар Вазорати тандурустӣ ва фурӯшро таъмин менамоем.')}
               </p>
             </div>
             <a
               href="mailto:ceo@toj-vitamin.tj"
               className="shrink-0 px-6 py-3 rounded-2xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition-colors shadow-sm"
             >
-              Request Compliance Dossier
+              {lang === 'en' ? 'Request Distribution Dossier' : (lang === 'ru' ? 'Запросить досье дистрибьютора' : 'Дархости ҳуҷҷатҳо')}
             </a>
           </div>
         </div>
       </section>
 
-      {/* Section 4: Legal Information & Executive Contacts */}
-      <section id="credentials" className="py-16 sm:py-24 bg-[#FDFBF7]">
+      {/* ======================================================== */}
+      {/* БЛОК 6. ЮРИДИЧЕСКАЯ ИНФОРМАЦИЯ И ЛИЦЕНЗИИ (COMPLIANCE)    */}
+      {/* ======================================================== */}
+      <section id="compliance" className="py-16 sm:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-[11px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-              TRANSPARENCY & CREDENTIALS
+              {t.legalTag}
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D1D1F] font-outfit mt-2 tracking-tight">
-              {t.contactTitle}
+              {t.legalTitle}
             </h2>
             <p className="mt-3 text-[15px] sm:text-base text-[#1D1D1F]/70">
-              {t.contactSubtitle}
+              {t.legalSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Column 1: Legal Entity & Licensing */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.06] shadow-sm space-y-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] shadow-sm space-y-6">
               <div>
                 <span className="text-[11px] font-bold text-[#1D1D1F]/40 uppercase tracking-wider block mb-1">
-                  {t.legalEntityLabel}
+                  {t.legalNameLabel}
                 </span>
-                <p className="text-[16px] font-bold text-[#1D1D1F] font-outfit">
-                  {t.legalEntityVal}
+                <p className="text-[15px] font-bold text-[#1D1D1F] font-outfit">
+                  {t.legalNameVal}
                 </p>
                 <span className="text-[12px] text-emerald-600 font-semibold block mt-1">
                   Tax Registration & FEA Status: Active (Est. 2003)
@@ -836,30 +981,30 @@ export default function CorporateAboutPage() {
 
               <div className="pt-4 border-t border-black/[0.05]">
                 <span className="text-[11px] font-bold text-[#1D1D1F]/40 uppercase tracking-wider block mb-1">
-                  Digital Platforms
+                  Digital Platforms & Brands
                 </span>
                 <p className="text-[13px] text-[#1D1D1F]/80">
                   • toj-vitamin.tj (Supplements Distribution)<br />
-                  • sakhovatapteka.tj (Retail Network)<br />
-                  • aslpharm.tj (Ecosystem App)
+                  • sakhovatapteka.tj (Retail Pharmacy Network)<br />
+                  • aslpharm.tj (Digital Ecosystem & App)
                 </p>
               </div>
             </div>
 
             {/* Column 2: Physical Hubs & Warehouses */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.06] shadow-sm space-y-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] shadow-sm space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <MapPin size={16} className="text-blue-600" />
                   <span className="text-[11px] font-bold text-[#1D1D1F]/40 uppercase tracking-wider">
-                    {t.hqAddressLabel}
+                    {t.hqLabel}
                   </span>
                 </div>
                 <p className="text-[14px] font-bold text-[#1D1D1F]">
-                  {t.hqAddressVal}
+                  {t.hqVal}
                 </p>
                 <span className="text-[12px] text-[#1D1D1F]/60 block mt-1">
-                  Central Warehouse, Executive Offices & Distribution Management
+                  Головной офис, центральный складской комплекс и руководство
                 </span>
               </div>
 
@@ -867,14 +1012,14 @@ export default function CorporateAboutPage() {
                 <div className="flex items-center gap-2 mb-1">
                   <Warehouse size={16} className="text-blue-600" />
                   <span className="text-[11px] font-bold text-[#1D1D1F]/40 uppercase tracking-wider">
-                    {t.dushanbeHubLabel}
+                    {t.dushanbeLabel}
                   </span>
                 </div>
                 <p className="text-[14px] font-bold text-[#1D1D1F]">
-                  {t.dushanbeHubVal}
+                  {t.dushanbeVal}
                 </p>
                 <span className="text-[12px] text-[#1D1D1F]/60 block mt-1">
-                  Regional Cross-docking & Central Tajikistan Express Delivery
+                  Кросс-докинг и экспресс-доставка по Душанбе, Хатлону и РРП
                 </span>
               </div>
             </div>
@@ -886,7 +1031,7 @@ export default function CorporateAboutPage() {
                   DIRECT CONTACT DESK
                 </span>
                 <h3 className="text-xl font-bold font-outfit mb-4">
-                  {lang === 'en' ? 'Get in Touch with Management' : (lang === 'ru' ? 'Связь с руководством' : 'Тамос бо роҳбарият')}
+                  {lang === 'en' ? 'Executive & Distribution Contacts' : (lang === 'ru' ? 'Контакты руководства и дистрибуции' : 'Тамос бо роҳбарият')}
                 </h3>
 
                 <div className="space-y-4">
@@ -912,7 +1057,7 @@ export default function CorporateAboutPage() {
                       className="text-[15px] font-bold text-white hover:underline flex items-center gap-1.5 mt-0.5"
                     >
                       <Phone size={16} />
-                      <span>+992 176660707</span>
+                      <span>{t.phoneVal}</span>
                     </a>
                   </div>
                 </div>
@@ -942,7 +1087,7 @@ export default function CorporateAboutPage() {
       </section>
 
       {/* Footer in About Page */}
-      <footer className="py-8 bg-white border-t border-black/[0.06] text-center text-[12px] text-[#1D1D1F]/50">
+      <footer className="py-8 bg-[#FDFBF7] border-t border-black/[0.06] text-center text-[12px] text-[#1D1D1F]/50">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>
             © {new Date().getFullYear()} LLC &quot;Sakhovati Istaravshan&quot; / Toj-Vitamin. All rights reserved.
