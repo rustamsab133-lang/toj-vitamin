@@ -27,6 +27,8 @@ import { useClient } from '@/store/useClient';
 import { useThemeStore } from '@/store/useTheme';
 import { getLocalizedQuizCategory, getLocalizedQuizOption, getLocalizedSynergyType, getLocalizedDosage } from '@/lib/quizLocalization';
 import { getLocalizedProductName } from '@/lib/productLocalization';
+import { findEnrichmentForProduct } from '@/lib/products';
+import enrichedData from '@/data/enriched_gls_products.json';
 
 interface QuizEngineProps {
   lang: Lang;
@@ -202,17 +204,29 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
           const markedPrice = dbProd 
             ? applyMarkupToPrice(Number(dbProd.price) || 0, markupSettings)
             : (p.price || 0);
+          const prodName = dbProd ? dbProd.name : p.name;
+          const enrichment = findEnrichmentForProduct(prodName, enrichedData as any);
 
           return { 
             ...p, 
+            ...enrichment,
+            ...(dbProd || {}),
             id: dbProd ? dbProd.id : p.id,
-            name: dbProd ? dbProd.name : p.name,
+            name: prodName,
             price: markedPrice, 
             image_url: dbProd?.image_url || p.image_url || null,
-            marketing_hooks: dbProd?.marketing_hooks || p.marketing_hooks || [],
-            tags: dbProd?.tags || p.tags || [],
-            expert_description: p.expert_description || dbProd?.description || '',
-            properties: dbProd?.tags || p.properties || []
+            marketing_hooks: (lang === 'en' && enrichment.marketing_hooks_en?.length) 
+              ? enrichment.marketing_hooks_en 
+              : (dbProd?.marketing_hooks || p.marketing_hooks || []),
+            marketing_hooks_en: enrichment.marketing_hooks_en || [],
+            properties: (lang === 'en' && enrichment.properties_en?.length)
+              ? enrichment.properties_en
+              : (enrichment.properties || dbProd?.tags || p.properties || []),
+            properties_en: enrichment.properties_en || [],
+            instructions_en: enrichment.instructions_en,
+            expert_description: (lang === 'en' && enrichment.properties_en?.length)
+              ? enrichment.properties_en.slice(0, 2).join('. ')
+              : (p.expert_description || dbProd?.description || '')
           };
         });
 
@@ -342,9 +356,17 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
           {(step === 'category' || step === 'loading') && <div />}
         </AnimatePresence>
 
-        {/* PROGRESS DOTS */}
+        {/* PROGRESS DOTS + EXIT TO CATALOG */}
         {step !== 'loading' && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-[11px] font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-wider flex items-center gap-1"
+            >
+              <span>{lang === 'en' ? 'To Catalog' : (lang === 'ru' ? 'В каталог' : 'Ба каталог')}</span>
+              <span>↓</span>
+            </button>
             {STEP_DISPLAY_LABELS.map((label, i) => (
               <div key={i} className="flex items-center gap-2">
                 <motion.div
@@ -678,9 +700,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               </button>
               <button
                 onClick={() => {
-                  useThemeStore.getState().setActiveBlock('catalog');
-                  if (typeof window !== 'undefined') window.history.replaceState(null, '', '#catalog');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="flex items-center gap-2 h-14 px-8 bg-[#1D1D1F] text-white rounded-full text-[15px] font-bold hover:bg-[#1E40AF] transition-all shadow-md active:scale-95"
               >

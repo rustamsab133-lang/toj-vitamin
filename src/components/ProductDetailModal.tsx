@@ -146,7 +146,7 @@ interface ProductDetailModalProps {
   product: Product | null;
   allProducts: Product[];
   lang: Lang;
-  onBuy: (product: Product, synergyProduct?: Product) => void;
+  onBuy?: (product: Product, synergyProduct?: Product) => void;
 }
 
 interface SynergyLink {

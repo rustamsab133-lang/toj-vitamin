@@ -275,7 +275,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
   const btnLabel = lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад');
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-4 md:pt-6 pb-6 relative overflow-visible w-full">
+    <div className="max-w-5xl mx-auto px-4 pt-20 md:pt-24 pb-6 relative overflow-visible w-full">
       <div className="relative group overflow-visible">
         {/* CAROUSEL CONTROLS */}
         {activeCombos.length > 1 && (

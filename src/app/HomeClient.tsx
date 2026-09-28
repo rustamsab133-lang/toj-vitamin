@@ -21,7 +21,6 @@ const SearchOverlay = dynamic(() => import('@/components/SearchOverlay').then(m 
 const ChatWidget = dynamic(() => import('@/components/ChatWidget').then(m => m.ChatWidget), { ssr: false });
 
 import { ComboBanner } from '@/components/ComboBanner';
-import { MainBlockSwitcher } from '@/components/MainBlockSwitcher';
 import { MainBackground } from '@/components/MainBackground';
 import { Header } from '@/components/Header';
 import { CartToast } from '@/components/CartToast';
@@ -41,8 +40,6 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
   const setSearch = useThemeStore(state => state.setSearch);
   const isSearchOpen = useThemeStore(state => state.isSearchOpen);
   const setIsSearchOpen = useThemeStore(state => state.setIsSearchOpen);
-  const activeBlock = useThemeStore(state => state.activeBlock);
-  const setActiveBlock = useThemeStore(state => state.setActiveBlock);
 
   
   // Use settings from server, but allow local override if needed
@@ -70,13 +67,13 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
     const handleHash = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#quiz' || hash === '#synergy') {
-        setActiveBlock('synergy');
+        setTimeout(() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' }), 100);
       } else if (hash === '#combos' || hash === '#combo') {
-        setActiveBlock('combos');
+        setTimeout(() => document.getElementById('combos')?.scrollIntoView({ behavior: 'smooth' }), 100);
       } else if (hash === '#science') {
-        setActiveBlock('science');
+        setTimeout(() => document.getElementById('science')?.scrollIntoView({ behavior: 'smooth' }), 100);
       } else if (hash === '#catalog') {
-        setActiveBlock('catalog');
+        setTimeout(() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' }), 100);
       }
     };
     handleHash();
@@ -223,88 +220,62 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
 
  
       <div className="relative z-10 flex flex-col">
-        {/* Mobile & Tablet Quick Bar: 'О нас' & 'Стать партнером' */}
-        <div className="flex lg:hidden items-center justify-center gap-2.5 px-4 pt-20 pb-1 max-w-md mx-auto w-full">
+        {/* Mobile & Tablet Quick Bar */}
+        <div className="flex lg:hidden items-center justify-center gap-2 px-3 pt-20 pb-2 max-w-lg mx-auto w-full">
+          <button
+            onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full bg-white/90 text-slate-800 border border-black/10 text-xs font-bold shadow-sm active:scale-95 transition-all text-center"
+          >
+            <span>💊 {lang === 'en' ? 'Catalog' : (lang === 'ru' ? 'Каталог' : 'Каталог')}</span>
+          </button>
+          <button
+            onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold shadow-sm active:scale-95 transition-all text-center"
+          >
+            <span>🧬 {lang === 'en' ? 'Synergy' : (lang === 'ru' ? 'Синергия' : 'Синергия')}</span>
+          </button>
           <Link
             href="/about"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-white/90 text-slate-800 border border-black/10 text-xs font-bold shadow-sm active:scale-95 transition-all text-center"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full bg-white/90 text-slate-800 border border-black/10 text-xs font-bold shadow-sm active:scale-95 transition-all text-center"
           >
-            <Building2 size={13} className="text-blue-600 shrink-0" />
-            <span>{lang === 'en' ? 'About Us' : (lang === 'ru' ? 'О нас' : 'Дар бораи мо')}</span>
+            <Building2 size={12} className="text-blue-600 shrink-0" />
+            <span>{lang === 'en' ? 'About' : (lang === 'ru' ? 'О нас' : 'О нас')}</span>
           </Link>
           <Link
             href="/opt"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-600/20 active:scale-95 transition-all text-center"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-600/20 active:scale-95 transition-all text-center"
           >
-            <Store size={13} className="text-white shrink-0" />
-            <span>{lang === 'en' ? 'Become a Partner' : (lang === 'ru' ? 'Стать партнером' : 'Шарик шудан')}</span>
+            <Store size={12} className="text-white shrink-0" />
+            <span>{lang === 'en' ? 'B2B' : (lang === 'ru' ? 'Опт' : 'Опт')}</span>
           </Link>
         </div>
 
-        <MainBlockSwitcher lang={lang} />
+        {/* 1. COMBO PROMO BANNER */}
+        <div id="combos" className="scroll-mt-24">
+          <ComboBanner 
+            lang={lang} 
+            settings={settings}
+            onOrderSuccess={() => setIsOrderSuccess(true)}
+          />
+        </div>
 
-        {/* MUTUALLY EXCLUSIVE BLOCK VIEWS */}
-        <AnimatePresence mode="wait">
-          {activeBlock === 'catalog' && (
-            <motion.div
-              key="catalog-view"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              id="catalog"
-            >
-              <ProductCatalog lang={lang} />
-            </motion.div>
-          )}
+        {/* 2. CATALOG CONTENT */}
+        <div id="catalog" className="scroll-mt-24">
+          <ProductCatalog lang={lang} />
+        </div>
 
-          {activeBlock === 'synergy' && (
-            <motion.div
-              key="synergy-view"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              id="quiz"
-              className={`w-full ${isImmersiveMode ? 'min-h-[85vh] flex items-center pt-2' : 'pb-24 pt-4'}`}
-            >
-              <QuizEngine 
-                lang={lang} 
-                onImmersiveChange={setIsImmersiveMode} 
-              />
-            </motion.div>
-          )}
+        {/* 3. SYNERGY ASSESSMENT */}
+        <section id="quiz" className="scroll-mt-24 py-16 md:py-24 my-6 bg-gradient-to-b from-blue-50/40 via-white to-transparent border-t border-b border-black/[0.04] relative">
+          <QuizEngine 
+            lang={lang} 
+            onImmersiveChange={setIsImmersiveMode} 
+          />
+        </section>
 
-          {activeBlock === 'combos' && (
-            <motion.div
-              key="combos-view"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="pb-24 pt-2"
-            >
-              <ComboBanner 
-                lang={lang} 
-                settings={settings}
-                onOrderSuccess={() => setIsOrderSuccess(true)}
-              />
-            </motion.div>
-          )}
-
-          {activeBlock === 'science' && (
-            <motion.div
-              key="science-view"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="pb-24 pt-6"
-            >
-              <ScienceGrid lang={lang} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* 4. SCIENCE GRID */}
+        <div id="science" className="scroll-mt-24">
+          <ScienceGrid lang={lang} />
+        </div>
       </div>
 
       <footer className="w-full bg-[#1D1D1F] text-white/60 relative z-20">
@@ -418,32 +389,16 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                     <Link href="/opt" className="block text-[14px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors text-left">
                       {lang === 'en' ? '🤝 Become a Partner (Wholesale B2B)' : (lang === 'ru' ? '🤝 Стать партнером (Опт B2B)' : '🤝 Шарик шудан (B2B Яклухт)')}
                     </Link>
-                    <button onClick={() => {
-                      setActiveBlock('synergy');
-                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#quiz');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('quiz')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '🧬 Vitamin Assessment' : (lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ')}
                     </button>
-                    <button onClick={() => {
-                      setActiveBlock('catalog');
-                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#catalog');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '💊 Vitamin Catalog' : (lang === 'ru' ? '💊 Каталог витаминов' : '💊 Каталоги витаминҳо')}
                     </button>
-                    <button onClick={() => {
-                      setActiveBlock('combos');
-                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#combos');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('combos')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '🎁 Ready Sets (Combos)' : (lang === 'ru' ? '🎁 Готовые сеты' : '🎁 Маҷмӯаҳои тайёр')}
                     </button>
-                    <button onClick={() => {
-                      setActiveBlock('science');
-                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#science');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('science')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
                       {lang === 'en' ? '🔬 Science & Quality' : (lang === 'ru' ? '🔬 Наука и стандарты' : '🔬 Илм ва стандартҳо')}
                     </button>
                     <Link href="/journal" className="block text-[14px] hover:text-white transition-colors text-left">
