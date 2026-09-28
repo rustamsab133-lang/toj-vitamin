@@ -15,12 +15,14 @@ export const MedicalDisclaimer: React.FC<MedicalDisclaimerProps> = ({ lang, clas
       </div>
       <div>
         <h4 className="text-[13px] font-bold text-[#475569] uppercase tracking-wider mb-1 font-outfit">
-          {lang === 'ru' ? 'Внимание' : 'Огоҳӣ'}
+          {lang === 'en' ? 'Medical Disclaimer' : (lang === 'ru' ? 'Внимание' : 'Огоҳӣ')}
         </h4>
         <p className="text-[13px] text-[#64748B] leading-relaxed font-inter">
-          {lang === 'ru' 
-            ? 'Представленная информация носит ознакомительный характер. Продукция не является лекарственным средством. Перед применением рекомендуем проконсультироваться с врачом.'
-            : 'Маълумоти пешниҳодшуда танҳо барои шиносоӣ мебошад. Маҳсулот доруворӣ нест. Пеш аз истифода бо духтур маслиҳат намоед.'}
+          {lang === 'en'
+            ? 'This information is for educational purposes only. Products are dietary supplements, not medicinal drugs. Please consult a physician before starting any supplementation.'
+            : (lang === 'ru'
+                ? 'Представленная информация носит ознакомительный характер. Продукция не является лекарственным средством. Перед применением рекомендуем проконсультироваться с врачом.'
+                : 'Маълумоти пешниҳодшуда танҳо барои шиносоӣ мебошад. Маҳсулот доруворӣ нест. Пеш аз истифода бо духтур маслиҳат намоед.')}
         </p>
       </div>
     </div>

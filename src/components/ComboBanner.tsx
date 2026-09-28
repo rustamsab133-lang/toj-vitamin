@@ -196,10 +196,10 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
 
   const theme = THEME_PRESETS[currentCombo.preset_theme] || THEME_PRESETS.slate;
 
-  const badge = lang === 'ru' ? currentCombo.badge_ru : currentCombo.badge_tg;
-  const title = lang === 'ru' ? currentCombo.title_ru : currentCombo.title_tg;
-  const subtitle = lang === 'ru' ? currentCombo.subtitle_ru : currentCombo.subtitle_tg;
-  const desc = lang === 'ru' ? currentCombo.desc_ru : currentCombo.desc_tg;
+  const badge = lang === 'en' ? (currentCombo.badge_ru || 'GLS Best-Seller') : (lang === 'ru' ? currentCombo.badge_ru : currentCombo.badge_tg);
+  const title = lang === 'en' ? (currentCombo.id === 'default-pms' ? 'Balance & Vitality' : currentCombo.title_ru) : (lang === 'ru' ? currentCombo.title_ru : currentCombo.title_tg);
+  const subtitle = lang === 'en' ? (currentCombo.id === 'default-pms' ? '& Pure Serenity' : currentCombo.subtitle_ru) : (lang === 'ru' ? currentCombo.subtitle_ru : currentCombo.subtitle_tg);
+  const desc = lang === 'en' ? (currentCombo.id === 'default-pms' ? 'Restore harmony and calm with our clinical duo.' : currentCombo.desc_ru) : (lang === 'ru' ? currentCombo.desc_ru : currentCombo.desc_tg);
   const btnLabel = lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад');
 
   return (

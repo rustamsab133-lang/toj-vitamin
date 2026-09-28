@@ -95,7 +95,7 @@ export const EmpatheticLoader: React.FC<EmpatheticLoaderProps> = ({ lang = 'ru',
             transition={{ delay: 0.2 }}
             className="text-[22px] font-semibold text-[#1D1D1F] tracking-tight font-outfit"
           >
-            {lang === 'ru' ? msg.title : 'Таҳлил ва интихоби қарори клиникӣ...'}
+            {lang === 'en' ? 'Analyzing and compiling clinical formulation...' : (lang === 'ru' ? msg.title : 'Таҳлил ва интихоби қарори клиникӣ...')}
           </motion.h3>
           <motion.p 
             initial={{ opacity: 0 }}
@@ -103,9 +103,11 @@ export const EmpatheticLoader: React.FC<EmpatheticLoaderProps> = ({ lang = 'ru',
             transition={{ delay: 0.5 }}
             className="text-[#86868B] text-[15px] leading-relaxed max-w-sm mx-auto"
           >
-            {lang === 'ru'
-              ? <><span className="font-medium text-[#1D1D1F]">🔬 </span>{msg.stat}</>
-              : <>Бо ин мушкилот <span className="font-medium text-[#1D1D1F]">60% одамон</span> мунтазам дучор мешаванд. Ин ислоҳ мешавад.</>
+            {lang === 'en'
+              ? <><span className="font-medium text-[#1D1D1F]">🔬 </span>Over 60% of individuals face similar nutrient deficiencies. Our algorithm finds the optimal synergistic formula.</>
+              : (lang === 'ru'
+                  ? <><span className="font-medium text-[#1D1D1F]">🔬 </span>{msg.stat}</>
+                  : <>Бо ин мушкилот <span className="font-medium text-[#1D1D1F]">60% одамон</span> мунтазам дучор мешаванд. Ин ислоҳ мешавад.</>)
             }
           </motion.p>
         </div>

@@ -438,7 +438,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       <span className="text-[38px] font-bold text-[#1D1D1F] font-outfit tracking-tighter">
                         {product.price}
                       </span>
-                      <span className="text-[16px] text-[#94A3B8] font-bold tracking-widest uppercase">{'смн'}</span>
+                      <span className="text-[16px] text-[#94A3B8] font-bold tracking-widest uppercase">{lang === 'en' ? 'TJS' : 'смн'}</span>
                    </div>
 
                    {product.tags && product.tags.length > 0 && (

@@ -380,7 +380,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                          </span>
                                       </div>
                                       <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
-                                        {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{'смн'}</span>
+                                        {product.price} <span className="text-[12px] font-medium text-[#94A3B8]">{lang === 'en' ? 'TJS' : 'смн'}</span>
                                       </p>
                                     </div>
                                   </div>

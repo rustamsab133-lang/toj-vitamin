@@ -300,7 +300,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
             onClick={loadCategories}
             className="px-6 py-3 bg-[#1D1D1F] text-white rounded-full text-[14px] font-bold hover:bg-[#1E40AF] transition-all"
           >
-            {lang === 'ru' ? 'Попробовать снова' : 'Дубора кӯшиш кунед'}
+            {lang === 'en' ? 'Try Again' : (lang === 'ru' ? 'Попробовать снова' : 'Дубора кӯшиш кунед')}
           </button>
         </div>
       )}
@@ -321,7 +321,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               <div className="w-8 h-8 rounded-full border border-[#1E40AF]/20 flex items-center justify-center group-hover:bg-[#1E40AF]/5 transition-colors">
                 <ArrowLeft size={16} />
               </div>
-              {lang === 'ru' ? 'Назад' : 'Бозгашт'}
+              {lang === 'en' ? 'Back' : (lang === 'ru' ? 'Назад' : 'Бозгашт')}
             </motion.button>
           )}
           {(step === 'category' || step === 'loading') && <div />}
@@ -366,16 +366,18 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 border border-black/5 mb-6">
                  <Dna size={14} className="text-[#1E40AF]" />
                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#1D1D1F]">
-                   {lang === 'ru' ? 'Персональный подбор' : 'Интихоби инфиродӣ'}
+                   {lang === 'en' ? 'Personal Assessment' : (lang === 'ru' ? 'Персональный подбор' : 'Интихоби инфиродӣ')}
                  </span>
                </div>
                <h1 className="text-[42px] md:text-[64px] leading-[1.05] font-bold text-[#0F172A] tracking-tight font-outfit">
-                 {lang === 'ru' ? 'Диагностика здоровья' : 'Ташхиси саломатӣ'}
+                 {lang === 'en' ? 'Health Assessment' : (lang === 'ru' ? 'Диагностика здоровья' : 'Ташхиси саломатӣ')}
                </h1>
                <p className="text-[#1E40AF]/60 text-[18px] md:text-[20px] max-w-sm mx-auto font-medium leading-relaxed">
-                {lang === 'ru' 
-                   ? 'Алгоритм сформирует умный комплекс на основе клинических данных.' 
-                   : 'Алгоритм дар асоси маълумоти клиникӣ маҷмӯи интеллектуалиро таҳия мекунад.'}
+                {lang === 'en'
+                   ? 'Our clinical algorithm formulates an intelligent synergy stack based on your biology.'
+                   : (lang === 'ru'
+                       ? 'Алгоритм сформирует умный комплекс на основе клинических данных.'
+                       : 'Алгоритм дар асоси маълумоти клиникӣ маҷмӯи интеллектуалиро таҳия мекунад.')}
                </p>
                
                {/* Premium Swipe / Interact Hint */}
@@ -385,7 +387,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
                    <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
                  </div>
                  <span className="text-[11px] font-extrabold text-[#1D1D1F] tracking-widest uppercase font-outfit">
-                   {lang === 'ru' ? 'Выберите систему для сканирования' : 'Барои оғози ташхис интихоб кунед'}
+                   {lang === 'en' ? 'Select a system to analyze' : (lang === 'ru' ? 'Выберите систему для сканирования' : 'Барои оғози ташхис интихоб кунед')}
                  </span>
                </div>
             </div>
@@ -399,7 +401,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               >
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366F1] mb-1">
-                    {lang === 'ru' ? '🕐 Ваш последний результат' : 'Натиҷаи охирини шумо'}
+                    {lang === 'en' ? '🕐 Your latest result' : (lang === 'ru' ? '🕐 Ваш последний результат' : 'Натиҷаи охирини шумо')}
                   </p>
                   <p className="text-[15px] font-semibold text-[#1D1D1F]">{lastResult.catTitle}</p>
                 </div>
@@ -410,7 +412,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
                   }}
                   className="shrink-0 h-10 px-5 bg-[#4F46E5] text-white rounded-full text-[13px] font-bold hover:bg-[#3730A3] transition-all"
                 >
-                  {lang === 'ru' ? 'Повторить' : 'Такрор'}
+                  {lang === 'en' ? 'Repeat' : (lang === 'ru' ? 'Повторить' : 'Такрор')}
                 </button>
               </motion.div>
             )}
@@ -490,7 +492,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               <div className="absolute bottom-8 left-8 right-8 z-20">
                 <div className="p-6 rounded-[28px] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl transform group-hover:translate-y-[-5px] transition-transform duration-500">
                   <p className="text-[9px] font-bold text-[#3B82F6] tracking-[0.2em] uppercase mb-2">
-                    {lang === 'ru' ? 'Клинический модуль' : 'Модули клиникӣ'}
+                    {lang === 'en' ? 'Clinical Module' : (lang === 'ru' ? 'Клинический модуль' : 'Модули клиникӣ')}
                   </p>
                   <h3 className="text-[22px] font-bold text-white tracking-tight leading-tight font-outfit">
                     {c.title}
@@ -504,7 +506,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
                         <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                       </div>
                       <span className="text-[11px] font-extrabold text-[#10B981] uppercase tracking-[0.25em] group-hover:text-white transition-colors duration-300">
-                        {lang === 'ru' ? 'Начать сканирование' : 'Оғози ташхис'}
+                        {lang === 'en' ? 'Start Analysis' : (lang === 'ru' ? 'Начать сканирование' : 'Оғози ташхис')}
                       </span>
                     </div>
 
@@ -577,12 +579,14 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
             {/* HEADER + SOCIAL PROOF */}
             <div className="text-center space-y-4">
                <h2 className="text-[40px] md:text-[56px] font-bold text-[#0F172A] tracking-tight font-outfit leading-none">
-                 {lang === 'ru' ? 'Умные комплексы' : 'Маблаги интеллект'}
+                 {lang === 'en' ? 'Intelligent Stacks' : (lang === 'ru' ? 'Умные комплексы' : 'Маблаги интеллект')}
                </h2>
                <p className="text-[#1E40AF]/60 text-[17px] max-w-xl mx-auto font-medium leading-relaxed">
-                 {lang === 'ru'
-                   ? 'Биологическая синергия препаратов, усиливающих действие друг друга по принципу «1+1=3».'
-                   : 'Синергияи биологии доруе, ки таъсири якдигарро тақвият медиханд.'}
+                 {lang === 'en'
+                   ? 'Biological synergy of supplements that amplify each other following the 1+1=3 clinical rule.'
+                   : (lang === 'ru'
+                       ? 'Биологическая синергия препаратов, усиливающих действие друг друга по принципу «1+1=3».'
+                       : 'Синергияи биологии доруе, ки таъсири якдигарро тақвият медиханд.')}
                </p>
             </div>
 
@@ -591,7 +595,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
               <div className="flex items-center gap-3 mb-6">
                 <Activity className="text-[#1E40AF]" size={20} />
                 <h4 className="text-[16px] font-bold text-[#1D1D1F] uppercase tracking-widest">
-                  {lang === 'ru' ? 'Ваш профиль здоровья' : 'Профили саломатии шумо'}
+                  {lang === 'en' ? 'Your Health Profile' : (lang === 'ru' ? 'Ваш профиль здоровья' : 'Профили саломатии шумо')}
                 </h4>
               </div>
               <div className="space-y-4">
@@ -617,9 +621,11 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
                 ))}
               </div>
               <p className="text-[12px] text-[#64748B] mt-6 text-center font-medium">
-                {lang === 'ru' 
-                  ? 'Рекомендованный ниже комплекс компенсирует дефицит за 30 дней курса.'
-                  : 'Маҷмӯаи тавсияшуда норасоиро дар 30 рӯз барқарор мекунад.'}
+                {lang === 'en'
+                  ? 'The recommended formula compensates nutrient deficiencies within a 30-day course.'
+                  : (lang === 'ru'
+                      ? 'Рекомендованный ниже комплекс компенсирует дефицит за 30 дней курса.'
+                      : 'Маҷмӯаи тавсияшуда норасоиро дар 30 рӯз барқарор мекунад.')}
               </p>
             </div>
             
@@ -644,14 +650,14 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ lang, onImmersiveChange 
                 className="flex items-center gap-3 h-14 px-8 bg-[#25D366] text-white rounded-full text-[15px] font-bold hover:bg-[#1fad52] transition-all shadow-lg hover:scale-[1.03] active:scale-[0.97]"
               >
                 <span>📲</span>
-                <span>{lang === 'ru' ? 'Поделиться результатом' : 'Натиҷаро фиристодан'}</span>
+                <span>{lang === 'en' ? 'Share Results' : (lang === 'ru' ? 'Поделиться результатом' : 'Натиҷаро фиристодан')}</span>
               </button>
               <button
                 onClick={() => { setSynergies([]); setSelectedCat(null); setSelectedOpt(null); setStep('category'); }}
                 className="flex items-center gap-2 h-14 px-8 bg-white border border-[#E2E8F0] text-[#1D1D1F] rounded-full text-[15px] font-bold hover:border-[#1D1D1F] transition-all"
               >
                 <span>🔁</span>
-                <span>{lang === 'ru' ? 'Пройти заново' : 'Дубора'}</span>
+                <span>{lang === 'en' ? 'Start Over' : (lang === 'ru' ? 'Пройти заново' : 'Дубора')}</span>
               </button>
             </div>
 

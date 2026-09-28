@@ -261,7 +261,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                                  {lang === 'en' ? 'Price' : (lang === 'ru' ? 'Цена' : 'Нарх')}
                                </span>
                                <p className="text-[20px] font-bold text-[#1D1D1F] font-outfit">
-                                 {product.price} <span className="text-sm font-medium">смн</span>
+                                 {product.price} <span className="text-sm font-medium">{lang === 'en' ? 'TJS' : 'смн'}</span>
                                </p>
                             </div>
                             <div className="w-10 h-10 rounded-full bg-[#1E40AF]/5 text-[#1E40AF] flex items-center justify-center group-hover:bg-[#1E40AF] group-hover:text-white transition-all">

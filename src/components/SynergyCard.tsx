@@ -71,7 +71,7 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
           <div className="flex items-center gap-2 bg-[#1E40AF]/5 px-4 py-2 rounded-full border border-[#1E40AF]/10">
             <Dna size={14} className="text-[#1E40AF]" />
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1E40AF]">
-              {lang === 'ru' ? 'Клиническая синергия' : 'Синергияи клиникӣ'}
+              {lang === 'en' ? 'Clinical Synergy' : (lang === 'ru' ? 'Клиническая синергия' : 'Синергияи клиникӣ')}
             </span>
           </div>
           <div className="flex items-center gap-2 bg-black/[0.03] px-4 py-2 rounded-full border border-black/[0.05]">
@@ -164,7 +164,7 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
           </div>
           <div className="space-y-6">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">Протокол приема</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">{lang === 'en' ? 'Intake Protocol' : (lang === 'ru' ? 'Протокол приема' : 'Тартиби истеъмол')}</p>
               <h4 className="text-[20px] font-bold leading-relaxed font-outfit">
                 {synergy.dosage}
               </h4>
@@ -176,10 +176,10 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
       {/* 4. FOOTER: Final CTA */}
       <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-black/[0.05] gap-6">
         <div className="flex flex-col">
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8] mb-1">К покупке</span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#94A3B8] mb-1">{lang === 'en' ? 'Total' : (lang === 'ru' ? 'К покупке' : 'Барои харид')}</span>
           <div className="flex items-baseline gap-1">
             <span className="text-[44px] font-bold text-[#1D1D1F] font-outfit tracking-tighter">{total}</span>
-            <span className="text-[16px] font-bold text-[#94A3B8] uppercase tracking-widest">смн</span>
+            <span className="text-[16px] font-bold text-[#94A3B8] uppercase tracking-widest">{lang === 'en' ? 'TJS' : 'смн'}</span>
           </div>
         </div>
 
@@ -194,12 +194,12 @@ export const SynergyCard: React.FC<SynergyCardProps> = ({ synergy, lang }) => {
           {isAdded ? (
             <>
               <Check size={22} className="stroke-[3]" />
-              <span>{lang === 'ru' ? 'Комплекс добавлен' : 'Маҷмӯа илова шуд'}</span>
+              <span>{lang === 'en' ? 'Stack Added' : (lang === 'ru' ? 'Комплекс добавлен' : 'Маҷмӯа илова шуд')}</span>
             </>
           ) : (
             <>
               <ShoppingBag size={20} />
-              <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
+              <span>{lang === 'en' ? 'Add Stack to Cart' : (lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад')}</span>
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </>
           )}
