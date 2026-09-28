@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { JournalList } from '@/components/JournalList';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -19,8 +20,33 @@ export default async function JournalPage() {
 
   return (
     <main className="min-h-screen bg-[#FDFBF7]">
+      {/* Top Navbar with Logo */}
+      <header className="sticky top-0 z-40 bg-[#FDFBF7]/85 backdrop-blur-md border-b border-black/[0.05] px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white border border-slate-200/80 p-0.5 shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
+              <Image 
+                src="/logo-square.webp" 
+                alt="TOJ-VITAMIN" 
+                width={32} 
+                height={32} 
+                className="w-full h-full object-contain"
+                priority
+              />
+            </div>
+            <span className="font-extrabold text-base tracking-tight text-slate-900">
+              TOJ-VITAMIN
+            </span>
+          </Link>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-xs">
+            <ArrowLeft size={14} />
+            Каталог
+          </Link>
+        </div>
+      </header>
+
       {/* Header Section */}
-      <section className="pt-32 pb-16 px-6 border-b border-black/[0.03]">
+      <section className="pt-16 pb-16 px-6 border-b border-black/[0.03]">
         <div className="max-w-4xl mx-auto space-y-8">
           <Link href="/" className="inline-flex items-center gap-2 text-[#94A3B8] hover:text-[#1E40AF] transition-colors font-bold text-[12px] uppercase tracking-widest">
             <ArrowLeft size={16} />

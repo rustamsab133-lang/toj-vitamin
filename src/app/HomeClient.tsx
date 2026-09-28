@@ -274,7 +274,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                         {lang === 'ru' ? 'Головной офис: РТ, г. Худжанд, ул. К. Худжанди 63/3' : 'Дафтари асосӣ: ҶТ, ш. Хуҷанд, кӯч. К. Хуҷандӣ 63/3'}
                       </p>
                       <p>
-                        {lang === 'ru' ? 'Склады GDP/GSP: г. Худжанд | г. Душанбе' : 'Анборҳои GDP/GSP: ш. Хуҷанд | ш. Душанбе'}
+                        {lang === 'ru' ? 'Склады: г. Худжанд | г. Душанбе' : 'Анборҳо: ш. Хуҷанд | ш. Душанбе'}
                       </p>
                       <p>
                         Email: <a href="mailto:ceo@toj-vitamin.tj" className="text-blue-400 hover:underline">ceo@toj-vitamin.tj</a> | Тел: <a href="tel:+992176660707" className="text-white hover:underline">+992 176660707</a>

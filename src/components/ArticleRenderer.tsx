@@ -4,6 +4,7 @@ import { Article, Lang } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, User, Share2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ArticleRendererProps {
   article: Article;
@@ -35,8 +36,33 @@ export const ArticleRenderer: React.FC<ArticleRendererProps> = ({ article, lang 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Sticky Top Bar with Logo */}
+      <nav className="sticky top-0 z-40 bg-[#FDFBF7]/85 backdrop-blur-md border-b border-black/[0.05] px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white border border-slate-200/80 p-0.5 shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
+              <Image 
+                src="/logo-square.webp" 
+                alt="TOJ-VITAMIN" 
+                width={32} 
+                height={32} 
+                className="w-full h-full object-contain"
+                priority
+              />
+            </div>
+            <span className="font-extrabold text-base tracking-tight text-slate-900">
+              TOJ-VITAMIN
+            </span>
+          </Link>
+          <Link href="/journal" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-emerald-700 transition-colors font-bold text-xs">
+            <ArrowLeft size={14} />
+            {lang === 'ru' ? 'Все статьи' : 'Ҳамаи мақолаҳо'}
+          </Link>
+        </div>
+      </nav>
+
       {/* Hero Header */}
-      <header className="relative w-full pt-32 pb-16 px-6">
+      <header className="relative w-full pt-16 pb-16 px-6">
         <div className="max-w-3xl mx-auto space-y-8">
           
           <Link href="/journal" className="inline-flex items-center gap-2 text-[#94A3B8] hover:text-[#1E40AF] transition-colors font-bold text-[12px] uppercase tracking-widest">

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Building2, ShieldCheck, Truck,
   HelpCircle, ChevronDown, Star, ArrowRight, X,
@@ -24,7 +25,7 @@ const CONTENT = {
 
     heroChip: 'Официальный дистрибьютор GLS Pharmaceuticals в Таджикистане',
     heroTitle: 'Прямые оптовые поставки витаминов и БАД GLS в аптечные сети Таджикистана',
-    heroSubtitle: 'Дистрибьюторский центр TOJ-VITAMIN (холдинг ООО «Саховати Истаравшан») — надежный национальный поставщик фармацевтического ритейла. Прямые поставки с завода, свежие сроки годности, собственные климатические склады GDP/GSP и оперативная доставка по всей республике.',
+    heroSubtitle: 'Дистрибьюторский центр TOJ-VITAMIN (холдинг ООО «Саховати Истаравшан») — надежный национальный поставщик фармацевтического ритейла. Прямые поставки с завода, свежие сроки годности, собственные климатические склады в Худжанде и Душанбе и оперативная доставка по всей республике.',
     heroBtnPartner: 'Стать партнером',
 
     trustBadges: [
@@ -40,7 +41,7 @@ const CONTENT = {
       },
       {
         icon: 'warehouse',
-        title: 'Склады стандартов GDP/GSP',
+        title: 'Склады в Худжанде и Душанбе',
         desc: 'Собственные климатические складские комплексы в Худжанде и Душанбе с постоянным термоконтролем (15–25°C).'
       },
       {
@@ -151,7 +152,7 @@ const CONTENT = {
       },
       {
         q: 'Какие температурные условия соблюдаются при хранении и доставке?',
-        a: 'Холдинг располагает современными складскими комплексами стандартов **GDP/GSP** в Худжанде и Душанбе с непрерывным контролем температуры (15–25°C) и влажности. Транспортировка осуществляется с соблюдением всех нормативов холодовой и климатической цепи.'
+        a: 'Холдинг располагает собственными складскими комплексами в Худжанде и Душанбе с непрерывным контролем температуры (15–25°C) и влажности. Транспортировка осуществляется с соблюдением всех нормативов холодовой и климатической цепи.'
       },
       {
         q: 'Какие формы оплаты доступны?',
@@ -207,7 +208,7 @@ const CONTENT = {
 
     heroChip: 'Official GLS Pharmaceuticals Distributor in Tajikistan',
     heroTitle: 'Direct Wholesale Supply of GLS Vitamins & Supplements to Tajikistan Pharmacies',
-    heroSubtitle: 'TOJ-VITAMIN Distribution Hub (part of LLC Sakhovati Istaravshan holding) is the leading national wholesale supplier for licensed retail pharmacies. Direct factory contracts, verified batch freshness, GDP/GSP climate warehouses, and express delivery nationwide.',
+    heroSubtitle: 'TOJ-VITAMIN Distribution Hub (part of LLC Sakhovati Istaravshan holding) is the leading national wholesale supplier for licensed retail pharmacies. Direct factory contracts, verified batch freshness, climate-controlled warehouses in Khujand and Dushanbe, and express delivery nationwide.',
     heroBtnPartner: 'Become a Partner',
 
     trustBadges: [
@@ -223,7 +224,7 @@ const CONTENT = {
       },
       {
         icon: 'warehouse',
-        title: 'GDP/GSP Climate Storage',
+        title: 'Warehouses in Khujand & Dushanbe',
         desc: 'Dedicated warehouse complexes in Khujand and Dushanbe with strict 15–25°C thermal and humidity monitoring.'
       },
       {
@@ -334,7 +335,7 @@ const CONTENT = {
       },
       {
         q: 'What storage conditions are maintained?',
-        a: 'We operate modern **GDP/GSP compliant** warehouses in Khujand and Dushanbe featuring 24/7 climate and humidity control (15–25°C).'
+        a: 'We operate modern climate-controlled warehouses in Khujand and Dushanbe featuring 24/7 temperature and humidity monitoring (15–25°C).'
       },
       {
         q: 'What payment methods are accepted?',
@@ -473,8 +474,15 @@ export default function OptDistributionPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
-              <Warehouse className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-emerald-600/10 group-hover:scale-105 transition-transform flex-shrink-0 bg-white border border-slate-200/60 p-1 flex items-center justify-center">
+              <Image 
+                src="/logo-square.webp" 
+                alt="TOJ-VITAMIN Logo" 
+                width={40} 
+                height={40} 
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -845,8 +853,14 @@ export default function OptDistributionPage() {
       <footer className="border-t border-slate-200 bg-white py-12 text-slate-500 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-              TV
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white border border-slate-200 flex items-center justify-center p-0.5 shadow-sm">
+              <Image 
+                src="/logo-square.webp" 
+                alt="TOJ-VITAMIN Logo" 
+                width={32} 
+                height={32} 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <p className="font-bold text-slate-800">TOJ-VITAMIN DISTRIBUTION / ООО «Саховати Истаравшан»</p>

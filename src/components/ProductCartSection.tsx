@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '@/store/useCart';
@@ -19,17 +20,35 @@ export function ProductPageHeader({ lang }: ProductPageHeaderProps) {
   const totalCartItems = totalItems();
 
   return (
-    <div className="w-full h-[80px] bg-white/80 backdrop-blur-md border-b border-black/[0.05] sticky top-0 z-50 flex items-center px-6 sm:px-12">
-      <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-[#1D1D1F] font-bold hover:text-[#1E40AF] transition-colors bg-white border border-black/5 px-4 py-2 rounded-full shadow-sm hover:shadow-md"
-        >
-          <ArrowLeft size={18} />
-          <span className="text-sm font-outfit">
-            {lang === 'ru' ? 'Вернуться в каталог' : 'Бозгашт ба каталог'}
-          </span>
-        </Link>
+    <div className="w-full h-[80px] bg-white/80 backdrop-blur-md border-b border-black/[0.05] sticky top-0 z-50 flex items-center px-4 sm:px-12">
+      <div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-[#1D1D1F] font-bold hover:text-emerald-700 transition-colors bg-white border border-black/5 px-3.5 py-2 rounded-full shadow-sm hover:shadow-md text-xs sm:text-sm"
+          >
+            <ArrowLeft size={16} />
+            <span className="font-outfit hidden sm:inline">
+              {lang === 'ru' ? 'Вернуться в каталог' : 'Бозгашт ба каталог'}
+            </span>
+          </Link>
+          
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white border border-slate-200/80 p-0.5 shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center">
+              <Image 
+                src="/logo-square.webp" 
+                alt="TOJ-VITAMIN" 
+                width={32} 
+                height={32} 
+                className="w-full h-full object-contain"
+                priority
+              />
+            </div>
+            <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 hidden xs:inline">
+              TOJ-VITAMIN
+            </span>
+          </Link>
+        </div>
         
         {/* Shopping Cart Button */}
         <button

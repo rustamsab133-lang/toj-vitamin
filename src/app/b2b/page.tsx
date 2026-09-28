@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, Plus, Minus, Check, Loader2, Calendar, MessageSquare, Phone, Info, Copy, Building2, LogIn, MapPin, User, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -258,15 +259,21 @@ export default function B2BStorefrontPage() {
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24 lg:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-emerald-600/10">
-            TV
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+            <Image 
+              src="/logo-square.webp" 
+              alt="TOJ-VITAMIN" 
+              width={36} 
+              height={36} 
+              className="w-full h-full object-contain" 
+            />
           </div>
           <div>
-            <span className="font-extrabold text-slate-900 tracking-tight text-lg leading-none block">TojVitamin</span>
+            <span className="font-extrabold text-slate-900 tracking-tight text-lg leading-none block">TOJ-VITAMIN</span>
             <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Оптовые закупки B2B</span>
           </div>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-2">
           <button 

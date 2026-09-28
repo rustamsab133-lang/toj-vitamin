@@ -83,16 +83,16 @@ const CONTENT = {
       }
     ],
 
-    // Блок 4. Складская логистика и соответствие стандартам (GDP / GSP)
+    // Блок 4. Складская логистика и контроль хранения
     logisticsTag: "ИНФРАСТРУКТУРА И ЛОГИСТИКА",
-    logisticsTitle: "Складская логистика и соответствие стандартам (GDP Compliance)",
-    logisticsSubtitle: "Современные складские мощности и строгий температурный контроль, отвечающие международным требованиям фармацевтического хранения.",
+    logisticsTitle: "Складская логистика и условия хранения",
+    logisticsSubtitle: "Собственные складские мощности и постоянный температурный контроль для правильного хранения витаминов и фармпродукции.",
 
     logisticsFeatures: [
       {
         icon: ThermometerSnowflake,
         title: "Контроль параметров хранения",
-        desc: "Круглосуточный автоматизированный мониторинг температурного режима и влажности: холодовая цепь 2–8°C и контролируемые сухие зоны 15–25°C. Лицензированные фармацевтические склады в Худжанде и Душанбе."
+        desc: "Мониторинг температурного режима и влажности: прохладные сухие зоны с температурой 15–25°C. Собственные складские комплексы в Худжанде и Душанбе."
       },
       {
         icon: Truck,
@@ -101,8 +101,8 @@ const CONTENT = {
       },
       {
         icon: Warehouse,
-        title: "Стандарты надлежащей практики (GDP / GSP)",
-        desc: "Зонирование складов, карантинные зоны, цифровой учет партий и серий, строгая прослеживаемость и соблюдение правил санитарного и температурного контроля."
+        title: "Надлежащее хранение и партионный учет",
+        desc: "Зонирование складов, карантинные зоны, цифровой учет партий и серий, строгая прослеживаемость и соблюдение правил санитарного и температурного режима."
       },
       {
         icon: ShieldCheck,
@@ -134,7 +134,7 @@ const CONTENT = {
       },
       {
         icon: Activity,
-        title: "Услуги для глобальных производителей (NOW Foods и др.)",
+        title: "Услуги для глобальных производителей",
         desc: "Прямой внешнеэкономический импорт (ВЭД), белое таможенное оформление под ключ, дистрибуция через 700+ аптек и защита бренда от контрафакта."
       }
     ],
@@ -231,16 +231,16 @@ const CONTENT = {
       }
     ],
 
-    // Block 4. Warehousing & GDP Compliance
-    logisticsTag: "SUPPLY CHAIN & COLD-CHAIN LOGISTICS",
-    logisticsTitle: "Warehousing & GDP Compliance",
-    logisticsSubtitle: "State-of-the-art storage facilities and automated climate monitoring meeting international Good Distribution Practice standards.",
+    // Block 4. Warehousing & Storage Conditions
+    logisticsTag: "SUPPLY CHAIN & STORAGE INFRASTRUCTURE",
+    logisticsTitle: "Warehousing & Storage Conditions",
+    logisticsSubtitle: "Dedicated regional storage facilities and continuous climate management ensuring optimal preservation of vitamins and health products.",
 
     logisticsFeatures: [
       {
         icon: ThermometerSnowflake,
-        title: "Automated Storage Parameter Control",
-        desc: "24/7 automated temperature and humidity monitoring: certified cold-chain (2–8°C) and controlled ambient zones (15–25°C). Licensed GDP warehouse complexes in Khujand and Dushanbe."
+        title: "Automated Parameter Monitoring",
+        desc: "Continuous temperature and humidity tracking: controlled ambient dry zones (15–25°C). Dedicated warehouse complexes in Khujand and Dushanbe."
       },
       {
         icon: Truck,
@@ -249,7 +249,7 @@ const CONTENT = {
       },
       {
         icon: Warehouse,
-        title: "Good Distribution Practice (GDP / GSP)",
+        title: "Quality Storage & Serial Tracking",
         desc: "Strict warehouse segregation, quarantine zones, batch serial tracking, and full compliance with sanitary and environmental standards."
       },
       {
@@ -282,7 +282,7 @@ const CONTENT = {
       },
       {
         icon: Activity,
-        title: "Full-Cycle Services for Global Brands (NOW Foods, etc.)",
+        title: "Full-Cycle Services for Global Brands",
         desc: "Direct foreign trade import, turnkey customs clearance, retail distribution across 700+ pharmacies, and robust anti-counterfeit brand protection."
       }
     ],
@@ -378,16 +378,16 @@ const CONTENT = {
       }
     ],
 
-    // Блок 4. Логистика
+    // Блок 4. Логистика ва нигоҳдорӣ
     logisticsTag: "ИНФРАСОХТОР ВА ЛОГИСТИКА",
-    logisticsTitle: "Логистикаи анборӣ ва риояи стандартҳо (GDP Compliance)",
-    logisticsSubtitle: "Иқтидорҳои муосири анборӣ ва назорати қатъии ҳарорат тибқи талаботи байналмилалии фарматсевтӣ.",
+    logisticsTitle: "Логистикаи анборӣ ва шароити нигоҳдорӣ",
+    logisticsSubtitle: "Иқтидорҳои муосири анборӣ ва назорати доимии ҳарорат барои нигоҳдории дурусти иловаҳо ва маҳсулоти фарматсевтӣ.",
 
     logisticsFeatures: [
       {
         icon: ThermometerSnowflake,
         title: "Назорати нигоҳдории маҳсулот",
-        desc: "Мониторинги худкори шабонарӯзии ҳарорат ва намӣ: занҷири сард 2–8°C ва минтақаҳои назоратшавандаи 15–25°C. Анборҳои литсензияшуда дар Хуҷанд ва Душанбе."
+        desc: "Мониторинги шабонарӯзии ҳарорат ва намӣ: минтақаҳои салқин ва хушк бо ҳарорати 15–25°C. Анборҳои хусусӣ дар шаҳрҳои Хуҷанд ва Душанбе."
       },
       {
         icon: Truck,
@@ -396,7 +396,7 @@ const CONTENT = {
       },
       {
         icon: Warehouse,
-        title: "Стандартҳои таҷрибаи хуб (GDP / GSP)",
+        title: "Нигоҳдории дуруст ва баҳисобгирии силсилаҳо",
         desc: "Минтақабандии анборҳо, ҷудокунии карантинӣ, баҳисобгирии рақамии силсилаҳо ва риояи меъёрҳои санитарӣ."
       },
       {
@@ -510,7 +510,7 @@ export default function CorporateAboutPage() {
               {lang === 'en' ? 'Ecosystem' : (lang === 'ru' ? 'Экосистема' : 'Экосистема')}
             </a>
             <a href="#logistics" className="hover:text-blue-600 transition-colors">
-              {lang === 'en' ? 'Logistics & GDP' : (lang === 'ru' ? 'Логистика и GDP' : 'Логистика ва GDP')}
+              {lang === 'en' ? 'Logistics & Warehouses' : (lang === 'ru' ? 'Логистика и склады' : 'Логистика ва анборҳо')}
             </a>
             <a href="#track-record" className="hover:text-blue-600 transition-colors">
               {lang === 'en' ? 'Track Record' : (lang === 'ru' ? 'Опыт и бренды' : 'Таҷриба')}
@@ -798,7 +798,7 @@ export default function CorporateAboutPage() {
       </section>
 
       {/* ======================================================== */}
-      {/* БЛОК 4. СКЛАДСКАЯ ЛОГИСТИКА И GDP COMPLIANCE             */}
+      {/* БЛОК 4. СКЛАДСКАЯ ЛОГИСТИКА И УСЛОВИЯ ХРАНЕНИЯ             */}
       {/* ======================================================== */}
       <section id="logistics" className="py-16 sm:py-24 bg-white border-b border-black/[0.05]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -835,7 +835,7 @@ export default function CorporateAboutPage() {
                   </div>
                   <div className="mt-5 pt-4 border-t border-black/[0.04] flex items-center text-[12px] font-bold text-blue-600">
                     <CheckCircle2 size={16} className="mr-1.5" />
-                    <span>GDP / GSP Certified Standard</span>
+                    <span>{lang === 'en' ? 'Climate Controlled (15–25°C)' : (lang === 'ru' ? 'Контроль температуры 15–25°C' : 'Назорати ҳарорат 15–25°C')}</span>
                   </div>
                 </div>
               );
