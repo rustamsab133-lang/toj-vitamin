@@ -517,8 +517,8 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
       {/* Dynamic Header */}
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg overflow-hidden shadow-sm">
-            <img src="/logo.webp" alt="TOJ-VITAMIN" className="w-full h-full object-contain scale-[2.8]" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-white flex items-center justify-center p-1 font-bold text-lg overflow-hidden shadow-sm">
+            <img src="/logo-square.webp" alt="TOJ-VITAMIN" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
           </div>
           <div>
             <h1 className="font-extrabold text-base text-slate-900 tracking-tight leading-none">Кабинет B2B</h1>

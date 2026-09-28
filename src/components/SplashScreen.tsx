@@ -30,14 +30,14 @@ export const SplashScreen: React.FC = () => {
           className="flex flex-col items-center"
         >
           {/* THE REAL LOGO IMAGE - LARGE & PRESTIGIOUS */}
-          <div className="w-32 h-32 mb-8 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border border-[#E5E5EA]/50 relative overflow-hidden group">
+          <div className="w-32 h-32 mb-8 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border border-[#E5E5EA]/50 relative overflow-hidden group p-3">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#1E40AF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <Image 
-              src="/logo.webp" 
+              src="/logo-square.webp" 
               alt="TOJ-VITAMIN Brand Logo" 
-              width={128} 
-              height={128} 
-              className="w-full h-full object-contain scale-[1.8] relative z-10" 
+              width={256} 
+              height={256} 
+              className="w-full h-full object-contain relative z-10" 
               priority
             />
           </div>

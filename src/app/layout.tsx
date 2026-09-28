@@ -80,7 +80,11 @@ export const metadata: Metadata = {
   // Icons
   icons: {
     icon: [
+      { url: "/favicon.ico" },
       { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
@@ -199,7 +203,7 @@ export default function RootLayout({
                   "Sakhovati Istaravshan"
                 ],
                 "url": "https://www.toj-vitamin.tj",
-                "logo": "https://www.toj-vitamin.tj/logo.webp",
+                "logo": "https://www.toj-vitamin.tj/icon.png",
                 "email": "ceo@toj-vitamin.tj",
                 "contactPoint": [
                   {

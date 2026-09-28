@@ -483,11 +483,12 @@ export default function CorporateAboutPage() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white shadow-sm border border-black/[0.05] p-1 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
               <Image 
-                src="/logo.webp" 
+                src="/logo-square.webp" 
                 alt="Toj-Vitamin Logo" 
-                width={44} 
-                height={44} 
-                className="w-full h-full object-contain scale-[3.2]"
+                width={88} 
+                height={88} 
+                className="w-full h-full object-contain"
+                priority
               />
             </div>
             <div className="flex flex-col">

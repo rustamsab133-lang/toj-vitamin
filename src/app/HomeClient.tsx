@@ -249,14 +249,14 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
               {/* Brand */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-0 overflow-hidden shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-0.5 overflow-hidden shadow-sm">
                     <Image 
-                    src="/logo.webp" 
-                    alt={settings.brand_name} 
-                    width={40} 
-                    height={40} 
-                    className="w-full h-full object-contain scale-[3.0]" 
-                  />
+                      src="/logo-square.webp" 
+                      alt={settings.brand_name} 
+                      width={80} 
+                      height={80} 
+                      className="w-full h-full object-contain" 
+                    />
                   </div>
                     <span className="font-bold text-[16px] text-white font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
                   </div>

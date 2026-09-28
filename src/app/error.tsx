@@ -52,7 +52,7 @@ export default function Error({
       </div>
 
       <div className="mt-20 opacity-20 flex items-center gap-3 grayscale">
-         <img src="/logo.webp" alt="Logo" className="w-8 h-8 object-contain scale-[2.5]" />
+         <img src="/logo-square.webp" alt="Logo" className="w-8 h-8 object-contain" />
          <span className="font-bold text-[14px] font-outfit tracking-widest">TOJ-VITAMIN</span>
       </div>
     </div>

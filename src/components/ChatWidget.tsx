@@ -316,7 +316,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
             <div className="chat-header">
               <div className="chat-header-info">
                 <div className="chat-avatar-container">
-                  <img src="/logo.webp" alt="TOJ-VITAMIN Logo" className="chat-avatar-img" />
+                  <img src="/logo-square.webp" alt="TOJ-VITAMIN Logo" className="chat-avatar-img" />
                   <span className="chat-avatar-status" />
                 </div>
                 <div className="chat-title-wrapper">
@@ -374,7 +374,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                             <div key={p.id} className="chat-product-card">
                               <div className="chat-product-img-wrapper">
                                 <img 
-                                  src={p.image_url || '/logo.webp'} 
+                                  src={p.image_url || '/logo-square.webp'} 
                                   alt={p.name} 
                                   className="chat-product-img" 
                                 />

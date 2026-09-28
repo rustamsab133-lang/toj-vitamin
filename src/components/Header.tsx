@@ -153,11 +153,11 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                >
                   <div className="w-12 h-12 md:w-13 md:h-13 rounded-2xl bg-white shadow-sm border border-black/[0.03] flex items-center justify-center p-0 transition-all group-hover:scale-110 group-active:scale-95 duration-500 overflow-hidden shrink-0">
                     <Image 
-                      src="/logo.webp" 
+                      src="/logo-square.webp" 
                       alt={`${settings.brand_name} Logo`} 
-                      width={52} 
-                      height={52} 
-                      className="w-full h-full object-contain scale-[3.4]" 
+                      width={96} 
+                      height={96} 
+                      className="w-full h-full object-contain p-0.5" 
                       priority
                     />
                   </div>

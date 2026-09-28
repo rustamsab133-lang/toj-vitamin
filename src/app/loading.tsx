@@ -34,11 +34,11 @@ export default function Loading() {
           />
         </div>
 
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center p-2">
           <img 
-            src="/logo.webp" 
+            src="/logo-square.webp" 
             alt="Loading..." 
-            className="w-12 h-12 object-contain opacity-80"
+            className="w-8 h-8 object-contain opacity-90"
           />
         </div>
       </div>
