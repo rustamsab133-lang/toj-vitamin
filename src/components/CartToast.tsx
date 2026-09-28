@@ -61,7 +61,7 @@ export const CartToast: React.FC<CartToastProps> = ({ lang }) => {
               <div className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold tracking-wide">
                 <Check size={13} className="shrink-0 stroke-[3]" />
                 <span className="truncate">
-                  {toastItem.title || (lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд')}
+                  {toastItem.title || (lang === 'en' ? 'Added to cart' : (lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд'))}
                 </span>
               </div>
               <p className="text-[13px] font-bold text-white truncate font-outfit mt-0.5">
@@ -78,7 +78,7 @@ export const CartToast: React.FC<CartToastProps> = ({ lang }) => {
               className="h-9 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-[12px] font-bold transition-all flex items-center gap-1.5 shadow-md shadow-blue-600/30"
             >
               <ShoppingBag size={14} />
-              <span>{lang === 'ru' ? 'В корзину' : 'Ба сабад'}</span>
+              <span>{lang === 'en' ? 'To Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад')}</span>
               <ArrowRight size={13} />
             </button>
 

@@ -421,11 +421,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                 </div>
                 <div>
                   <h2 className="text-[22px] font-bold text-[#1D1D1F] tracking-tight font-outfit leading-none">
-                    {lang === 'ru' ? 'Корзина' : 'Сабад'}
+                    {lang === 'en' ? 'Cart' : (lang === 'ru' ? 'Корзина' : 'Сабад')}
                   </h2>
                   {items.length > 0 && (
                     <p className="text-[11px] font-bold text-[#94A3B8] mt-0.5">
-                      {totalItems()} {lang === 'ru' ? 'товаров' : 'маҳсулот'}
+                      {totalItems()} {lang === 'en' ? 'items' : (lang === 'ru' ? 'товаров' : 'маҳсулот')}
                     </p>
                   )}
                 </div>
@@ -450,7 +450,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       <span className="text-[12px] font-bold text-[#1D1D1F] font-outfit">
                         {discountedTotal >= FREE_DELIVERY_LIMIT 
                           ? (lang === 'ru' ? '🎉 Бесплатная доставка!' : '🎉 Расонидани ройгон!')
-                          : (lang === 'ru' ? `Ещё ${remainingForFree} смн до бесплатной доставки` : `${remainingForFree} смн то расонидани ройгон`)
+                          : (lang === 'en' ? `Add ${remainingForFree} TJS for free delivery` : (lang === 'ru' ? `Ещё ${remainingForFree} смн до бесплатной доставки` : `${remainingForFree} смн то расонидани ройгон`))
                         }
                       </span>
                     </div>
@@ -479,7 +479,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                     <ShoppingBag size={40} strokeWidth={1} className="text-[#86868B]" />
                   </motion.div>
                   <h3 className="text-[22px] font-bold text-[#1D1D1F] mb-2 font-outfit">
-                    {lang === 'ru' ? 'Корзина пуста' : 'Сабад холӣ'}
+                    {lang === 'en' ? 'Cart is empty' : (lang === 'ru' ? 'Корзина пуста' : 'Сабад холӣ')}
                   </h3>
                   <p className="text-[14px] text-[#86868B] mb-10 max-w-xs font-medium px-4">
                     {lang === 'ru'
@@ -665,13 +665,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       <div className="space-y-2">
                         <label className="flex items-center gap-1.5 text-[12px] font-bold text-[#555] font-outfit px-0.5">
                           <Ticket size={13} className="text-indigo-600" />
-                          <span>{lang === 'ru' ? 'Есть промокод?' : 'Промокод доред?'}</span>
+                          <span>{lang === 'en' ? 'Have a promo code?' : (lang === 'ru' ? 'Есть промокод?' : 'Промокод доред?')}</span>
                         </label>
                         <div className="flex gap-2">
                           <div className="flex-1 relative">
                             <input
                               type="text"
-                              placeholder={lang === 'ru' ? 'Введите промокод' : 'Ворид кардани промокод'}
+                              placeholder={lang === 'en' ? 'Enter promo code' : (lang === 'ru' ? 'Введите промокод' : 'Ворид кардани промокод')}
                               value={promoInput}
                               onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
                               className="w-full h-11 px-4 rounded-xl bg-white border border-[#D8D8E0] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 font-bold text-[13px] uppercase tracking-wider outline-none transition-all font-outfit text-[#1D1D1F] placeholder:text-[#C4C4C9] placeholder:normal-case"
@@ -701,7 +701,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                   {/* Discount details between promocode block and checkout button */}
                   {appliedPromo && (
                     <div className="flex items-center justify-between text-[13px] font-bold font-outfit px-1 text-[#64748B] pt-1">
-                      <span>{lang === 'ru' ? 'Скидка по промокоду:' : 'Тахфиф бо промокод:'}</span>
+                      <span>{lang === 'en' ? 'Promo discount:' : (lang === 'ru' ? 'Скидка по промокоду:' : 'Тахфиф бо промокод:')}</span>
                       <div className="flex items-center gap-1.5">
                         <span className="line-through text-slate-400 font-medium">{currentTotal} смн</span>
                         <span className="text-emerald-600">−{discountAmount} смн</span>
@@ -720,7 +720,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                     
                     <div className="relative flex items-center gap-3">
                       <Zap size={16} fill="currentColor" className={isVerifying ? 'animate-pulse' : ''} />
-                      <span>{isVerifying ? (lang === 'ru' ? 'Оформление...' : 'Фармоиш...') : (lang === 'ru' ? 'Оформить заказ' : 'Фармоиш додан')}</span>
+                      <span>{isVerifying ? (lang === 'en' ? 'Processing...' : (lang === 'ru' ? 'Оформление...' : 'Фармоиш...')) : (lang === 'en' ? 'Place Order' : (lang === 'ru' ? 'Оформить заказ' : 'Фармоиш додан'))}</span>
                       <span className="text-white/50">•</span>
                       {appliedPromo ? (
                         <span className="font-extrabold">{discountedTotal} смн</span>

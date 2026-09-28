@@ -178,7 +178,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
     if (currentProducts.length > 0) {
       addMultiple(currentProducts);
       triggerAnimation();
-      triggerToast(currentProducts[0], lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+      triggerToast(currentProducts[0], lang === 'en' ? 'Combo added to cart' : (lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд'));
       setIsAdded(true);
       setTimeout(() => setIsAdded(false), 2500);
     }
@@ -200,7 +200,7 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
   const title = lang === 'ru' ? currentCombo.title_ru : currentCombo.title_tg;
   const subtitle = lang === 'ru' ? currentCombo.subtitle_ru : currentCombo.subtitle_tg;
   const desc = lang === 'ru' ? currentCombo.desc_ru : currentCombo.desc_tg;
-  const btnLabel = lang === 'ru' ? 'В корзину' : 'Ба сабад';
+  const btnLabel = lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад');
 
   return (
     <div className="max-w-5xl mx-auto px-4 pt-28 md:pt-32 pb-6 relative overflow-visible w-full">

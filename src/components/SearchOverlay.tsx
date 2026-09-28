@@ -173,7 +173,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                 <div className="flex items-baseline justify-between mb-8">
                   <div className="flex items-baseline gap-4">
                     <h2 className="text-[28px] md:text-[48px] font-bold tracking-tight text-[#1D1D1F] font-outfit">
-                      {lang === 'ru' ? 'Результаты поиска' : 'Натиҷаҳои ҷустуҷӯ'}
+                      {lang === 'en' ? 'Search Results' : (lang === 'ru' ? 'Результаты поиска' : 'Натиҷаҳои ҷустуҷӯ')}
                     </h2>
                     <span className="text-[18px] md:text-[24px] font-bold text-[#1E40AF]/40 font-outfit">
                       {filteredProducts.length}
@@ -183,7 +183,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                     onClick={handleClose}
                     className="text-[#1D1D1F]/40 hover:text-[#1D1D1F] transition-colors flex items-center gap-2 font-bold uppercase tracking-widest text-[10px] md:text-[11px]"
                   >
-                    <span>{lang === 'ru' ? 'Закрыть' : 'Пӯшидан'}</span>
+                    <span>{lang === 'en' ? 'Close' : (lang === 'ru' ? 'Закрыть' : 'Пӯшидан')}</span>
                     <X size={20} />
                   </button>
                 </div>
@@ -196,7 +196,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                       className="w-12 h-12 border-4 border-[#1E40AF]/10 border-t-[#1E40AF] rounded-full mb-4"
                     />
                     <p className="text-[#1D1D1F]/40 font-bold uppercase tracking-widest text-[11px]">
-                      {lang === 'ru' ? 'Загрузка данных...' : 'Дар ҳоли боргирӣ...'}
+                      {lang === 'en' ? 'Loading results...' : (lang === 'ru' ? 'Загрузка данных...' : 'Дар ҳоли боргирӣ...')}
                     </p>
                   </div>
                 ) : search.trim().length < 2 ? (
@@ -206,12 +206,14 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                       <Search size={32} className="text-[#1D1D1F]/30" />
                     </div>
                     <h3 className="text-[20px] md:text-[24px] font-bold text-[#1D1D1F] mb-2 font-outfit">
-                      {lang === 'ru' ? 'Введите еще символы' : 'Рамзҳои бештарро ворид кунед'}
+                      {lang === 'en' ? 'Enter more characters' : (lang === 'ru' ? 'Введите еще символы' : 'Рамзҳои бештарро ворид кунед')}
                     </h3>
                     <p className="text-[#1D1D1F]/40 max-w-sm">
-                      {lang === 'ru' 
-                        ? 'Пожалуйста, введите не менее 2 символов для точного поиска по каталогу.' 
-                        : 'Лутфан, на камтар аз 2 аломатро барои ҷустуҷӯи дақиқ ворид кунед.'}
+                      {lang === 'en'
+                        ? 'Please enter at least 2 characters to search the catalog.'
+                        : (lang === 'ru'
+                            ? 'Пожалуйста, введите не менее 2 символов для точного поиска по каталогу.'
+                            : 'Лутфан, на камтар аз 2 аломатро барои ҷустуҷӯи дақиқ ворид кунед.')}
                     </p>
                   </div>
                 ) : filteredProducts.length > 0 ? (
@@ -256,7 +258,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                           <div className="mt-auto pt-4 border-t border-black/5 flex items-center justify-between">
                             <div>
                                <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest block mb-0.5">
-                                 {lang === 'ru' ? 'Цена' : 'Нарх'}
+                                 {lang === 'en' ? 'Price' : (lang === 'ru' ? 'Цена' : 'Нарх')}
                                </span>
                                <p className="text-[20px] font-bold text-[#1D1D1F] font-outfit">
                                  {product.price} <span className="text-sm font-medium">смн</span>
@@ -276,12 +278,14 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ lang }) => {
                       <Search size={32} className="text-[#1D1D1F]/20" />
                     </div>
                     <h3 className="text-[24px] font-bold text-[#1D1D1F] mb-2 font-outfit">
-                      {lang === 'ru' ? 'Ничего не найдено' : 'Ҳеҷ чиз ёфт нашуд'}
+                      {lang === 'en' ? 'No products found' : (lang === 'ru' ? 'Ничего не найдено' : 'Ҳеҷ чиз ёфт нашуд')}
                     </h3>
                     <p className="text-[#1D1D1F]/40 max-w-sm">
-                      {lang === 'ru' 
-                        ? 'Попробуйте изменить запрос или поискать по названию бренда.' 
-                        : 'Кӯшиш кунед, ки дархостро иваз кунед ё аз рӯи номи бренд ҷустуҷӯ кунед.'}
+                      {lang === 'en'
+                        ? 'Try modifying your search or search by brand name.'
+                        : (lang === 'ru'
+                            ? 'Попробуйте изменить запрос или поискать по названию бренда.'
+                            : 'Кӯшиш кунед, ки дархостро иваз кунед ё аз рӯи номи бренд ҷустуҷӯ кунед.')}
                     </p>
                   </div>
                 )}

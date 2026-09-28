@@ -8,7 +8,11 @@ interface ScienceGridProps {
 }
 
 export const ScienceGrid: React.FC<ScienceGridProps> = ({ lang }) => {
-  const items = lang === 'ru' ? [
+  const items = lang === 'en' ? [
+    { icon: Microscope, title: 'Clinical Purity', desc: 'Multi-level quality assurance' },
+    { icon: Zap, title: 'Molecular Synergy', desc: 'Active components enhance each other' },
+    { icon: ShieldCheck, title: 'GMP & ISO Standards', desc: 'Automated certified production' },
+  ] : lang === 'ru' ? [
     { icon: Microscope, title: 'Клиническая чистота', desc: 'Многоуровневый контроль качества' },
     { icon: Zap, title: 'Молекулярная синергия', desc: 'Компоненты усиливают друг друга' },
     { icon: ShieldCheck, title: 'Стандарты GMP и ISO', desc: 'Автоматизированное производство' },

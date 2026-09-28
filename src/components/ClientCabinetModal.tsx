@@ -13,24 +13,24 @@ interface ClientCabinetModalProps {
   lang: Lang;
 }
 
-const STATUS_STYLE: Record<string, { label: { ru: string; tj: string }; color: string; icon: React.ReactNode }> = {
+const STATUS_STYLE: Record<string, { label: { ru: string; tj: string; en: string }; color: string; icon: React.ReactNode }> = {
   new: { 
-    label: { ru: 'Принят', tj: 'Қабул шуд' }, 
+    label: { ru: 'Принят', tj: 'Қабул шуд', en: 'Received' }, 
     color: 'bg-blue-500/10 text-blue-600 border border-blue-500/20', 
     icon: <Clock size={12} /> 
   },
   processing: { 
-    label: { ru: 'В сборке', tj: 'Дар ҳоли ҷамъоварӣ' }, 
+    label: { ru: 'В сборке', tj: 'Дар ҳоли ҷамъоварӣ', en: 'Processing' }, 
     color: 'bg-amber-500/10 text-amber-600 border border-amber-500/20', 
     icon: <ShoppingBag size={12} /> 
   },
   delivered: { 
-    label: { ru: 'В пути', tj: 'Дар роҳ' }, 
+    label: { ru: 'В пути', tj: 'Дар роҳ', en: 'In Transit' }, 
     color: 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20', 
     icon: <Truck size={12} /> 
   },
   completed: { 
-    label: { ru: 'Выдан', tj: 'Супорида шуд' }, 
+    label: { ru: 'Выдан', tj: 'Супорида шуд', en: 'Completed' }, 
     color: 'bg-green-500/10 text-green-600 border border-green-500/20', 
     icon: <CheckCircle2 size={12} /> 
   },

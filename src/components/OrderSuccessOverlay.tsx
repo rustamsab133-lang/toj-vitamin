@@ -1,3 +1,4 @@
+import { Lang } from '@/lib/types';
 "use client";
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,7 +7,7 @@ import { CheckCircle2, ShoppingBag, Sparkles } from 'lucide-react';
 interface OrderSuccessOverlayProps {
   isVisible: boolean;
   onClose: () => void;
-  lang: 'ru' | 'tj';
+  lang: Lang;
 }
 
 export const OrderSuccessOverlay: React.FC<OrderSuccessOverlayProps> = ({ isVisible, onClose, lang }) => {
@@ -65,7 +66,7 @@ export const OrderSuccessOverlay: React.FC<OrderSuccessOverlayProps> = ({ isVisi
                 transition={{ delay: 0.4 }}
                 className="text-[28px] font-bold text-white font-outfit tracking-tight leading-tight"
               >
-                {lang === 'ru' ? 'Заказ оформлен!' : 'Фармоиш қабул шуд!'}
+                {lang === 'en' ? 'Order Confirmed!' : (lang === 'ru' ? 'Заказ оформлен!' : 'Фармоиш қабул шуд!')}
               </motion.h4>
               
               <motion.p 

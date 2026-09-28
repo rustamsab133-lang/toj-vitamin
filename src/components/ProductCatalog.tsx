@@ -212,7 +212,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
 
     if (synergyProduct) {
       addMultiple([product, synergyProduct]);
-      triggerToast(synergyProduct, lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд');
+      triggerToast(synergyProduct, lang === 'en' ? 'Set added to cart' : (lang === 'ru' ? 'Набор добавлен в корзину' : 'Маҷмӯа ба сабад илова шуд'));
     } else {
       addItem(product);
       triggerToast(product);
@@ -282,11 +282,11 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                       <div className="flex items-center gap-2 opacity-40">
                         <category.icon size={14} className="text-[#1D1D1F]" />
                         <span className="text-[10px] font-bold tracking-[0.2em] uppercase font-outfit">
-                          {lang === 'ru' ? 'Комплекс' : 'Маҷмӯа'}
+                          {lang === 'en' ? 'Collection' : (lang === 'ru' ? 'Комплекс' : 'Маҷмӯа')}
                         </span>
                       </div>
                       <h2 className="text-[32px] md:text-[42px] font-bold tracking-tight text-[#1D1D1F] font-outfit leading-none">
-                        {category.label[lang]}
+                        {(category.label as any)[lang] || category.label.ru}
                       </h2>
                     </div>
                   </div>
@@ -328,7 +328,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                             <div className="absolute top-7 right-7 z-20 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
                                <div className="w-1.5 h-1.5 rounded-full bg-[#1E40AF] animate-pulse" />
                                <span className="text-[8px] font-bold uppercase tracking-widest text-[#94A3B8]">
-                                 {lang === 'ru' ? 'Подробно' : 'Тафсилот'}
+                                 {lang === 'en' ? 'Details' : (lang === 'ru' ? 'Подробно' : 'Тафсилот')}
                                </span>
                             </div>
 
@@ -376,7 +376,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                       <div className="flex items-center gap-1.5 mb-1">
                                          <ShieldCheck size={10} className="text-[#1E40AF] shrink-0" />
                                          <span className="text-[9px] text-[#94A3B8] uppercase font-bold tracking-[0.12em] whitespace-nowrap">
-                                           {lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ'}
+                                           {lang === 'en' ? 'Clinical standard' : (lang === 'ru' ? 'Клинический стандарт' : 'Стандарти клиникӣ')}
                                          </span>
                                       </div>
                                       <p className="text-[20px] font-bold font-outfit tracking-tight text-[#1D1D1F]">
@@ -399,7 +399,7 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                    >
                                       <div className="w-full h-10 bg-[#1D1D1F] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:bg-[#1E40AF] active:scale-95 transition-all duration-300 pointer-events-none text-[11px] uppercase tracking-[0.15em]">
                                         <ArrowRight size={14} />
-                                        <span>{lang === 'ru' ? 'Подробнее' : 'Тафсилот'}</span>
+                                        <span>{lang === 'en' ? 'View Details' : (lang === 'ru' ? 'Подробнее' : 'Тафсилот')}</span>
                                       </div>
                                   </div>
                                </div>
@@ -442,8 +442,8 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                     ? 'bg-green-600 text-white'
                                     : 'bg-[#1E40AF] text-white hover:bg-black'
                                 }`}
-                                title={lang === 'ru' ? 'Купить' : 'Харид'}
-                                aria-label={lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}
+                                title={lang === 'en' ? 'Add to cart' : (lang === 'ru' ? 'Купить' : 'Харид')}
+                                aria-label={lang === 'en' ? 'Add to cart' : (lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад')}
                                 style={{ touchAction: 'manipulation' }}
                               >
                                 <AnimatePresence mode="wait" initial={false}>

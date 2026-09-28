@@ -427,7 +427,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <div className="space-y-6 pt-2">
                    <div className="space-y-2">
                       <p className="text-[#94A3B8] text-[12px] font-bold uppercase tracking-[0.25em] font-outfit">
-                        {lang === 'ru' ? 'Эксклюзивная коллекция' : 'Коллексияи эксклюзивӣ'}
+                        {lang === 'en' ? 'Exclusive Collection' : (lang === 'ru' ? 'Эксклюзивная коллекция' : 'Коллексияи эксклюзивӣ')}
                       </p>
                       <h2 className="text-[34px] md:text-[40px] font-bold text-[#1D1D1F] leading-tight font-outfit tracking-tight">
                         {product.name}
@@ -458,7 +458,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {product.marketing_hooks && product.marketing_hooks.length > 0 && (
                   <div className="space-y-6">
                     <h4 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.2em] font-outfit">
-                      {lang === 'ru' ? 'Преимущества' : 'Бартариятҳо'}
+                      {lang === 'en' ? 'Key Benefits' : (lang === 'ru' ? 'Преимущества' : 'Бартариятҳо')}
                     </h4>
                     <div className="grid gap-5">
                       {product.marketing_hooks.map((hook, idx) => (
@@ -478,7 +478,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {/* 3. Scientific Description: Pure Content */}
                 <div className="space-y-6">
                   <h4 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.2em] font-outfit">
-                    {lang === 'ru' ? 'Описание и действие' : 'Хусусиятҳо ва Таъсир'}
+                    {lang === 'en' ? 'Description & Mechanism' : (lang === 'ru' ? 'Описание и действие' : 'Хусусиятҳо ва Таъсир')}
                   </h4>
                   <div className="space-y-5">
                     {descriptionLines.map((line, idx) => (
@@ -499,7 +499,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         <div className="flex items-center gap-3 mb-4 text-[#1D1D1F]">
                           <AlertCircle size={18} />
                           <h4 className="text-[12px] font-bold uppercase tracking-[0.15em] font-outfit">
-                            {lang === 'ru' ? 'Инструкции и безопасность' : 'Дастур ва бехатарӣ'}
+                            {lang === 'en' ? 'Usage & Safety' : (lang === 'ru' ? 'Инструкции и безопасность' : 'Дастур ва бехатарӣ')}
                           </h4>
                         </div>
                         <div className="space-y-4">
@@ -515,7 +515,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {synergies.length > 0 && (
                    <div className="space-y-8 pt-4">
                       <h4 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[0.2em] font-outfit text-center">
-                        {lang === 'ru' ? 'Идеальное дополнение' : 'Иловаи комил'}
+                        {lang === 'en' ? 'Recommended Synergies' : (lang === 'ru' ? 'Идеальное дополнение' : 'Иловаи комил')}
                       </h4>
                       <div className="space-y-4">
                         {synergies.map((link, idx) => {
@@ -589,7 +589,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                                </span>
                             </div>
                             <h4 className="text-[18px] sm:text-[20px] font-bold text-white font-outfit mb-1">
-                              {lang === 'ru' ? 'Научный Журнал' : 'Маҷаллаи Илмӣ'}
+                              {lang === 'en' ? 'Science Journal' : (lang === 'ru' ? 'Научный Журнал' : 'Маҷаллаи Илмӣ')}
                             </h4>
                             <p className="text-[#94A3B8] text-[13px] leading-relaxed">
                               {lang === 'ru' ? 'Узнайте больше о составах, исследованиях и правилах приема в нашем медицинском блоге.' : 'Дар бораи таркибҳо ва тадқиқотҳо дар блоги мо бештар хонед.'}
@@ -628,12 +628,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   {isAdded ? (
                     <>
                       <Check size={20} className="stroke-[3]" />
-                      <span>{lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд'}</span>
+                      <span>{lang === 'en' ? 'Added to Cart' : (lang === 'ru' ? 'Добавлено в корзину' : 'Ба сабад илова шуд')}</span>
                     </>
                   ) : (
                     <>
                       <ShoppingBag size={18} />
-                      <span>{lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад'}</span>
+                      <span>{lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'Добавить в корзину' : 'Илова ба сабад')}</span>
                     </>
                   )}
                 </button>
@@ -647,7 +647,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   title={lang === 'ru' ? 'Открыть корзину' : 'Кушодани сабад'}
                 >
                   <ShoppingBag size={17} />
-                  <span className="hidden sm:inline">{lang === 'ru' ? 'В корзину' : 'Ба сабад'}</span>
+                  <span className="hidden sm:inline">{lang === 'en' ? 'Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад')}</span>
                   <ArrowRight size={15} />
                 </button>
               </div>

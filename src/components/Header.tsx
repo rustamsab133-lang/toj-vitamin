@@ -104,7 +104,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder={lang === 'ru' ? 'Поиск витаминов...' : 'Ҷустуҷӯи витаминҳо...'}
+                  placeholder={lang === 'en' ? 'Search vitamins (e.g. D3, Omega-3)...' : (lang === 'ru' ? 'Поиск витаминов...' : 'Ҷустуҷӯи витаминҳо...')}
                   className="w-full bg-transparent text-[16px] sm:text-[18px] font-bold text-[#1D1D1F] outline-none font-outfit placeholder:text-[#1D1D1F]/20 pr-8 min-w-0"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -114,8 +114,8 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                     type="button"
                     onClick={handleClearSearch}
                     className="absolute right-0 w-7 h-7 rounded-full bg-black/[0.07] hover:bg-black/[0.14] text-[#1D1D1F]/60 hover:text-[#1D1D1F] flex items-center justify-center transition-all active:scale-90"
-                    title={lang === 'ru' ? 'Очистить' : 'Тоза кардан'}
-                    aria-label={lang === 'ru' ? 'Очистить поле' : 'Тоза кардани майдон'}
+                    title={lang === 'en' ? 'Clear' : (lang === 'ru' ? 'Очистить' : 'Тоза кардан')}
+                    aria-label={lang === 'en' ? 'Clear search field' : (lang === 'ru' ? 'Очистить поле' : 'Тоза кардани майдон')}
                   >
                     <X size={14} />
                   </button>
@@ -123,17 +123,17 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
               </div>
               {search && (
                 <span className="shrink-0 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider hidden sm:block">
-                  {lang === 'ru' ? 'Результаты ниже ↓' : 'Натиҷа дар поён ↓'}
+                  {lang === 'en' ? 'Results below ↓' : (lang === 'ru' ? 'Результаты ниже ↓' : 'Натиҷа дар поён ↓')}
                 </span>
               )}
               <button
                 type="button"
                 onClick={handleCloseSearch}
                 className="shrink-0 h-9 px-3.5 rounded-full bg-black/[0.06] hover:bg-black hover:text-white text-[#1D1D1F] text-[12px] sm:text-[13px] font-bold flex items-center justify-center transition-all active:scale-90 font-outfit select-none"
-                title={lang === 'ru' ? 'Закрыть поиск' : 'Пӯшидани ҷустуҷӯ'}
-                aria-label={lang === 'ru' ? 'Закрыть поиск' : 'Пӯшидани ҷустуҷӯ'}
+                title={lang === 'en' ? 'Close search' : (lang === 'ru' ? 'Закрыть поиск' : 'Пӯшидани ҷустуҷӯ')}
+                aria-label={lang === 'en' ? 'Close search' : (lang === 'ru' ? 'Закрыть поиск' : 'Пӯшидани ҷустуҷӯ')}
               >
-                <span>{lang === 'ru' ? 'Закрыть' : 'Пӯшидан'}</span>
+                <span>{lang === 'en' ? 'Close' : (lang === 'ru' ? 'Закрыть' : 'Пӯшидан')}</span>
               </button>
             </motion.div>
           ) : (
@@ -178,14 +178,14 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-white/80 hover:bg-white text-[#1D1D1F] border border-black/10 text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm"
                  >
                    <Building2 size={13} className="text-blue-600" />
-                   <span>{lang === 'ru' ? 'О нас' : 'Дар бораи мо'}</span>
+                   <span>{lang === 'en' ? 'About Us' : (lang === 'ru' ? 'О нас' : 'Дар бораи мо')}</span>
                  </Link>
                  <Link
                    href="/opt"
                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm"
                  >
                    <Store size={13} className="text-emerald-600" />
-                   <span>{lang === 'ru' ? 'Стать партнером' : 'Шарик шудан'}</span>
+                   <span>{lang === 'en' ? 'Wholesale B2B' : (lang === 'ru' ? 'Стать партнером' : 'Шарик шудан')}</span>
                  </Link>
                </div>
 
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                      ? (lang === 'ru' 
                          ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
                          : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`)
-                     : (settings.hero_cta_text || (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин'))
+                     : (settings.hero_cta_text || (lang === 'en' ? 'Vitamin Match' : (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин')))
                    }
                  </span>
                </button>
@@ -218,13 +218,23 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                   <Search size={18} className="group-hover:scale-110 transition-transform" />
                 </button>
 
-                <button
-                  onClick={() => setLang && setLang(lang === 'ru' ? 'tj' : 'ru')}
-                  className="flex h-10 px-3 rounded-full bg-white/75 hover:bg-white/85 transition-colors text-[10px] font-bold text-[#1D1D1F] items-center gap-1.5 border border-white/50 md:backdrop-blur-sm"
-                >
-                  <Globe size={13} className="text-[#86868B]" />
-                  {lang === 'ru' ? 'RU' : 'TJ'}
-                </button>
+                <div className="flex items-center p-0.5 rounded-full bg-white/75 border border-white/50 md:backdrop-blur-sm">
+                  {(['ru', 'tj', 'en'] as Lang[]).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setLang && setLang(l)}
+                      className={`h-7 px-2 rounded-full text-[10px] font-bold uppercase transition-all ${
+                        lang === l 
+                          ? 'bg-blue-600 text-white shadow-sm' 
+                          : 'text-[#1D1D1F]/70 hover:text-[#1D1D1F]'
+                      }`}
+                      aria-label={`Switch language to ${l.toUpperCase()}`}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
 
                 {/* Profile Cabinet Button */}
                 <button
@@ -235,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                   {isAuth && client ? (
                     <span className="text-[10px] font-bold max-w-[80px] truncate hidden sm:inline">{client.name}</span>
                   ) : (
-                    <span className="text-[10px] font-bold hidden sm:inline">{lang === 'ru' ? 'Войти' : 'Ворид'}</span>
+                    <span className="text-[10px] font-bold hidden sm:inline">{lang === 'en' ? 'Log in' : (lang === 'ru' ? 'Войти' : 'Ворид')}</span>
                   )}
                 </button>
 
@@ -243,7 +253,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 <button
                   onClick={() => setIsCartOpen(true)}
                   className="h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-white/75 hover:bg-white/85 transition-all text-[#1D1D1F] border border-white/50 md:backdrop-blur-sm active:scale-90 relative"
-                  aria-label={lang === 'ru' ? 'Корзина' : 'Сабад'}
+                  aria-label={lang === 'en' ? 'Cart' : (lang === 'ru' ? 'Корзина' : 'Сабад')}
                 >
                   <ShoppingBag size={17} />
                   {totalCartItems > 0 && (

@@ -69,8 +69,8 @@ export interface Order {
 
 // ==== QUIZ TYPES ====
 
-export type Lang = 'ru' | 'tj';
-export type I18nString = Record<Lang, string>;
+export type Lang = 'ru' | 'tj' | 'en';
+export type I18nString = Partial<Record<Lang, string>>;
 
 export interface QuizCategory {
   id: string;

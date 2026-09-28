@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+import { Lang } from '@/lib/types';
 import { Share2, Link2, Check, MessageCircle, Send, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,7 +9,7 @@ interface ShareButtonProps {
   title: string;
   description?: string;
   variant?: 'primary' | 'compact';
-  lang?: 'ru' | 'tj';
+  lang?: Lang;
 }
 
 import { trackEvent } from '@/lib/analytics';

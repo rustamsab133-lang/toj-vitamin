@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, ShoppingCart, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/store/useCart';
-import { Product } from '@/lib/types';
+import { Product, Lang } from '@/lib/types';
 import './ChatWidget.css';
 
 interface Message {
@@ -15,7 +15,7 @@ interface Message {
 }
 
 interface ChatWidgetProps {
-  lang: 'ru' | 'tj';
+  lang: Lang;
 }
 
 export function ChatWidget({ lang }: ChatWidgetProps) {
@@ -73,9 +73,11 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
   }, [messages]);
 
   const initializeWelcomeMessage = () => {
-    const welcomeText = lang === 'ru'
-      ? 'Здравствуйте! 😊 Я ваш личный ИИ-нутрициолог TOJ-VITAMIN. Расскажите о ваших целях или жалобах на здоровье, и я помогу подобрать идеальную связку витаминов из каталога!'
-      : 'Салом! 😊 Ман маслиҳатчии инфиродии шумо TOJ-VITAMIN мебошам. Дар бораи мақсадҳо ва мушкилоти саломатии худ нависед ва ман ба шумо маҷмӯи беҳтарини витаминҳоро аз каталог интихоб мекунам!';
+    const welcomeText = lang === 'en'
+      ? 'Hello! 😊 I am your personal AI nutritionist at TOJ-VITAMIN. Tell me about your health goals or symptoms, and I will recommend the ideal vitamins for you!'
+      : (lang === 'ru'
+          ? 'Здравствуйте! 😊 Я ваш личный ИИ-нутрициолог TOJ-VITAMIN. Расскажите о ваших целях или жалобах на здоровье, и я помогу подобрать идеальную связку витаминов из каталога!'
+          : 'Салом! 😊 Ман маслиҳатчии инфиродии шумо TOJ-VITAMIN мебошам. Дар бораи мақсадҳо ва мушкилоти саломатии худ нависед ва ман ба шумо маҷмӯи беҳтарини витаминҳоро аз каталог интихоб мекунам!');
 
     setMessages([
       {
@@ -212,9 +214,11 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
       const errorMessage: Message = {
         id: `msg-${Date.now()}-error`,
         sender: 'bot',
-        text: lang === 'ru'
-          ? 'К сожалению, произошла небольшая заминка сети. Пожалуйста, напишите еще раз или обратитесь в нашу поддержку.'
-          : 'Мутаассифона, хатогии шабака рух дод. Лутфан, дубора нависед ё бо дастгирии мо тамос гиред.',
+        text: lang === 'en'
+          ? 'Sorry, a temporary network issue occurred. Please try sending your message again or contact our support.'
+          : (lang === 'ru'
+              ? 'К сожалению, произошла небольшая заминка сети. Пожалуйста, напишите еще раз или обратитесь в нашу поддержку.'
+              : 'Мутаассифона, хатогии шабака рух дод. Лутфан, дубора нависед ё бо дастгирии мо тамос гиред.'),
         timestamp: new Date()
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -323,7 +327,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                   <span className="chat-brand-name">TOJ-VITAMIN</span>
                   <span className="chat-status-text">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#25d366] inline-block"></span>
-                    {lang === 'ru' ? 'ИИ-нутрициолог онлайн' : 'ИИ-мушовир онлайн'}
+                    {lang === 'en' ? 'AI Nutritionist Online' : (lang === 'ru' ? 'ИИ-нутрициолог онлайн' : 'ИИ-мушовир онлайн')}
                   </span>
                 </div>
               </div>
@@ -333,7 +337,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                   title={lang === 'ru' ? 'Очистить историю' : 'Тоза кардани таърих'}
                   className="chat-close-btn text-[10px] uppercase font-bold tracking-widest px-2"
                 >
-                  {lang === 'ru' ? 'Сброс' : 'Тоза'}
+                  {lang === 'en' ? 'Reset' : (lang === 'ru' ? 'Сброс' : 'Тоза')}
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
@@ -391,12 +395,12 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                                 {isAdded ? (
                                   <>
                                     <Check size={12} />
-                                    {lang === 'ru' ? 'В корзине!' : 'Дар сабад!'}
+                                    {lang === 'en' ? 'In cart!' : (lang === 'ru' ? 'В корзине!' : 'Дар сабад!')}
                                   </>
                                 ) : (
                                   <>
                                     <ShoppingCart size={12} />
-                                    {lang === 'ru' ? 'Купить' : 'Харид'}
+                                    {lang === 'en' ? 'Buy' : (lang === 'ru' ? 'Купить' : 'Харид')}
                                   </>
                                 )}
                               </button>
