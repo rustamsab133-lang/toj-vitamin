@@ -48,6 +48,36 @@ const DEFAULT_SYSTEM_INSTRUCTION = `Ты — ИИ-консультант пре�
 
 const SYSTEM_INSTRUCTION = `${DEFAULT_SYSTEM_INSTRUCTION}\n\n${SYSTEM_RULES}`;
 
+const SYSTEM_RULES_EN = `
+ORDERING & BEHAVIOR RULES:
+1. If the client wants to purchase (e.g. "I want to buy", "order this", "take this"), but has NOT yet provided a phone number, politely ask for their phone number. Do NOT populate "create_order" yet.
+2. If you have the client's phone number AND they confirmed ordering, populate "create_order" in JSON.
+3. Items for "create_order" must come from the client's cart or discussed catalog products with exact IDs and prices.
+4. When asked about dosages, administration protocols, contraindications or course durations, strictly quote the manufacturer guidelines from the catalog.
+
+RESPONSE FORMAT:
+You MUST return valid JSON ONLY with this schema:
+{
+  "reply": "Your response to the client in English (2-4 sentences, max 60 words).",
+  "recommended_product_ids": ["array of recommended product IDs from catalog"],
+  "create_order": {
+    "phone": "client phone number (only if provided)",
+    "items": [
+      { "id": "product ID", "name": "product name", "price": 0, "quantity": 1 }
+    ]
+  }
+}
+Set "create_order" to null unless an order is explicitly being confirmed with a phone number.
+Ensure the JSON is strictly valid with no markdown syntax.`;
+
+const DEFAULT_SYSTEM_INSTRUCTION_EN = `You are the AI Nutritionist and Health Consultant for "TOJ-VITAMIN", a premium certified vitamins and health supplement store in Tajikistan.
+Your goal is to politely, professionally, and concisely advise customers on choosing the ideal vitamins, supplements, and synergistic stacks for their health goals and symptoms.
+Always reply in fluent, natural English.
+Keep answers CONCISE (2-4 sentences, maximum 60 words).
+Greet ("Hello!", "Hi!") ONLY in the very first message of a conversation. If previous conversation history exists, do NOT repeat greetings.`;
+
+const SYSTEM_INSTRUCTION_EN = `${DEFAULT_SYSTEM_INSTRUCTION_EN}\n\n${SYSTEM_RULES_EN}`;
+
 export async function POST(request: NextRequest) {
   try {
     // 1. Rate limiting
@@ -154,7 +184,7 @@ export async function POST(request: NextRequest) {
 
     // 8. Векторный и ключевой RAG-поиск релевантных товаров
     const relevantProducts = await getRelevantProducts(sanitizedMessage, activeProducts, MAX_RELEVANT_PRODUCTS);
-    const catalog = await formatCatalogProducts(relevantProducts);
+    const catalog = await formatCatalogProducts(relevantProducts, userLang);
 
     // 9. Инструкции по языку общения
     let langInstruction = '';
@@ -207,9 +237,9 @@ ${historyText}
 Бот:`;
 
     // 12. Запрос к Gemini — используем systemInstruction для статических правил
-    const finalSystemInstruction = customPromptText
-      ? `${customPromptText}\n\n${SYSTEM_RULES}`
-      : SYSTEM_INSTRUCTION;
+    const finalSystemInstruction = userLang === 'en'
+      ? SYSTEM_INSTRUCTION_EN
+      : (customPromptText ? `${customPromptText}\n\n${SYSTEM_RULES}` : SYSTEM_INSTRUCTION);
 
     const model = genAI.getGenerativeModel({
       model: AGENT_MODEL,
@@ -283,9 +313,11 @@ ${historyText}
             console.error('❌ Ошибка базы данных при создании заказа через ИИ:', orderError);
           } else if (newOrder) {
             console.log(`✅ Заказ №${newOrder.id} успешно создан через ИИ-консультанта!`);
-            const orderConfirmText = chatLang === 'tj'
-              ? `\n\n✅ Закази шумо қабул шуд! Рақами фармоиш: №${newOrder.id}`
-              : `\n\n✅ Ваш заказ оформлен! Номер заказа: №${newOrder.id}`;
+            const orderConfirmText = userLang === 'en'
+              ? `\n\n✅ Your order has been placed! Order number: #${newOrder.id}`
+              : (chatLang === 'tj' || userLang === 'tj'
+                ? `\n\n✅ Закази шумо қабул шуд! Рақами фармоиш: №${newOrder.id}`
+                : `\n\n✅ Ваш заказ оформлен! Номер заказа: №${newOrder.id}`);
             reply += orderConfirmText;
           }
         } catch (orderErr) {

@@ -123,9 +123,11 @@ export function getSetting(settings: Record<string, string>, key: string, defaul
  * Format product list with enrichment data (properties, synergies) and markup pricing
  * into a RAG-friendly text string for AI prompts.
  */
-export async function formatCatalogProducts(dbProducts: any[]): Promise<string> {
+export async function formatCatalogProducts(dbProducts: any[], lang: string = 'ru'): Promise<string> {
   try {
-    if (!dbProducts || dbProducts.length === 0) return 'Каталог пуст.';
+    if (!dbProducts || dbProducts.length === 0) {
+      return lang === 'en' ? 'Catalog is empty.' : (lang === 'tj' ? 'Каталог холӣ аст.' : 'Каталог пуст.');
+    }
 
     const enrichedData = await loadEnrichedData();
     const markupSettings = await getMarkupSettings();
@@ -133,9 +135,32 @@ export async function formatCatalogProducts(dbProducts: any[]): Promise<string> 
     return dbProducts
       .map((p: any) => {
         const enrich = findEnrichmentForProduct(p.name, enrichedData);
+        const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
+
+        if (lang === 'en') {
+          const props = (enrich.properties_en && enrich.properties_en.length > 0)
+            ? enrich.properties_en.join(', ')
+            : (enrich.properties ? enrich.properties.join(', ') : 'General Wellness');
+          const synergies = (enrich.synergies_en && enrich.synergies_en.length > 0)
+            ? enrich.synergies_en.join('; ')
+            : (enrich.synergies ? enrich.synergies.join('; ') : 'None');
+
+          let instructStr = '';
+          const instEn = enrich.instructions_en;
+          if (instEn) {
+            const parts: string[] = [];
+            if (instEn.usage) parts.push(`Suggested use: ${instEn.usage}`);
+            if (instEn.course) parts.push(`Duration: ${instEn.course}`);
+            if (instEn.contraindications) parts.push(`Contraindications: ${instEn.contraindications}`);
+            if (parts.length > 0) instructStr = `. Manufacturer Guidelines: [${parts.join('; ')}]`;
+          }
+
+          const enTitle = enrich.title_en || p.name;
+          return `- [ID: ${p.id}] ${enTitle} (Original: ${p.name}): Price: ${markedPrice} TJS. Clinical Properties: [${props}]. Synergy Pairs: [${synergies}]${instructStr}`;
+        }
+
         const props = enrich.properties ? enrich.properties.join(', ') : 'Общее оздоровление';
         const synergies = enrich.synergies ? enrich.synergies.join('; ') : 'Отсутствует';
-        const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
 
         let instructStr = '';
         if (enrich.instructions) {
@@ -151,6 +176,6 @@ export async function formatCatalogProducts(dbProducts: any[]): Promise<string> 
       .join('\n');
   } catch (error) {
     console.error('❌ Ошибка при сборке каталога:', error);
-    return 'Ошибка загрузки каталога.';
+    return lang === 'en' ? 'Catalog loading error.' : 'Ошибка загрузки каталога.';
   }
 }

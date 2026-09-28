@@ -7,6 +7,7 @@
  */
 
 import { genAI } from '@/lib/gemini';
+import { getLocalizedProductName } from '@/lib/productLocalization';
 
 // Lazy-loaded in-memory cache for product embeddings
 let cachedEmbeddings: Record<string, { embedding: number[] }> | null = null;
@@ -49,12 +50,13 @@ function keywordScore(query: string, product: any): number {
   const q = query.toLowerCase();
   const name = (product.name || '').toLowerCase();
   const fullName = (product.full_name || '').toLowerCase();
+  const enName = getLocalizedProductName(product.name || '', 'en').toLowerCase();
   const tags = Array.isArray(product.tags) ? product.tags.join(' ').toLowerCase() : '';
 
   let score = 0;
   const words = q.split(/[\s,.;:!?+()\-]+/).filter((w: string) => w.length >= 3);
   for (const w of words) {
-    if (name.includes(w)) score += 0.35;
+    if (name.includes(w) || enName.includes(w)) score += 0.35;
     if (fullName.includes(w)) score += 0.25;
     if (tags.includes(w)) score += 0.15;
   }

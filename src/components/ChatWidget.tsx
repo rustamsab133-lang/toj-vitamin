@@ -19,6 +19,37 @@ interface ChatWidgetProps {
   lang: Lang;
 }
 
+const getWelcomeText = (targetLang: Lang) => {
+  if (targetLang === 'en') {
+    return 'Hello! 😊 I am your personal AI nutritionist at TOJ-VITAMIN. Tell me about your health goals or symptoms, and I will recommend the ideal vitamins for you!';
+  }
+  if (targetLang === 'tj') {
+    return 'Салом! 😊 Ман мушовири шахсии Шумо оид ба саломатӣ ва маводи ғизоӣ аз TOJ-VITAMIN мебошам. Дар бораи мақсадҳо ва нигарониҳои худ нависед ва ман беҳтарин маҷмӯи витаминҳоро ба Шумо интихоб мекунам!';
+  }
+  return 'Здравствуйте! 😊 Я ваш личный ИИ-нутрициолог TOJ-VITAMIN. Расскажите о ваших целях или жалобах на здоровье, и я помогу подобрать идеальную связку витаминов из каталога!';
+};
+
+const QUICK_PROMPTS: Record<Lang, Array<{ label: string; prompt: string }>> = {
+  en: [
+    { label: '⚡ Energy & Focus', prompt: 'I feel fatigued and want more energy and concentration. What vitamins do you recommend?' },
+    { label: '🦴 Joints & Bones', prompt: 'What supplements do you recommend for joint health and cartilage support?' },
+    { label: '🌙 Sleep & Anti-Stress', prompt: 'I want something for stress relief, calming anxiety, and deep restorative sleep.' },
+    { label: '🛡️ Immune Boost', prompt: 'What is the best stack to strengthen my immune system right now?' }
+  ],
+  ru: [
+    { label: '⚡ Энергия и фокус', prompt: 'Чувствую упадок сил. Какие витамины попить для энергии и бодрости?' },
+    { label: '🦴 Суставы и связки', prompt: 'Что порекомендуете для суставов, хрящей и связок?' },
+    { label: '🌙 Сон и антистресс', prompt: 'Посоветуйте препараты от стресса, тревожности и для крепкого сна.' },
+    { label: '🛡️ Иммунитет', prompt: 'Как укрепить иммунитет и защитить организм от сезонных простуд?' }
+  ],
+  tj: [
+    { label: '⚡ Энергия ва неру', prompt: 'Ман хастагӣ ҳис мекунам. Барои энергия ва неру кадом витаминҳо беҳтаранд?' },
+    { label: '🦴 Буғумҳо ва устухон', prompt: 'Барои саломатии буғумҳо ва пайвандҳо чӣ маслиҳат медиҳед?' },
+    { label: '🌙 Хоб ва оромӣ', prompt: 'Барои хоби ором, рафъи асабоният ва стресс чӣ тавсия медиҳед?' },
+    { label: '🛡️ Масуният', prompt: 'Барои қавӣ гардонидани масуният кадом витаминҳо лозиманд?' }
+  ]
+};
+
 export function ChatWidget({ lang }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -38,7 +69,33 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
   const triggerAnimation = useCart((state) => state.triggerAnimation);
   const triggerToast = useCart((state) => state.triggerToast);
 
-  // Load chat session and initial message
+  const initializeWelcomeMessage = () => {
+    setMessages([
+      {
+        id: 'welcome',
+        sender: 'bot',
+        text: getWelcomeText(lang),
+        timestamp: new Date()
+      }
+    ]);
+  };
+
+  // Synchronize welcome message when user changes language
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 0) {
+        return [{
+          id: 'welcome',
+          sender: 'bot',
+          text: getWelcomeText(lang),
+          timestamp: new Date()
+        }];
+      }
+      return prev.map(m => m.id === 'welcome' ? { ...m, text: getWelcomeText(lang) } : m);
+    });
+  }, [lang]);
+
+  // Load chat session and history from localStorage on initial mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedChatId = localStorage.getItem('web_chat_session_id');
@@ -51,11 +108,12 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
       if (savedMessages) {
         try {
           const parsed = JSON.parse(savedMessages) as any[];
-          if (parsed.length <= 1 && parsed[0]?.id === 'welcome') {
+          if (!parsed || parsed.length === 0) {
             initializeWelcomeMessage();
           } else {
             setMessages(parsed.map(m => ({
               ...m,
+              text: m.id === 'welcome' ? getWelcomeText(lang) : m.text,
               timestamp: new Date(m.timestamp)
             })));
           }
@@ -67,7 +125,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang]);
+  }, []);
 
   // Keep local storage updated (limit to last 50 messages to prevent storage bloat)
   useEffect(() => {
@@ -76,23 +134,6 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
       localStorage.setItem('web_chat_messages', JSON.stringify(trimmed));
     }
   }, [messages]);
-
-  const initializeWelcomeMessage = () => {
-    const welcomeText = lang === 'en'
-      ? 'Hello! 😊 I am your personal AI nutritionist at TOJ-VITAMIN. Tell me about your health goals or symptoms, and I will recommend the ideal vitamins for you!'
-      : (lang === 'ru'
-          ? 'Здравствуйте! 😊 Я ваш личный ИИ-нутрициолог TOJ-VITAMIN. Расскажите о ваших целях или жалобах на здоровье, и я помогу подобрать идеальную связку витаминов из каталога!'
-          : 'Салом! 😊 Ман маслиҳатчии инфиродии шумо TOJ-VITAMIN мебошам. Дар бораи мақсадҳо ва мушкилоти саломатии худ нависед ва ман ба шумо маҷмӯи беҳтарини витаминҳоро аз каталог интихоб мекунам!');
-
-    setMessages([
-      {
-        id: 'welcome',
-        sender: 'bot',
-        text: welcomeText,
-        timestamp: new Date()
-      }
-    ]);
-  };
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -130,11 +171,10 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     }
   }, [isOpen]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!input.trim() || isLoading) return;
+  const sendDirectMessage = async (rawText: string) => {
+    if (!rawText.trim() || isLoading) return;
 
-    const userText = input.trim();
+    const userText = rawText.trim();
     setInput('');
 
     const userMessage: Message = {
@@ -147,27 +187,30 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Подготовка контекста корзины
+    // Context preparation
     const cartContext = cartItems && cartItems.length > 0
-      ? cartItems.map(item => `${item.name} (кол-во: ${item.quantity})`).join(', ')
-      : 'Корзина пуста';
+      ? cartItems.map(item => `${getLocalizedProductName(item.name, lang)} (${lang === 'en' ? 'qty' : 'кол-во'}: ${item.quantity})`).join(', ')
+      : (lang === 'en' ? 'Cart is empty' : (lang === 'tj' ? 'Сабад холӣ аст' : 'Корзина пуста'));
 
-    // Подготовка контекста результатов теста
-    let quizContext = 'Тест не пройден';
+    let quizContext = lang === 'en' ? 'Quiz not taken' : (lang === 'tj' ? 'Тест гузаронида нашудааст' : 'Тест не пройден');
     try {
       const saved = localStorage.getItem('toj_quiz_last');
       if (saved) {
         const parsed = JSON.parse(saved);
-        quizContext = `Категория: ${parsed.catTitle || ''}`;
+        quizContext = lang === 'en'
+          ? `Category: ${parsed.catTitle || ''}`
+          : `Категория: ${parsed.catTitle || ''}`;
         if (parsed.optionTitle) {
-          quizContext += `, Проблема: ${parsed.optionTitle}`;
+          quizContext += lang === 'en' ? `, Concern: ${parsed.optionTitle}` : `, Проблема: ${parsed.optionTitle}`;
         }
         if (parsed.recommendedProductNames && parsed.recommendedProductNames.length > 0) {
-          quizContext += `, Рекомендованные продукты теста: ${parsed.recommendedProductNames.join(', ')}`;
+          quizContext += lang === 'en'
+            ? `, Recommended: ${parsed.recommendedProductNames.join(', ')}`
+            : `, Рекомендованные продукты теста: ${parsed.recommendedProductNames.join(', ')}`;
         }
       }
     } catch (err) {
-      console.warn('⚠️ Ошибка при извлечении контекста теста:', err);
+      console.warn('⚠️ Error extracting quiz context:', err);
     }
 
     try {
@@ -233,7 +276,12 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     }
   };
 
-  // Специфический нечеткий поиск продуктов в тексте сообщения для вывода карточек покупки
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    await sendDirectMessage(input);
+  };
+
+  // Multilingual fuzzy match for products mentioned in bot replies
   const detectProductsInText = (text: string): Product[] => {
     if (!text || !allProducts || allProducts.length === 0) return [];
     
@@ -244,23 +292,26 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
     for (const p of allProducts) {
       const shortName = p.name.toLowerCase().trim();
       const fullName = p.full_name ? p.full_name.toLowerCase().trim() : '';
+      const enName = getLocalizedProductName(p.name, 'en').toLowerCase().trim();
 
-      if (shortName.length < 3) continue;
+      const candidateNames = [shortName, fullName, enName].filter(n => n && n.length >= 3);
 
-      const escapedShortName = escapeRegExp(shortName);
-      const pattern = new RegExp(`(?:^|[^a-zA-Zа-яА-Я0-9_])${escapedShortName}(?:$|[^a-zA-Zа-яА-Я0-9_])`, 'i');
-
-      const isShortNameMentioned = pattern.test(lower);
-      const isFullNameMentioned = fullName && lower.includes(fullName);
-
-      if (isShortNameMentioned || isFullNameMentioned) {
-        if (!matched.some(mp => mp.id === p.id)) {
-          matched.push(p);
+      let isMatch = false;
+      for (const candidate of candidateNames) {
+        const escaped = escapeRegExp(candidate);
+        const pattern = new RegExp(`(?:^|[^a-zA-Zа-яА-Я0-9_])${escaped}(?:$|[^a-zA-Zа-яА-Я0-9_])`, 'i');
+        if (pattern.test(lower) || lower.includes(candidate)) {
+          isMatch = true;
+          break;
         }
+      }
+
+      if (isMatch && !matched.some(mp => mp.id === p.id)) {
+        matched.push(p);
       }
     }
     
-    // Ограничиваемся первыми 3 продуктами на сообщение для эстетичности интерфейса
+    // Limit to top 3 products per message
     return matched.slice(0, 3);
   };
 
@@ -305,7 +356,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(true)}
           className="chat-trigger-btn"
-          aria-label="Open Chat Support"
+          aria-label={lang === 'en' ? 'Open AI Nutritionist Chat' : (lang === 'ru' ? 'Открыть чат с ИИ-нутрициологом' : 'Кушодани чати ИИ-мушовир')}
         >
           <MessageSquare size={26} />
           <span className="chat-pulse-indicator" />
@@ -374,6 +425,22 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                         </span>
                       </div>
                     </div>
+
+                    {/* Quick starter suggestion chips for the current language */}
+                    {msg.id === 'welcome' && messages.length === 1 && !isLoading && (
+                      <div className="flex flex-wrap gap-1.5 px-1 py-1">
+                        {QUICK_PROMPTS[lang]?.map((qp, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => sendDirectMessage(qp.prompt)}
+                            className="text-[12px] bg-white hover:bg-[#f0f0f2] text-[#1D1D1F] border border-black/10 hover:border-black/25 rounded-full px-3 py-1.5 transition-all active:scale-95 shadow-xs text-left font-medium"
+                          >
+                            {qp.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     
                     {/* Render Interactive Buy Cards if Bot mentions Products */}
                     {detectedProducts.length > 0 && (
@@ -441,7 +508,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={lang === 'en' ? 'Type your message...' : (lang === 'ru' ? 'Напишите сообщение...' : 'Паём нависед...')}
+                  placeholder={lang === 'en' ? 'Type your health goal or question...' : (lang === 'ru' ? 'Напишите цель или вопрос...' : 'Мақсад ё саволи худро нависед...')}
                   disabled={isLoading}
                   className="chat-input-field"
                 />
@@ -449,7 +516,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
                   type="submit"
                   disabled={!input.trim() || isLoading}
                   className="chat-send-btn"
-                  aria-label="Send message"
+                  aria-label={lang === 'en' ? 'Send message' : (lang === 'ru' ? 'Отправить сообщение' : 'Фиристодани паём')}
                 >
                   <Send size={16} />
                 </button>
