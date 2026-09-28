@@ -349,7 +349,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                   <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit">{lang === 'en' ? 'Navigation' : (lang === 'ru' ? 'Навигация' : 'Навигатсия')}</h4>
                   <div className="space-y-2.5">
                     <Link href="/about" className="block text-[14px] text-blue-400 hover:text-blue-300 font-semibold transition-colors text-left">
-                      {lang === 'en' ? '🏢 About Us / Sakhovati Istaravshan Holding' : (lang === 'ru' ? '🏢 О нас / Холдинг «Саховати Истаравшан»' : '🏢 Дар бораи мо / Холдинг')}
+                      {lang === 'en' ? '🏢 About Company (Sakhovati Istaravshan Holding)' : (lang === 'ru' ? '🏢 О компании (Холдинг «Саховати Истаравшан»)' : '🏢 Дар бораи ширкат (Холдинг)')}
                     </Link>
                     <Link href="/opt" className="block text-[14px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors text-left">
                       {lang === 'en' ? '🤝 Become a Partner (Wholesale B2B)' : (lang === 'ru' ? '🤝 Стать партнером (Опт B2B)' : '🤝 Шарик шудан (B2B Яклухт)')}

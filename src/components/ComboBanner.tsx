@@ -110,6 +110,65 @@ const THEME_PRESETS: Record<string, {
   }
 };
 
+
+const COMBO_EN_TRANSLATIONS: Record<string, { badge: string; title: string; subtitle: string; desc: string }> = {
+  'combo-1786442823020': {
+    badge: 'GLS BESTSELLER',
+    title: 'Life Without PMS',
+    subtitle: '& Pure Serenity',
+    desc: 'Restore hormonal harmony and calm with our clinical duo.'
+  },
+  'default-pms': {
+    badge: 'GLS BESTSELLER',
+    title: 'Life Without PMS',
+    subtitle: '& Pure Serenity',
+    desc: 'Restore hormonal harmony and calm with our clinical duo.'
+  },
+  'combo-male-power': {
+    badge: 'DOUBLE POWER',
+    title: "Men's Vitality Charge",
+    subtitle: '+ Energy & Stamina',
+    desc: 'Yohimbe activates healthy blood circulation while Maca defeats stress, revitalizing stamina and drive.'
+  },
+  'combo-beauty-antiage': {
+    badge: 'YOUTH FORMULA',
+    title: 'Radiant Skin Secret',
+    subtitle: '+ Cellular Energy Boost',
+    desc: 'Collagen & CoQ10: skin elasticity, glossy hair, and a youthful glow from within.'
+  }
+};
+
+function getLocalizedCombo(combo: ComboBannerConfig, lang: Lang) {
+  if (lang === 'en') {
+    const en = COMBO_EN_TRANSLATIONS[combo.id];
+    if (en) return en;
+    const lower = (combo.title_ru || '').toLowerCase();
+    if (lower.includes('пмс') || lower.includes('дзен')) return COMBO_EN_TRANSLATIONS['default-pms'];
+    if (lower.includes('мужск') || lower.includes('йохимбе') || lower.includes('мака')) return COMBO_EN_TRANSLATIONS['combo-male-power'];
+    if (lower.includes('кож') || lower.includes('молод') || lower.includes('коллаген')) return COMBO_EN_TRANSLATIONS['combo-beauty-antiage'];
+    return {
+      badge: 'GLS Bestseller',
+      title: combo.title_ru,
+      subtitle: combo.subtitle_ru,
+      desc: combo.desc_ru
+    };
+  }
+  if (lang === 'tj') {
+    return {
+      badge: combo.badge_tg || combo.badge_ru,
+      title: combo.title_tg || combo.title_ru,
+      subtitle: combo.subtitle_tg || combo.subtitle_ru,
+      desc: combo.desc_tg || combo.desc_ru
+    };
+  }
+  return {
+    badge: combo.badge_ru,
+    title: combo.title_ru,
+    subtitle: combo.subtitle_ru,
+    desc: combo.desc_ru
+  };
+}
+
 export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrderSuccess }) => {
   const { allProducts, addMultiple, triggerAnimation, triggerToast } = useCart();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -196,10 +255,11 @@ export const ComboBanner: React.FC<ComboBannerProps> = ({ lang, settings, onOrde
 
   const theme = THEME_PRESETS[currentCombo.preset_theme] || THEME_PRESETS.slate;
 
-  const badge = lang === 'en' ? 'GLS Bestseller' : (lang === 'ru' ? currentCombo.badge_ru : currentCombo.badge_tg);
-  const title = lang === 'en' ? (currentCombo.id === 'default-pms' ? 'Balance & Vitality' : currentCombo.title_ru) : (lang === 'ru' ? currentCombo.title_ru : currentCombo.title_tg);
-  const subtitle = lang === 'en' ? (currentCombo.id === 'default-pms' ? '& Pure Serenity' : currentCombo.subtitle_ru) : (lang === 'ru' ? currentCombo.subtitle_ru : currentCombo.subtitle_tg);
-  const desc = lang === 'en' ? (currentCombo.id === 'default-pms' ? 'Restore harmony and calm with our clinical duo.' : currentCombo.desc_ru) : (lang === 'ru' ? currentCombo.desc_ru : currentCombo.desc_tg);
+  const localizedCombo = getLocalizedCombo(currentCombo, lang);
+  const badge = localizedCombo.badge;
+  const title = localizedCombo.title;
+  const subtitle = localizedCombo.subtitle;
+  const desc = localizedCombo.desc;
   const btnLabel = lang === 'en' ? 'Add to Cart' : (lang === 'ru' ? 'В корзину' : 'Ба сабад');
 
   return (

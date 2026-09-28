@@ -60,12 +60,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { message, chatId, cartItems, quizResult, cartItemsRaw } = await request.json() as {
+    const { message, chatId, cartItems, quizResult, cartItemsRaw, lang: userLang } = await request.json() as {
       message: string;
       chatId?: string | null;
       cartItems?: string;
       quizResult?: string;
       cartItemsRaw?: Array<{ id: string; name: string; price: number; quantity: number }>;
+      lang?: string;
     };
 
     // 2. Sanitize and validate input
@@ -157,12 +158,14 @@ export async function POST(request: NextRequest) {
 
     // 9. Инструкции по языку общения
     let langInstruction = '';
-    if (chatLang === 'tj') {
-      langInstruction = 'ВНИМАНИЕ: Общайся ИСКЛЮЧИТЕЛЬНО на таджикском языке.';
-    } else if (chatLang === 'ru') {
+    if (userLang === 'en') {
+      langInstruction = 'CRITICAL REQUIREMENT: The client is currently viewing the website in ENGLISH interface mode (lang: en). You MUST write your reply EXCLUSIVELY in fluent, professional English (2-4 sentences, max 60 words). Recommend products using their clinical benefits. Do not write in Russian or Tajik unless explicitly requested by the client.';
+    } else if (userLang === 'tj' || chatLang === 'tj') {
+      langInstruction = 'ВНИМАНИЕ: Общайся ИСКЛЮЧИТЕЛЬНО на таджикском языке (бо забони тоҷикӣ). Ҷавоби худро бо забони тоҷикӣ пешниҳод кунед.';
+    } else if (userLang === 'ru' || chatLang === 'ru') {
       langInstruction = 'ВНИМАНИЕ: Общайся ИСКЛЮЧИТЕЛЬНО на русском языке.';
     } else {
-      langInstruction = 'ВНИМАНИЕ: Определи язык последнего сообщения клиента. Если клиент написал на таджикском языке, ты обязан отвечать СТРОГО на таджикском. Если на русском — СТРОГО на русском. Язык ответа должен ВСЕГДА совпадать с языком вопроса клиента.';
+      langInstruction = 'ВНИМАНИЕ: Определи язык последнего сообщения клиента. Если клиент написал на английском, отвечай на английском. Если на таджикском — на таджикском. Если на русском — на русском. Язык ответа должен ВСЕГДА совпадать с языком вопроса клиента.';
     }
 
     // 10. Активный A/B промпт
@@ -236,9 +239,11 @@ ${historyText}
     }
 
     if (!reply || reply.trim().length === 0) {
-      reply = chatLang === 'tj'
-        ? 'Салом! Ман метавонам ба шумо дар интихоби витаминҳо кӯмак кунам. Шуморо кадом масъала ё мақсад нигарон мекунад?'
-        : 'Здравствуйте! Я помогу вам подобрать витамины. Расскажите, какая у вас цель или жалоба?';
+      reply = userLang === 'en'
+        ? 'Hello! I can help you find the ideal vitamins and supplements. What health goals or symptoms would you like to address?'
+        : (userLang === 'tj' || chatLang === 'tj'
+          ? 'Салом! Ман метавонам ба шумо дар интихоби витаминҳо кӯмак кунам. Шуморо кадом масъала ё мақсад нигарон мекунад?'
+          : 'Здравствуйте! Я помогу вам подобрать витамины. Расскажите, какая у вас цель или жалоба?');
     }
 
     // 13. Если ИИ решил создать заказ — валидируем телефон

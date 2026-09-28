@@ -51,10 +51,14 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
       if (savedMessages) {
         try {
           const parsed = JSON.parse(savedMessages) as any[];
-          setMessages(parsed.map(m => ({
-            ...m,
-            timestamp: new Date(m.timestamp)
-          })));
+          if (parsed.length <= 1 && parsed[0]?.id === 'welcome') {
+            initializeWelcomeMessage();
+          } else {
+            setMessages(parsed.map(m => ({
+              ...m,
+              timestamp: new Date(m.timestamp)
+            })));
+          }
         } catch {
           initializeWelcomeMessage();
         }
@@ -177,6 +181,7 @@ export function ChatWidget({ lang }: ChatWidgetProps) {
         body: JSON.stringify({
           message: userText,
           chatId: chatId,
+          lang: lang,
           cartItems: cartContext,
           quizResult: quizContext,
           cartItemsRaw: cartItems.map(item => ({

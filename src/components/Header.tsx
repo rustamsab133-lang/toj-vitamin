@@ -206,7 +206,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                          : (lang === 'ru' 
                            ? `Мой рецепт: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`
                            : `Нусхаи ман: ${lastQuizResult.catTitle.length > 18 ? lastQuizResult.catTitle.slice(0, 18) + '...' : lastQuizResult.catTitle}`))
-                     : (settings.hero_cta_text || (lang === 'en' ? 'Vitamin Match' : (lang === 'ru' ? 'Подбор витаминов' : 'Интихоби витамин')))
+                     : (lang === 'en' ? 'Find My Vitamins' : (lang === 'tj' ? 'Витаминҳои маро интихоб кунед' : (settings.hero_cta_text || 'Подобрать мои витамины')))
                    }
                  </span>
                </button>
