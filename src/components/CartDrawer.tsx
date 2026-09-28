@@ -47,6 +47,7 @@ const CartProductImage: React.FC<CartProductImageProps> = ({ src, alt, sizeIcon 
         src={src}
         alt={alt}
         fill
+        unoptimized
         sizes="(max-width: 640px) 250px, 300px"
         priority={true} // Ignore lazy loading, load immediately when cart drawer is mounted
         className={`object-contain transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}

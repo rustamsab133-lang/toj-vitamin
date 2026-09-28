@@ -14,6 +14,11 @@ interface CartToastProps {
 
 export const CartToast: React.FC<CartToastProps> = ({ lang }) => {
   const { showToast, toastItem, hideToast, setIsOpen: setIsCartOpen } = useCart();
+  const [imageError, setImageError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImageError(false);
+  }, [toastItem?.product?.id]);
 
   useEffect(() => {
     if (!showToast) return;
@@ -42,14 +47,16 @@ export const CartToast: React.FC<CartToastProps> = ({ lang }) => {
         >
           {/* Thumbnail & Title */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center relative overflow-hidden shrink-0">
-              {toastItem.product.image_url ? (
+            <div className="relative w-11 h-11 rounded-xl bg-white border border-white/20 flex items-center justify-center overflow-hidden shrink-0 shadow-sm p-0.5">
+              {toastItem.product.image_url && !imageError ? (
                 <Image
                   src={toastItem.product.image_url}
                   alt={getLocalizedProductName(toastItem.product.name, lang)}
-                  width={44}
-                  height={44}
-                  className="object-contain w-full h-full p-1"
+                  fill
+                  unoptimized
+                  sizes="44px"
+                  onError={() => setImageError(true)}
+                  className="object-contain p-0.5"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-emerald-500/20 text-emerald-400">
