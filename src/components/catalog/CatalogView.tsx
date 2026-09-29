@@ -450,7 +450,6 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                         width={200}
                         height={200}
                         className="object-contain max-h-full drop-shadow-md hover:scale-105 transition-transform duration-300"
-                        unoptimized
                       />
                     </div>
                   </div>

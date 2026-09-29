@@ -237,8 +237,9 @@ export async function getCatalogData(priceType: 'retail' | 'wholesale' | 'none' 
     );
     const waLink = `https://wa.me/${OFFICIAL_PHONE}?text=${waText}`;
 
-    // Clean image
-    const imageUrl = prod.image_url || '/logo.webp';
+    // Clean image with optimized thumbnail if available
+    const thumbFile = path.join(process.cwd(), `public/catalog-thumbs/prod-${prod.id}.png`);
+    const imageUrl = fs.existsSync(thumbFile) ? `/catalog-thumbs/prod-${prod.id}.png` : (prod.image_url || '/logo.webp');
 
     return {
       id: String(prod.id),

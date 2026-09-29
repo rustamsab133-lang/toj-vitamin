@@ -181,7 +181,8 @@ async function main() {
       `Здравствуйте! Хочу заказать товар из каталога TOJ-VITAMIN:\nКод: ${code}\nНаименование: ${p.name}\nЦена: ${retailPrice} смн`
     );
     const waLink = `https://wa.me/${OFFICIAL_PHONE}?text=${waText}`;
-    const imgUrl = p.image_url || '/logo.webp';
+    const thumbPath = path.join(__dirname, `../public/catalog-thumbs/prod-${p.id}.png`);
+    const imgUrl = fs.existsSync(thumbPath) ? `/catalog-thumbs/prod-${p.id}.png` : (p.image_url || '/logo.webp');
 
     return `
       <div class="card">
