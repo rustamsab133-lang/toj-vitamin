@@ -94,7 +94,7 @@ const CONTENT = {
       },
       {
         icon: Globe,
-        image: "/assets/science/vitality.png",
+        image: "/assets/about/toj_vitamin_brand.webp",
         badge: "Цифровой флагман",
         title: "Цифровая платформа Toj-Vitamin (B2B / D2C)",
         desc: "Высокотехнологичный онлайн-сервис с персональным научным подбором витаминов, образовательной базой знаний, прямым контактом с потребителем и личным кабинетом заказа для аптек.",
@@ -262,7 +262,7 @@ const CONTENT = {
       },
       {
         icon: Globe,
-        image: "/assets/science/vitality.png",
+        image: "/assets/about/toj_vitamin_brand.webp",
         badge: "Digital Platform",
         title: "Digital Platform Toj-Vitamin (B2B / D2C)",
         desc: "High-tech consumer e-commerce platform offering algorithmic nutrient selection, medical content, direct consumer feedback, and online order management for pharmacies.",
@@ -429,7 +429,7 @@ const CONTENT = {
       },
       {
         icon: Globe,
-        image: "/assets/science/vitality.png",
+        image: "/assets/about/toj_vitamin_brand.webp",
         badge: "Флагмани рақамӣ",
         title: "Платформаи рақамии Toj-Vitamin (B2B / D2C)",
         desc: "Хизматрасонии онлайни баландтехнологӣ бо интихоби инфиродии витаминҳо, мақолаҳои илмӣ ва бахши фармоиш барои дорухонаҳо.",
@@ -937,8 +937,14 @@ export default function CorporateAboutPage() {
             {/* Карточка 3: Роль Toj-Vitamin */}
             <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center mb-5">
-                  <Sparkles size={24} />
+                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-black/[0.08] p-1.5 flex items-center justify-center mb-5 overflow-hidden">
+                  <Image 
+                    src="/logo-square.webp" 
+                    alt="Toj-Vitamin Logo" 
+                    width={48} 
+                    height={48} 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <h3 className="text-xl font-bold text-[#1D1D1F] font-outfit">
                   {t.roleTitle}
