@@ -78,25 +78,33 @@ const CONTENT = {
         image: "/assets/science/synergy.png",
         badge: "B2B Фармация",
         title: "Оптовая дистрибуция (B2B Pharma)",
-        desc: "Прямые контракты на поставку с национальными и региональными аптечными сетями, независимыми аптеками, клиниками и медицинскими учреждениями по всей стране. Бесперебойное снабжение и гибкие коммерческие условия.",
+        desc: "Прямые контракты на поставку с национальными и региональными аптечными сетями, независимыми аптеками, клиниками и больницами по всей стране. Бесперебойное снабжение и гибкие коммерческие условия.",
         linkText: "Оптовый B2B портал",
         url: "/opt"
       },
       {
         icon: Store,
         image: "/assets/about/aslpharm_pharmacy_hd.webp",
-        badge: "Аптечный ритейл",
-        title: "Собственные розничные сети ASLPHARM и САХОВАТ",
-        desc: "Сеть собственных аптек, обеспечивающая прямой контакт с розничным покупателем, профессиональное консультирование провизорами и гарантированное наличие ключевых брендов на полках.",
-        linkText: "Сеть Саховат (sakhovatapteka.tj) • ASLPHARM (aslpharm.tj)",
-        url: "https://sakhovatapteka.tj",
-        secondaryUrl: "https://aslpharm.tj"
+        badge: "Аптечная сеть (Филиалы)",
+        title: "Сеть аптек ASLPHARM",
+        desc: "Собственная филиальная сеть современных аптек в городах Таджикистана. Высокие европейские стандарты обслуживания, квалифицированные провизоры и гарантированное наличие оригинальных препаратов на полках.",
+        linkText: "Официальный сайт aslpharm.tj",
+        url: "https://aslpharm.tj"
+      },
+      {
+        icon: Store,
+        image: "/assets/about/sakhovat_pharmacy_card.webp",
+        badge: "Аптечная сеть (Филиалы)",
+        title: "Сеть аптек САХОВАТ",
+        desc: "Собственная филиальная сеть аптек с комфортной эко-концепцией. Просторные залы, расширенные отделы нутрицевтики, витаминов, детского здоровья, ухода за мамой и сертифицированной лечебной косметики.",
+        linkText: "Официальный сайт sakhovatapteka.tj",
+        url: "https://sakhovatapteka.tj"
       },
       {
         icon: Globe,
         image: "/assets/about/toj_vitamin_brand.webp",
         badge: "Цифровой флагман",
-        title: "Цифровая платформа Toj-Vitamin (B2B / D2C)",
+        title: "Цифровая платформа Toj-Vitamin",
         desc: "Высокотехнологичный онлайн-сервис с персональным научным подбором витаминов, образовательной базой знаний, прямым контактом с потребителем и личным кабинетом заказа для аптек.",
         linkText: "Перейти к каталогу Toj-Vitamin",
         url: "/#catalog"
@@ -253,18 +261,26 @@ const CONTENT = {
       {
         icon: Store,
         image: "/assets/about/aslpharm_pharmacy_hd.webp",
-        badge: "Pharmacy Retail",
-        title: "Proprietary Retail Networks ASLPHARM & SAKHOVAT",
-        desc: "In-house brick-and-mortar pharmacy chain providing direct patient engagement, expert pharmacist dispensing, and guaranteed prime shelf space for strategic partner brands.",
-        linkText: "Sakhovat Chain (sakhovatapteka.tj) • ASLPHARM (aslpharm.tj)",
-        url: "https://sakhovatapteka.tj",
-        secondaryUrl: "https://aslpharm.tj"
+        badge: "Pharmacy Chain (Branches)",
+        title: "ASLPHARM Pharmacy Chain",
+        desc: "Proprietary multi-branch pharmacy network operating across Tajikistan. Contemporary European dispensing standards, licensed pharmacists, and guaranteed availability of genuine medical lines.",
+        linkText: "Official Website aslpharm.tj",
+        url: "https://aslpharm.tj"
+      },
+      {
+        icon: Store,
+        image: "/assets/about/sakhovat_pharmacy_card.webp",
+        badge: "Pharmacy Chain (Branches)",
+        title: "SAKHOVAT Pharmacy Chain",
+        desc: "Proprietary multi-branch eco-concept pharmacy network. Spacious layouts, dedicated departments for nutraceuticals, vitamins, maternal & child healthcare, and clinical skincare.",
+        linkText: "Official Website sakhovatapteka.tj",
+        url: "https://sakhovatapteka.tj"
       },
       {
         icon: Globe,
         image: "/assets/about/toj_vitamin_brand.webp",
         badge: "Digital Platform",
-        title: "Digital Platform Toj-Vitamin (B2B / D2C)",
+        title: "Digital Platform Toj-Vitamin",
         desc: "High-tech consumer e-commerce platform offering algorithmic nutrient selection, medical content, direct consumer feedback, and online order management for pharmacies.",
         linkText: "Visit Toj-Vitamin Catalog",
         url: "/#catalog"
@@ -420,18 +436,26 @@ const CONTENT = {
       {
         icon: Store,
         image: "/assets/about/aslpharm_pharmacy_hd.webp",
-        badge: "Чаканаи дорухона",
-        title: "Шабакаҳои дорухонаи ASLPHARM ва САХОВАТ",
-        desc: "Шабакаи дорухонаҳои хусусӣ, ки алоқаи мустақимро бо харидор ва мавҷудияти кафолатноки маҳсулотро дар рафҳо таъмин мекунад.",
-        linkText: "Шабакаи Саховат (sakhovatapteka.tj) • ASLPHARM (aslpharm.tj)",
-        url: "https://sakhovatapteka.tj",
-        secondaryUrl: "https://aslpharm.tj"
+        badge: "Шабакаи дорухонаҳо (Филиалҳо)",
+        title: "Шабакаи дорухонаҳои ASLPHARM",
+        desc: "Шабакаи хусусии бисёрфилиалии дорухонаҳои муосир дар шаҳрҳои Тоҷикистон. Меъёрҳои баланди хизматрасонӣ, дорусозони касбӣ ва мавҷудияти маҳсулоти аслӣ дар рафҳо.",
+        linkText: "Сомонаи расмии aslpharm.tj",
+        url: "https://aslpharm.tj"
+      },
+      {
+        icon: Store,
+        image: "/assets/about/sakhovat_pharmacy_card.webp",
+        badge: "Шабакаи дорухонаҳо (Филиалҳо)",
+        title: "Шабакаи дорухонаҳои САХОВАТ",
+        desc: "Шабакаи хусусии бисёрфилиалии дорухонаҳо бо консепсияи эко. Толорҳои барҳаво, бахшҳои махсуси витаминҳо, иловаҳои биологӣ, саломатии модару кӯдак ва косметикаи табобатӣ.",
+        linkText: "Сомонаи расмии sakhovatapteka.tj",
+        url: "https://sakhovatapteka.tj"
       },
       {
         icon: Globe,
         image: "/assets/about/toj_vitamin_brand.webp",
         badge: "Флагмани рақамӣ",
-        title: "Платформаи рақамии Toj-Vitamin (B2B / D2C)",
+        title: "Платформаи рақамии Toj-Vitamin",
         desc: "Хизматрасонии онлайни баландтехнологӣ бо интихоби инфиродии витаминҳо, мақолаҳои илмӣ ва бахши фармоиш барои дорухонаҳо.",
         linkText: "Ба каталоги Toj-Vitamin гузаред",
         url: "/#catalog"
@@ -891,7 +915,7 @@ export default function CorporateAboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Карточка 1: История */}
             <div className="p-6 sm:p-8 rounded-3xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
@@ -998,7 +1022,7 @@ export default function CorporateAboutPage() {
                         src={branch.image}
                         alt={branch.title}
                         fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
