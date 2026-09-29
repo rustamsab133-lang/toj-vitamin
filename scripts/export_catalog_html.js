@@ -1,8 +1,9 @@
 /**
  * export_catalog_html.js
  * 
- * Скрипт генерации автономного красивого HTML/PDF каталога продукции TOJ-VITAMIN
- * со схемами приема (дозировками), артикулами, логотипом и кликабельными ссылками в WhatsApp.
+ * Скрипт генерации постраничного PDF/HTML каталога TOJ-VITAMIN
+ * со строгой разбивкой по листам A4 (ровно 4 товара на страницу).
+ * Исключает разрезание карточек и текста между страницами.
  * 
  * Запуск: node scripts/export_catalog_html.js
  */
@@ -109,8 +110,16 @@ function parseInstructionDetails(rawUsage, fullText) {
   return { usage, timing, course };
 }
 
+function chunkArray(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 async function main() {
-  console.log('\n📄 === ГЕНЕРАЦИЯ АВТОНОМНОГО КАТАЛОГА TOJ-VITAMIN ===');
+  console.log('\n📄 === ПОСТРАНИЧНАЯ ГЕНЕРАЦИЯ КАТАЛОГА TOJ-VITAMIN ===');
   console.log('⏳ Загрузка товаров и настроек из Supabase...');
 
   const [
@@ -155,7 +164,8 @@ async function main() {
 
   const dateStr = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const cardsHtml = activeProducts.map((p, index) => {
+  // Map products to structured objects
+  const items = activeProducts.map((p, index) => {
     const codeNum = index + 1;
     const code = `#${codeNum < 10 ? '0' + codeNum : codeNum}`;
     const category = getProductCategory(p.name);
@@ -170,46 +180,109 @@ async function main() {
     const { usage, timing, course } = parseInstructionDetails(rawUsage, fullText);
 
     const properties = (enrichObj?.properties && enrichObj.properties.length > 0)
-      ? enrichObj.properties.slice(0, 3)
+      ? enrichObj.properties.slice(0, 2)
       : [
-          'Поддержка общего тонуса и энергии',
-          'Высокая биодоступность действующих веществ',
-          'Оригинальное сертифицированное качество'
+          'Поддержка тонуса и укрепление защитных сил',
+          'Высокая биодоступность действующих веществ'
         ];
 
     const waText = encodeURIComponent(
       `Здравствуйте! Хочу заказать товар из каталога TOJ-VITAMIN:\nКод: ${code}\nНаименование: ${p.name}\nЦена: ${retailPrice} смн`
     );
     const waLink = `https://wa.me/${OFFICIAL_PHONE}?text=${waText}`;
+
     const thumbPath = path.join(__dirname, `../public/catalog-thumbs/prod-${p.id}.png`);
     const imgUrl = fs.existsSync(thumbPath) ? `/catalog-thumbs/prod-${p.id}.png` : (p.image_url || '/logo.webp');
 
+    return {
+      code,
+      name: p.name,
+      category,
+      retailPrice,
+      usage,
+      timing,
+      course,
+      properties,
+      waLink,
+      imgUrl
+    };
+  });
+
+  // Chunk products: exactly 4 items per page!
+  const ITEMS_PER_PAGE = 4;
+  const productPages = chunkArray(items, ITEMS_PER_PAGE);
+  const totalPagesCount = productPages.length + 2; // Cover + Product Pages + Back Cover
+
+  console.log(`📑 Сформировано страниц: ${totalPagesCount} (Обложка + ${productPages.length} стр. каталога + Финал)`);
+
+  function renderCard(p) {
     return `
       <div class="card">
         <div class="card-header">
-          <span class="category-pill">${category}</span>
-          <span class="code-badge">${code}</span>
+          <span class="category-pill">${p.category}</span>
+          <span class="code-badge">${p.code}</span>
         </div>
+        
         <div class="image-box">
-          <img src="${imgUrl}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy" />
+          <img src="${p.imgUrl}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy" />
         </div>
+
         <div class="card-body">
-          <div class="card-title">${p.name}</div>
+          <div class="card-title" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</div>
+          
           <ul class="properties-list">
-            ${properties.map(pr => `<li>${pr}</li>`).join('')}
+            ${p.properties.map(pr => `<li>${pr}</li>`).join('')}
           </ul>
+
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> ${usage}</div>
-            <div class="instruction-sub">🕒 <strong>Время:</strong> ${timing} &bull; 📅 <strong>Курс:</strong> ${course}</div>
+            <div class="instruction-row">👉 <strong>Прием:</strong> ${p.usage}</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> ${p.timing} &bull; 📅 <strong>Курс:</strong> ${p.course}</div>
           </div>
+
           <div class="card-footer">
             <div class="price-box">
               <span class="price-label">Цена:</span>
-              <span class="price-val">${retailPrice} смн</span>
+              <span class="price-val">${p.retailPrice} смн</span>
             </div>
-            <a href="${waLink}" target="_blank" class="order-btn">📲 Заказать</a>
+            <a href="${p.waLink}" target="_blank" class="order-btn">📲 Заказать</a>
           </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const pagesHtml = productPages.map((pageItems, pageIdx) => {
+    const pageNum = pageIdx + 2; // Cover is page 1
+    // Primary category on this page
+    const pageCategory = pageItems[0]?.category || 'Витамины и минералы';
+
+    return `
+      <div class="catalog-page">
+        <!-- Page Running Header -->
+        <div class="page-running-header">
+          <div class="header-left">
+            <img src="/logo.webp" alt="TOJ-VITAMIN" class="mini-logo" onerror="this.style.display='none'" />
+            <span class="header-brand">TOJ-VITAMIN &bull; Официальный дистрибьютор</span>
+          </div>
+          <div class="header-right">
+            <span class="header-cat">${pageCategory}</span>
+          </div>
+        </div>
+
+        <!-- 2x2 Products Grid (Fixed Page Content) -->
+        <div class="page-grid-2x2">
+          ${pageItems.map(p => renderCard(p)).join('\n')}
+          ${pageItems.length < 4 ? '<div class="card-placeholder"></div>'.repeat(4 - pageItems.length) : ''}
+        </div>
+
+        <!-- Page Running Footer -->
+        <div class="page-running-footer">
+          <div class="footer-left">
+            📞 Заказ и консультация в WhatsApp: <strong>${OFFICIAL_PHONE_FORMATTED}</strong>
+          </div>
+          <div class="footer-center">www.toj-vitamin.tj</div>
+          <div class="footer-right">Стр. ${pageNum} из ${totalPagesCount}</div>
         </div>
       </div>
     `;
@@ -228,88 +301,33 @@ async function main() {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f8fafc;
+      background: #f1f5f9;
       color: #0f172a;
-      line-height: 1.45;
-      padding: 24px;
+      line-height: 1.4;
+      padding: 20px 0;
     }
-    .container { max-width: 1200px; margin: 0 auto; }
     
-    /* Cover */
-    .cover {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-      color: #ffffff;
-      border-radius: 24px;
-      padding: 40px;
-      margin-bottom: 32px;
-      box-shadow: 0 20px 40px -15px rgba(15,23,42,0.4);
-    }
-    .cover-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
-    }
-    .brand-wrap { display: flex; align-items: center; gap: 16px; }
-    .brand-logo { width: 56px; height: 56px; border-radius: 14px; background: #fff; padding: 6px; object-fit: contain; }
-    .brand-name { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
-    .brand-sub { font-size: 11px; text-transform: uppercase; color: #34d399; font-weight: 700; letter-spacing: 1px; }
-    .distributor-badge {
-      background: rgba(16,185,129,0.15);
-      border: 1px solid rgba(16,185,129,0.4);
-      color: #6ee7b7;
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .cover-hero { margin: 32px 0; }
-    .cover-title { font-size: 34px; font-weight: 900; line-height: 1.2; margin-bottom: 12px; }
-    .cover-desc { font-size: 14px; color: #cbd5e1; max-width: 720px; line-height: 1.6; }
-    .how-to-order {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 24px 0;
-    }
-    .step-box h4 { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-    .step-box p { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
-    .cover-contacts {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.15);
-      font-size: 12px;
-    }
-    .contact-item { color: #fff; text-decoration: none; font-weight: 700; }
-    .contact-item span { display: block; font-size: 10px; color: #94a3b8; font-weight: 500; text-transform: uppercase; }
-
-    /* Action bar */
+    /* Top sticky action bar */
     .action-bar {
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      max-width: 210mm;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      padding: 12px 20px;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
-      background: #fff;
-      padding: 16px 20px;
-      border-radius: 16px;
-      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     .print-btn {
       background: #0f172a;
       color: #fff;
       border: none;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 10px;
       font-weight: 700;
       font-size: 13px;
@@ -317,81 +335,212 @@ async function main() {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      transition: background 0.2s;
     }
     .print-btn:hover { background: #1e293b; }
 
-    /* Grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
+    /* Each physical A4 Page container */
+    .cover-page,
+    .catalog-page,
+    .back-cover-page {
+      width: 210mm;
+      min-height: 297mm;
+      max-height: 297mm;
+      height: 297mm;
+      margin: 0 auto 30px auto;
+      background: #ffffff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
+
+    /* ================= COVER PAGE ================= */
+    .cover-page {
+      background: linear-gradient(145deg, #090e17 0%, #172033 60%, #0d1527 100%);
+      color: #ffffff;
+      padding: 14mm 16mm;
+    }
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 6mm;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .brand-wrap { display: flex; align-items: center; gap: 14px; }
+    .brand-logo { width: 52px; height: 52px; border-radius: 12px; background: #fff; padding: 6px; object-fit: contain; }
+    .brand-name { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 10px; text-transform: uppercase; color: #34d399; font-weight: 700; letter-spacing: 1px; }
+    .distributor-badge {
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.35);
+      color: #6ee7b7;
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .cover-hero { margin: 10mm 0; }
+    .cover-badge-year {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+    .cover-title { font-size: 32px; font-weight: 900; line-height: 1.25; margin-bottom: 12px; }
+    .cover-desc { font-size: 13px; color: #cbd5e1; line-height: 1.6; max-width: 600px; }
+    .how-to-order {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 8mm;
+    }
+    .step-box h4 { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .step-box p { font-size: 11px; color: #cbd5e1; line-height: 1.45; }
+    .cover-contacts {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 6mm;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      font-size: 11px;
+    }
+    .contact-item { color: #fff; text-decoration: none; font-weight: 700; }
+    .contact-item span { display: block; font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
+
+    /* ================= CATALOG PRODUCT PAGE ================= */
+    .catalog-page {
+      padding: 10mm 12mm 8mm 12mm;
+    }
+    .page-running-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 3.5mm;
+      border-bottom: 1.5px solid #e2e8f0;
+      margin-bottom: 4mm;
+      height: 10mm;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .mini-logo { width: 22px; height: 22px; object-fit: contain; }
+    .header-brand { font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .header-cat { font-size: 11px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 2px 10px; border-radius: 6px; }
+
+    /* 2x2 Grid exactly on one page */
+    .page-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      flex: 1;
+      height: 250mm;
+      max-height: 250mm;
+    }
+
     .card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 14px;
+      padding: 12px;
       display: flex;
-      flex-col: column;
+      flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      break-inside: avoid;
-      page-break-inside: avoid;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      height: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .card-placeholder {
+      border: 1px dashed #e2e8f0;
+      border-radius: 14px;
+      background: #fafafa;
     }
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
     }
     .category-pill {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      background: #f1f5f9;
+      background: #f8fafc;
       color: #475569;
-      padding: 4px 10px;
-      border-radius: 8px;
+      padding: 3px 8px;
+      border-radius: 6px;
       border: 1px solid #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
     }
     .code-badge {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       background: #0f172a;
       color: #ffffff;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 2px 6px;
+      border-radius: 5px;
     }
     .image-box {
-      height: 160px;
+      height: 95px;
+      max-height: 95px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
     }
     .image-box img {
-      max-height: 100%;
+      max-height: 90px;
       max-width: 100%;
       object-fit: contain;
     }
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+    }
     .card-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 800;
       color: #0f172a;
-      line-height: 1.35;
-      margin-bottom: 8px;
-      min-height: 38px;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      height: 32px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
     .properties-list {
       list-style: none;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      height: 36px;
+      overflow: hidden;
     }
     .properties-list li {
-      font-size: 11px;
+      font-size: 10px;
       color: #475569;
-      margin-bottom: 3px;
-      padding-left: 12px;
+      line-height: 1.35;
+      margin-bottom: 2px;
+      padding-left: 10px;
       position: relative;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .properties-list li::before {
       content: "•";
@@ -403,179 +552,228 @@ async function main() {
     .instructions-box {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
-      border-radius: 12px;
-      padding: 10px;
-      margin-bottom: 12px;
-      font-size: 11px;
+      border-radius: 10px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      font-size: 10px;
       color: #065f46;
     }
     .instructions-header {
       font-weight: 800;
-      margin-bottom: 4px;
-      font-size: 10px;
-      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+      font-size: 9px;
+      letter-spacing: 0.3px;
     }
-    .instruction-row { margin-bottom: 2px; }
-    .instruction-sub { font-size: 10px; color: #047857; }
+    .instruction-row { line-height: 1.25; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .instruction-sub { font-size: 9px; color: #047857; line-height: 1.2; }
     .card-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 10px;
+      padding-top: 6px;
       border-top: 1px solid #f1f5f9;
+      margin-top: auto;
     }
-    .price-box .price-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; }
-    .price-box .price-val { font-size: 16px; font-weight: 900; color: #0f172a; }
+    .price-box .price-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; line-height: 1; }
+    .price-box .price-val { font-size: 14px; font-weight: 900; color: #0f172a; line-height: 1.2; }
     .order-btn {
       background: #059669;
       color: #ffffff;
       text-decoration: none;
       font-weight: 700;
-      font-size: 11px;
-      padding: 8px 14px;
-      border-radius: 8px;
-      transition: background 0.2s;
+      font-size: 10px;
+      padding: 5px 12px;
+      border-radius: 7px;
     }
-    .order-btn:hover { background: #047857; }
 
-    /* Footer */
-    .footer {
+    .page-running-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 3mm;
+      border-top: 1px solid #e2e8f0;
+      font-size: 9px;
+      color: #64748b;
+      margin-top: 3mm;
+      height: 8mm;
+    }
+    .footer-left strong { color: #0f172a; }
+
+    /* ================= BACK COVER ================= */
+    .back-cover-page {
       background: #0f172a;
       color: #ffffff;
-      border-radius: 24px;
-      padding: 32px;
-      margin-top: 32px;
-      break-inside: avoid;
+      padding: 14mm 16mm;
     }
-    .footer-grid {
+    .back-cover-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid #334155;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin: auto 0;
     }
-    .footer-col h4 { font-size: 14px; font-weight: 700; color: #34d399; margin-bottom: 10px; }
-    .footer-col p, .footer-col li { font-size: 12px; color: #cbd5e1; line-height: 1.6; }
-    .disclaimer {
+    .back-cover-col {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .back-cover-col h4 { font-size: 14px; font-weight: 800; color: #34d399; margin-bottom: 8px; }
+    .back-cover-col p, .back-cover-col li { font-size: 12px; color: #cbd5e1; line-height: 1.6; }
+    .disclaimer-box {
+      border-top: 1px solid rgba(255,255,255,0.15);
+      padding-top: 14px;
       text-align: center;
       font-size: 10px;
       color: #64748b;
-      margin-top: 20px;
       line-height: 1.5;
     }
 
+    /* PRINT RULES */
     @media print {
-      body { background: #fff !important; padding: 0 !important; }
+      @page {
+        size: A4 portrait;
+        margin: 0 !important;
+      }
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 210mm !important;
+      }
       .action-bar { display: none !important; }
-      .cover { border-radius: 0 !important; page-break-after: always; box-shadow: none !important; }
-      .footer { border-radius: 0 !important; }
-      .grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
-      @page { size: A4; margin: 8mm; }
+      .cover-page,
+      .catalog-page,
+      .back-cover-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        min-height: 297mm !important;
+        overflow: hidden !important;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    
-    <!-- Action bar -->
-    <div class="action-bar">
-      <div>
-        <strong>Каталог TOJ-VITAMIN (${activeProducts.length} позиций)</strong>
-        <span style="font-size: 12px; color: #64748b; margin-left: 8px;">Дата: ${dateStr}</span>
-      </div>
-      <button onclick="window.print()" class="print-btn">
-        📄 Распечатать / Сохранить в PDF
-      </button>
+  <!-- Action Bar on screen -->
+  <div class="action-bar">
+    <div>
+      <strong style="font-size: 15px;">Каталог продукции TOJ-VITAMIN</strong>
+      <span style="font-size: 12px; color: #64748b; margin-left: 8px;">
+        105 товаров &bull; ${totalPagesCount} страниц (ровно 4 товара на лист)
+      </span>
     </div>
+    <button onclick="window.print()" class="print-btn">
+      📄 Сохранить идеальный PDF (Печать)
+    </button>
+  </div>
 
-    <!-- Cover Page -->
-    <div class="cover">
-      <div class="cover-top">
-        <div class="brand-wrap">
-          <img src="/logo.webp" alt="Logo" class="brand-logo" onerror="this.style.display='none'" />
-          <div>
-            <div class="brand-name">TOJ-VITAMIN</div>
-            <div class="brand-sub">Дистрибьюторский центр здоровья</div>
-          </div>
-        </div>
-        <div class="distributor-badge">
-          🛡️ Официальный дистрибьютор GLS Pharmaceuticals в Таджикистане
+  <!-- PAGE 1: COVER -->
+  <div class="cover-page">
+    <div class="cover-top">
+      <div class="brand-wrap">
+        <img src="/logo.webp" alt="Logo" class="brand-logo" onerror="this.style.display='none'" />
+        <div>
+          <div class="brand-name">TOJ-VITAMIN</div>
+          <div class="brand-sub">Дистрибьюторский центр здоровья</div>
         </div>
       </div>
-
-      <div class="cover-hero">
-        <h1 class="cover-title">Официальный каталог продукции и схемы приема</h1>
-        <p class="cover-desc">
-          Сертифицированные инновационные витамины, биодоступные хелаты и минеральные комплексы для поддержки здоровья всей семьи. Прямые поставки с завода, свежие сроки годности, собственные климатические склады.
-        </p>
-      </div>
-
-      <div class="how-to-order">
-        <div class="step-box">
-          <h4>1. Заказ одного товара</h4>
-          <p>Нажмите кнопку <strong>«Заказать»</strong> под карточкой любого выбранного препарата — сразу откроется WhatsApp с готовым сообщением.</p>
-        </div>
-        <div class="step-box">
-          <h4>2. Заказ нескольких позиций (списком)</h4>
-          <p>Отправьте номера товаров (например: <strong>«Хочу #03, #11 и #24»</strong>) в WhatsApp на номер <strong>${OFFICIAL_PHONE_FORMATTED}</strong>. Мы рассчитаем сумму и оформим единую доставку.</p>
-        </div>
-      </div>
-
-      <div class="cover-contacts">
-        <a href="tel:+${OFFICIAL_PHONE}" class="contact-item">
-          <span>Телефон для заказов</span>
-          ${OFFICIAL_PHONE_FORMATTED}
-        </a>
-        <a href="https://wa.me/${OFFICIAL_PHONE}" class="contact-item">
-          <span>WhatsApp / Telegram</span>
-          ${OFFICIAL_PHONE_FORMATTED}
-        </a>
-        <div class="contact-item">
-          <span>Склады и логистика</span>
-          г. Душанбе &bull; г. Худжанд
-        </div>
-        <div class="contact-item">
-          <span>Официальный сайт</span>
-          www.toj-vitamin.tj
-        </div>
+      <div class="distributor-badge">
+        🛡️ Официальный дистрибьютор GLS в РТ
       </div>
     </div>
 
-    <!-- Cards Grid -->
-    <div class="grid">
-      ${cardsHtml}
+    <div class="cover-hero">
+      <div class="cover-badge-year">Официальное издание &bull; 2026</div>
+      <h1 class="cover-title">Каталог сертифицированных витаминов и схемы приема</h1>
+      <p class="cover-desc">
+        Более 100 оригинальных биодоступных комплексов GLS Pharmaceuticals в Таджикистане. Точные схемы приема, дозировки, актуальные цены и доставка до двери.
+      </p>
     </div>
 
-    <!-- Footer -->
-    <div class="footer">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <h4>💬 Заказ через мессенджеры</h4>
-          <p>Вы можете отправить список артикулов или скриншоты прямо на наш номер WhatsApp: <strong>${OFFICIAL_PHONE_FORMATTED}</strong>.</p>
-        </div>
-        <div class="footer-col">
-          <h4>🚚 Доставка по Таджикистану</h4>
-          <p>Курьерская доставка день-в-день по Душанбе и Худжанду. Экспресс-отправка в регионы РТ до 24 часов.</p>
-        </div>
-        <div class="footer-col">
-          <h4>🏢 Оптовые поставки аптекам</h4>
-          <p>Специальные оптовые условия для аптек и медцентров. Сертификаты соответствия Минздрава РТ, накладные и счета-фактуры.</p>
-        </div>
+    <div class="how-to-order">
+      <div class="step-box">
+        <h4>1. Заказ одного товара</h4>
+        <p>Нажмите <strong>«Заказать»</strong> под любым выбранным товаром — сразу откроется WhatsApp с готовым текстом заказа.</p>
       </div>
-      <div class="disclaimer">
-        Биологически активная добавка к пище (БАД). Не является лекарственным средством. Перед применением рекомендуется проконсультироваться со специалистом.<br>
-        &copy; ${new Date().getFullYear()} TOJ-VITAMIN (ООО «Саховати Истаравшан»). Все права защищены.
+      <div class="step-box">
+        <h4>2. Заказ нескольких позиций (списком)</h4>
+        <p>Отправьте номера товаров (напр. <strong>«Хочу #03, #11 и #24»</strong>) на номер <strong>${OFFICIAL_PHONE_FORMATTED}</strong> в WhatsApp.</p>
       </div>
     </div>
 
+    <div class="cover-contacts">
+      <a href="tel:+${OFFICIAL_PHONE}" class="contact-item">
+        <span>Телефон для заказов</span>
+        ${OFFICIAL_PHONE_FORMATTED}
+      </a>
+      <a href="https://wa.me/${OFFICIAL_PHONE}" class="contact-item">
+        <span>WhatsApp</span>
+        ${OFFICIAL_PHONE_FORMATTED}
+      </a>
+      <div class="contact-item">
+        <span>Склады и логистика</span>
+        г. Душанбе &bull; г. Худжанд
+      </div>
+      <div class="contact-item">
+        <span>Сайт</span>
+        www.toj-vitamin.tj
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGES 2..N: 4 PRODUCTS PER SHEET -->
+  ${pagesHtml}
+
+  <!-- LAST PAGE: BACK COVER -->
+  <div class="back-cover-page">
+    <div class="cover-top">
+      <div class="brand-wrap">
+        <img src="/logo.webp" alt="Logo" class="brand-logo" onerror="this.style.display='none'" />
+        <div>
+          <div class="brand-name">TOJ-VITAMIN</div>
+          <div class="brand-sub">ООО «Саховати Истаравшан»</div>
+        </div>
+      </div>
+      <div class="distributor-badge">
+        📞 ${OFFICIAL_PHONE_FORMATTED}
+      </div>
+    </div>
+
+    <div class="back-cover-grid">
+      <div class="back-cover-col">
+        <h4>💬 Заказ нескольких товаров через WhatsApp</h4>
+        <p>Вы можете отправить список артикулов или скриншоты прямо на наш номер: <strong>${OFFICIAL_PHONE_FORMATTED}</strong>. Консультант рассчитает скидку и оформит доставку в одном заказе.</p>
+      </div>
+
+      <div class="back-cover-col">
+        <h4>🚚 Доставка по Республике Таджикистан</h4>
+        <p><strong>Душанбе и Худжанд:</strong> курьерская доставка день-в-день прямо в руки.<br>
+        <strong>Регионы РТ:</strong> оперативная отправка до 24 часов в любой город республики.</p>
+      </div>
+
+      <div class="back-cover-col">
+        <h4>🏢 Аптекам и оптовым партнерам</h4>
+        <p>Специальные оптовые условия для аптек и медцентров. Сертификаты соответствия Службы надзора Минздрава РТ, накладные и безналичный расчет.</p>
+      </div>
+    </div>
+
+    <div class="disclaimer-box">
+      Биологически активная добавка к пище (БАД). Не является лекарственным средством. Перед применением рекомендуется проконсультироваться со специалистом.<br>
+      &copy; ${new Date().getFullYear()} TOJ-VITAMIN. Все права защищены.
+    </div>
   </div>
 </body>
 </html>`;
 
   const outputPath = path.join(__dirname, '../public/catalog.html');
   fs.writeFileSync(outputPath, fullHtml, 'utf8');
-  console.log(`✅ Каталог успешно сохранен: ${outputPath} (${(fullHtml.length / 1024).toFixed(1)} КБ)`);
-  console.log('🎉 Готово! Файл доступен по пути: /catalog.html или http://localhost:3000/catalog');
+  console.log(`✅ Постраничный каталог сохранен: ${outputPath} (${(fullHtml.length / 1024).toFixed(1)} КБ)`);
 }
 
 main().catch(console.error);

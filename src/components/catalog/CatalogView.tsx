@@ -18,7 +18,8 @@ import {
   Filter,
   Check,
   ExternalLink,
-  Layers
+  Layers,
+  LayoutGrid
 } from 'lucide-react';
 import { CatalogProduct, CatalogDataResult } from '@/lib/catalogData';
 
@@ -26,18 +27,24 @@ interface CatalogViewProps {
   initialData: CatalogDataResult;
 }
 
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
 export default function CatalogView({ initialData }: CatalogViewProps) {
   const [data, setData] = useState<CatalogDataResult>(initialData);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [priceType, setPriceType] = useState<'retail' | 'wholesale' | 'none'>('retail');
-  const [loadingPrice, setLoadingPrice] = useState(false);
 
   // Handle switching price mode
   const handlePriceTypeChange = async (newType: 'retail' | 'wholesale' | 'none') => {
     if (newType === priceType) return;
     setPriceType(newType);
-    setLoadingPrice(true);
     try {
       const res = await fetch(`/api/catalog/data?priceType=${newType}`);
       if (res.ok) {
@@ -46,8 +53,6 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
       }
     } catch (e) {
       console.error('Failed to change price mode:', e);
-    } finally {
-      setLoadingPrice(false);
     }
   };
 
@@ -67,6 +72,14 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
       );
     });
   }, [data.products, search, selectedCategory]);
+
+  // Chunk products: exactly 4 items per physical A4 page
+  const ITEMS_PER_PAGE = 4;
+  const productPages = useMemo(() => {
+    return chunkArray(filteredProducts, ITEMS_PER_PAGE);
+  }, [filteredProducts]);
+
+  const totalPagesCount = productPages.length + 2; // Cover + Product Pages + Back Cover
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -98,21 +111,21 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans print:bg-white print:text-black">
+    <div className="min-h-screen bg-slate-100/80 text-slate-900 font-sans print:bg-white print:text-black print:p-0">
+      
       {/* ===================== CONTROL TOOLBAR (HIDDEN IN PRINT) ===================== */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-200 flex items-center justify-center shadow-sm p-1">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center shadow-sm">
               <Image 
-                src="/logo-square.webp" 
+                src="/logo.webp" 
                 alt="TOJ-VITAMIN" 
                 width={40} 
                 height={40} 
-                className="object-contain" 
+                className="object-contain"
                 onError={(e) => {
-                  // fallback if image fails
                   (e.target as HTMLElement).style.display = 'none';
                 }}
               />
@@ -121,11 +134,11 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
               <h1 className="text-base font-bold text-slate-900 leading-tight tracking-tight flex items-center gap-2">
                 TOJ-VITAMIN
                 <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  PDF Каталог
+                  Постраничный PDF
                 </span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
-                {data.totalCount} позиций с официальными схемами приема
+                {filteredProducts.length} товаров • {totalPagesCount} страниц (ровно 4 на страницу)
               </p>
             </div>
           </div>
@@ -181,13 +194,13 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
               className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
             >
               <Printer size={15} />
-              <span>Сохранить в PDF / Печать</span>
+              <span>📄 Сохранить в PDF (Печать)</span>
             </button>
           </div>
         </div>
 
         {/* Filter bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 border-t border-slate-100 flex flex-wrap items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 border-t border-slate-100 flex flex-wrap items-center gap-3">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[220px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
@@ -209,7 +222,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
           </div>
 
           {/* Category Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             <button
               onClick={() => setSelectedCategory('all')}
               className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
@@ -237,107 +250,114 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
         </div>
       </header>
 
-      {/* ===================== PRINT STYLES ===================== */}
+      {/* ===================== PRINT CSS RULES ===================== */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           @page {
-            size: A4;
-            margin: 8mm 8mm 8mm 8mm;
+            size: A4 portrait;
+            margin: 0 !important;
           }
-          body {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            background-color: #ffffff !important;
+          html, body {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
           }
-          .page-break-before {
-            page-break-before: always !important;
-            break-before: page !important;
-          }
-          .page-break-after {
+          .cover-page,
+          .catalog-page,
+          .back-cover-page {
+            width: 210mm !important;
+            height: 297mm !important;
+            max-height: 297mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
-          }
-          .card-avoid-break {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+            background: #ffffff;
           }
         }
       `}} />
 
-      {/* ===================== CATALOG CONTAINER ===================== */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 print:p-0 print:max-w-none">
-        
-        {/* ===================== COVER PAGE ===================== */}
-        <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl p-8 sm:p-12 mb-10 shadow-xl border border-slate-700/50 page-break-after print:rounded-none print:shadow-none print:mb-0 print:min-h-[280mm] print:flex print:flex-col print:justify-between">
+      {/* ===================== PAGES WRAPPER ===================== */}
+      <div className="py-8 print:p-0">
+
+        {/* ===================== PAGE 1: COVER ===================== */}
+        <section className="cover-page w-[210mm] min-h-[297mm] max-h-[297mm] h-[297mm] mx-auto mb-8 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-[14mm_16mm] shadow-xl rounded-2xl flex flex-col justify-between overflow-hidden print:rounded-none print:shadow-none print:mb-0">
           <div>
-            {/* Top row with Logo and Distributor badge */}
-            <div className="flex flex-wrap items-center justify-between gap-6 pb-8 border-b border-slate-700/60">
+            {/* Top row */}
+            <div className="flex items-center justify-between pb-6 border-b border-slate-700/60">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-white p-2 flex items-center justify-center shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center shadow-lg">
                   <Image 
                     src="/logo.webp" 
                     alt="TOJ-VITAMIN Logo" 
-                    width={64} 
-                    height={64} 
+                    width={56} 
+                    height={56} 
                     className="object-contain"
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                  <h2 className="text-2xl font-extrabold tracking-tight text-white">
                     TOJ-VITAMIN
                   </h2>
-                  <p className="text-xs sm:text-sm font-semibold text-emerald-400 tracking-wide uppercase">
+                  <p className="text-[11px] font-bold text-emerald-400 tracking-wider uppercase">
                     Дистрибьюторский центр здоровья
                   </p>
                 </div>
               </div>
 
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-2xl text-emerald-300 text-xs sm:text-sm font-bold">
-                <ShieldCheck size={18} className="text-emerald-400 shrink-0" />
-                <span>Официальный дистрибьютор GLS Pharmaceuticals в РТ</span>
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-1.5 rounded-xl text-emerald-300 text-xs font-bold">
+                <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                <span>Официальный дистрибьютор GLS в РТ</span>
               </div>
             </div>
 
-            {/* Catalog Title Banner */}
-            <div className="py-10 sm:py-14 max-w-3xl">
+            {/* Catalog Hero Banner */}
+            <div className="py-10 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-slate-300 text-xs font-semibold mb-4 backdrop-blur-sm">
                 <Sparkles size={14} className="text-amber-400" />
-                Официальный каталог продукции и схемы приема • 2026
+                Официальное издание • Каталог и схемы приема 2026
               </div>
-              <h1 className="text-3xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4 text-balance">
-                Премиальные витамины и нутрицевтики с доказанной эффективностью
+              <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight mb-4">
+                Каталог сертифицированных витаминов и схемы приема
               </h1>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl font-normal">
-                Более 80 сертифицированных позиций: витамины высокой биодоступности, хелатные минералы, комплексы для иммунитета, энергии, сна и активного долголетия. Прямые поставки с завода, свежие сроки годности и контроль температурного режима.
+              <p className="text-sm text-slate-300 leading-relaxed max-w-xl font-normal">
+                Более 100 оригинальных биодоступных комплексов GLS Pharmaceuticals в Таджикистане. Точные схемы приема, дозировки, актуальные цены и доставка до двери.
               </p>
             </div>
 
             {/* How to Order Guide */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm mb-8">
-              <div className="flex gap-3.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-500/30">
+            <div className="grid grid-cols-2 gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm mb-6">
+              <div className="flex gap-3">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 border border-emerald-500/30">
                   1
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white mb-1">
-                    Как заказать один товар
+                  <h4 className="text-xs font-bold text-white mb-1">
+                    Заказ одного товара
                   </h4>
-                  <p className="text-xs text-slate-300 leading-normal">
-                    Нажмите зеленую кнопку <strong className="text-emerald-300">«Заказать в WhatsApp»</strong> под любым выбранным товаром — откроется диалог с уже заполненным текстом заказа.
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Нажмите <strong className="text-emerald-300">«Заказать»</strong> под любым выбранным товаром — сразу откроется WhatsApp с текстом заказа.
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-3.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-500/30">
+              <div className="flex gap-3">
+                <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-500/30">
                   2
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white mb-1">
-                    Как заказать несколько товаров
+                  <h4 className="text-xs font-bold text-white mb-1">
+                    Заказ нескольких позиций (списком)
                   </h4>
-                  <p className="text-xs text-slate-300 leading-normal">
-                    Просто отправьте список номеров товаров (например: <strong className="text-blue-300">«Хочу заказать #04, #12 и #25»</strong>) на наш номер в WhatsApp. Консультант рассчитает заказ и оформит доставку!
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Отправьте номера товаров (напр. <strong className="text-blue-300">«Хочу #03, #11 и #24»</strong>) в WhatsApp на номер {data.company.phoneFormatted}.
                   </p>
                 </div>
               </div>
@@ -345,224 +365,221 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
           </div>
 
           {/* Contact Bar & Warehouses */}
-          <div className="pt-6 border-t border-slate-700/60 flex flex-wrap items-center justify-between gap-6 text-xs text-slate-300">
-            <div className="flex flex-wrap items-center gap-6">
-              <a 
-                href={`tel:+${data.company.phone}`}
-                className="flex items-center gap-2 hover:text-white transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                  <Phone size={14} />
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Телефон</div>
-                  <div className="font-bold text-white text-sm">{data.company.phoneFormatted}</div>
-                </div>
-              </a>
+          <div className="pt-6 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-300">
+            <div className="flex items-center gap-6">
+              <div>
+                <span className="text-[9px] text-slate-400 uppercase font-semibold block">Телефон для заказов</span>
+                <span className="font-bold text-white text-sm">{data.company.phoneFormatted}</span>
+              </div>
 
-              <a 
-                href={`https://wa.me/${data.company.whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:text-white transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                  <MessageCircle size={14} />
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-semibold">WhatsApp</div>
-                  <div className="font-bold text-emerald-400 text-sm">{data.company.whatsappFormatted}</div>
-                </div>
-              </a>
+              <div>
+                <span className="text-[9px] text-slate-400 uppercase font-semibold block">WhatsApp</span>
+                <span className="font-bold text-emerald-400 text-sm">{data.company.whatsappFormatted}</span>
+              </div>
 
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                  <Building2 size={14} />
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Склады и доставка</div>
-                  <div className="font-bold text-white text-xs">г. Душанбе • г. Худжанд</div>
-                </div>
+              <div>
+                <span className="text-[9px] text-slate-400 uppercase font-semibold block">Склады и доставка</span>
+                <span className="font-bold text-white text-xs">г. Душанбе • г. Худжанд</span>
               </div>
             </div>
 
             <div className="text-right">
-              <span className="text-[11px] text-slate-400 block">Официальный сайт</span>
-              <a 
-                href={data.company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white hover:text-emerald-400 font-bold text-sm underline"
-              >
-                www.toj-vitamin.tj
-              </a>
+              <span className="text-[9px] text-slate-400 uppercase font-semibold block">Официальный сайт</span>
+              <span className="text-white font-bold text-xs">www.toj-vitamin.tj</span>
             </div>
           </div>
         </section>
 
-        {/* ===================== PRODUCTS SECTION ===================== */}
-        <section className="mb-14">
-          <div className="flex items-center justify-between mb-6 print:hidden">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                {selectedCategory === 'all' ? 'Все товары каталога' : selectedCategory}
-              </h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Показано {filteredProducts.length} из {data.totalCount} наименований
-              </p>
-            </div>
+        {/* ===================== PAGES 2..N: 4 PRODUCTS PER PAGE (2x2 GRID) ===================== */}
+        {productPages.map((pageItems, pageIdx) => {
+          const pageNum = pageIdx + 2;
+          const pageCat = pageItems[0]?.category || 'Витамины и минералы';
 
-            <div className="text-xs text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 font-medium">
-              Тип цен: <strong className="text-slate-800 font-bold">
-                {priceType === 'retail' ? 'Розничные' : priceType === 'wholesale' ? 'Оптовые (B2B)' : 'Скрыты'}
-              </strong>
-            </div>
-          </div>
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 print:grid-cols-2 print:gap-4">
-            {filteredProducts.map((p) => {
-              const catClass = getCategoryColor(p.category);
-
-              return (
-                <div
-                  key={p.id}
-                  className="card-avoid-break bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden print:border-slate-300 print:shadow-none"
-                >
-                  {/* Top Bar: Category Pill & Fast Order Code */}
-                  <div className="p-4 pb-0 flex items-center justify-between gap-2">
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${catClass} truncate`}>
-                      {p.category}
-                    </span>
-
-                    <span className="text-xs font-extrabold bg-slate-900 text-white px-2.5 py-0.5 rounded-lg tracking-wider shrink-0 shadow-xs">
-                      {p.code}
-                    </span>
+          return (
+            <div 
+              key={`page-${pageIdx}`}
+              className="catalog-page w-[210mm] min-h-[297mm] max-h-[297mm] h-[297mm] mx-auto mb-8 bg-white p-[10mm_12mm_8mm_12mm] shadow-xl rounded-2xl flex flex-col justify-between overflow-hidden print:rounded-none print:shadow-none print:mb-0"
+            >
+              {/* Page Running Header */}
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 h-[10mm]">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                    <Image src="/logo.webp" alt="TOJ" width={20} height={20} className="object-contain" />
                   </div>
-
-                  {/* Product Image on soft subtle podium */}
-                  <div className="relative h-44 sm:h-48 w-full px-4 pt-3 flex items-center justify-center">
-                    <div className="absolute inset-x-8 bottom-3 h-14 bg-radial from-slate-100 to-transparent rounded-full opacity-70 pointer-events-none" />
-                    <div className="relative w-full h-full max-h-40 flex items-center justify-center">
-                      <Image
-                        src={p.imageUrl}
-                        alt={p.name}
-                        width={200}
-                        height={200}
-                        className="object-contain max-h-full drop-shadow-md hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="p-4 pt-1 flex-1 flex flex-col justify-between">
-                    <div>
-                      {/* Product Name */}
-                      <h4 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 mb-2" title={p.name}>
-                        {p.name}
-                      </h4>
-
-                      {/* Benefits bullets */}
-                      <ul className="space-y-1 mb-3">
-                        {p.properties.map((prop, i) => (
-                          <li key={i} className="text-[11px] text-slate-600 flex items-start gap-1.5 leading-tight">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
-                            <span className="line-clamp-1">{prop}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      {/* Dosage & Usage Instruction Box */}
-                      <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-2.5 mb-3.5 text-slate-800">
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-900 mb-1">
-                          <Clock size={13} className="text-emerald-600 shrink-0" />
-                          <span>КАК И СКОЛЬКО ПРИНИМАТЬ:</span>
-                        </div>
-                        
-                        <div className="text-[11px] space-y-0.5 font-medium">
-                          <p className="text-slate-800 leading-tight">
-                            👉 <strong>Прием:</strong> {p.instructions.usage}
-                          </p>
-                          <p className="text-slate-600 leading-tight flex items-center gap-2">
-                            <span>🕒 <strong>Время:</strong> {p.instructions.timing}</span>
-                            <span>•</span>
-                            <span>📅 <strong>Курс:</strong> {p.instructions.course}</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Price & Order Action */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
-                      <div>
-                        {priceType !== 'none' ? (
-                          <div>
-                            <span className="text-[10px] text-slate-400 uppercase font-semibold block leading-none">
-                              {priceType === 'wholesale' ? 'Оптовая цена' : 'Цена'}
-                            </span>
-                            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                              {p.displayPrice}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs font-bold text-slate-600">
-                            По запросу
-                          </span>
-                        )}
-                      </div>
-
-                      <a
-                        href={p.waLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all shrink-0"
-                      >
-                        <MessageCircle size={13} />
-                        <span>Заказать</span>
-                      </a>
-                    </div>
-                  </div>
+                  <span className="text-[11px] font-extrabold text-slate-900 tracking-wider uppercase">
+                    TOJ-VITAMIN • Официальный дистрибьютор
+                  </span>
                 </div>
-              );
-            })}
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-md">
+                    {pageCat}
+                  </span>
+                </div>
+              </div>
+
+              {/* 2x2 Fixed Grid Content */}
+              <div className="grid grid-cols-2 grid-rows-2 gap-3 h-[250mm] max-h-[250mm] my-auto">
+                {pageItems.map((p) => {
+                  const catClass = getCategoryColor(p.category);
+
+                  return (
+                    <div 
+                      key={p.id}
+                      className="bg-white border border-slate-200/90 rounded-xl p-3 flex flex-col justify-between h-full overflow-hidden shadow-xs"
+                    >
+                      {/* Top Bar: Category Pill & Fast Order Code */}
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${catClass} truncate max-w-[150px]`}>
+                          {p.category}
+                        </span>
+
+                        <span className="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded tracking-wider shrink-0">
+                          {p.code}
+                        </span>
+                      </div>
+
+                      {/* Product Image */}
+                      <div className="h-[95px] max-h-[95px] w-full flex items-center justify-center my-1 relative">
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <Image
+                            src={p.imageUrl}
+                            alt={p.name}
+                            width={160}
+                            height={95}
+                            className="object-contain max-h-[90px] drop-shadow-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Title & bullets */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-[12px] font-extrabold text-slate-900 leading-snug line-clamp-2 mb-1.5 h-[32px]" title={p.name}>
+                            {p.name}
+                          </h4>
+
+                          <ul className="space-y-0.5 mb-2 h-[34px] overflow-hidden">
+                            {p.properties.slice(0, 2).map((prop, i) => (
+                              <li key={i} className="text-[10px] text-slate-600 flex items-start gap-1 leading-tight truncate">
+                                <span className="text-emerald-500 font-bold shrink-0">•</span>
+                                <span className="truncate">{prop}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          {/* Dosage & Usage Instruction Box */}
+                          <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-lg p-2 mb-2 text-slate-900">
+                            <div className="flex items-center gap-1 text-[9px] font-extrabold text-emerald-900 mb-0.5 tracking-wider">
+                              <Clock size={11} className="text-emerald-600 shrink-0" />
+                              <span>КАК И СКОЛЬКО ПРИНИМАТЬ:</span>
+                            </div>
+                            
+                            <div className="text-[9.5px] space-y-0.5 font-medium leading-tight">
+                              <p className="truncate">
+                                👉 <strong>Прием:</strong> {p.instructions.usage}
+                              </p>
+                              <p className="text-[9px] text-emerald-800 truncate">
+                                🕒 {p.instructions.timing} &bull; 📅 {p.instructions.course}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Price & Order Action */}
+                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
+                          <div>
+                            {priceType !== 'none' ? (
+                              <div>
+                                <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
+                                  {priceType === 'wholesale' ? 'Опт' : 'Цена'}
+                                </span>
+                                <span className="text-sm font-black text-slate-900 tracking-tight leading-tight">
+                                  {p.displayPrice}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] font-bold text-slate-500">
+                                По запросу
+                              </span>
+                            )}
+                          </div>
+
+                          <a
+                            href={p.waLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-xs transition-all shrink-0"
+                          >
+                            <MessageCircle size={11} />
+                            <span>Заказать</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Fill empty cells if last page has < 4 items */}
+                {pageItems.length < 4 && Array.from({ length: 4 - pageItems.length }).map((_, emptyIdx) => (
+                  <div key={`empty-${emptyIdx}`} className="border border-dashed border-slate-200 rounded-xl bg-slate-50/50" />
+                ))}
+              </div>
+
+              {/* Page Running Footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-[9px] text-slate-500 h-[8mm]">
+                <div>
+                  📞 Заказ в WhatsApp: <strong>{data.company.phoneFormatted}</strong>
+                </div>
+                <div>www.toj-vitamin.tj</div>
+                <div className="font-bold text-slate-700">
+                  Стр. {pageNum} из {totalPagesCount}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* ===================== LAST PAGE: BACK COVER ===================== */}
+        <section className="back-cover-page w-[210mm] min-h-[297mm] max-h-[297mm] h-[297mm] mx-auto bg-slate-950 text-white p-[14mm_16mm] shadow-xl rounded-2xl flex flex-col justify-between overflow-hidden print:rounded-none print:shadow-none">
+          <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center">
+                <Image src="/logo.webp" alt="Logo" width={40} height={40} className="object-contain" />
+              </div>
+              <div>
+                <div className="text-lg font-bold text-white">TOJ-VITAMIN</div>
+                <div className="text-[10px] text-slate-400">ООО «Саховати Истаравшан»</div>
+              </div>
+            </div>
+            <div className="text-right text-xs text-emerald-400 font-bold">
+              📞 {data.company.phoneFormatted}
+            </div>
           </div>
 
-          {filteredProducts.length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center my-6">
-              <p className="text-slate-500 font-medium text-sm">
-                По вашему запросу товаров не найдено. Попробуйте сбросить фильтры.
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* ===================== FOOTER / BACK COVER ===================== */}
-        <footer className="card-avoid-break bg-slate-900 text-white rounded-3xl p-8 sm:p-10 border border-slate-800 print:rounded-none">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-800">
-            {/* Column 1: Order instructions */}
-            <div>
-              <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-3">
+          <div className="grid grid-cols-1 gap-6 my-auto">
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2.5 text-emerald-400 text-sm font-bold mb-2">
                 <MessageCircle size={18} />
-                <span>Заказ списком через WhatsApp</span>
+                <span>Заказ нескольких позиций списком в WhatsApp</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                Если вы хотите заказать сразу несколько позиций для всей семьи или для аптеки, отправьте их коды на номер:
+                Для оформления заказа на курс или для всей семьи просто отправьте номера препаратов на номер:
               </p>
-              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 font-mono text-xs text-emerald-300">
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-xs text-emerald-300">
                 «Здравствуйте! Хочу заказать: #02 (2 шт), #07 (1 шт), #19 (1 шт)»
               </div>
             </div>
 
-            {/* Column 2: Logistics */}
-            <div>
-              <div className="flex items-center gap-2 text-blue-400 text-sm font-bold mb-3">
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2.5 text-blue-400 text-sm font-bold mb-2">
                 <Truck size={18} />
-                <span>Условия доставки по Таджикистану</span>
+                <span>Быстрая доставка по Таджикистану</span>
               </div>
               <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <Check size={14} className="text-blue-400 mt-0.5 shrink-0" />
-                  <span><strong>Душанбе и Худжанд:</strong> курьерская доставка день-в-день прямо в руки.</span>
+                  <span><strong>Душанбе и Худжанд:</strong> экспресс-доставка день-в-день курьером прямо в руки.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check size={14} className="text-blue-400 mt-0.5 shrink-0" />
@@ -574,46 +591,19 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                 </li>
               </ul>
             </div>
-
-            {/* Column 3: Direct Contacts */}
-            <div>
-              <div className="flex items-center gap-2 text-amber-400 text-sm font-bold mb-3">
-                <Building2 size={18} />
-                <span>Прямые контакты TOJ-VITAMIN</span>
-              </div>
-              <div className="space-y-2.5 text-xs text-slate-300">
-                <p>
-                  <span className="text-slate-400 block text-[11px]">Телефон и WhatsApp:</span>
-                  <a href={`tel:+${data.company.phone}`} className="text-white font-bold text-sm hover:underline">
-                    {data.company.phoneFormatted}
-                  </a>
-                </p>
-                <p>
-                  <span className="text-slate-400 block text-[11px]">Официальный сайт:</span>
-                  <a href={data.company.website} target="_blank" rel="noopener noreferrer" className="text-emerald-400 font-bold hover:underline">
-                    www.toj-vitamin.tj
-                  </a>
-                </p>
-                <p>
-                  <span className="text-slate-400 block text-[11px]">Юр. лицо:</span>
-                  <span className="text-slate-300">ООО «Саховати Истаравшан»</span>
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Legal Supplement Disclaimer */}
-          <div className="pt-6 text-center text-[10px] text-slate-400 leading-normal max-w-4xl mx-auto">
+          <div className="pt-6 border-t border-slate-800/80 text-center text-[10px] text-slate-500 leading-relaxed">
             <p>
-              Биологически активная добавка к пище (БАД). Не является лекарственным средством. Перед применением рекомендуется проконсультироваться с врачом или фармацевтом. Противопоказания: индивидуальная непереносимость компонентов, беременность и период лактации (если не указано иное).
+              Биологически активная добавка к пище (БАД). Не является лекарственным средством. Перед применением рекомендуется проконсультироваться со специалистом.
             </p>
-            <p className="mt-2 text-slate-500">
+            <p className="mt-1 text-slate-600">
               © {new Date().getFullYear()} TOJ-VITAMIN. Все права защищены.
             </p>
           </div>
-        </footer>
+        </section>
 
-      </main>
+      </div>
     </div>
   );
 }
