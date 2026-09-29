@@ -50,6 +50,23 @@ const CONTENT = {
     roleTitle: "Роль Toj-Vitamin",
     roleDesc: "Выделенное специализированное подразделение и цифровая платформа холдинга, сфокусированная исключительно на формировании цивилизованного рынка биологически активных добавок, развитии превентивной медицины и культуры здорового образа жизни.",
 
+    // Блок 1.1. Визуальный блок Hero Showcase
+    heroShowcaseTag: "НАЦИОНАЛЬНЫЙ ЛОГИСТИЧЕСКИЙ ХАБ",
+    heroShowcaseTitle: "Складские комплексы класса А и изотермический автопарк",
+    heroShowcaseDesc: "Многоярусные логистические комплексы в Худжанде и Душанбе с непрерывным климат-контролем 15–25°C, обеспечивающие снабжение 700+ аптек по всему Таджикистану.",
+    fleetSectionTag: "ТРАНСПОРТНАЯ ТЕРМОЛОГИСТИКА",
+    fleetSectionTitle: "Собственный изотермический автопарк",
+    fleetSectionDesc: "Специализированные фургоны с холодильно-обогревательными установками и постоянным телеметрическим GPS-контролем температуры на всем маршруте.",
+    warehouseSectionTag: "СТАНДАРТЫ ХРАНЕНИЯ",
+    warehouseSectionTitle: "Многоярусное адресное хранение и зонирование",
+    warehouseSectionDesc: "Карантинные зоны, цифровой учет серий, влагозащита и соблюдение правил санитарного и температурного режима 15–25°C.",
+    labSectionTag: "КОНТРОЛЬ КАЧЕСТВА И СЕРТИФИКАЦИЯ",
+    labSectionTitle: "100% Входной лабораторный контроль партий",
+    labSectionDesc: "Каждая партия витаминов и добавок проходит обязательное тестирование в аналитических лабораториях Службы надзора за фармдеятельностью Минздрава РТ.",
+    gmpSectionTag: "ПРОИЗВОДСТВЕННЫЙ СТАНДАРТ",
+    gmpSectionTitle: "Международные сертификаты GMP и ISO",
+    gmpSectionDesc: "Прямые контракты с аккредитованными фармпроизводителями. Оригинальная продукция без посредников и риска фальсификата.",
+
     // Блок 3. Экосистема бизнеса
     ecosystemTag: "БИЗНЕС-СИНЕРГИЯ ХОЛДИНГА",
     ecosystemTitle: "Экосистема бизнеса: от опта до конечного потребителя",
@@ -58,6 +75,7 @@ const CONTENT = {
     ecosystemBranches: [
       {
         icon: Building2,
+        image: "/assets/about/warehouse_hub.jpg",
         badge: "B2B Фармация",
         title: "Оптовая дистрибуция (B2B Pharma)",
         desc: "Прямые контракты на поставку с национальными и региональными аптечными сетями, независимыми аптеками, клиниками и медицинскими учреждениями по всей стране. Бесперебойное снабжение и гибкие коммерческие условия.",
@@ -66,6 +84,7 @@ const CONTENT = {
       },
       {
         icon: Store,
+        image: "/assets/about/pharmacy_retail.jpg",
         badge: "Аптечный ритейл",
         title: "Собственные розничные сети ASLPHARM и САХОВАТ",
         desc: "Сеть собственных аптек, обеспечивающая прямой контакт с розничным покупателем, профессиональное консультирование провизорами и гарантированное наличие ключевых брендов на полках.",
@@ -75,6 +94,7 @@ const CONTENT = {
       },
       {
         icon: Globe,
+        image: "/assets/science/vitality.png",
         badge: "Цифровой флагман",
         title: "Цифровая платформа Toj-Vitamin (B2B / D2C)",
         desc: "Высокотехнологичный онлайн-сервис с персональным научным подбором витаминов, образовательной базой знаний, прямым контактом с потребителем и личным кабинетом заказа для аптек.",
@@ -198,6 +218,23 @@ const CONTENT = {
     roleTitle: "The Role of Toj-Vitamin",
     roleDesc: "A dedicated specialized division and digital ecosystem of the holding, focused exclusively on developing an authorized dietary supplements market, promoting preventive medicine, and cultivating health literacy.",
 
+    // Block 1.1. Hero Showcase
+    heroShowcaseTag: "NATIONAL LOGISTICS & PHARMA HUB",
+    heroShowcaseTitle: "Class-A Warehousing Complexes & Cold-Chain Fleet",
+    heroShowcaseDesc: "Multi-tier pharmaceutical distribution centers in Khujand and Dushanbe with continuous 15–25°C climate control, supplying over 700 partner pharmacies across Tajikistan.",
+    fleetSectionTag: "COLD-CHAIN TRANSIT LOGISTICS",
+    fleetSectionTitle: "Dedicated Refrigerated Fleet",
+    fleetSectionDesc: "Specialized temperature-controlled delivery vans equipped with active cooling/heating units and telemetric GPS tracking throughout transit.",
+    warehouseSectionTag: "STORAGE STANDARDS",
+    warehouseSectionTitle: "High-Bay Multi-Tier Racking & Segregation",
+    warehouseSectionDesc: "Quarantine areas, automated batch tracking, humidity control, and continuous 15–25°C thermal surveillance.",
+    labSectionTag: "QUALITY ASSURANCE & TESTING",
+    labSectionTitle: "100% Inbound Laboratory Verification",
+    labSectionDesc: "Every imported batch of supplements undergoes mandatory physicochemical verification by the Ministry of Health of the Republic of Tajikistan.",
+    gmpSectionTag: "MANUFACTURING COMPLIANCE",
+    gmpSectionTitle: "Global GMP & ISO Certified Partners",
+    gmpSectionDesc: "Direct authorized contracts with certified manufacturers. 100% genuine products with complete traceability and anti-counterfeit protection.",
+
     // Block 3. Business Ecosystem
     ecosystemTag: "ENTERPRISE SYNERGY",
     ecosystemTitle: "Business Ecosystem: From Wholesale to End-Consumer",
@@ -206,6 +243,7 @@ const CONTENT = {
     ecosystemBranches: [
       {
         icon: Building2,
+        image: "/assets/about/warehouse_hub.jpg",
         badge: "B2B Pharma",
         title: "Wholesale Distribution (B2B Pharma)",
         desc: "Direct supply agreements with national and regional pharmacy chains, independent drugstores, hospitals, and clinics across Tajikistan. Guaranteed supply continuity and flexible commercial terms.",
@@ -214,6 +252,7 @@ const CONTENT = {
       },
       {
         icon: Store,
+        image: "/assets/about/pharmacy_retail.jpg",
         badge: "Pharmacy Retail",
         title: "Proprietary Retail Networks ASLPHARM & SAKHOVAT",
         desc: "In-house brick-and-mortar pharmacy chain providing direct patient engagement, expert pharmacist dispensing, and guaranteed prime shelf space for strategic partner brands.",
@@ -223,6 +262,7 @@ const CONTENT = {
       },
       {
         icon: Globe,
+        image: "/assets/science/vitality.png",
         badge: "Digital Platform",
         title: "Digital Platform Toj-Vitamin (B2B / D2C)",
         desc: "High-tech consumer e-commerce platform offering algorithmic nutrient selection, medical content, direct consumer feedback, and online order management for pharmacies.",
@@ -345,6 +385,23 @@ const CONTENT = {
     roleTitle: "Нақши Toj-Vitamin",
     roleDesc: "Бахши тахассусӣ ва платформаи рақамии холдинг, ки махсус барои ташаккули бозори тамаддунофари иловаҳои биологӣ ва тарғиби тарзи ҳаёти солим нигаронида шудааст.",
 
+    // Блок 1.1. Visual Hero Showcase
+    heroShowcaseTag: "МАРКАЗИ ЛОГИСТИКИИ МИЛЛИИ ФАРМАТСЕВТӢ",
+    heroShowcaseTitle: "Маҷмааҳои анбории дараҷаи А ва автопарки махсус",
+    heroShowcaseDesc: "Марказҳои бисёрошёнаи анборӣ дар Хуҷанд ва Душанбе бо назорати доимии ҳарорати 15–25°C барои таъминоти зиёда аз 700 дорухонаи шарик дар саросари Тоҷикистон.",
+    fleetSectionTag: "ЛОГИСТИКАИ САРДХОНАӢ",
+    fleetSectionTitle: "Автопарки махсуси изотермикӣ",
+    fleetSectionDesc: "Нақлиёти махсус бо дастгоҳҳои сардидиҳанда ва мониторинги доимии GPS оид ба ҳарорат дар тамоми масири ҳаракат.",
+    warehouseSectionTag: "МЕЪЁРҲОИ НИГОҲДОРӢ",
+    warehouseSectionTitle: "Нигоҳдории бисёрошёнаи адресӣ ва минтақабандӣ",
+    warehouseSectionDesc: "Минтақаҳои карантинӣ, баҳисобгирии рақамии силсилаҳо ва риояи меъёрҳои санитарии 15–25°C.",
+    labSectionTag: "НАЗОРАТИ СИФАТ ВА СЕРТИФИКАТСИЯ",
+    labSectionTitle: "100% Санҷиши озмоишгоҳии ҳар як силсила",
+    labSectionDesc: "Ҳар як силсилаи воридшуда аз санҷиши ҳатмии таҳлилӣ дар озмоишгоҳҳои Вазорати тандурустии ҶТ мегузарад.",
+    gmpSectionTag: "МЕЪЁРИ ИСТЕҲСОЛОТ",
+    gmpSectionTitle: "Шаҳодатномаҳои байналмилалии GMP ва ISO",
+    gmpSectionDesc: "Шартномаҳои мустақим бо истеҳсолкунандагони пешрафта. Маҳсулоти аслӣ бидуни миёнарав ва кафолати сифат.",
+
     // Блок 3. Экосистема
     ecosystemTag: "СИНЕРГИЯИ БИЗНЕСИ ХОЛДИНГ",
     ecosystemTitle: "Экосистемаи тиҷорат: аз яклухт то истеъмолкунанда",
@@ -353,6 +410,7 @@ const CONTENT = {
     ecosystemBranches: [
       {
         icon: Building2,
+        image: "/assets/about/warehouse_hub.jpg",
         badge: "B2B Фарматсия",
         title: "Дистрибутсияи яклухт (B2B Pharma)",
         desc: "Шартномаҳои мустақим бо шабакаҳои дорухонаҳо, дорухонаҳои мустақил ва беморхонаҳо дар саросари кишвар. Таъминоти мунтазам ва шартҳои мусоид.",
@@ -361,6 +419,7 @@ const CONTENT = {
       },
       {
         icon: Store,
+        image: "/assets/about/pharmacy_retail.jpg",
         badge: "Чаканаи дорухона",
         title: "Шабакаҳои дорухонаи ASLPHARM ва САХОВАТ",
         desc: "Шабакаи дорухонаҳои хусусӣ, ки алоқаи мустақимро бо харидор ва мавҷудияти кафолатноки маҳсулотро дар рафҳо таъмин мекунад.",
@@ -370,6 +429,7 @@ const CONTENT = {
       },
       {
         icon: Globe,
+        image: "/assets/science/vitality.png",
         badge: "Флагмани рақамӣ",
         title: "Платформаи рақамии Toj-Vitamin (B2B / D2C)",
         desc: "Хизматрасонии онлайни баландтехнологӣ бо интихоби инфиродии витаминҳо, мақолаҳои илмӣ ва бахши фармоиш барои дорухонаҳо.",
@@ -621,6 +681,65 @@ export default function CorporateAboutPage() {
           </motion.div>
         </div>
 
+        {/* Featured Visual Hero Showcase */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-16">
+          <div className="relative rounded-[32px] overflow-hidden border border-black/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.12)] bg-slate-900 group">
+            <div className="relative h-[280px] sm:h-[420px] lg:h-[480px] w-full">
+              <Image
+                src="/assets/about/warehouse_hub.jpg"
+                alt="Central Pharmaceutical Logistics Hub LLC Sakhovati Istaravshan"
+                fill
+                priority
+                sizes="(max-width: 1200px) 100vw, 1200px"
+                className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
+            </div>
+
+            {/* Floating Top Badges */}
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex flex-wrap gap-2 z-10">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#1D1D1F] text-[11px] sm:text-[12px] font-bold shadow-md">
+                <ThermometerSnowflake size={14} className="text-blue-600" />
+                <span>{lang === 'en' ? 'Climate Controlled 15–25°C' : (lang === 'ru' ? 'Контроль температуры 15–25°C' : 'Назорати ҳарорат 15–25°C')}</span>
+              </div>
+              <div className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600/95 backdrop-blur-md text-white text-[11px] sm:text-[12px] font-bold shadow-md">
+                <ShieldCheck size={14} />
+                <span>{lang === 'en' ? 'State Licensed Importer' : (lang === 'ru' ? 'Лицензия Минздрава РТ' : 'Литсензияи Вазорати тандурустӣ')}</span>
+              </div>
+            </div>
+
+            {/* Bottom Caption Overlay */}
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-8 sm:left-8 sm:right-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white z-10">
+              <div className="text-left">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-blue-300 block mb-1">
+                  {t.heroShowcaseTag}
+                </span>
+                <h3 className="text-lg sm:text-2xl font-bold font-outfit text-white">
+                  {t.heroShowcaseTitle}
+                </h3>
+                <p className="text-[12px] sm:text-[14px] text-white/80 max-w-2xl mt-1.5 hidden sm:block leading-relaxed">
+                  {t.heroShowcaseDesc}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-start sm:self-end">
+                <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-center">
+                  <span className="text-base sm:text-2xl font-extrabold font-outfit text-white block leading-tight">24h</span>
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-white/70 block">{lang === 'en' ? 'Dushanbe' : 'Душанбе'}</span>
+                </div>
+                <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-center">
+                  <span className="text-base sm:text-2xl font-extrabold font-outfit text-white block leading-tight">24h</span>
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-white/70 block">{lang === 'en' ? 'Khujand' : 'Худжанд'}</span>
+                </div>
+                <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-center">
+                  <span className="text-base sm:text-2xl font-extrabold font-outfit text-white block leading-tight">48h</span>
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-white/70 block">{lang === 'en' ? 'Regions' : 'Регионы'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Ключевые показатели: Инфографика в 4 плашках */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-14 sm:mt-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
@@ -753,50 +872,67 @@ export default function CorporateAboutPage() {
               return (
                 <div
                   key={idx}
-                  className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:shadow-xl transition-all group"
+                  className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden"
                 >
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/50">
-                        {branch.badge}
-                      </span>
+                    {/* Top Image Banner */}
+                    <div className="relative h-[210px] w-full overflow-hidden bg-slate-100">
+                      <Image
+                        src={branch.image}
+                        alt={branch.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-blue-700 shadow-sm border border-black/5">
+                          {branch.badge}
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-3.5 left-4 right-4 z-10 flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
+                          <IconComp size={16} />
+                        </div>
+                        <span className="text-white text-[15px] font-bold font-outfit drop-shadow-sm leading-snug">
+                          {branch.title}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                      <IconComp size={24} />
+                    <div className="p-6">
+                      <p className="text-[14px] text-[#1D1D1F]/70 leading-relaxed">
+                        {branch.desc}
+                      </p>
                     </div>
-
-                    <h3 className="text-lg sm:text-xl font-bold text-[#1D1D1F] font-outfit">
-                      {branch.title}
-                    </h3>
-
-                    <p className="mt-3 text-[14px] text-[#1D1D1F]/70 leading-relaxed">
-                      {branch.desc}
-                    </p>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-black/[0.05] space-y-2">
-                    {branch.url.startsWith('http') ? (
-                      <div className="flex flex-col gap-1.5">
-                        <a
+                  <div className="p-6 pt-0">
+                    <div className="pt-4 border-t border-black/[0.05]">
+                      {branch.url.startsWith('http') ? (
+                        <div className="flex flex-col gap-1.5">
+                          <a
+                            href={branch.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                          >
+                            <span>{branch.linkText}</span>
+                            <ArrowUpRight size={14} />
+                          </a>
+                        </div>
+                      ) : (
+                        <Link
                           href={branch.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
                         >
                           <span>{branch.linkText}</span>
-                          <ArrowUpRight size={14} />
-                        </a>
-                      </div>
-                    ) : (
-                      <Link
-                        href={branch.url}
-                        className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                      >
-                        <span>{branch.linkText}</span>
-                        <ArrowRight size={14} />
-                      </Link>
-                    )}
+                          <ArrowRight size={14} />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -848,6 +984,59 @@ export default function CorporateAboutPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Photo Showcase: Cold-Chain Fleet & Modern High-Bay Warehouse */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {/* Card 1: Refrigerated Delivery Fleet */}
+            <div className="relative rounded-[28px] overflow-hidden border border-black/[0.08] shadow-lg group h-[260px] sm:h-[320px] bg-slate-900">
+              <Image
+                src="/assets/about/delivery_fleet.jpg"
+                alt="Pharmaceutical refrigerated delivery fleet"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+              <div className="absolute top-4 left-4 z-10">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-600 text-white shadow-sm">
+                  {t.fleetSectionTag}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10 text-white">
+                <h4 className="text-base sm:text-xl font-bold font-outfit text-white">
+                  {t.fleetSectionTitle}
+                </h4>
+                <p className="text-[12px] sm:text-[13px] text-white/80 mt-1 leading-snug">
+                  {t.fleetSectionDesc}
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Climate Controlled High-Bay Warehouse */}
+            <div className="relative rounded-[28px] overflow-hidden border border-black/[0.08] shadow-lg group h-[260px] sm:h-[320px] bg-slate-900">
+              <Image
+                src="/assets/about/warehouse_hub.jpg"
+                alt="Central climate controlled warehouse multi-tier storage"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+              <div className="absolute top-4 left-4 z-10">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-600 text-white shadow-sm">
+                  {t.warehouseSectionTag}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10 text-white">
+                <h4 className="text-base sm:text-xl font-bold font-outfit text-white">
+                  {t.warehouseSectionTitle}
+                </h4>
+                <p className="text-[12px] sm:text-[13px] text-white/80 mt-1 leading-snug">
+                  {t.warehouseSectionDesc}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Regional coverage banner */}
@@ -924,6 +1113,59 @@ export default function CorporateAboutPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Photo Showcase: Laboratory & Manufacturing Quality */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {/* Card 1: Analytical Laboratory Testing */}
+            <div className="relative rounded-[28px] overflow-hidden border border-black/[0.08] shadow-lg group h-[260px] sm:h-[300px] bg-slate-900">
+              <Image
+                src="/assets/science/lab.png"
+                alt="Analytical laboratory quality testing"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+              <div className="absolute top-4 left-4 z-10">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-600 text-white shadow-sm">
+                  {t.labSectionTag}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10 text-white">
+                <h4 className="text-base sm:text-xl font-bold font-outfit text-white">
+                  {t.labSectionTitle}
+                </h4>
+                <p className="text-[12px] sm:text-[13px] text-white/80 mt-1 leading-snug">
+                  {t.labSectionDesc}
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: GMP & ISO Certified Manufacturing */}
+            <div className="relative rounded-[28px] overflow-hidden border border-black/[0.08] shadow-lg group h-[260px] sm:h-[300px] bg-slate-900">
+              <Image
+                src="/assets/science/factory.png"
+                alt="GMP and ISO certified cleanroom manufacturing"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+              <div className="absolute top-4 left-4 z-10">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-600 text-white shadow-sm">
+                  {t.gmpSectionTag}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10 text-white">
+                <h4 className="text-base sm:text-xl font-bold font-outfit text-white">
+                  {t.gmpSectionTitle}
+                </h4>
+                <p className="text-[12px] sm:text-[13px] text-white/80 mt-1 leading-snug">
+                  {t.gmpSectionDesc}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Compliance Callout Banner */}
