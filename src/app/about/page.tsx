@@ -84,7 +84,7 @@ const CONTENT = {
       },
       {
         icon: Store,
-        image: "/assets/about/pharmacy_retail.jpg",
+        image: "/assets/about/aslpharm_pharmacy_hd.webp",
         badge: "Аптечный ритейл",
         title: "Собственные розничные сети ASLPHARM и САХОВАТ",
         desc: "Сеть собственных аптек, обеспечивающая прямой контакт с розничным покупателем, профессиональное консультирование провизорами и гарантированное наличие ключевых брендов на полках.",
@@ -252,7 +252,7 @@ const CONTENT = {
       },
       {
         icon: Store,
-        image: "/assets/about/pharmacy_retail.jpg",
+        image: "/assets/about/aslpharm_pharmacy_hd.webp",
         badge: "Pharmacy Retail",
         title: "Proprietary Retail Networks ASLPHARM & SAKHOVAT",
         desc: "In-house brick-and-mortar pharmacy chain providing direct patient engagement, expert pharmacist dispensing, and guaranteed prime shelf space for strategic partner brands.",
@@ -419,7 +419,7 @@ const CONTENT = {
       },
       {
         icon: Store,
-        image: "/assets/about/pharmacy_retail.jpg",
+        image: "/assets/about/aslpharm_pharmacy_hd.webp",
         badge: "Чаканаи дорухона",
         title: "Шабакаҳои дорухонаи ASLPHARM ва САХОВАТ",
         desc: "Шабакаи дорухонаҳои хусусӣ, ки алоқаи мустақимро бо харидор ва мавҷудияти кафолатноки маҳсулотро дар рафҳо таъмин мекунад.",
