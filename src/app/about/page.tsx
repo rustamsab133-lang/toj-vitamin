@@ -705,55 +705,51 @@ export default function CorporateAboutPage() {
           </motion.div>
         </div>
 
-        {/* Инфографическая технологическая панель стандартов холдинга (Stripe / Apple Health Style) */}
+        {/* Премиальная светлая панель стандартов холдинга (Apple / Stripe Health Style) */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-16">
-          <div className="rounded-[32px] border border-black/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.06)] bg-gradient-to-b from-slate-900 to-slate-950 text-white p-6 sm:p-10 relative overflow-hidden">
-            {/* Деликатная фоновая подсветка */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
+          <div className="rounded-[32px] border border-black/[0.06] shadow-[0_12px_40px_rgba(0,0,0,0.03)] bg-white p-6 sm:p-10 relative overflow-hidden">
             {/* Header: Бейдж, Заголовок и Индикатор статуса */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-8 border-b border-white/10 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-7 border-b border-black/[0.06] relative z-10">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-blue-400">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-blue-600">
                   {t.heroShowcaseTag}
                 </span>
-                <h3 className="text-xl sm:text-3xl font-extrabold font-outfit text-white mt-1">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-outfit text-[#1D1D1F] mt-1">
                   {t.heroShowcaseTitle}
                 </h3>
-                <p className="text-[13px] sm:text-[14px] text-white/70 max-w-2xl mt-1.5 leading-relaxed">
+                <p className="text-[13px] sm:text-[14px] text-[#1D1D1F]/70 max-w-2xl mt-1.5 leading-relaxed">
                   {t.heroShowcaseDesc}
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start md:self-auto px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[12px] font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{lang === 'en' ? 'Standards Active' : (lang === 'ru' ? 'Регламент активен' : 'Меъёрҳо фаъоланд')}</span>
+              <div className="flex items-center gap-2 self-start md:self-auto px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[12px] font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{lang === 'en' ? 'Standards Verified' : (lang === 'ru' ? 'Регламент соблюдается' : 'Меъёрҳо риоя мешаванд')}</span>
               </div>
             </div>
 
-            {/* 3 Инфографических карточки без искусственных фото */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8 relative z-10">
-              {/* Карточка 1: Контроль температуры и хранения */}
-              <div className="p-6 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-blue-500/40 transition-all flex flex-col justify-between group">
+            {/* 3 Инфографических колонки стандартов */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 relative z-10">
+              {/* Колонка 1: Контроль температуры и хранения */}
+              <div className="p-6 rounded-2xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:border-blue-500/30 transition-all">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
                       <ThermometerSnowflake size={20} />
                     </div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
                       {lang === 'en' ? 'Cold-Chain' : (lang === 'ru' ? 'Климат-контроль' : 'Назорати ҳарорат')}
                     </span>
                   </div>
 
                   <div className="mt-5">
-                    <div className="text-3xl sm:text-4xl font-extrabold font-outfit text-white tracking-tight">
+                    <div className="text-3xl sm:text-4xl font-extrabold font-outfit text-blue-600 tracking-tight">
                       15°C – 25°C
                     </div>
-                    <div className="text-[13px] font-bold text-blue-300 mt-1">
+                    <div className="text-[13px] font-bold text-[#1D1D1F] mt-1">
                       {lang === 'en' ? 'Controlled Storage Ambient' : (lang === 'ru' ? 'Режим хранения витаминов и БАД' : 'Реҷаи нигоҳдории витаминҳо')}
                     </div>
-                    <p className="text-[12px] text-white/65 mt-2 leading-relaxed">
+                    <p className="text-[12px] text-[#1D1D1F]/65 mt-2 leading-relaxed">
                       {lang === 'en'
                         ? 'Continuous surveillance of dry ambient conditions, humidity below 60%, and UV protection.'
                         : (lang === 'ru'
@@ -763,33 +759,33 @@ export default function CorporateAboutPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-white/10">
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">GSP Standard</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Humidity < 60%' : (lang === 'ru' ? 'Влажность < 60%' : 'Намӣ < 60%')}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'UV Protection' : (lang === 'ru' ? 'Защита от УФ' : 'Муҳофизати УФ')}</span>
+                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-black/[0.05]">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">GSP Standard</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">{lang === 'en' ? 'Humidity < 60%' : (lang === 'ru' ? 'Влажность < 60%' : 'Намӣ < 60%')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">{lang === 'en' ? 'UV Protection' : (lang === 'ru' ? 'Защита от УФ' : 'Муҳофизати УФ')}</span>
                 </div>
               </div>
 
-              {/* Карточка 2: Государственная лицензия и контроль качества */}
-              <div className="p-6 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between group">
+              {/* Колонка 2: Государственная лицензия и контроль качества */}
+              <div className="p-6 rounded-2xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:border-emerald-500/30 transition-all">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
                       <ShieldCheck size={20} />
                     </div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                       {lang === 'en' ? 'Ministry of Health' : (lang === 'ru' ? 'Минздрав РТ' : 'Вазорати тандурустӣ')}
                     </span>
                   </div>
 
                   <div className="mt-5">
-                    <div className="text-3xl sm:text-4xl font-extrabold font-outfit text-white tracking-tight">
+                    <div className="text-3xl sm:text-4xl font-extrabold font-outfit text-emerald-600 tracking-tight">
                       № 0001859
                     </div>
-                    <div className="text-[13px] font-bold text-emerald-300 mt-1">
+                    <div className="text-[13px] font-bold text-[#1D1D1F] mt-1">
                       {lang === 'en' ? 'State Pharmaceutical License' : (lang === 'ru' ? 'Государственная фармлицензия' : 'Иҷозатномаи давлатӣ')}
                     </div>
-                    <p className="text-[12px] text-white/65 mt-2 leading-relaxed">
+                    <p className="text-[12px] text-[#1D1D1F]/65 mt-2 leading-relaxed">
                       {lang === 'en'
                         ? 'Issued by the State Service for Pharmaceutical Surveillance under the Ministry of Health of RT. 100% genuine products directly imported.'
                         : (lang === 'ru'
@@ -799,45 +795,45 @@ export default function CorporateAboutPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-white/10">
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">100% Genuine</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Batch Testing' : (lang === 'ru' ? 'Контроль серий' : 'Назорати силсилаҳо')}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">GMP / ISO</span>
+                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-black/[0.05]">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">100% Genuine</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">{lang === 'en' ? 'Batch Testing' : (lang === 'ru' ? 'Контроль серий' : 'Назорати силсилаҳо')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">GMP / ISO</span>
                 </div>
               </div>
 
-              {/* Карточка 3: Логистические сроки и национальная сеть */}
-              <div className="p-6 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-purple-500/40 transition-all flex flex-col justify-between group">
+              {/* Колонка 3: Логистические сроки и национальная сеть */}
+              <div className="p-6 rounded-2xl bg-[#FDFBF7] border border-black/[0.06] flex flex-col justify-between hover:border-purple-500/30 transition-all">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
                       <Truck size={20} />
                     </div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80">
                       {lang === 'en' ? 'Transit SLAs' : (lang === 'ru' ? 'Сроки доставки' : 'Мӯҳлатҳои интиқол')}
                     </span>
                   </div>
 
                   <div className="mt-5">
                     <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
-                        <span className="text-xl sm:text-2xl font-black font-outfit text-white block">24h</span>
-                        <span className="text-[9px] uppercase font-bold text-white/70 block mt-0.5">{lang === 'en' ? 'Dushanbe' : 'Душанбе'}</span>
+                      <div className="p-2.5 rounded-xl bg-white border border-black/[0.05] shadow-xs">
+                        <span className="text-xl sm:text-2xl font-black font-outfit text-[#1D1D1F] block">24h</span>
+                        <span className="text-[9px] uppercase font-bold text-[#1D1D1F]/50 block mt-0.5">{lang === 'en' ? 'Dushanbe' : 'Душанбе'}</span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
-                        <span className="text-xl sm:text-2xl font-black font-outfit text-white block">24h</span>
-                        <span className="text-[9px] uppercase font-bold text-white/70 block mt-0.5">{lang === 'en' ? 'Khujand' : 'Худжанд'}</span>
+                      <div className="p-2.5 rounded-xl bg-white border border-black/[0.05] shadow-xs">
+                        <span className="text-xl sm:text-2xl font-black font-outfit text-[#1D1D1F] block">24h</span>
+                        <span className="text-[9px] uppercase font-bold text-[#1D1D1F]/50 block mt-0.5">{lang === 'en' ? 'Khujand' : 'Худжанд'}</span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
-                        <span className="text-xl sm:text-2xl font-black font-outfit text-white block">48h</span>
-                        <span className="text-[9px] uppercase font-bold text-white/70 block mt-0.5">{lang === 'en' ? 'Regions' : 'Регионы'}</span>
+                      <div className="p-2.5 rounded-xl bg-white border border-black/[0.05] shadow-xs">
+                        <span className="text-xl sm:text-2xl font-black font-outfit text-[#1D1D1F] block">48h</span>
+                        <span className="text-[9px] uppercase font-bold text-[#1D1D1F]/50 block mt-0.5">{lang === 'en' ? 'Regions' : 'Регионы'}</span>
                       </div>
                     </div>
 
-                    <div className="text-[13px] font-bold text-purple-300 mt-3">
+                    <div className="text-[13px] font-bold text-[#1D1D1F] mt-3">
                       {lang === 'en' ? 'Nationwide Pharmacy Supply' : (lang === 'ru' ? 'Снабжение аптек по Таджикистану' : 'Таъминоти дорухонаҳо дар саросари Тоҷикистон')}
                     </div>
-                    <p className="text-[12px] text-white/65 mt-1 leading-relaxed">
+                    <p className="text-[12px] text-[#1D1D1F]/65 mt-1 leading-relaxed">
                       {lang === 'en'
                         ? 'Rapid order assembly and thermal dispatch for over 700 partner pharmacies and medical clinics.'
                         : (lang === 'ru'
@@ -847,28 +843,28 @@ export default function CorporateAboutPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-white/10">
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">700+ {lang === 'en' ? 'Pharmacies' : (lang === 'ru' ? 'Аптек' : 'Дорухона')}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Thermal Boxes' : (lang === 'ru' ? 'Термобоксы' : 'Термобоксҳо')}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Whole RT' : (lang === 'ru' ? 'Вся РТ' : 'Тамоми ҶТ')}</span>
+                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-black/[0.05]">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">700+ {lang === 'en' ? 'Pharmacies' : (lang === 'ru' ? 'Аптек' : 'Дорухона')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">{lang === 'en' ? 'Thermal Boxes' : (lang === 'ru' ? 'Термобоксы' : 'Термобоксҳо')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-black/[0.05] text-[#1D1D1F]/70 font-medium">{lang === 'en' ? 'Whole RT' : (lang === 'ru' ? 'Вся РТ' : 'Тамоми ҶТ')}</span>
                 </div>
               </div>
             </div>
 
             {/* Bottom Bar: Распределительные узлы */}
-            <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[12px] text-white/70 relative z-10">
+            <div className="mt-8 pt-6 border-t border-black/[0.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[12px] text-[#1D1D1F]/70 relative z-10">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                  <span className="text-white font-semibold">{lang === 'en' ? 'Northern Hub (HQ): Khujand' : (lang === 'ru' ? 'Северный хаб (Штаб-квартира): г. Худжанд' : 'Маркази Шимолӣ (Сарситод): ш. Хуҷанд')}</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                  <span className="text-[#1D1D1F] font-semibold">{lang === 'en' ? 'Northern Hub (HQ): Khujand' : (lang === 'ru' ? 'Северный хаб (Штаб-квартира): г. Худжанд' : 'Маркази Шимолӣ (Сарситод): ш. Хуҷанд')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-white font-semibold">{lang === 'en' ? 'Central & Southern Hub: Dushanbe' : (lang === 'ru' ? 'Центрально-Южный хаб: г. Душанбе' : 'Маркази Марказӣ ва Ҷанубӣ: ш. Душанбе')}</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                  <span className="text-[#1D1D1F] font-semibold">{lang === 'en' ? 'Central & Southern Hub: Dushanbe' : (lang === 'ru' ? 'Центрально-Южный хаб: г. Душанбе' : 'Маркази Марказӣ ва Ҷанубӣ: ш. Душанбе')}</span>
                 </div>
               </div>
 
-              <div className="text-white/60 font-medium text-[11px]">
+              <div className="text-[#1D1D1F]/50 font-medium text-[11px]">
                 {lang === 'en' ? 'LLC "Sakhovati Istaravshan" • Established 2003' : (lang === 'ru' ? 'ООО «Саховати Истаравшан» • Основано в 2003 году' : 'ҶДММ «Саховати Истаравшан» • Аз соли 2003')}
               </div>
             </div>
@@ -1007,77 +1003,252 @@ export default function CorporateAboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {t.ecosystemBranches.map((branch, idx) => {
-              const IconComp = branch.icon;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden"
-                >
-                  <div>
-                    {/* Top Image Banner */}
-                    <div className="relative h-[210px] w-full overflow-hidden bg-slate-100">
-                      <Image
-                        src={branch.image}
-                        alt={branch.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      
-                      <div className="absolute top-3 left-3 z-10">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-blue-700 shadow-sm border border-black/5">
-                          {branch.badge}
-                        </span>
-                      </div>
+          {/* УРОВЕНЬ 1: СОБСТВЕННЫЙ АПТЕЧНЫЙ РИТЕЙЛ (2 ФЛАГМАНСКИЕ СЕТИ) */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                <Store size={18} />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] font-outfit">
+                {lang === 'en' ? 'Proprietary Pharmacy Networks (Multi-Branch Retail)' : (lang === 'ru' ? 'Собственные аптечные сети холдинга (Филиалы по РТ)' : 'Шабакаҳои дорухонаи хусусии холдинг (Филиалҳо)')}
+              </h3>
+            </div>
+            <span className="text-[12px] font-semibold text-[#1D1D1F]/50">
+              {lang === 'en' ? 'Direct patient engagement & licensed dispensing' : (lang === 'ru' ? 'Прямой контакт с покупателем и фармацевтический отпуск' : 'Хизматрасонии бевосита ва машварати касбӣ')}
+            </span>
+          </div>
 
-                      <div className="absolute bottom-3.5 left-4 right-4 z-10 flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
-                          <IconComp size={16} />
-                        </div>
-                        <span className="text-white text-[15px] font-bold font-outfit drop-shadow-sm leading-snug">
-                          {branch.title}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-6">
-                      <p className="text-[14px] text-[#1D1D1F]/70 leading-relaxed">
-                        {branch.desc}
-                      </p>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            {/* Карточка 1: ASLPHARM */}
+            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden">
+              <div>
+                {/* Wide 16:9 Photo Banner */}
+                <div className="relative h-[260px] sm:h-[300px] w-full overflow-hidden bg-slate-100">
+                  <Image
+                    src={t.ecosystemBranches[1].image}
+                    alt={t.ecosystemBranches[1].title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-emerald-700 shadow-sm border border-black/5">
+                      {t.ecosystemBranches[1].badge}
+                    </span>
                   </div>
 
-                  <div className="p-6 pt-0">
-                    <div className="pt-4 border-t border-black/[0.05]">
-                      {branch.url.startsWith('http') ? (
-                        <div className="flex flex-col gap-1.5">
-                          <a
-                            href={branch.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                          >
-                            <span>{branch.linkText}</span>
-                            <ArrowUpRight size={14} />
-                          </a>
-                        </div>
-                      ) : (
-                        <Link
-                          href={branch.url}
-                          className="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                        >
-                          <span>{branch.linkText}</span>
-                          <ArrowRight size={14} />
-                        </Link>
-                      )}
+                  <div className="absolute bottom-4 left-5 right-5 z-10 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
+                      <Store size={18} />
                     </div>
+                    <span className="text-white text-lg sm:text-xl font-bold font-outfit drop-shadow-sm leading-tight">
+                      {t.ecosystemBranches[1].title}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="p-7">
+                  <p className="text-[14px] sm:text-[15px] text-[#1D1D1F]/75 leading-relaxed">
+                    {t.ecosystemBranches[1].desc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-7 pt-0">
+                <div className="pt-5 border-t border-black/[0.05] flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[#1D1D1F]/50">
+                    {lang === 'en' ? 'Proprietary Retail Network' : (lang === 'ru' ? 'Филиальная розничная сеть' : 'Шабакаи чаканаи хусусӣ')}
+                  </span>
+                  <a
+                    href={t.ecosystemBranches[1].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[13px] transition-all border border-emerald-200/80 shadow-xs"
+                  >
+                    <span>{t.ecosystemBranches[1].linkText}</span>
+                    <ArrowUpRight size={15} />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Карточка 2: САХОВАТ */}
+            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden">
+              <div>
+                {/* Wide 16:9 Photo Banner */}
+                <div className="relative h-[260px] sm:h-[300px] w-full overflow-hidden bg-slate-100">
+                  <Image
+                    src={t.ecosystemBranches[2].image}
+                    alt={t.ecosystemBranches[2].title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-blue-700 shadow-sm border border-black/5">
+                      {t.ecosystemBranches[2].badge}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-5 right-5 z-10 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
+                      <Store size={18} />
+                    </div>
+                    <span className="text-white text-lg sm:text-xl font-bold font-outfit drop-shadow-sm leading-tight">
+                      {t.ecosystemBranches[2].title}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-7">
+                  <p className="text-[14px] sm:text-[15px] text-[#1D1D1F]/75 leading-relaxed">
+                    {t.ecosystemBranches[2].desc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-7 pt-0">
+                <div className="pt-5 border-t border-black/[0.05] flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[#1D1D1F]/50">
+                    {lang === 'en' ? 'Proprietary Retail Network' : (lang === 'ru' ? 'Филиальная розничная сеть' : 'Шабакаи чаканаи хусусӣ')}
+                  </span>
+                  <a
+                    href={t.ecosystemBranches[2].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[13px] transition-all border border-blue-200/80 shadow-xs"
+                  >
+                    <span>{t.ecosystemBranches[2].linkText}</span>
+                    <ArrowUpRight size={15} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* УРОВЕНЬ 2: ОПТОВАЯ ДИСТРИБУЦИЯ И ЦИФРОВОЙ ФЛАГМАН */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                <Building2 size={18} />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] font-outfit">
+                {lang === 'en' ? 'Wholesale Supply & Digital Infrastructure' : (lang === 'ru' ? 'Оптовая дистрибуция и цифровая платформа' : 'Дистрибутсияи яклухт ва платформаи рақамӣ')}
+              </h3>
+            </div>
+            <span className="text-[12px] font-semibold text-[#1D1D1F]/50">
+              {lang === 'en' ? 'National supply chain & healthtech e-commerce' : (lang === 'ru' ? 'Национальные поставки и онлайн-сервисы' : 'Таъминоти миллӣ ва хизматрасониҳои рақамӣ')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Карточка 3: Оптовая дистрибуция B2B */}
+            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden">
+              <div>
+                <div className="relative h-[220px] sm:h-[240px] w-full overflow-hidden bg-slate-100">
+                  <Image
+                    src={t.ecosystemBranches[0].image}
+                    alt={t.ecosystemBranches[0].title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-blue-700 shadow-sm border border-black/5">
+                      {t.ecosystemBranches[0].badge}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-5 right-5 z-10 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
+                      <Building2 size={18} />
+                    </div>
+                    <span className="text-white text-lg sm:text-xl font-bold font-outfit drop-shadow-sm leading-tight">
+                      {t.ecosystemBranches[0].title}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-7">
+                  <p className="text-[14px] sm:text-[15px] text-[#1D1D1F]/75 leading-relaxed">
+                    {t.ecosystemBranches[0].desc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-7 pt-0">
+                <div className="pt-5 border-t border-black/[0.05] flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[#1D1D1F]/50">
+                    {lang === 'en' ? 'For Pharmacies & Clinics' : (lang === 'ru' ? 'Для аптек и медцентров' : 'Барои дорухонаҳо ва клиникаҳо')}
+                  </span>
+                  <Link
+                    href={t.ecosystemBranches[0].url}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-blue-600 text-white font-bold text-[13px] transition-all shadow-xs"
+                  >
+                    <span>{t.ecosystemBranches[0].linkText}</span>
+                    <ArrowRight size={15} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Карточка 4: Платформа Toj-Vitamin */}
+            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden">
+              <div>
+                <div className="relative h-[220px] sm:h-[240px] w-full overflow-hidden bg-slate-100">
+                  <Image
+                    src={t.ecosystemBranches[3].image}
+                    alt={t.ecosystemBranches[3].title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-amber-700 shadow-sm border border-black/5">
+                      {t.ecosystemBranches[3].badge}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-5 right-5 z-10 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
+                      <Globe size={18} />
+                    </div>
+                    <span className="text-white text-lg sm:text-xl font-bold font-outfit drop-shadow-sm leading-tight">
+                      {t.ecosystemBranches[3].title}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-7">
+                  <p className="text-[14px] sm:text-[15px] text-[#1D1D1F]/75 leading-relaxed">
+                    {t.ecosystemBranches[3].desc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-7 pt-0">
+                <div className="pt-5 border-t border-black/[0.05] flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[#1D1D1F]/50">
+                    {lang === 'en' ? 'Direct-to-Consumer & B2B' : (lang === 'ru' ? 'Онлайн-витрина и подбор' : 'Хизматрасонии онлайн')}
+                  </span>
+                  <Link
+                    href={t.ecosystemBranches[3].url}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[13px] transition-all shadow-xs"
+                  >
+                    <span>{t.ecosystemBranches[3].linkText}</span>
+                    <ArrowRight size={15} />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
