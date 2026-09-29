@@ -116,18 +116,31 @@ export const DocumentsDashboard: React.FC<{ onBack: () => void }> = ({ onBack })
           </div>
         </div>
         
-        <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-slate-100 self-start lg:self-auto">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === item.id ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-              }`}
-            >
-              {item.icon} <span>{item.label}</span>
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
+          <a
+            href="/catalog"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-all active:scale-95"
+            title="Открыть фирменный PDF-каталог с дозировками и печатью"
+          >
+            <FileText size={16} />
+            <span>📄 Каталог PDF со схемами</span>
+          </a>
+
+          <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-slate-100">
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === item.id ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                {item.icon} <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

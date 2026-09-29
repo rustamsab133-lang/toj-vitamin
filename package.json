@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export:meta": "node scripts/export_instagram_safe_catalog.js"
+    "export:meta": "node scripts/export_instagram_safe_catalog.js",
+    "export:catalog": "node scripts/export_catalog_html.js"
   },
   "dependencies": {
     "@google-analytics/data": "^5.2.2",
