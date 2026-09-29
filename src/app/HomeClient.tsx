@@ -308,13 +308,13 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         </div>
       </div>
 
-      <footer className="w-full bg-[#1D1D1F] text-white/60 relative z-20">
+      <footer className="w-full bg-[#FDFBF7] text-[#1D1D1F]/70 border-t border-black/[0.06] relative z-20">
           <div className="max-w-5xl mx-auto px-8 py-20">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
               {/* Brand */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-0.5 overflow-hidden shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-0.5 overflow-hidden shadow-xs border border-black/[0.06]">
                     <Image 
                       src="/logo-square.webp" 
                       alt={settings.brand_name} 
@@ -323,18 +323,18 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                       className="w-full h-full object-contain" 
                     />
                   </div>
-                    <span className="font-bold text-[16px] text-white font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
+                    <span className="font-bold text-[16px] text-[#1D1D1F] font-outfit tracking-[0.1em] uppercase">{settings.brand_name}</span>
                   </div>
                   <div className="space-y-3">
-                    <p className="text-[14px] leading-relaxed text-white/90">
+                    <p className="text-[14px] leading-relaxed text-[#1D1D1F]/80">
                       {lang === 'en'
                         ? 'Toj-Vitamin is the specialized nutraceutical division and digital platform of the Sakhovati Istaravshan pharmaceutical holding (established in 2003). Direct supply of certified vitamins and supplements across Tajikistan.'
                         : (lang === 'ru'
                           ? 'Toj-Vitamin — специализированное подразделение и цифровая платформа фармацевтического холдинга ООО «Саховати Истаравшан» (на рынке с 2003 года). Прямые поставки сертифицированных витаминов и нутрицевтиков в Таджикистане.'
                           : 'Toj-Vitamin — бахши тахассусӣ ва платформаи рақамии холдинги фарматсевтии ҶДММ «Саховати Истаравшан» (дар бозор аз соли 2003). Интиқоли мустақими витаминҳо ва иловаҳои сертисификатсияшуда дар Тоҷикистон.')}
                     </p>
-                    <div className="text-[12px] text-white/60 space-y-1 pt-1 border-t border-white/10">
-                      <p className="font-semibold text-white/80">
+                    <div className="text-[12px] text-[#1D1D1F]/60 space-y-1 pt-1 border-t border-black/[0.06]">
+                      <p className="font-semibold text-[#1D1D1F]/80">
                         {lang === 'en' ? 'LLC "Sakhovati Istaravshan" / Toj-Vitamin Distribution' : (lang === 'ru' ? 'ООО «Саховати Истаравшан» / LLC "Sakhovati Istaravshan"' : 'ҶДММ «Саховати Истаравшан»')}
                       </p>
                       <p>
@@ -344,7 +344,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                         {lang === 'en' ? 'Warehouses: Khujand | Dushanbe' : (lang === 'ru' ? 'Склады: г. Худжанд | г. Душанбе' : 'Анборҳо: ш. Хуҷанд | ш. Душанбе')}
                       </p>
                       <p>
-                        Email: <a href="mailto:ceo@toj-vitamin.tj" className="text-blue-400 hover:underline">ceo@toj-vitamin.tj</a> | {lang === 'en' ? 'Tel:' : 'Тел:'} <a href="tel:+992176660707" className="text-white hover:underline">+992 176660707</a>
+                        Email: <a href="mailto:ceo@toj-vitamin.tj" className="text-blue-600 hover:underline">ceo@toj-vitamin.tj</a> | {lang === 'en' ? 'Tel:' : 'Тел:'} <a href="tel:+992176660707" className="text-[#1D1D1F] font-semibold hover:underline">+992 176660707</a>
                       </p>
                     </div>
                   </div>
@@ -352,7 +352,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
 
                 {/* Ecosystem & Partners */}
                 <div className="space-y-4">
-                  <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit opacity-60">
+                  <h4 className="text-[12px] font-bold text-[#1D1D1F] uppercase tracking-[0.2em] font-outfit">
                     {lang === 'en' ? 'Holding Ecosystem' : (lang === 'ru' ? 'Экосистема холдинга' : 'Экосистемаи холдинг')}
                   </h4>
                   <div className="space-y-2.5">
@@ -360,89 +360,89 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
                       href="https://sakhovatapteka.tj"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="group flex items-center justify-between p-2.5 rounded-xl bg-white border border-black/[0.06] hover:border-black/20 hover:shadow-xs transition-all shadow-xs"
                     >
                       <div className="flex flex-col">
-                        <span className="text-[13px] font-semibold text-white">
+                        <span className="text-[13px] font-semibold text-[#1D1D1F]">
                           {lang === 'en' ? 'Sakhovat Pharmacy' : 'Саховат Аптека'}
                         </span>
-                        <span className="text-[11px] text-white/40">{lang === 'en' ? 'Retail pharmacy chain' : (lang === 'ru' ? 'Розничная аптечная сеть' : 'Шабакаи дорухонаҳои чакана')}</span>
+                        <span className="text-[11px] text-[#1D1D1F]/50">{lang === 'en' ? 'Retail pharmacy chain' : (lang === 'ru' ? 'Розничная аптечная сеть' : 'Шабакаи дорухонаҳои чакана')}</span>
                       </div>
-                      <ArrowUpRight size={15} className="text-white/40 group-hover:text-white transition-colors" />
+                      <ArrowUpRight size={15} className="text-[#1D1D1F]/40 group-hover:text-blue-600 transition-colors" />
                     </a>
                     <a
                       href="https://aslpharm.tj"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="group flex items-center justify-between p-2.5 rounded-xl bg-white border border-black/[0.06] hover:border-black/20 hover:shadow-xs transition-all shadow-xs"
                     >
                       <div className="flex flex-col">
-                        <span className="text-[13px] font-semibold text-white">ASLPHARM</span>
-                        <span className="text-[11px] text-white/40">{lang === 'en' ? 'Pharmaceutical ecosystem' : (lang === 'ru' ? 'Фармацевтическая экосистема' : 'Экосистемаи фарматсевтӣ')}</span>
+                        <span className="text-[13px] font-semibold text-[#1D1D1F]">ASLPHARM</span>
+                        <span className="text-[11px] text-[#1D1D1F]/50">{lang === 'en' ? 'Pharmaceutical ecosystem' : (lang === 'ru' ? 'Фармацевтическая экосистема' : 'Экосистемаи фарматсевтӣ')}</span>
                       </div>
-                      <ArrowUpRight size={15} className="text-white/40 group-hover:text-white transition-colors" />
+                      <ArrowUpRight size={15} className="text-[#1D1D1F]/40 group-hover:text-blue-600 transition-colors" />
                     </a>
                   </div>
 
-                  <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit opacity-60 pt-2">
+                  <h4 className="text-[12px] font-bold text-[#1D1D1F] uppercase tracking-[0.2em] font-outfit pt-2">
                     {lang === 'en' ? 'Contacts' : (lang === 'ru' ? 'Контакты' : 'Тамос')}
                   </h4>
                   <div className="flex flex-col gap-2">
                     {/* WhatsApp */}
                     <a
                       href={`https://wa.me/${settings.whatsapp_phone}`}
-                      className="flex items-center gap-2.5 p-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-colors"
+                      className="flex items-center gap-2.5 p-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/25 hover:bg-[#25D366]/20 transition-colors"
                     >
-                      <MessageCircle size={16} className="text-[#25D366]" />
-                      <span className="text-[12px] font-semibold text-white">WhatsApp: +{settings.whatsapp_phone}</span>
+                      <MessageCircle size={16} className="text-[#16a34a]" />
+                      <span className="text-[12px] font-semibold text-emerald-950">WhatsApp: +{settings.whatsapp_phone}</span>
                     </a>
                     {/* Instagram */}
                     <a
                       href="https://www.instagram.com/toj_vitamin"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2.5 p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 transition-colors"
+                      className="flex items-center gap-2.5 p-2 rounded-xl bg-pink-50 border border-pink-200/80 hover:bg-pink-100/80 transition-colors"
                     >
-                      <Instagram size={16} className="text-pink-400" />
-                      <span className="text-[12px] font-semibold text-white">Instagram: @toj_vitamin</span>
+                      <Instagram size={16} className="text-pink-600" />
+                      <span className="text-[12px] font-semibold text-pink-950">Instagram: @toj_vitamin</span>
                     </a>
                   </div>
                 </div>
 
                 {/* Links */}
                 <div className="space-y-4">
-                  <h4 className="text-[12px] font-bold text-white uppercase tracking-[0.2em] font-outfit">{lang === 'en' ? 'Navigation' : (lang === 'ru' ? 'Навигация' : 'Навигатсия')}</h4>
+                  <h4 className="text-[12px] font-bold text-[#1D1D1F] uppercase tracking-[0.2em] font-outfit">{lang === 'en' ? 'Navigation' : (lang === 'ru' ? 'Навигация' : 'Навигатсия')}</h4>
                   <div className="space-y-2.5">
-                    <Link href="/about" className="block text-[14px] text-blue-400 hover:text-blue-300 font-semibold transition-colors text-left">
+                    <Link href="/about" className="block text-[14px] text-blue-600 hover:text-blue-700 font-semibold transition-colors text-left">
                       {lang === 'en' ? '🏢 About Company (Sakhovati Istaravshan Holding)' : (lang === 'ru' ? '🏢 О компании (Холдинг «Саховати Истаравшан»)' : '🏢 Дар бораи ширкат (Холдинг)')}
                     </Link>
-                    <Link href="/opt" className="block text-[14px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors text-left">
+                    <Link href="/opt" className="block text-[14px] text-emerald-700 hover:text-emerald-800 font-semibold transition-colors text-left">
                       {lang === 'en' ? '🤝 Become a Partner (Wholesale B2B)' : (lang === 'ru' ? '🤝 Стать партнером (Опт B2B)' : '🤝 Шарик шудан (B2B Яклухт)')}
                     </Link>
-                    <button onClick={() => setIsQuizOpen(true)} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => setIsQuizOpen(true)} className="block text-[14px] text-[#1D1D1F]/80 hover:text-blue-600 transition-colors text-left">
                       {lang === 'en' ? '🧬 Vitamin Assessment' : (lang === 'ru' ? '🧬 Персональный подбор' : '🧬 Интихоби инфиродӣ')}
                     </button>
-                    <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] text-[#1D1D1F]/80 hover:text-blue-600 transition-colors text-left">
                       {lang === 'en' ? '💊 Vitamin Catalog' : (lang === 'ru' ? '💊 Каталог витаминов' : '💊 Каталоги витаминҳо')}
                     </button>
-                    <button onClick={() => document.getElementById('combos')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('combos')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] text-[#1D1D1F]/80 hover:text-blue-600 transition-colors text-left">
                       {lang === 'en' ? '🎁 Ready Sets (Combos)' : (lang === 'ru' ? '🎁 Готовые сеты' : '🎁 Маҷмӯаҳои тайёр')}
                     </button>
-                    <button onClick={() => document.getElementById('science')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] hover:text-white transition-colors text-left">
+                    <button onClick={() => document.getElementById('science')?.scrollIntoView({ behavior: 'smooth' })} className="block text-[14px] text-[#1D1D1F]/80 hover:text-blue-600 transition-colors text-left">
                       {lang === 'en' ? '🔬 Science & Quality' : (lang === 'ru' ? '🔬 Наука и стандарты' : '🔬 Илм ва стандартҳо')}
                     </button>
-                    <Link href="/journal" className="block text-[14px] hover:text-white transition-colors text-left">
+                    <Link href="/journal" className="block text-[14px] text-[#1D1D1F]/80 hover:text-blue-600 transition-colors text-left">
                       {lang === 'en' ? '🧪 Science Journal' : (lang === 'ru' ? '🧪 Научный журнал' : '🧪 Журнали илмӣ')}
                     </Link>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                 <p className="text-[12px] text-white/40">
+              <div className="border-t border-black/[0.06] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                 <p className="text-[12px] text-[#1D1D1F]/50">
                    © {new Date().getFullYear()} {settings.brand_name} / ООО «Саховати Истаравшан» (2003–{new Date().getFullYear()}). {lang === 'en' ? 'All rights reserved.' : (lang === 'ru' ? 'Все права защищены.' : 'Ҳамаи ҳуқуқҳо ҳифз шудаанд.')}
                  </p>
-                 <p className="text-[11px] text-white/30 max-w-md text-center sm:text-right">
+                 <p className="text-[11px] text-[#1D1D1F]/40 max-w-md text-center sm:text-right">
                    {lang === 'en'
                      ? 'Products are certified dietary supplements, not medicinal drugs. Please consult a healthcare professional before use.'
                      : (lang === 'ru'

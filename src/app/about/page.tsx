@@ -1201,15 +1201,15 @@ export default function CorporateAboutPage() {
             {/* Карточка 4: Платформа Toj-Vitamin */}
             <div className="rounded-3xl bg-white border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden">
               <div>
-                <div className="relative h-[220px] sm:h-[240px] w-full overflow-hidden bg-slate-100">
+                <div className="relative h-[220px] sm:h-[240px] w-full overflow-hidden bg-[#FDFBF7]">
                   <Image
                     src={t.ecosystemBranches[3].image}
                     alt={t.ecosystemBranches[3].title}
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="object-contain p-3 group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent pointer-events-none" />
                   
                   <div className="absolute top-4 left-4 z-10">
                     <span className="text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-amber-700 shadow-sm border border-black/5">
@@ -1218,10 +1218,10 @@ export default function CorporateAboutPage() {
                   </div>
 
                   <div className="absolute bottom-4 left-5 right-5 z-10 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 border border-white/30">
+                    <div className="w-9 h-9 rounded-xl bg-white shadow-sm border border-black/10 text-blue-600 flex items-center justify-center shrink-0">
                       <Globe size={18} />
                     </div>
-                    <span className="text-white text-lg sm:text-xl font-bold font-outfit drop-shadow-sm leading-tight">
+                    <span className="text-[#1D1D1F] text-lg sm:text-xl font-bold font-outfit leading-tight">
                       {t.ecosystemBranches[3].title}
                     </span>
                   </div>

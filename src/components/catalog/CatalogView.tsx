@@ -104,13 +104,13 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center shadow-sm">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-200 flex items-center justify-center shadow-sm p-1">
               <Image 
-                src="/logo.webp" 
+                src="/logo-square.webp" 
                 alt="TOJ-VITAMIN" 
                 width={40} 
                 height={40} 
-                className="object-contain"
+                className="object-contain" 
                 onError={(e) => {
                   // fallback if image fails
                   (e.target as HTMLElement).style.display = 'none';
