@@ -51,15 +51,15 @@ const CONTENT = {
     roleDesc: "Выделенное специализированное подразделение и цифровая платформа холдинга, сфокусированная исключительно на формировании цивилизованного рынка биологически активных добавок, развитии превентивной медицины и культуры здорового образа жизни.",
 
     // Блок 1.1. Визуальный блок Hero Showcase
-    heroShowcaseTag: "НАЦИОНАЛЬНЫЙ ЛОГИСТИЧЕСКИЙ ХАБ",
-    heroShowcaseTitle: "Складские комплексы класса А и изотермический автопарк",
-    heroShowcaseDesc: "Многоярусные логистические комплексы в Худжанде и Душанбе с непрерывным климат-контролем 15–25°C, обеспечивающие снабжение 700+ аптек по всему Таджикистану.",
-    fleetSectionTag: "ТРАНСПОРТНАЯ ТЕРМОЛОГИСТИКА",
-    fleetSectionTitle: "Собственный изотермический автопарк",
-    fleetSectionDesc: "Специализированные фургоны с холодильно-обогревательными установками и постоянным телеметрическим GPS-контролем температуры на всем маршруте.",
-    warehouseSectionTag: "СТАНДАРТЫ ХРАНЕНИЯ",
-    warehouseSectionTitle: "Многоярусное адресное хранение и зонирование",
-    warehouseSectionDesc: "Карантинные зоны, цифровой учет серий, влагозащита и соблюдение правил санитарного и температурного режима 15–25°C.",
+    heroShowcaseTag: "ФАРМАЦЕВТИЧЕСКИЙ РЕГЛАМЕНТ И СТАНДАРТЫ",
+    heroShowcaseTitle: "Контроль условий хранения, лицензирование и снабжение аптек",
+    heroShowcaseDesc: "Единая система надлежащей практики хранения (GSP) и термологистики холдинга ООО «Саховати Истаравшан» для снабжения более 700 аптек-партнеров по всей Республике Таджикистан.",
+    fleetSectionTag: "ТЕРМОЛОГИСТИКА И МАРШРУТЫ",
+    fleetSectionTitle: "Транспортировка в термоконтейнерах",
+    fleetSectionDesc: "Специализированная доставка с хладоэлементами и термопакетами для сохранения биоактивности витаминов и добавок.",
+    warehouseSectionTag: "РЕГЛАМЕНТ ХРАНЕНИЯ (GSP)",
+    warehouseSectionTitle: "Контролируемый микроклимат 15–25°C",
+    warehouseSectionDesc: "Сухие вентилируемые складские помещения, адресное зонирование, защита от прямого солнечного света и электронный журнал учета показателей.",
     labSectionTag: "КОНТРОЛЬ КАЧЕСТВА И СЕРТИФИКАЦИЯ",
     labSectionTitle: "100% Входной лабораторный контроль партий",
     labSectionDesc: "Каждая партия витаминов и добавок проходит обязательное тестирование в аналитических лабораториях Службы надзора за фармдеятельностью Минздрава РТ.",
@@ -75,7 +75,7 @@ const CONTENT = {
     ecosystemBranches: [
       {
         icon: Building2,
-        image: "/assets/about/warehouse_hub.jpg",
+        image: "/assets/science/synergy.png",
         badge: "B2B Фармация",
         title: "Оптовая дистрибуция (B2B Pharma)",
         desc: "Прямые контракты на поставку с национальными и региональными аптечными сетями, независимыми аптеками, клиниками и медицинскими учреждениями по всей стране. Бесперебойное снабжение и гибкие коммерческие условия.",
@@ -219,15 +219,15 @@ const CONTENT = {
     roleDesc: "A dedicated specialized division and digital ecosystem of the holding, focused exclusively on developing an authorized dietary supplements market, promoting preventive medicine, and cultivating health literacy.",
 
     // Block 1.1. Hero Showcase
-    heroShowcaseTag: "NATIONAL LOGISTICS & PHARMA HUB",
-    heroShowcaseTitle: "Class-A Warehousing Complexes & Cold-Chain Fleet",
-    heroShowcaseDesc: "Multi-tier pharmaceutical distribution centers in Khujand and Dushanbe with continuous 15–25°C climate control, supplying over 700 partner pharmacies across Tajikistan.",
-    fleetSectionTag: "COLD-CHAIN TRANSIT LOGISTICS",
-    fleetSectionTitle: "Dedicated Refrigerated Fleet",
-    fleetSectionDesc: "Specialized temperature-controlled delivery vans equipped with active cooling/heating units and telemetric GPS tracking throughout transit.",
-    warehouseSectionTag: "STORAGE STANDARDS",
-    warehouseSectionTitle: "High-Bay Multi-Tier Racking & Segregation",
-    warehouseSectionDesc: "Quarantine areas, automated batch tracking, humidity control, and continuous 15–25°C thermal surveillance.",
+    heroShowcaseTag: "PHARMACEUTICAL COMPLIANCE & STANDARDS",
+    heroShowcaseTitle: "Storage Quality Control, Licensing & Pharmacy Supply",
+    heroShowcaseDesc: "Integrated Good Storage Practice (GSP) and thermal distribution framework of LLC 'Sakhovati Istaravshan', supplying over 700 partner pharmacies across Tajikistan.",
+    fleetSectionTag: "COLD-CHAIN TRANSIT & ROUTES",
+    fleetSectionTitle: "Thermal Container Delivery",
+    fleetSectionDesc: "Specialized transit using temperature-controlled containers and cool-packs preserving the bioavailability of vitamins and supplements.",
+    warehouseSectionTag: "STORAGE SPECIFICATIONS (GSP)",
+    warehouseSectionTitle: "Controlled Ambient 15–25°C",
+    warehouseSectionDesc: "Dedicated dry ventilated storage facilities, batch quarantine segregation, UV protection, and digital environmental logging.",
     labSectionTag: "QUALITY ASSURANCE & TESTING",
     labSectionTitle: "100% Inbound Laboratory Verification",
     labSectionDesc: "Every imported batch of supplements undergoes mandatory physicochemical verification by the Ministry of Health of the Republic of Tajikistan.",
@@ -243,7 +243,7 @@ const CONTENT = {
     ecosystemBranches: [
       {
         icon: Building2,
-        image: "/assets/about/warehouse_hub.jpg",
+        image: "/assets/science/synergy.png",
         badge: "B2B Pharma",
         title: "Wholesale Distribution (B2B Pharma)",
         desc: "Direct supply agreements with national and regional pharmacy chains, independent drugstores, hospitals, and clinics across Tajikistan. Guaranteed supply continuity and flexible commercial terms.",
@@ -386,15 +386,15 @@ const CONTENT = {
     roleDesc: "Бахши тахассусӣ ва платформаи рақамии холдинг, ки махсус барои ташаккули бозори тамаддунофари иловаҳои биологӣ ва тарғиби тарзи ҳаёти солим нигаронида шудааст.",
 
     // Блок 1.1. Visual Hero Showcase
-    heroShowcaseTag: "МАРКАЗИ ЛОГИСТИКИИ МИЛЛИИ ФАРМАТСЕВТӢ",
-    heroShowcaseTitle: "Маҷмааҳои анбории дараҷаи А ва автопарки махсус",
-    heroShowcaseDesc: "Марказҳои бисёрошёнаи анборӣ дар Хуҷанд ва Душанбе бо назорати доимии ҳарорати 15–25°C барои таъминоти зиёда аз 700 дорухонаи шарик дар саросари Тоҷикистон.",
-    fleetSectionTag: "ЛОГИСТИКАИ САРДХОНАӢ",
-    fleetSectionTitle: "Автопарки махсуси изотермикӣ",
-    fleetSectionDesc: "Нақлиёти махсус бо дастгоҳҳои сардидиҳанда ва мониторинги доимии GPS оид ба ҳарорат дар тамоми масири ҳаракат.",
-    warehouseSectionTag: "МЕЪЁРҲОИ НИГОҲДОРӢ",
-    warehouseSectionTitle: "Нигоҳдории бисёрошёнаи адресӣ ва минтақабандӣ",
-    warehouseSectionDesc: "Минтақаҳои карантинӣ, баҳисобгирии рақамии силсилаҳо ва риояи меъёрҳои санитарии 15–25°C.",
+    heroShowcaseTag: "МЕЪЁРҲОИ ФАРМАТСЕВТӢ ВА СТАНДАРТҲО",
+    heroShowcaseTitle: "Назорати шароити нигоҳдорӣ, иҷозатномадиҳӣ ва таъминот",
+    heroShowcaseDesc: "Низоми ягонаи таҷрибаи дурусти нигоҳдорӣ (GSP) ва логистикаи гармидиҳии холдинги ҶДММ «Саховати Истаравшан» барои таъминоти зиёда аз 700 дорухонаи шарик дар Тоҷикистон.",
+    fleetSectionTag: "ЛОГИСТИКАИ ТЕРМОИЗОЛЯТСИОНӢ",
+    fleetSectionTitle: "Интиқол дар қуттиҳои термоизолятсионӣ",
+    fleetSectionDesc: "Интиқоли махсус бо истифода аз унсурҳои хунуккунанда барои ҳифзи фаъолнокии биологии витаминҳо ва иловаҳо.",
+    warehouseSectionTag: "МЕЪЁРҲОИ НИГОҲДОРӢ (GSP)",
+    warehouseSectionTitle: "Ҳарорати мусоид 15–25°C",
+    warehouseSectionDesc: "Анборҳои хусусии хушк ва вентилятсияшуда, минтақабандии карантинӣ ва сабти рақамии нишондиҳандаҳо.",
     labSectionTag: "НАЗОРАТИ СИФАТ ВА СЕРТИФИКАТСИЯ",
     labSectionTitle: "100% Санҷиши озмоишгоҳии ҳар як силсила",
     labSectionDesc: "Ҳар як силсилаи воридшуда аз санҷиши ҳатмии таҳлилӣ дар озмоишгоҳҳои Вазорати тандурустии ҶТ мегузарад.",
@@ -410,7 +410,7 @@ const CONTENT = {
     ecosystemBranches: [
       {
         icon: Building2,
-        image: "/assets/about/warehouse_hub.jpg",
+        image: "/assets/science/synergy.png",
         badge: "B2B Фарматсия",
         title: "Дистрибутсияи яклухт (B2B Pharma)",
         desc: "Шартномаҳои мустақим бо шабакаҳои дорухонаҳо, дорухонаҳои мустақил ва беморхонаҳо дар саросари кишвар. Таъминоти мунтазам ва шартҳои мусоид.",
@@ -681,60 +681,171 @@ export default function CorporateAboutPage() {
           </motion.div>
         </div>
 
-        {/* Featured Visual Hero Showcase */}
+        {/* Инфографическая технологическая панель стандартов холдинга (Stripe / Apple Health Style) */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-16">
-          <div className="relative rounded-[32px] overflow-hidden border border-black/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.12)] bg-slate-900 group">
-            <div className="relative h-[280px] sm:h-[420px] lg:h-[480px] w-full">
-              <Image
-                src="/assets/about/warehouse_hub.jpg"
-                alt="Central Pharmaceutical Logistics Hub LLC Sakhovati Istaravshan"
-                fill
-                priority
-                sizes="(max-width: 1200px) 100vw, 1200px"
-                className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
-            </div>
+          <div className="rounded-[32px] border border-black/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.06)] bg-gradient-to-b from-slate-900 to-slate-950 text-white p-6 sm:p-10 relative overflow-hidden">
+            {/* Деликатная фоновая подсветка */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Floating Top Badges */}
-            <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex flex-wrap gap-2 z-10">
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#1D1D1F] text-[11px] sm:text-[12px] font-bold shadow-md">
-                <ThermometerSnowflake size={14} className="text-blue-600" />
-                <span>{lang === 'en' ? 'Climate Controlled 15–25°C' : (lang === 'ru' ? 'Контроль температуры 15–25°C' : 'Назорати ҳарорат 15–25°C')}</span>
-              </div>
-              <div className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600/95 backdrop-blur-md text-white text-[11px] sm:text-[12px] font-bold shadow-md">
-                <ShieldCheck size={14} />
-                <span>{lang === 'en' ? 'State Licensed Importer' : (lang === 'ru' ? 'Лицензия Минздрава РТ' : 'Литсензияи Вазорати тандурустӣ')}</span>
-              </div>
-            </div>
-
-            {/* Bottom Caption Overlay */}
-            <div className="absolute bottom-4 left-4 right-4 sm:bottom-8 sm:left-8 sm:right-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white z-10">
-              <div className="text-left">
-                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-blue-300 block mb-1">
+            {/* Header: Бейдж, Заголовок и Индикатор статуса */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-8 border-b border-white/10 relative z-10">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-blue-400">
                   {t.heroShowcaseTag}
                 </span>
-                <h3 className="text-lg sm:text-2xl font-bold font-outfit text-white">
+                <h3 className="text-xl sm:text-3xl font-extrabold font-outfit text-white mt-1">
                   {t.heroShowcaseTitle}
                 </h3>
-                <p className="text-[12px] sm:text-[14px] text-white/80 max-w-2xl mt-1.5 hidden sm:block leading-relaxed">
+                <p className="text-[13px] sm:text-[14px] text-white/70 max-w-2xl mt-1.5 leading-relaxed">
                   {t.heroShowcaseDesc}
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-start sm:self-end">
-                <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-center">
-                  <span className="text-base sm:text-2xl font-extrabold font-outfit text-white block leading-tight">24h</span>
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-white/70 block">{lang === 'en' ? 'Dushanbe' : 'Душанбе'}</span>
+              <div className="flex items-center gap-2 self-start md:self-auto px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[12px] font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{lang === 'en' ? 'Standards Active' : (lang === 'ru' ? 'Регламент активен' : 'Меъёрҳо фаъоланд')}</span>
+              </div>
+            </div>
+
+            {/* 3 Инфографических карточки без искусственных фото */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8 relative z-10">
+              {/* Карточка 1: Контроль температуры и хранения */}
+              <div className="p-6 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-blue-500/40 transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                      <ThermometerSnowflake size={20} />
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      {lang === 'en' ? 'Cold-Chain' : (lang === 'ru' ? 'Климат-контроль' : 'Назорати ҳарорат')}
+                    </span>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-3xl sm:text-4xl font-extrabold font-outfit text-white tracking-tight">
+                      15°C – 25°C
+                    </div>
+                    <div className="text-[13px] font-bold text-blue-300 mt-1">
+                      {lang === 'en' ? 'Controlled Storage Ambient' : (lang === 'ru' ? 'Режим хранения витаминов и БАД' : 'Реҷаи нигоҳдории витаминҳо')}
+                    </div>
+                    <p className="text-[12px] text-white/65 mt-2 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Continuous surveillance of dry ambient conditions, humidity below 60%, and UV protection.'
+                        : (lang === 'ru'
+                          ? 'Сухой режим, относительная влажность до 60%, защита от прямых солнечных лучей и перепадов температуры.'
+                          : 'Ҳавои хушк, намӣ то 60%, муҳофизат аз нурҳои офтоб ва тағйирёбии ҳарорат.')}
+                    </p>
+                  </div>
                 </div>
-                <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-center">
-                  <span className="text-base sm:text-2xl font-extrabold font-outfit text-white block leading-tight">24h</span>
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-white/70 block">{lang === 'en' ? 'Khujand' : 'Худжанд'}</span>
+
+                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-white/10">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">GSP Standard</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Humidity < 60%' : (lang === 'ru' ? 'Влажность < 60%' : 'Намӣ < 60%')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'UV Protection' : (lang === 'ru' ? 'Защита от УФ' : 'Муҳофизати УФ')}</span>
                 </div>
-                <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-center">
-                  <span className="text-base sm:text-2xl font-extrabold font-outfit text-white block leading-tight">48h</span>
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-white/70 block">{lang === 'en' ? 'Regions' : 'Регионы'}</span>
+              </div>
+
+              {/* Карточка 2: Государственная лицензия и контроль качества */}
+              <div className="p-6 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {lang === 'en' ? 'Ministry of Health' : (lang === 'ru' ? 'Минздрав РТ' : 'Вазорати тандурустӣ')}
+                    </span>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-3xl sm:text-4xl font-extrabold font-outfit text-white tracking-tight">
+                      № 0001859
+                    </div>
+                    <div className="text-[13px] font-bold text-emerald-300 mt-1">
+                      {lang === 'en' ? 'State Pharmaceutical License' : (lang === 'ru' ? 'Государственная фармлицензия' : 'Иҷозатномаи давлатӣ')}
+                    </div>
+                    <p className="text-[12px] text-white/65 mt-2 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Issued by the State Service for Pharmaceutical Surveillance under the Ministry of Health of RT. 100% genuine products directly imported.'
+                        : (lang === 'ru'
+                          ? 'Служба надзора за фармдеятельностью Минздрава РТ. Прямой импорт оригинальной продукции без серых схем и посредников.'
+                          : 'Хадамоти назорати фаъолияти фарматсевтии Вазорати тандурустии ҶТ. Воридоти мустақими маҳсулоти аслӣ.')}
+                    </p>
+                  </div>
                 </div>
+
+                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-white/10">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">100% Genuine</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Batch Testing' : (lang === 'ru' ? 'Контроль серий' : 'Назорати силсилаҳо')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">GMP / ISO</span>
+                </div>
+              </div>
+
+              {/* Карточка 3: Логистические сроки и национальная сеть */}
+              <div className="p-6 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-purple-500/40 transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+                      <Truck size={20} />
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      {lang === 'en' ? 'Transit SLAs' : (lang === 'ru' ? 'Сроки доставки' : 'Мӯҳлатҳои интиқол')}
+                    </span>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
+                        <span className="text-xl sm:text-2xl font-black font-outfit text-white block">24h</span>
+                        <span className="text-[9px] uppercase font-bold text-white/70 block mt-0.5">{lang === 'en' ? 'Dushanbe' : 'Душанбе'}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
+                        <span className="text-xl sm:text-2xl font-black font-outfit text-white block">24h</span>
+                        <span className="text-[9px] uppercase font-bold text-white/70 block mt-0.5">{lang === 'en' ? 'Khujand' : 'Худжанд'}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
+                        <span className="text-xl sm:text-2xl font-black font-outfit text-white block">48h</span>
+                        <span className="text-[9px] uppercase font-bold text-white/70 block mt-0.5">{lang === 'en' ? 'Regions' : 'Регионы'}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-[13px] font-bold text-purple-300 mt-3">
+                      {lang === 'en' ? 'Nationwide Pharmacy Supply' : (lang === 'ru' ? 'Снабжение аптек по Таджикистану' : 'Таъминоти дорухонаҳо дар саросари Тоҷикистон')}
+                    </div>
+                    <p className="text-[12px] text-white/65 mt-1 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Rapid order assembly and thermal dispatch for over 700 partner pharmacies and medical clinics.'
+                        : (lang === 'ru'
+                          ? 'Комплектация и бережная отгрузка в термобоксах для более чем 700 аптек и медицинских учреждений.'
+                          : 'Маҷмӯъбандӣ ва интиқоли эҳтиётона дар термобоксҳо барои зиёда аз 700 дорухона ва клиникаҳо.')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 mt-5 pt-4 border-t border-white/10">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">700+ {lang === 'en' ? 'Pharmacies' : (lang === 'ru' ? 'Аптек' : 'Дорухона')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Thermal Boxes' : (lang === 'ru' ? 'Термобоксы' : 'Термобоксҳо')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">{lang === 'en' ? 'Whole RT' : (lang === 'ru' ? 'Вся РТ' : 'Тамоми ҶТ')}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bar: Распределительные узлы */}
+            <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[12px] text-white/70 relative z-10">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  <span className="text-white font-semibold">{lang === 'en' ? 'Northern Hub (HQ): Khujand' : (lang === 'ru' ? 'Северный хаб (Штаб-квартира): г. Худжанд' : 'Маркази Шимолӣ (Сарситод): ш. Хуҷанд')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="text-white font-semibold">{lang === 'en' ? 'Central & Southern Hub: Dushanbe' : (lang === 'ru' ? 'Центрально-Южный хаб: г. Душанбе' : 'Маркази Марказӣ ва Ҷанубӣ: ш. Душанбе')}</span>
+                </div>
+              </div>
+
+              <div className="text-white/60 font-medium text-[11px]">
+                {lang === 'en' ? 'LLC "Sakhovati Istaravshan" • Established 2003' : (lang === 'ru' ? 'ООО «Саховати Истаравшан» • Основано в 2003 году' : 'ҶДММ «Саховати Истаравшан» • Аз соли 2003')}
               </div>
             </div>
           </div>
@@ -986,55 +1097,89 @@ export default function CorporateAboutPage() {
             })}
           </div>
 
-          {/* Photo Showcase: Cold-Chain Fleet & Modern High-Bay Warehouse */}
+          {/* Технологические карточки стандартов хранения и транспортировки */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-            {/* Card 1: Refrigerated Delivery Fleet */}
-            <div className="relative rounded-[28px] overflow-hidden border border-black/[0.08] shadow-lg group h-[260px] sm:h-[320px] bg-slate-900">
-              <Image
-                src="/assets/about/delivery_fleet.jpg"
-                alt="Pharmaceutical refrigerated delivery fleet"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-              <div className="absolute top-4 left-4 z-10">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-600 text-white shadow-sm">
-                  {t.fleetSectionTag}
-                </span>
-              </div>
-              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10 text-white">
-                <h4 className="text-base sm:text-xl font-bold font-outfit text-white">
-                  {t.fleetSectionTitle}
+            {/* Карточка 1: Регламент хранения GSP */}
+            <div className="p-7 rounded-3xl bg-white border border-black/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:border-blue-500/30 transition-all">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {t.warehouseSectionTag}
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <ThermometerSnowflake size={16} />
+                  </div>
+                </div>
+
+                <h4 className="text-xl font-bold font-outfit text-[#1D1D1F] mt-4">
+                  {t.warehouseSectionTitle}
                 </h4>
-                <p className="text-[12px] sm:text-[13px] text-white/80 mt-1 leading-snug">
-                  {t.fleetSectionDesc}
+                <p className="text-[13px] text-[#1D1D1F]/70 mt-2 leading-relaxed">
+                  {t.warehouseSectionDesc}
                 </p>
+
+                {/* Чек-лист параметров */}
+                <div className="mt-5 space-y-2.5">
+                  <div className="flex items-center gap-2.5 text-[12px] text-[#1D1D1F]/80">
+                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'Constant ambient temperature 15°C – 25°C throughout the year' : (lang === 'ru' ? 'Постоянная температура 15°C – 25°C круглый год' : 'Ҳарорати доимии 15°C – 25°C дар тамоми фасли сол')}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-[12px] text-[#1D1D1F]/80">
+                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'Relative air humidity controlled below 60%' : (lang === 'ru' ? 'Относительная влажность воздуха под контролем не более 60%' : 'Намии нисбии ҳаво зери назорати на бештар аз 60%')}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-[12px] text-[#1D1D1F]/80">
+                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'Quarantine isolation zone for newly received batches' : (lang === 'ru' ? 'Зона карантинного контроля для поступающих серий' : 'Минтақаи карантинӣ барои силсилаҳои нав воридшуда')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-bold text-blue-600">
+                <span>{lang === 'en' ? 'GSP Compliance Verified' : (lang === 'ru' ? 'Стандарт GSP подтверждён' : 'Мутобиқати меъёри GSP')}</span>
+                <span>15°C – 25°C</span>
               </div>
             </div>
 
-            {/* Card 2: Climate Controlled High-Bay Warehouse */}
-            <div className="relative rounded-[28px] overflow-hidden border border-black/[0.08] shadow-lg group h-[260px] sm:h-[320px] bg-slate-900">
-              <Image
-                src="/assets/about/warehouse_hub.jpg"
-                alt="Central climate controlled warehouse multi-tier storage"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-              <div className="absolute top-4 left-4 z-10">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-600 text-white shadow-sm">
-                  {t.warehouseSectionTag}
-                </span>
-              </div>
-              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10 text-white">
-                <h4 className="text-base sm:text-xl font-bold font-outfit text-white">
-                  {t.warehouseSectionTitle}
+            {/* Карточка 2: Транспортировка и изотермические боксы */}
+            <div className="p-7 rounded-3xl bg-white border border-black/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between hover:border-emerald-500/30 transition-all">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {t.fleetSectionTag}
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Truck size={16} />
+                  </div>
+                </div>
+
+                <h4 className="text-xl font-bold font-outfit text-[#1D1D1F] mt-4">
+                  {t.fleetSectionTitle}
                 </h4>
-                <p className="text-[12px] sm:text-[13px] text-white/80 mt-1 leading-snug">
-                  {t.warehouseSectionDesc}
+                <p className="text-[13px] text-[#1D1D1F]/70 mt-2 leading-relaxed">
+                  {t.fleetSectionDesc}
                 </p>
+
+                {/* Чек-лист параметров */}
+                <div className="mt-5 space-y-2.5">
+                  <div className="flex items-center gap-2.5 text-[12px] text-[#1D1D1F]/80">
+                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'Specialized isothermal packaging with cooling packs' : (lang === 'ru' ? 'Изотермическая упаковка с хладоэлементами' : 'Бастабандии изотермикӣ бо унсурҳои сардидиҳанда')}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-[12px] text-[#1D1D1F]/80">
+                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'Intact seal verification and analytical certificate validation' : (lang === 'ru' ? 'Контроль заводских пломб и паспортов качества' : 'Санҷиши пломбаҳои корхона ва шиносномаҳои сифат')}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-[12px] text-[#1D1D1F]/80">
+                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                    <span>{lang === 'en' ? 'Express direct dispatch to regional pharmacy partners' : (lang === 'ru' ? 'Прямая оперативная отгрузка в аптечные сети' : 'Интиқоли фаврӣ ба шабакаҳои дорухонаҳо')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-bold text-emerald-600">
+                <span>{lang === 'en' ? 'Delivery SLA' : (lang === 'ru' ? 'Регламент доставки' : 'Мӯҳлати интиқол')}</span>
+                <span>24h – 48h</span>
               </div>
             </div>
           </div>
