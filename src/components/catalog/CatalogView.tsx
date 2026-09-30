@@ -55,8 +55,8 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
     });
   }, [data.products, search, selectedCategory]);
 
-  // Strict 2 products per physical A4 sheet (Horizontal large cards)
-  const ITEMS_PER_PAGE = 2;
+  // Strict 4 products per physical A4 sheet (2x2 grid)
+  const ITEMS_PER_PAGE = 4;
   const productPages = useMemo(() => {
     return chunkArray(filteredProducts, ITEMS_PER_PAGE);
   }, [filteredProducts]);
@@ -217,22 +217,25 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 8mm 10mm 8mm 10mm !important;
+            margin: 6mm 8mm 6mm 8mm !important;
           }
           html, body {
             background: #ffffff !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .cover-page,
           .catalog-page,
           .back-cover-page {
             width: 100% !important;
-            height: 281mm !important;
-            max-height: 281mm !important;
-            min-height: 281mm !important;
+            height: 284mm !important;
+            max-height: 284mm !important;
+            min-height: 284mm !important;
             margin: 0 !important;
+            padding: 4mm 5mm !important;
             box-shadow: none !important;
             border-radius: 0 !important;
             page-break-after: always !important;
@@ -246,14 +249,33 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             flex-direction: column !important;
             justify-content: space-between !important;
           }
-          .product-card-row {
-            height: 122mm !important;
-            max-height: 122mm !important;
-            min-height: 122mm !important;
+          .cards-grid-4 {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-rows: repeat(2, 1fr) !important;
+            gap: 3.5mm !important;
+            flex: 1 !important;
+            height: calc(100% - 16mm) !important;
+            max-height: calc(100% - 16mm) !important;
+            overflow: hidden !important;
+          }
+          .product-card-2x2 {
+            height: 100% !important;
+            max-height: 100% !important;
             overflow: hidden !important;
             box-sizing: border-box !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            padding: 2.5mm !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+          }
+          .product-photo-box {
+            height: 38mm !important;
+            max-height: 38mm !important;
           }
         }
       `}} />
@@ -362,7 +384,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
           </div>
         </section>
 
-        {/* ===================== PAGES 2..N: 2 LARGE PRODUCTS PER PAGE ===================== */}
+        {/* ===================== PAGES 2..N: 4 PRODUCTS PER PAGE (2x2 GRID) ===================== */}
         {productPages.map((pageItems, pageIdx) => {
           const pageNum = pageIdx + 2;
           const pageCat = pageItems[0]?.category || 'Витамины и минералы';
@@ -370,7 +392,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
           return (
             <div 
               key={`page-${pageIdx}`}
-              className="catalog-page w-full min-h-[281mm] max-h-[281mm] bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 shadow-lg flex flex-col justify-between mb-8 overflow-hidden print:rounded-none print:shadow-none print:border-none print:mb-0"
+              className="catalog-page w-full min-h-[281mm] max-h-[281mm] bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-lg flex flex-col justify-between mb-8 overflow-hidden print:rounded-none print:shadow-none print:border-none print:mb-0"
             >
               {/* Page Running Header */}
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 h-[10mm]">
@@ -390,105 +412,105 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                 </div>
               </div>
 
-              {/* 2 Big Cards Container */}
-              <div className="flex flex-col justify-between flex-1 my-3 gap-3">
+              {/* 4 Cards Container (2x2 Grid) */}
+              <div className="cards-grid-4 grid grid-cols-2 gap-2.5 sm:gap-3 flex-1 my-2">
                 {pageItems.map((p) => {
                   const catClass = getCategoryColor(p.category);
 
                   return (
                     <div 
                       key={p.id}
-                      className="product-card-row bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-4 overflow-hidden shadow-xs hover:border-slate-300 transition-colors"
+                      className="product-card-2x2 bg-white border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:border-slate-300 transition-colors"
                     >
-                      {/* Left: Prominent Product Image (Height 150-170px) */}
-                      <div className="w-full sm:w-44 md:w-48 h-36 sm:h-full flex items-center justify-center shrink-0 bg-slate-50/70 rounded-xl p-2 relative">
-                        <img
-                          src={p.imageUrl}
-                          alt={p.name}
-                          loading="eager"
-                          decoding="sync"
-                          className="max-h-full max-w-full object-contain drop-shadow-md"
-                        />
+                      <div>
+                        {/* Category Badge & Fast Code */}
+                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catClass} truncate max-w-[120px]`}>
+                            {p.category}
+                          </span>
+                          <span className="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded tracking-wider shrink-0">
+                            {p.code}
+                          </span>
+                        </div>
+
+                        {/* Product Image: Centered, prominent photo without wasted margins */}
+                        <div className="product-photo-box w-full h-32 sm:h-36 flex items-center justify-center bg-slate-50/80 rounded-xl p-1.5 mb-1.5 relative shrink-0">
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            loading="eager"
+                            decoding="sync"
+                            className="max-h-full max-w-full object-contain drop-shadow-sm"
+                          />
+                        </div>
+
+                        {/* Product Name */}
+                        <h3 className="text-xs sm:text-[13px] font-extrabold text-slate-900 leading-snug line-clamp-2 mb-1" title={p.name}>
+                          {p.name}
+                        </h3>
+
+                        {/* Key benefit (1 main bullet point) */}
+                        <div className="text-[10px] text-slate-600 line-clamp-1 flex items-start gap-1 mb-1.5 leading-tight">
+                          <span className="text-emerald-500 font-bold shrink-0">•</span>
+                          <span className="truncate">{p.properties[0] || 'Сертифицированное качество GLS'}</span>
+                        </div>
+
+                        {/* Dosage & Usage Instruction Box */}
+                        <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-lg p-1.5 mb-1.5 text-slate-900">
+                          <div className="flex items-center gap-1 text-[9px] font-extrabold text-emerald-900 mb-0.5 tracking-wider">
+                            <Clock size={11} className="text-emerald-600 shrink-0" />
+                            <span>КАК И СКОЛЬКО ПРИНИМАТЬ:</span>
+                          </div>
+                          
+                          <div className="text-[9.5px] space-y-0.5 font-medium leading-tight">
+                            <p className="line-clamp-1 text-slate-800">
+                              👉 <strong>Прием:</strong> {p.instructions.usage}
+                            </p>
+                            <p className="text-[8.5px] text-emerald-800 line-clamp-1">
+                              🕒 {p.instructions.timing} &bull; 📅 {p.instructions.course}
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Right: Full Product Details */}
-                      <div className="flex-1 flex flex-col justify-between h-full w-full">
+                      {/* Price & Order Action */}
+                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
                         <div>
-                          {/* Category Badge & Fast Code */}
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${catClass} truncate max-w-[200px]`}>
-                              {p.category}
-                            </span>
-                            <span className="text-[11px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-md tracking-wider shrink-0">
-                              {p.code}
-                            </span>
-                          </div>
-
-                          {/* Product Name */}
-                          <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug line-clamp-2 mb-1.5" title={p.name}>
-                            {p.name}
-                          </h3>
-
-                          {/* Key benefits */}
-                          <ul className="space-y-0.5 mb-2.5">
-                            {p.properties.slice(0, 2).map((prop, i) => (
-                              <li key={i} className="text-[11px] text-slate-600 flex items-start gap-1.5 leading-tight">
-                                <span className="text-emerald-500 font-bold shrink-0">•</span>
-                                <span className="line-clamp-1">{prop}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          {/* Dosage & Usage Instruction Box */}
-                          <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-2.5 mb-2 text-slate-900">
-                            <div className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-900 mb-0.5 tracking-wider">
-                              <Clock size={12} className="text-emerald-600 shrink-0" />
-                              <span>КАК И СКОЛЬКО ПРИНИМАТЬ:</span>
-                            </div>
-                            
-                            <div className="text-[10.5px] space-y-0.5 font-medium leading-tight">
-                              <p className="line-clamp-1">
-                                👉 <strong>Прием:</strong> {p.instructions.usage}
-                              </p>
-                              <p className="text-[10px] text-emerald-800 line-clamp-1">
-                                🕒 {p.instructions.timing} &bull; 📅 {p.instructions.course}
-                              </p>
-                            </div>
-                          </div>
+                          <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
+                            Цена
+                          </span>
+                          <span className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight">
+                            {p.retailPrice} смн
+                          </span>
                         </div>
 
-                        {/* Price & Order Action */}
-                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 mt-auto">
-                          <div>
-                            <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
-                              Цена
-                            </span>
-                            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
-                              {p.retailPrice} смн
-                            </span>
-                          </div>
-
-                          <a
-                            href={p.waLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs transition-all shrink-0"
-                          >
-                            <MessageCircle size={13} />
-                            <span>Заказать в WhatsApp</span>
-                          </a>
-                        </div>
+                        <a
+                          href={p.waLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-[10.5px] font-bold shadow-xs transition-all shrink-0"
+                        >
+                          <MessageCircle size={12} />
+                          <span>Заказать</span>
+                        </a>
                       </div>
                     </div>
                   );
                 })}
 
-                {/* If page has only 1 item, clean empty slot */}
-                {pageItems.length === 1 && (
-                  <div className="product-card-row border border-dashed border-slate-200 rounded-2xl bg-slate-50/40 flex items-center justify-center text-xs text-slate-400">
-                    TOJ-VITAMIN • Доставка по Таджикистану
+                {/* If page has fewer than 4 items, elegant placeholder slots */}
+                {pageItems.length < 4 && Array.from({ length: 4 - pageItems.length }).map((_, idx) => (
+                  <div 
+                    key={`placeholder-${idx}`}
+                    className="border border-dashed border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-slate-50/50 text-slate-400"
+                  >
+                    <ShieldCheck size={26} className="text-emerald-500/60 mb-2" />
+                    <span className="text-xs font-bold text-slate-700">TOJ-VITAMIN</span>
+                    <span className="text-[10px] text-slate-500 max-w-[150px] mt-1">
+                      Официальный дистрибьютор GLS Pharmaceuticals
+                    </span>
                   </div>
-                )}
+                ))}
               </div>
 
               {/* Page Running Footer */}

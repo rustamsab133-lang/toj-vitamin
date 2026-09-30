@@ -209,8 +209,8 @@ async function main() {
     };
   });
 
-  // Strict 2 products per physical A4 sheet (Large horizontal cards)
-  const ITEMS_PER_PAGE = 2;
+  // Strict 4 products per physical A4 sheet (2x2 grid)
+  const ITEMS_PER_PAGE = 4;
   const productPages = chunkArray(items, ITEMS_PER_PAGE);
   const totalPagesCount = productPages.length + 2; // Cover + Product Pages + Back Cover
 
@@ -218,40 +218,38 @@ async function main() {
 
   function renderCard(p) {
     return `
-      <div class="product-card-row">
-        <!-- Big Product Image -->
-        <div class="image-box">
-          <img src="${p.imgUrl}" alt="${p.name.replace(/"/g, '&quot;')}" loading="eager" decoding="sync" />
+      <div class="product-card-2x2">
+        <div class="card-inner-top">
+          <div class="card-header">
+            <span class="category-pill">${p.category}</span>
+            <span class="code-badge">${p.code}</span>
+          </div>
+
+          <!-- Prominent Product Image -->
+          <div class="image-box">
+            <img src="${p.imgUrl}" alt="${p.name.replace(/"/g, '&quot;')}" loading="eager" decoding="sync" />
+          </div>
+
+          <h3 class="card-title" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</h3>
+          
+          <div class="card-prop">
+            <span class="bullet">•</span>
+            <span class="prop-text">${p.properties[0] || 'Сертифицированное качество GLS'}</span>
+          </div>
+
+          <div class="instructions-box">
+            <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
+            <div class="instruction-row">👉 <strong>Прием:</strong> ${p.usage}</div>
+            <div class="instruction-sub">🕒 ${p.timing} &bull; 📅 ${p.course}</div>
+          </div>
         </div>
 
-        <!-- Product Details -->
-        <div class="card-details">
-          <div>
-            <div class="card-header">
-              <span class="category-pill">${p.category}</span>
-              <span class="code-badge">${p.code}</span>
-            </div>
-
-            <h3 class="card-title" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</h3>
-            
-            <ul class="properties-list">
-              ${p.properties.map(pr => `<li>${pr}</li>`).join('')}
-            </ul>
-
-            <div class="instructions-box">
-              <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-              <div class="instruction-row">👉 <strong>Прием:</strong> ${p.usage}</div>
-              <div class="instruction-sub">🕒 ${p.timing} &bull; 📅 ${p.course}</div>
-            </div>
+        <div class="card-footer">
+          <div class="price-box">
+            <span class="price-label">Цена:</span>
+            <span class="price-val">${p.retailPrice} смн</span>
           </div>
-
-          <div class="card-footer">
-            <div class="price-box">
-              <span class="price-label">Цена:</span>
-              <span class="price-val">${p.retailPrice} смн</span>
-            </div>
-            <a href="${p.waLink}" target="_blank" class="order-btn">📲 Заказать в WhatsApp</a>
-          </div>
+          <a href="${p.waLink}" target="_blank" class="order-btn">📲 Заказать</a>
         </div>
       </div>
     `;
@@ -274,10 +272,16 @@ async function main() {
           </div>
         </div>
 
-        <!-- 2 Large Products Container -->
+        <!-- 4 Products Container (2x2 Grid) -->
         <div class="page-cards-container">
           ${pageItems.map(p => renderCard(p)).join('\n')}
-          ${pageItems.length === 1 ? '<div class="product-card-placeholder">TOJ-VITAMIN &bull; Доставка по Таджикистану</div>' : ''}
+          ${pageItems.length < 4 ? Array.from({ length: 4 - pageItems.length }).map(() => `
+            <div class="product-card-placeholder">
+              <div class="placeholder-icon">🛡️</div>
+              <strong>TOJ-VITAMIN</strong>
+              <span>Официальный дистрибьютор GLS в РТ</span>
+            </div>
+          `).join('') : ''}
         </div>
 
         <!-- Page Running Footer -->
@@ -445,139 +449,140 @@ async function main() {
     .header-brand { font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
     .header-cat { font-size: 10px; font-weight: 700; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 10px; border-radius: 6px; }
 
-    /* 2 Large Cards Container */
+    /* 4 Cards Container (2x2 Grid) */
     .page-cards-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 12px;
+      flex: 1;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .product-card-2x2 {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      flex: 1;
-      margin: 12px 0;
-      gap: 14px;
-    }
-
-    .product-card-row {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 14px 18px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 20px;
-      height: calc((100% - 14px) / 2);
-      box-sizing: border-box;
       overflow: hidden;
+      box-sizing: border-box;
     }
     .product-card-placeholder {
       border: 1px dashed #cbd5e1;
-      border-radius: 16px;
+      border-radius: 14px;
       background: #f8fafc;
-      height: calc((100% - 14px) / 2);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       color: #94a3b8;
-      font-size: 12px;
+      font-size: 11px;
+      text-align: center;
+      padding: 12px;
     }
+    .placeholder-icon { font-size: 24px; margin-bottom: 6px; }
 
-    .image-box {
-      width: 170px;
-      height: 100%;
-      min-height: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f8fafc;
-      border-radius: 14px;
-      padding: 10px;
-      flex-shrink: 0;
-    }
-    .image-box img {
-      max-height: 140px;
-      max-width: 100%;
-      object-fit: contain;
-    }
-
-    .card-details {
+    .card-inner-top {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      flex: 1;
-      height: 100%;
-      min-width: 0;
     }
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .category-pill {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       background: #f1f5f9;
       color: #334155;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
       border: 1px solid #e2e8f0;
+      max-width: 130px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .code-badge {
-      font-size: 11px;
-      font-weight: 800;
+      font-size: 10px;
+      font-weight: 900;
       background: #0f172a;
       color: #ffffff;
-      padding: 2px 7px;
-      border-radius: 5px;
+      padding: 1px 6px;
+      border-radius: 4px;
     }
+
+    .image-box {
+      width: 100%;
+      height: 135px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 6px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+    .image-box img {
+      max-height: 125px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
     .card-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 800;
       color: #0f172a;
-      line-height: 1.3;
+      line-height: 1.25;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      height: 30px;
+    }
+
+    .card-prop {
+      font-size: 10px;
+      color: #64748b;
       margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
-    .properties-list {
-      list-style: none;
-      margin-bottom: 8px;
-    }
-    .properties-list li {
-      font-size: 11px;
-      color: #475569;
-      line-height: 1.35;
-      margin-bottom: 2px;
-      padding-left: 12px;
-      position: relative;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .properties-list li::before {
-      content: "•";
+    .card-prop .bullet {
       color: #10b981;
-      position: absolute;
-      left: 0;
       font-weight: bold;
     }
+
     .instructions-box {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
-      border-radius: 10px;
-      padding: 6px 10px;
-      margin-bottom: 8px;
-      font-size: 10.5px;
+      border-radius: 8px;
+      padding: 5px 8px;
+      margin-bottom: 6px;
+      font-size: 9.5px;
       color: #065f46;
     }
     .instructions-header {
       font-weight: 800;
       margin-bottom: 2px;
-      font-size: 9.5px;
+      font-size: 8.5px;
       letter-spacing: 0.3px;
     }
-    .instruction-row { line-height: 1.25; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .instruction-sub { font-size: 9.5px; color: #047857; line-height: 1.2; }
+    .instruction-row { line-height: 1.2; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .instruction-sub { font-size: 8.5px; color: #047857; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .card-footer {
       display: flex;
@@ -587,16 +592,16 @@ async function main() {
       border-top: 1px solid #f1f5f9;
       margin-top: auto;
     }
-    .price-box .price-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; line-height: 1; }
-    .price-box .price-val { font-size: 16px; font-weight: 900; color: #0f172a; line-height: 1.2; }
+    .price-box .price-label { font-size: 7.5px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; line-height: 1; }
+    .price-box .price-val { font-size: 14px; font-weight: 900; color: #0f172a; line-height: 1.2; }
     .order-btn {
       background: #059669;
       color: #ffffff;
       text-decoration: none;
       font-weight: 700;
-      font-size: 11px;
-      padding: 7px 14px;
-      border-radius: 8px;
+      font-size: 10.5px;
+      padding: 5px 12px;
+      border-radius: 6px;
     }
 
     .page-running-footer {
@@ -644,13 +649,15 @@ async function main() {
     @media print {
       @page {
         size: A4 portrait;
-        margin: 8mm 10mm 8mm 10mm !important;
+        margin: 6mm 8mm 6mm 8mm !important;
       }
       html, body {
         background: #ffffff !important;
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       .action-bar { display: none !important; }
       .cover-page,
@@ -664,21 +671,37 @@ async function main() {
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        height: 281mm !important;
-        max-height: 281mm !important;
-        min-height: 281mm !important;
+        height: 284mm !important;
+        max-height: 284mm !important;
+        min-height: 284mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
-        padding: 4mm 6mm !important;
+        padding: 3mm 4mm !important;
       }
-      .product-card-row {
-        height: 122mm !important;
-        max-height: 122mm !important;
-        min-height: 122mm !important;
+      .page-cards-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(2, 1fr) !important;
+        gap: 3.5mm !important;
+        height: calc(100% - 16mm) !important;
+        max-height: calc(100% - 16mm) !important;
+        overflow: hidden !important;
+      }
+      .product-card-2x2 {
+        height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        padding: 2.5mm !important;
+      }
+      .image-box {
+        height: 38mm !important;
+        max-height: 38mm !important;
+      }
+      .image-box img {
+        max-height: 36mm !important;
       }
     }
   </style>
@@ -689,7 +712,7 @@ async function main() {
     <div>
       <strong style="font-size: 15px;">Каталог продукции TOJ-VITAMIN</strong>
       <span style="font-size: 12px; color: #64748b; margin-left: 8px;">
-        105 товаров &bull; ${totalPagesCount} страниц (2 товара на страницу, крупные фото)
+        105 товаров &bull; ${totalPagesCount} страниц (4 товара на страницу, каталог со схемами приема)
       </span>
     </div>
     <button onclick="window.print()" class="print-btn">

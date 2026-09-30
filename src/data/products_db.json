@@ -57,7 +57,8 @@
       "Энергия",
       "Репродукция"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-42.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-42.jpg",
+    "full_name": "Йохимбе капс (похудение, энергия) 350мг №60 GLS"
   },
   {
     "id": "38",
@@ -77,7 +78,8 @@
       "Энергия",
       "Детокс"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-5.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-5.jpg",
+    "full_name": "Альфа липоевая кислота капс. (молодость, похудение) 400мг №60 GLS"
   },
   {
     "id": "31",
@@ -167,7 +169,8 @@
       "Метаболизм",
       "Похудение"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-34.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-34.jpg",
+    "full_name": "Диабет формула капс.450мг №60 GLS"
   },
   {
     "id": "71",
@@ -209,7 +212,8 @@
       "Сердце",
       "Зрение"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-92.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-92.jpg",
+    "full_name": "Таурин 1000МЕ капс. (мышцы, похудение, выносливость) 400мг №90 GLS"
   },
   {
     "id": "46",
@@ -249,7 +253,8 @@
       "Метаболизм",
       "Здоровье"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-9.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-9.jpg",
+    "full_name": "Барбарис Берберин капс. (похудение, печень, метаболизм) №60 GLS"
   },
   {
     "id": "95",
@@ -269,7 +274,8 @@
       "Печень",
       "Похудение"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-63.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-63.jpg",
+    "full_name": "Липотропный фактор капс. (похудение, печень) 450мг №180 GLS"
   },
   {
     "id": "70",
@@ -333,14 +339,15 @@
   },
   {
     "id": "40",
-    "name": "МАКСИФЕРТ (Мио-инозитол) — Здоровье яичников и Фертильность",
+    "name": "Инозитол (Максиферт) капс. (баланс гармонов) №90 GLS",
     "tags": [
       "Фертильность",
       "Планирование беременности",
       "СПКЯ",
       "Душанбе"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-40.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-40.jpg",
+    "full_name": "Инозитол (Максиферт) капс. (баланс гармонов) №90 GLS"
   },
   {
     "id": "1",
@@ -503,7 +510,8 @@
       "Антистресс",
       "Похудение"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-93.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-93.jpg",
+    "full_name": "Тирозин капс. (похудение, сердце) 500мг №90 GLS"
   },
   {
     "id": "85",
@@ -573,7 +581,8 @@
       "Детокс",
       "Пищеварение"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-97.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-97.jpg",
+    "full_name": "Хитозан морской капс. (пищеварение, очищение, похудение) 240мг №100 GLS"
   },
   {
     "id": "22",
@@ -655,7 +664,8 @@
       "Красота",
       "Пищеварение"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-90.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-90.jpg",
+    "full_name": "Семена Льна порошок (похудение, очищение, микробиом) 200г GLS"
   },
   {
     "id": "100",
@@ -665,7 +675,8 @@
       "Метаболизм",
       "Здоровье"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-100.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-100.jpg",
+    "full_name": "Хрома пиколинат 250мкг капс. (похудение, метаболизм) 240мг №60 GLS"
   },
   {
     "id": "81",
@@ -718,7 +729,8 @@
       "Красота",
       "Энергия"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/13-1775833784642.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/13-1775833784642.jpg",
+    "full_name": "Витамин B5 капс. (жиросжигание. энергия) 400мг №60 GLS"
   },
   {
     "id": "18",
@@ -759,7 +771,8 @@
       "Энергия",
       "Спорт"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-39.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-39.jpg",
+    "full_name": "Жиросжигатель капс. (похудение) №60 GLS"
   },
   {
     "id": "53",
@@ -842,7 +855,8 @@
       "Метаболизм",
       "Здоровье"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/41-1775833861783.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/41-1775833861783.jpg",
+    "full_name": "Йод капс. (щитовидная железа, баланс гармонов) №60 GLS"
   },
   {
     "id": "20",
@@ -892,7 +906,8 @@
       "Похудение",
       "Сердце"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-64.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-64.jpg",
+    "full_name": "Л-карнитин капс. (похудение, мышцы) 400мг №60 GLS"
   },
   {
     "id": "107",
@@ -1042,7 +1057,8 @@
       "Anti-age",
       "Здоровье"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-102.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-102.jpg",
+    "full_name": "Цинк селен капс. (красота, фетильность) 320мг №60 GLS"
   },
   {
     "id": "60",
@@ -1062,7 +1078,8 @@
       "Метаболизм",
       "Здоровье"
     ],
-    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-99.jpg"
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-99.jpg",
+    "full_name": "Хрома пиколинат 250мкг капс. (похудение, метаболизм) 240мг №120 GLS"
   },
   {
     "id": "59",
@@ -1083,5 +1100,22 @@
       "Суставы"
     ],
     "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/prod-51.jpg"
+  },
+  {
+    "id": "109",
+    "name": "Бустер тестостерона капс. GLS",
+    "full_name": "Бустер тестостерона капс. GLS",
+    "description": "",
+    "price": 130,
+    "icon_type": "pill",
+    "synergy_product_id": null,
+    "synergy_reason": null,
+    "created_at": "2026-09-05T03:58:28.206077+00:00",
+    "image_url": "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/109-1788580705696.jpg",
+    "tags": [],
+    "med_interactions": [],
+    "marketing_hooks": [],
+    "barcode": null,
+    "stock_quantity": 0
   }
 ]
