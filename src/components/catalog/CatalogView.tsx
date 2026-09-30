@@ -133,7 +133,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                 </span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
-                {filteredProducts.length} позиций • 2 товара на лист (крупные фото)
+                {filteredProducts.length} позиций • 4 товара на лист (каталог со схемами приема)
               </p>
             </div>
           </div>
@@ -214,11 +214,11 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
 
       {/* ===================== STRICT PRINT & RESPONSIVE STYLES ===================== */}
       <style dangerouslySetInnerHTML={{__html: `
+        @page {
+          size: A4 portrait;
+          margin: 6mm 8mm;
+        }
         @media print {
-          @page {
-            size: A4 portrait;
-            margin: 5mm 6mm 5mm 6mm !important;
-          }
           html, body {
             background: #ffffff !important;
             margin: 0 !important;
@@ -233,12 +233,31 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             max-width: none !important;
           }
           .cover-page,
-          .catalog-page,
           .back-cover-page {
             width: 100% !important;
-            height: 255mm !important;
+            height: 250mm !important;
             max-height: 255mm !important;
-            min-height: 255mm !important;
+            margin: 0 auto !important;
+            padding: 4mm !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+            background: #ffffff !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+          }
+          .catalog-page {
+            width: 100% !important;
+            height: 250mm !important;
+            max-height: 252mm !important;
+            min-height: 245mm !important;
             margin: 0 auto !important;
             padding: 2mm 3mm !important;
             box-shadow: none !important;
@@ -258,36 +277,72 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
           .cards-grid-4 {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
-            grid-template-rows: repeat(2, 1fr) !important;
+            grid-template-rows: repeat(2, 114mm) !important;
             gap: 2.5mm !important;
+            margin: 1.5mm 0 0 0 !important;
             flex: 1 !important;
-            height: calc(100% - 10mm) !important;
-            max-height: calc(100% - 10mm) !important;
-            overflow: hidden !important;
-            box-sizing: border-box !important;
-          }
-          .product-card-2x2 {
-            height: 100% !important;
-            max-height: 100% !important;
+            height: 232mm !important;
+            max-height: 232mm !important;
             overflow: hidden !important;
             box-sizing: border-box !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+          }
+          .product-card-2x2 {
+            height: 114mm !important;
+            max-height: 114mm !important;
+            min-height: 114mm !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-before: avoid !important;
+            break-before: avoid !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 2mm !important;
+            padding: 2mm 2.5mm !important;
             border: 1px solid #e2e8f0 !important;
             border-radius: 6px !important;
           }
+          .card-content-top {
+            display: flex !important;
+            flex-direction: column !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .product-card-footer {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding-top: 1.5mm !important;
+            margin-top: auto !important;
+            border-top: 1px solid #f1f5f9 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-before: avoid !important;
+            break-before: avoid !important;
+            height: 8mm !important;
+          }
+          .product-card-footer a {
+            padding: 1.5mm 3.5mm !important;
+            font-size: 9.5px !important;
+          }
           .product-photo-box {
-            height: 28mm !important;
-            max-height: 28mm !important;
+            height: 26mm !important;
+            max-height: 26mm !important;
+            margin-bottom: 1mm !important;
           }
           .product-photo-box img {
-            max-height: 26mm !important;
+            max-height: 24mm !important;
             max-width: 100% !important;
             object-fit: contain !important;
+          }
+          .dosage-box {
+            padding: 1.5mm 2mm !important;
+            margin-bottom: 1mm !important;
           }
         }
       `}} />
@@ -434,7 +489,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                       key={p.id}
                       className="product-card-2x2 bg-white border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:border-slate-300 transition-colors"
                     >
-                      <div>
+                      <div className="card-content-top">
                         {/* Category Badge & Fast Code */}
                         <div className="flex items-center justify-between gap-1.5 mb-1">
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${catClass} truncate max-w-[120px]`}>
@@ -472,7 +527,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                         </ul>
 
                         {/* Dosage & Usage Instruction Box - Full text without clipping */}
-                        <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2 mb-2 text-slate-900">
+                        <div className="dosage-box bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2 mb-1.5 text-slate-900">
                           <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-emerald-950 mb-1 tracking-wider uppercase">
                             <Clock size={12} className="text-emerald-600 shrink-0" />
                             <span>Как и сколько принимать:</span>
@@ -492,7 +547,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                       </div>
 
                       {/* Price & Order Action */}
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
+                      <div className="product-card-footer pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
                         <div>
                           <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
                             Цена

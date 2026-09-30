@@ -356,11 +356,11 @@
     }
 
     /* ================= PRINT RULES (EXACT A4 WITH ZERO SPILLOVER) ================= */
+    @page {
+      size: A4 portrait;
+      margin: 6mm 8mm;
+    }
     @media print {
-      @page {
-        size: A4 portrait;
-        margin: 5mm 6mm 5mm 6mm !important;
-      }
       html, body {
         background: #ffffff !important;
         margin: 0 !important;
@@ -371,7 +371,6 @@
       }
       .action-bar { display: none !important; }
       .cover-page,
-      .catalog-page,
       .back-cover-page {
         margin: 0 auto !important;
         box-shadow: none !important;
@@ -381,42 +380,99 @@
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        height: 255mm !important;
+        height: 250mm !important;
         max-height: 255mm !important;
-        min-height: 255mm !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        padding: 4mm !important;
+      }
+      .catalog-page {
+        margin: 0 auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        height: 250mm !important;
+        max-height: 252mm !important;
+        min-height: 245mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         padding: 2mm 3mm !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
       }
       .page-cards-container {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        grid-template-rows: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(2, 114mm) !important;
         gap: 2.5mm !important;
-        height: calc(100% - 10mm) !important;
-        max-height: calc(100% - 10mm) !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-      }
-      .product-card-2x2 {
-        height: 100% !important;
-        max-height: 100% !important;
+        margin: 1.5mm 0 0 0 !important;
+        height: 232mm !important;
+        max-height: 232mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        padding: 2mm !important;
+      }
+      .product-card-2x2 {
+        height: 114mm !important;
+        max-height: 114mm !important;
+        min-height: 114mm !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        padding: 2mm 2.5mm !important;
         border: 1px solid #e2e8f0 !important;
         border-radius: 6px !important;
       }
+      .card-inner-top {
+        display: flex !important;
+        flex-direction: column !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .card-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding-top: 1.5mm !important;
+        margin-top: auto !important;
+        border-top: 1px solid #f1f5f9 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+        height: 8mm !important;
+      }
+      .order-btn {
+        padding: 1.5mm 3.5mm !important;
+        font-size: 9.5px !important;
+      }
       .image-box {
-        height: 28mm !important;
-        max-height: 28mm !important;
+        height: 26mm !important;
+        max-height: 26mm !important;
+        margin-bottom: 1mm !important;
       }
       .image-box img {
-        max-height: 26mm !important;
+        max-height: 24mm !important;
         max-width: 100% !important;
         object-fit: contain !important;
+      }
+      .instructions-box {
+        padding: 1.5mm 2mm !important;
+        margin-bottom: 1mm !important;
       }
     }
   </style>
