@@ -5,7 +5,7 @@ import {
   Copy, ExternalLink, MessageCircle, User, Stethoscope, 
   FileText, Plus, Trash2, Search, ArrowLeft, AlertTriangle, 
   TrendingUp, RefreshCw, Sun, Sunrise, Moon, Calendar, 
-  Check, Phone, HelpCircle, Pill, ChevronRight
+  Check, Phone, HelpCircle, Pill, ChevronRight, LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminDbQuery } from '@/lib/admin-api';
@@ -13,7 +13,8 @@ import { Product } from '@/lib/types';
 import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
 
 interface ConsultantCopilotProps {
-  onBack: () => void;
+  onBack?: () => void;
+  onLogout?: () => void;
   initialOrderId?: number;
 }
 
@@ -38,7 +39,7 @@ const PRESET_LABS = [
   { label: 'Дефицит витамина D и остеопения', text: 'Витамин D 25-OH: 12 нг/мл, Кальций общий: 2.15 ммоль/л, Фосфор: 1.05 ммоль/л' },
 ];
 
-export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, initialOrderId }) => {
+export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, onLogout, initialOrderId }) => {
   const [activeTab, setActiveTab] = useState<'order' | 'consult' | 'labs'>('order');
   const [lang, setLang] = useState<'ru' | 'tj'>('ru');
   const [products, setProducts] = useState<Product[]>([]);
@@ -271,12 +272,14 @@ export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, in
       {/* Top Header */}
       <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
-          >
-            <ArrowLeft size={18} />
-          </button>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+            >
+              <ArrowLeft size={18} />
+            </button>
+          )}
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
             <Stethoscope size={24} />
           </div>
@@ -293,24 +296,37 @@ export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, in
           </div>
         </div>
 
-        {/* Language selector */}
-        <div className="flex items-center gap-2 self-start md:self-auto bg-slate-100 p-1 rounded-2xl">
-          <button
-            onClick={() => setLang('ru')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              lang === 'ru' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            🇷🇺 Русский
-          </button>
-          <button
-            onClick={() => setLang('tj')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              lang === 'tj' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            🇹🇯 Тоҷикӣ
-          </button>
+        {/* Right tools: Language selector and optional Logout */}
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+            <button
+              onClick={() => setLang('ru')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                lang === 'ru' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              🇷🇺 Русский
+            </button>
+            <button
+              onClick={() => setLang('tj')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                lang === 'tj' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              🇹🇯 Тоҷикӣ
+            </button>
+          </div>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 text-xs font-bold transition-all"
+              title="Выйти из кабинета"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Выйти</span>
+            </button>
+          )}
         </div>
       </div>
 

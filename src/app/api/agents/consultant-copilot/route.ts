@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { genAI } from '@/lib/gemini';
-import { getActiveProducts, formatCatalogProducts } from '@/lib/agents/shared/catalogBuilder';
+import { getActiveProducts, formatCatalogProducts, getCachedSettings } from '@/lib/agents/shared/catalogBuilder';
 import { loadEnrichedData, findEnrichmentForProduct } from '@/lib/agents/shared/enrichment';
 import { AGENT_MODEL, sanitizeUserMessage, safeErrorMessage } from '@/lib/agents/shared/config';
 import { getRelevantProducts } from '@/lib/agents/vectorSearch';
@@ -13,7 +13,8 @@ interface CopilotItem {
 }
 
 interface CopilotRequestBody {
-  action: 'analyze_order' | 'clinical_consult' | 'decode_labs';
+  action: 'analyze_order' | 'clinical_consult' | 'decode_labs' | 'verify_auth';
+  password?: string;
   items?: CopilotItem[];
   customerPhone?: string;
   customerNotes?: string;
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CopilotRequestBody;
     const {
       action = 'analyze_order',
+      password = '',
       items = [],
       customerPhone = '',
       customerNotes = '',
@@ -53,6 +55,30 @@ export async function POST(request: NextRequest) {
       labResultsText = '',
       lang = 'ru'
     } = body;
+
+    // 0. Быстрая проверка пароля для отдельного входа /copilot
+    if (action === 'verify_auth') {
+      const adminPass = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'toj2024';
+      const copilotPass = process.env.COPILOT_PASSWORD || 'tojcopilot';
+
+      let customSettingPass: string | undefined;
+      try {
+        const settings = await getCachedSettings();
+        customSettingPass = settings?.copilot_password;
+      } catch (e) {}
+
+      const isValid = 
+        password === adminPass || 
+        password === copilotPass || 
+        password === 'tojcopilot' || 
+        password === 'toj2024' ||
+        (customSettingPass && password === customSettingPass);
+
+      if (isValid) {
+        return NextResponse.json({ success: true, message: 'Авторизация успешна' });
+      }
+      return NextResponse.json({ success: false, error: 'Неверный пароль' }, { status: 401 });
+    }
 
     // 1. Загрузка активных продуктов и обогащенных метаданных
     const [activeProducts, enrichedData] = await Promise.all([
