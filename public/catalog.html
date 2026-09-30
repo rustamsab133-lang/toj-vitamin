@@ -55,8 +55,6 @@
     .back-cover-page {
       max-width: 860px;
       width: 100%;
-      min-height: 281mm;
-      max-height: 281mm;
       margin: 0 auto 30px auto;
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -223,7 +221,7 @@
 
     .image-box {
       width: 100%;
-      height: 135px;
+      height: 115px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -234,7 +232,7 @@
       flex-shrink: 0;
     }
     .image-box img {
-      max-height: 125px;
+      max-height: 105px;
       max-width: 100%;
       object-fit: contain;
     }
@@ -249,42 +247,64 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      height: 30px;
+      min-height: 30px;
     }
 
-    .card-prop {
-      font-size: 10px;
-      color: #64748b;
+    .properties-list {
+      list-style: none;
       margin-bottom: 6px;
+    }
+    .properties-list li {
+      font-size: 10px;
+      color: #475569;
+      line-height: 1.25;
+      margin-bottom: 2px;
+      padding-left: 10px;
+      position: relative;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
-    .card-prop .bullet {
+    .properties-list li::before {
+      content: "•";
       color: #10b981;
+      position: absolute;
+      left: 0;
       font-weight: bold;
     }
 
     .instructions-box {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
-      border-radius: 8px;
-      padding: 5px 8px;
+      border-radius: 10px;
+      padding: 6px 8px;
       margin-bottom: 6px;
-      font-size: 9.5px;
+      font-size: 10px;
       color: #065f46;
     }
     .instructions-header {
       font-weight: 800;
       margin-bottom: 2px;
-      font-size: 8.5px;
+      font-size: 9px;
       letter-spacing: 0.3px;
     }
-    .instruction-row { line-height: 1.2; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .instruction-sub { font-size: 8.5px; color: #047857; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .instruction-row {
+      line-height: 1.3;
+      margin-bottom: 2px;
+      color: #1e293b;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .instruction-sub {
+      font-size: 9px;
+      color: #047857;
+      line-height: 1.2;
+      padding-top: 2px;
+      border-top: 1px solid rgba(167, 243, 208, 0.6);
+      font-weight: 600;
+    }
 
     .card-footer {
       display: flex;
@@ -351,7 +371,7 @@
     @media print {
       @page {
         size: A4 portrait;
-        margin: 6mm 8mm 6mm 8mm !important;
+        margin: 5mm 6mm 5mm 6mm !important;
       }
       html, body {
         background: #ffffff !important;
@@ -365,7 +385,7 @@
       .cover-page,
       .catalog-page,
       .back-cover-page {
-        margin: 0 !important;
+        margin: 0 auto !important;
         box-shadow: none !important;
         border: none !important;
         border-radius: 0 !important;
@@ -373,21 +393,22 @@
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        height: 284mm !important;
-        max-height: 284mm !important;
-        min-height: 284mm !important;
+        height: 255mm !important;
+        max-height: 255mm !important;
+        min-height: 255mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
-        padding: 3mm 4mm !important;
+        padding: 2mm 3mm !important;
       }
       .page-cards-container {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         grid-template-rows: repeat(2, 1fr) !important;
-        gap: 3.5mm !important;
-        height: calc(100% - 16mm) !important;
-        max-height: calc(100% - 16mm) !important;
+        gap: 2.5mm !important;
+        height: calc(100% - 14mm) !important;
+        max-height: calc(100% - 14mm) !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
       }
       .product-card-2x2 {
         height: 100% !important;
@@ -396,14 +417,18 @@
         box-sizing: border-box !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        padding: 2.5mm !important;
+        padding: 2mm !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px !important;
       }
       .image-box {
-        height: 38mm !important;
-        max-height: 38mm !important;
+        height: 28mm !important;
+        max-height: 28mm !important;
       }
       .image-box img {
-        max-height: 36mm !important;
+        max-height: 26mm !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
       }
     }
   </style>
@@ -507,15 +532,14 @@
 
           <h3 class="card-title" title="5-HTP капс. (спокойствие, сон) 400мг №60 GLS">5-HTP капс. (спокойствие, сон) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Нормализует циклы сна, способствует легкому засыпанию.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Нормализует циклы сна, способствует легкому засыпанию.</li><li>Снижает уровень тревожности и стресса.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы во время еды в первой половине дня</div>
-            <div class="instruction-sub">🕒 Утром / в первой половине дня &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы во время еды в первой половине дня</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Утром / в первой половине дня &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -543,15 +567,14 @@
 
           <h3 class="card-title" title="Алоэ Вера капс. (красота, иммунитет) 400мг №60 GLS">Алоэ Вера капс. (красота, иммунитет) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Улучшает состояние кожи, придавая ей сияние и упругость.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Улучшает состояние кожи, придавая ей сияние и упругость.</li><li>Активирует защитные функции организма, укрепляя иммунитет.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по применению: взрослым по 1-2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по применению: взрослым по 1-2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -579,15 +602,14 @@
 
           <h3 class="card-title" title="Альфа липоевая кислота капс. (молодость, похудение) 400мг №60 GLS">Альфа липоевая кислота капс. (молодость, похудение) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -615,15 +637,14 @@
 
           <h3 class="card-title" title="Аминокислотный комплекс порошок (рельеф мышц, энергия) 156г GLS">Аминокислотный комплекс порошок (рельеф мышц, энергия) 156г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает рост и быстрое восстановление мышечной ткани.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает рост и быстрое восстановление мышечной ткани.</li><li>Увеличивает выносливость и энергетический потенциал организма.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) растворить в 200 мл воды; взрослым принимать по 1 порции 2 раза в день до или после еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) растворить в 200 мл воды; взрослым принимать по 1 порции 2 раза в день до или после еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -679,15 +700,14 @@
 
           <h3 class="card-title" title="Аргинин 1000 капс. (сосуды, мышцы) 400мг №90 GLS">Аргинин 1000 капс. (сосуды, мышцы) 400мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье сердечно-сосудистой системы.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье сердечно-сосудистой системы.</li><li>Улучшает кровоток и питание мышц.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -715,15 +735,14 @@
 
           <h3 class="card-title" title="Артурон капс. (мужская сила, энергия) 500мг №90 GLS">Артурон капс. (мужская сила, энергия) 500мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает мужскую силу и выносливость.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает мужскую силу и выносливость.</li><li>Повышает уровень энергии и жизненного тонуса.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по 1 капсуле 3 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по 1 капсуле 3 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -751,15 +770,14 @@
 
           <h3 class="card-title" title="Бета-каротин капс (омоложение, кожа, зрение) 450мг №60 GLS">Бета-каротин капс (омоложение, кожа, зрение) 450мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье кожи, придает естественное сияние.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье кожи, придает естественное сияние.</li><li>Улучшает остроту зрения, защищает сетчатку глаз.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1-2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1-2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -787,15 +805,14 @@
 
           <h3 class="card-title" title="Биотин без сахара шипучие таб. (красота, кожа) №20 масса 3.8г GLS">Биотин без сахара шипучие таб. (красота, кожа) №20 масса 3.8г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет волосы, стимулирует их рост и блеск.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет волосы, стимулирует их рост и блеск.</li><li>Улучшает эластичность кожи, борется с сухостью.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 таблетке в день во время еды, предварительно растворив таблетку в 1 стакане воды (200 мл)</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 таблетке в день во время еды, предварительно растворив таблетку в 1 стакане воды (200 мл)</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -851,15 +868,14 @@
 
           <h3 class="card-title" title="Бустер тестостерона капс. GLS">Бустер тестостерона капс. GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Стимулирует естественную выработку собственного тестостерона.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Стимулирует естественную выработку собственного тестостерона.</li><li>Повышает выносливость, физическую силу и ускоряет рост сухой мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по 1 капсуле 3 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по 1 капсуле 3 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -887,15 +903,14 @@
 
           <h3 class="card-title" title="В-комплекс капс. (иммунитет, энергия) 430мг №60 GLS">В-комплекс капс. (иммунитет, энергия) 430мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Способствует выработке клеточной энергии и снижает усталость.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Способствует выработке клеточной энергии и снижает усталость.</li><li>Укрепляет иммунную систему и повышает сопротивляемость организма.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порцию (100 г) порошка (4 мерных ложки) предварительно растворить в 350-400 мл воды или обезжиренного молока (для смешивания рекомендуется использовать шейкер); взрослым принимать 1 раз в день после еды, в т.ч. при занятиях спортом</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порцию (100 г) порошка (4 мерных ложки) предварительно растворить в 350-400 мл воды или обезжиренного молока (для смешивания рекомендуется использовать шейкер); взрослым принимать 1 раз в день после еды, в т.ч. при занятиях спортом</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -923,15 +938,14 @@
 
           <h3 class="card-title" title="Витамин А 10000МЕ капс. (красота, зрение) 400мг №60 GLS">Витамин А 10000МЕ капс. (красота, зрение) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает остроту зрения, улучшает сумеречное видение.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает остроту зрения, улучшает сумеречное видение.</li><li>Способствует здоровью кожи, волос и ногтей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 7 лет по 1 капсуле в день во время еды, взрослым, в т.ч. женщинам, планирующим беременность, беременным и кормящим женщинам по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 7 лет по 1 капсуле в день во время еды, взрослым, в т.ч. женщинам, планирующим беременность, беременным и кормящим женщинам по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -959,15 +973,14 @@
 
           <h3 class="card-title" title="Витамин Д3+К2 капс. (кости, сосуды) 220мг №60 GLS">Витамин Д3+К2 капс. (кости, сосуды) 220мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает сильный иммунитет, снижает риск инфекций.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает сильный иммунитет, снижает риск инфекций.</li><li>Способствует усвоению кальция, укрепляет кости и зубы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3-х лет и взрослым, в том числе беременным и кормящим женщинам, по 1 нажатию (0,13 мл) непосредственно в полость рта 1 раз в день во время еды. Перед применением встряхнуть флакон</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3-х лет и взрослым, в том числе беременным и кормящим женщинам, по 1 нажатию (0,13 мл) непосредственно в полость рта 1 раз в день во время еды. Перед применением встряхнуть флакон</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1023,15 +1036,14 @@
 
           <h3 class="card-title" title="Витамин К2 капс. (омоложение, сосуды) 400мг №60 GLS">Витамин К2 капс. (омоложение, сосуды) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает эластичность сосудов, предотвращая их кальцификацию.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает эластичность сосудов, предотвращая их кальцификацию.</li><li>Способствует прочности костей, направляя кальций в скелет.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1-2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1-2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1059,15 +1071,14 @@
 
           <h3 class="card-title" title="Витамин С детс. паст. (иммунитет, сердце) №90 апельсин">Витамин С детс. паст. (иммунитет, сердце) №90 апельсин</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Мощно укрепляет иммунную систему, сокращает длительность простуд.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Мощно укрепляет иммунную систему, сокращает длительность простуд.</li><li>Является сильным антиоксидантом, защищает клетки от повреждений.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1095,15 +1106,14 @@
 
           <h3 class="card-title" title="Витамин С капс. (иммунитет, сердце, красота) 900мг 500мг №60 GLS">Витамин С капс. (иммунитет, сердце, красота) 900мг 500мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Мощно укрепляет иммунную систему, сокращает длительность простуд.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Мощно укрепляет иммунную систему, сокращает длительность простуд.</li><li>Является сильным антиоксидантом, защищает клетки от повреждений.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1131,15 +1141,14 @@
 
           <h3 class="card-title" title="Витамин С шипучие таб. (иммунитет, сердце, красота) 900мг №20 апельсин">Витамин С шипучие таб. (иммунитет, сердце, красота) 900мг №20 апельсин</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Мощно укрепляет иммунную систему, сокращает длительность простуд.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Мощно укрепляет иммунную систему, сокращает длительность простуд.</li><li>Является сильным антиоксидантом, защищает клетки от повреждений.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1195,15 +1204,14 @@
 
           <h3 class="card-title" title="Витамин С шипучие таб. (иммунитет, сердце, красота) 900мг №20 лимон">Витамин С шипучие таб. (иммунитет, сердце, красота) 900мг №20 лимон</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Мощно укрепляет иммунную систему, сокращает длительность простуд.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Мощно укрепляет иммунную систему, сокращает длительность простуд.</li><li>Является сильным антиоксидантом, защищает клетки от повреждений.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1231,15 +1239,14 @@
 
           <h3 class="card-title" title="Витамин B5 капс. (жиросжигание. энергия) 400мг №60 GLS">Витамин B5 капс. (жиросжигание. энергия) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Ускоряет метаболизм жиров, способствуя эффективному похудению.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Ускоряет метаболизм жиров, способствуя эффективному похудению.</li><li>Повышает уровень клеточной энергии, борется с усталостью.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1267,15 +1274,14 @@
 
           <h3 class="card-title" title="Витамин B12 капс.(кровь, нервы) 190мг №60 GLS">Витамин B12 капс.(кровь, нервы) 190мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 3 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 3 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1303,15 +1309,14 @@
 
           <h3 class="card-title" title="Витамин D3 для детей паст. (иммунитет, кости) №30 GLS">Витамин D3 для детей паст. (иммунитет, кости) №30 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает крепкий иммунитет и защитные функции организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает крепкий иммунитет и защитные функции организма.</li><li>Обеспечивает здоровый рост и правильное развитие костей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1367,15 +1372,14 @@
 
           <h3 class="card-title" title="Витамин D3 для детей паст. (иммунитет, кости) №90 GLS">Витамин D3 для детей паст. (иммунитет, кости) №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает крепкий иммунитет и защитные функции организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает крепкий иммунитет и защитные функции организма.</li><li>Обеспечивает здоровый рост и правильное развитие костей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1403,15 +1407,14 @@
 
           <h3 class="card-title" title="Витамины для беременных капс.500мг №60 GLS">Витамины для беременных капс.500мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровое развитие плода на всех этапах.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровое развитие плода на всех этапах.</li><li>Обеспечивает маму всеми необходимыми питательными веществами.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым, в том числе беременным и кормящим женщинам по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым, в том числе беременным и кормящим женщинам по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1439,15 +1442,14 @@
 
           <h3 class="card-title" title="Витамины для волос капс.370мг №60 GLS">Витамины для волос капс.370мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Предотвращение выпадения и стимуляция роста волос</span>
-          </div>
+          <ul class="properties-list">
+            <li>Предотвращение выпадения и стимуляция роста волос</li><li>Снижение жирности, увеличение объема и улучшение внешнего вида волос</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1475,15 +1477,14 @@
 
           <h3 class="card-title" title="Витамины для глаз капс.420мг №60 GLS">Витамины для глаз капс.420мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание здоровья и защита глаз от негативного воздействия УФизлучения</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание здоровья и защита глаз от негативного воздействия УФизлучения</li><li>Снижение риска ухудшения зрения и возрастных заболеваний глаз</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> детям 7-10 лет по 1 капсуле в день во время еды, детям старше 11 лет и взрослым по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> детям 7-10 лет по 1 капсуле в день во время еды, детям старше 11 лет и взрослым по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1539,15 +1540,14 @@
 
           <h3 class="card-title" title="Гинкго билоба + Готу кола капс. (память, продуктивность) 380мг №60 GLS">Гинкго билоба + Готу кола капс. (память, продуктивность) 380мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Улучшает память, внимание и концентрацию.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Улучшает память, внимание и концентрацию.</li><li>Поддерживает здоровое мозговое кровообращение.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1575,15 +1575,14 @@
 
           <h3 class="card-title" title="Глутатион капс. (омоложение, очищение) 300мг №60 GLS">Глутатион капс. (омоложение, очищение) 300мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Мощный антиоксидант, защищает клетки от свободных радикалов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Мощный антиоксидант, защищает клетки от свободных радикалов.</li><li>Эффективно очищает организм, поддерживает здоровую функцию печени.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1611,15 +1610,14 @@
 
           <h3 class="card-title" title="Глюкозамин Хондроитин капс. (суставы, кости) 400мг №120 GLS">Глюкозамин Хондроитин капс. (суставы, кости) 400мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье хрящевой ткани и суставов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье хрящевой ткани и суставов.</li><li>Способствует восстановлению поврежденных хрящей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 1–2 месяца (1-2 упаковки)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> 1–2 месяца (1-2 упаковки)</div>
           </div>
         </div>
 
@@ -1647,15 +1645,14 @@
 
           <h3 class="card-title" title="Диабет формула капс.450мг №60 GLS">Диабет формула капс.450мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает чувствительность к инсулину, уменьшает тягу к сладкому и ускоряет</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает чувствительность к инсулину, уменьшает тягу к сладкому и ускоряет</li><li>Обладает антиоксидантным действием, защищает сосуды и печень от повреждений</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1711,15 +1708,14 @@
 
           <h3 class="card-title" title="Железо хелат капс. (профилактика анемии, синтез гемоглабина) 400мг №60 GLS">Железо хелат капс. (профилактика анемии, синтез гемоглабина) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Уменьшение негативных проявлений и профилактика развития железодефицитной анемии</span>
-          </div>
+          <ul class="properties-list">
+            <li>Уменьшение негативных проявлений и профилактика развития железодефицитной анемии</li><li>Способствует восполнению естественных потерь железа, в том числе при менструациях,</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1747,15 +1743,14 @@
 
           <h3 class="card-title" title="Женская формула капс. (красота, молодость) 430мг №60 GLS">Женская формула капс. (красота, молодость) 430мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание красоты и молодости кожи, волос и ногтей</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание красоты и молодости кожи, волос и ногтей</li><li>Замедление процессов старения — Antiage effect</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1783,15 +1778,14 @@
 
           <h3 class="card-title" title="Женьшень капс. (иммунитет, энергия) 200мг №60 GLS">Женьшень капс. (иммунитет, энергия) 200мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет иммунитет, повышает сопротивляемость организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет иммунитет, повышает сопротивляемость организма.</li><li>Придает энергию, снижает усталость и сонливость.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в первой половине дня во время еды</div>
-            <div class="instruction-sub">🕒 Утром / в первой половине дня &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в первой половине дня во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Утром / в первой половине дня &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -1819,15 +1813,14 @@
 
           <h3 class="card-title" title="Жидкий хлорофил GLS 500 мг">Жидкий хлорофил GLS 500 мг</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Эффективный природный детоксикант для мягкого очищения организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Эффективный природный детоксикант для мягкого очищения организма.</li><li>Поддерживает здоровую микрофлору кишечника и улучшает пищеварение.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым принимать 25 мл 1 раз в день, смешав со 100 мл тёплой воды или любым напитком во время приёма пищи</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым принимать 25 мл 1 раз в день, смешав со 100 мл тёплой воды или любым напитком во время приёма пищи</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1883,15 +1876,14 @@
 
           <h3 class="card-title" title="Жиросжигатель капс. (похудение) №60 GLS">Жиросжигатель капс. (похудение) №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Ускоряет метаболизм, способствуя активному сжиганию жира.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Ускоряет метаболизм, способствуя активному сжиганию жира.</li><li>Снижает аппетит, помогая эффективно контролировать вес.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по применению: взрослым по 1 капсуле 2 раза в первой половине дня во время еды</div>
-            <div class="instruction-sub">🕒 Утром / в первой половине дня &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по применению: взрослым по 1 капсуле 2 раза в первой половине дня во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Утром / в первой половине дня &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -1919,9 +1911,8 @@
 
           <h3 class="card-title" title="Инозитол (Максиферт) капс. (баланс гармонов) №90 GLS">Инозитол (Максиферт) капс. (баланс гармонов) №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Инозитол + Метилфолат
+          <ul class="properties-list">
+            <li>Инозитол + Метилфолат
 
 Инозит положительно влияет на репродуктивную систему, гормональный фон, регулярность менструального цикла, играет важную роль в восстановлении функции яичников и созревании яйцеклетки, увеличивает частоту наступления беременности. Уменьшает риск развития инсулинорезистентности, диабета, избыточного веса и ожирения, участвует в регуляции уровня лептина - гормона, контролирующего аппетит.
 
@@ -1939,13 +1930,13 @@
 
 Способствует поддержанию сперматогенеза, улучшает качество спермы, снижая риск развития мужского бесплодия и повышая шансы на успешное зачатие.
 
-БАД. Не является лекарственным средством.</span>
-          </div>
+БАД. Не является лекарственным средством.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 3 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 3 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -1973,15 +1964,14 @@
 
           <h3 class="card-title" title="Йод капс. (щитовидная железа, баланс гармонов) №60 GLS">Йод капс. (щитовидная железа, баланс гармонов) №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровую функцию щитовидной железы.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровую функцию щитовидной железы.</li><li>Способствует выработке важных гормонов щитовидной железы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3-х лет по 1 капле 1 раз в день, взрослым по 3 капли 1 раз в день во время еды, добавляя в пищу или напитки. Перед употреблением флакон взболтать</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3-х лет по 1 капле 1 раз в день, взрослым по 3 капли 1 раз в день во время еды, добавляя в пищу или напитки. Перед употреблением флакон взболтать</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2009,15 +1999,14 @@
 
           <h3 class="card-title" title="Йохимбе капс (похудение, энергия) 350мг №60 GLS">Йохимбе капс (похудение, энергия) 350мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Активирует процесс жиросжигания, ускоряя метаболизм.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Активирует процесс жиросжигания, ускоряя метаболизм.</li><li>Значительно повышает уровень энергии и выносливость.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в первой половине дня во время еды</div>
-            <div class="instruction-sub">🕒 Утром / в первой половине дня &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в первой половине дня во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Утром / в первой половине дня &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -2073,15 +2062,14 @@
 
           <h3 class="card-title" title="Калий магний капс. (для сердца) 430мг №120 GLS">Калий магний капс. (для сердца) 430мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Положительно влияет на работу сердца, участвует в регуляции частоты сердечных</span>
-          </div>
+          <ul class="properties-list">
+            <li>Положительно влияет на работу сердца, участвует в регуляции частоты сердечных</li><li>Предотвращает развитие мышечных спазмов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2109,15 +2097,14 @@
 
           <h3 class="card-title" title="Кальций Магний Цынк капс. (антистресс, кости) 750мг №120 GLS">Кальций Магний Цынк капс. (антистресс, кости) 750мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержка крепких костей, зубов и суставов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержка крепких костей, зубов и суставов.</li><li>Снижение стресса, улучшение настроения и сна.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 4 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 4 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2145,15 +2132,14 @@
 
           <h3 class="card-title" title="Кальций цитрат капс. (ногти, зубы, кости) №120 GLS">Кальций цитрат капс. (ногти, зубы, кости) №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет костную ткань, зубы, предотвращает хрупкость.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет костную ткань, зубы, предотвращает хрупкость.</li><li>Поддерживает здоровье ногтей, волос, улучшает их рост.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 4 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 4 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2181,15 +2167,14 @@
 
           <h3 class="card-title" title="Кальций D3 капс. (зубы, кости, ногти) 550мг №90 GLS">Кальций D3 капс. (зубы, кости, ногти) 550мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет кости и зубы, предотвращает остеопороз.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет кости и зубы, предотвращает остеопороз.</li><li>Способствует здоровью и прочности ногтей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 4 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 4 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2245,15 +2230,14 @@
 
           <h3 class="card-title" title="Кожа Волосы Ногти капс. 400мг №60 GLS">Кожа Волосы Ногти капс. 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Улучшает эластичность, увлажнение и сияние кожи.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Улучшает эластичность, увлажнение и сияние кожи.</li><li>Укрепляет волосяные фолликулы, предотвращает выпадение волос.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2281,15 +2265,14 @@
 
           <h3 class="card-title" title="Коллаген для суставов капс.400мг №120 GLS">Коллаген для суставов капс.400мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет хрящевую ткань и суставные связки.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет хрящевую ткань и суставные связки.</li><li>Экстракт мартинии душистой снижает воспаление и болевые ощущения в суставах.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2317,15 +2300,14 @@
 
           <h3 class="card-title" title="Коллаген животный капс. (красота, суставы) 400мг №120 GLS">Коллаген животный капс. (красота, суставы) 400мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает упругость кожи, уменьшает морщины.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает упругость кожи, уменьшает морщины.</li><li>Укрепляет волосы и ногти, предотвращает ломкость.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2353,15 +2335,14 @@
 
           <h3 class="card-title" title="Коллаген морской 1000МЕ капс. (молодость, кожа, волосы) 430мг №90 GLS">Коллаген морской 1000МЕ капс. (молодость, кожа, волосы) 430мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Улучшает упругость кожи, разглаживает морщины.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Улучшает упругость кожи, разглаживает морщины.</li><li>Укрепляет волосы, ногти, придает естественный блеск.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 3 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 3 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2417,15 +2398,14 @@
 
           <h3 class="card-title" title="Коллаген морской 1000МЕ капс. (молодость, кожа, волосы) 430мг №180 GLS">Коллаген морской 1000МЕ капс. (молодость, кожа, волосы) 430мг №180 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Улучшает упругость кожи, разглаживает морщины.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Улучшает упругость кожи, разглаживает морщины.</li><li>Укрепляет волосы, ногти, придает естественный блеск.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 3 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 3 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2453,15 +2433,14 @@
 
           <h3 class="card-title" title="Коллаген порошок (красота, суставы) Лесные ягоды 180г GLS">Коллаген порошок (красота, суставы) Лесные ягоды 180г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает упругость кожи, разглаживает морщины.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает упругость кожи, разглаживает морщины.</li><li>Укрепляет суставы, связки, снижает дискомфорт.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым принимать 1 порцию (6 г) порошка (1 мерную ложку) 1 раз в день после еды, предварительно растворив порошок в 200 мл воды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым принимать 1 порцию (6 г) порошка (1 мерную ложку) 1 раз в день после еды, предварительно растворив порошок в 200 мл воды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2489,15 +2468,14 @@
 
           <h3 class="card-title" title="Коллаген порошок (красота, суставы) Лимон 180г GLS">Коллаген порошок (красота, суставы) Лимон 180г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает упругость кожи, разглаживает морщины.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает упругость кожи, разглаживает морщины.</li><li>Укрепляет суставы, связки, снижает дискомфорт.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым принимать 1 порцию (6 г) порошка (1 мерную ложку) 1 раз в день после еды, предварительно растворив порошок в 200 мл воды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым принимать 1 порцию (6 г) порошка (1 мерную ложку) 1 раз в день после еды, предварительно растворив порошок в 200 мл воды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2525,15 +2503,14 @@
 
           <h3 class="card-title" title="Коллаген порошок (красота, суставы) Малина 180г GLS">Коллаген порошок (красота, суставы) Малина 180г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает упругость кожи, разглаживает морщины.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает упругость кожи, разглаживает морщины.</li><li>Укрепляет суставы, связки, снижает дискомфорт.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым принимать 1 порцию (6 г) порошка (1 мерную ложку) 1 раз в день после еды, предварительно растворив порошок в 200 мл воды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым принимать 1 порцию (6 г) порошка (1 мерную ложку) 1 раз в день после еды, предварительно растворив порошок в 200 мл воды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2589,15 +2566,14 @@
 
           <h3 class="card-title" title="Коэнзим Q10 капс. (красота, сердце) 310мг №60 GLS">Коэнзим Q10 капс. (красота, сердце) 310мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2625,15 +2601,14 @@
 
           <h3 class="card-title" title="Креатин порошок (мышцы, энергия) Малина 150г GLS">Креатин порошок (мышцы, энергия) Малина 150г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает силу и выносливость мышц.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает силу и выносливость мышц.</li><li>Способствует быстрому росту мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2661,15 +2636,14 @@
 
           <h3 class="card-title" title="Креатин порошок (мышцы, энергия) малина 300г GLS">Креатин порошок (мышцы, энергия) малина 300г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает силу и выносливость мышц.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает силу и выносливость мышц.</li><li>Способствует быстрому росту мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2697,15 +2671,14 @@
 
           <h3 class="card-title" title="Креатин порошок (мышцы, энергия) Цитрус  300г GLS">Креатин порошок (мышцы, энергия) Цитрус  300г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает силу и выносливость мышц.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает силу и выносливость мышц.</li><li>Способствует быстрому росту мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2761,15 +2734,14 @@
 
           <h3 class="card-title" title="Креатин порошок (мышцы, энергия) Цитрус 150г GLS">Креатин порошок (мышцы, энергия) Цитрус 150г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает силу и выносливость мышц.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает силу и выносливость мышц.</li><li>Способствует быстрому росту мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2797,15 +2769,14 @@
 
           <h3 class="card-title" title="Креатин порошок (мышцы, энергия) Экзотик 150г GLS">Креатин порошок (мышцы, энергия) Экзотик 150г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает силу и выносливость мышц.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает силу и выносливость мышц.</li><li>Способствует быстрому росту мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2833,15 +2804,14 @@
 
           <h3 class="card-title" title="Креатин порошок (мышцы, энергия) Экзотик 300г GLS">Креатин порошок (мышцы, энергия) Экзотик 300г GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает силу и выносливость мышц.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает силу и выносливость мышц.</li><li>Способствует быстрому росту мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2869,15 +2839,14 @@
 
           <h3 class="card-title" title="Л-аргинин">Л-аргинин</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Является донатором оксида азота (NO), улучшает кровообращение и пампинг.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Является донатором оксида азота (NO), улучшает кровообращение и пампинг.</li><li>Поддерживает здоровье сердечно-сосудистой системы и эластичность сосудов.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2933,15 +2902,14 @@
 
           <h3 class="card-title" title="Л-карнитин капс. (похудение, мышцы) 400мг №60 GLS">Л-карнитин капс. (похудение, мышцы) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Ускоряет сжигание жира, способствуя похудению.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Ускоряет сжигание жира, способствуя похудению.</li><li>Повышает энергию и физическую выносливость.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 3 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 3 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -2969,15 +2937,14 @@
 
           <h3 class="card-title" title="Магний В6 для беременных капс. 450мг №180 GLS">Магний В6 для беременных капс. 450мг №180 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Снижает тонус матки, предотвращает преждевременные роды.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Снижает тонус матки, предотвращает преждевременные роды.</li><li>Уменьшает проявления токсикоза, тошноту у беременных.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по 4 капсулы 1-2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по 4 капсулы 1-2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3005,15 +2972,14 @@
 
           <h3 class="card-title" title="Магний Хелат капс. (сон, нервы, сердце) 400мг №180 GLS">Магний Хелат капс. (сон, нервы, сердце) 400мг №180 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым, в т.ч. беременным и кормящим женщинам, по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым, в т.ч. беременным и кормящим женщинам, по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3041,15 +3007,14 @@
 
           <h3 class="card-title" title="Магний Цитрат + В6 капс (спокойствие, мышцы, сердце) 500мг №90 GLS">Магний Цитрат + В6 капс (спокойствие, мышцы, сердце) 500мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Снимает нервное напряжение, улучшает качество сна.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Снимает нервное напряжение, улучшает качество сна.</li><li>Поддерживает здоровье сердца, регулирует сердечный ритм.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3105,15 +3070,14 @@
 
           <h3 class="card-title" title="Магний Цитрат + В6 капс (спокойствие, мышцы, сердце) 500мг №180 GLS">Магний Цитрат + В6 капс (спокойствие, мышцы, сердце) 500мг №180 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Снимает нервное напряжение, улучшает качество сна.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Снимает нервное напряжение, улучшает качество сна.</li><li>Поддерживает здоровье сердца, регулирует сердечный ритм.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 3 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3141,15 +3105,14 @@
 
           <h3 class="card-title" title="Мака перуанская капс 350мг №60 GLS">Мака перуанская капс 350мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Повышает энергию, выносливость и жизненный тонус организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Повышает энергию, выносливость и жизненный тонус организма.</li><li>Поддерживает гормональный баланс у мужчин и женщин.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3177,15 +3140,14 @@
 
           <h3 class="card-title" title="Мужская формула капс. (мужская сыла, энергия) 440мг №60 GLS">Мужская формула капс. (мужская сыла, энергия) 440мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Замедление процессов старения, поддержание молодости и красоты — Antiage effect</span>
-          </div>
+          <ul class="properties-list">
+            <li>Замедление процессов старения, поддержание молодости и красоты — Antiage effect</li><li>Улучшение эрекции и показателей качества спермы</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3213,15 +3175,14 @@
 
           <h3 class="card-title" title="Мультивитамины 12+9 капс.420мг №60 GLS">Мультивитамины 12+9 капс.420мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3277,15 +3238,14 @@
 
           <h3 class="card-title" title="Мультивитамины 12+9 капс.420мг №120 GLS">Мультивитамины 12+9 капс.420мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3313,15 +3273,14 @@
 
           <h3 class="card-title" title="Мультивитамины актив шипучие таб. №20 мультифрукт">Мультивитамины актив шипучие таб. №20 мультифрукт</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает высокий уровень энергии, жизненного тонуса.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает высокий уровень энергии, жизненного тонуса.</li><li>Укрепляет иммунитет, защищает организм от инфекций.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 таблетке в день во время еды, предварительно растворив таблетку в 1 стакане (200 мл) воды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 таблетке в день во время еды, предварительно растворив таблетку в 1 стакане (200 мл) воды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3349,15 +3308,14 @@
 
           <h3 class="card-title" title="Мультивитамины для детей капс. (развитие, мозг) 450мг №60 GLS">Мультивитамины для детей капс. (развитие, мозг) 450мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровый рост и развитие организма ребенка.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровый рост и развитие организма ребенка.</li><li>Улучшает память, внимание и когнитивные функции.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3-х лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3-х лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3385,15 +3343,14 @@
 
           <h3 class="card-title" title="Мультивитамины для детей паст. (развитие, мозг) №90 GLS">Мультивитамины для детей паст. (развитие, мозг) №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровый рост и развитие организма ребенка.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровый рост и развитие организма ребенка.</li><li>Улучшает память, внимание и когнитивные функции.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3-х лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3-х лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3449,15 +3406,14 @@
 
           <h3 class="card-title" title="Мумие экстракт капс. (красивая кожа, суставы) 300мг 400мг №60 GLS">Мумие экстракт капс. (красивая кожа, суставы) 300мг 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье кожи, улучшая её упругость и вид.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье кожи, улучшая её упругость и вид.</li><li>Способствует регенерации суставов и костной ткани.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3485,15 +3441,14 @@
 
           <h3 class="card-title" title="Омега 3 pro GLS #120 ">Омега 3 pro GLS #120 </h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье сердца и сосудов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье сердца и сосудов.</li><li>Улучшает концентрацию внимания и память.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 7 лет по 1 капсуле в день во время еды, взрослым, в т.ч. женщинам, планирующим беременность, беременным и кормящим женщинам по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 7 лет по 1 капсуле в день во время еды, взрослым, в т.ч. женщинам, планирующим беременность, беременным и кормящим женщинам по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3521,15 +3476,14 @@
 
           <h3 class="card-title" title="Омега 3-6-9 капс. 700мг №90 GLS">Омега 3-6-9 капс. 700мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье сердца и сосудов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье сердца и сосудов.</li><li>Улучшает функции мозга и зрения.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым и детям старше 14 лет по 3 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым и детям старше 14 лет по 3 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3557,15 +3511,14 @@
 
           <h3 class="card-title" title="Омега-3 35%ПНЖК капс. 610г №120 GLS">Омега-3 35%ПНЖК капс. 610г №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье сердца и эластичность сосудов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье сердца и эластичность сосудов.</li><li>Улучшает функции мозга, память и концентрацию внимания.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям с 6 лет и взрослым по 2 капсулы 1 раз в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям с 6 лет и взрослым по 2 капсулы 1 раз в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3621,15 +3574,14 @@
 
           <h3 class="card-title" title="Омега-3 Витамин D3 капс. (сердце, концентрация ума) 700мг №60 GLS">Омега-3 Витамин D3 капс. (сердце, концентрация ума) 700мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает крепкий иммунитет и защитные функции организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает крепкий иммунитет и защитные функции организма.</li><li>Обеспечивает здоровый рост и правильное развитие костей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3657,15 +3609,14 @@
 
           <h3 class="card-title" title="Омега-3 Витамин D3 капс. (сердце, концентрация ума) 700мг №120 GLS">Омега-3 Витамин D3 капс. (сердце, концентрация ума) 700мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает крепкий иммунитет и защитные функции организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает крепкий иммунитет и защитные функции организма.</li><li>Обеспечивает здоровый рост и правильное развитие костей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Детям старше 3 лет и взрослым принимать по 1 пастилке в день во время еды. Не превышать рекомендуемую суточную дозу</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3693,15 +3644,14 @@
 
           <h3 class="card-title" title="Протеин порошок (вес, мышцы, энергия) 900г Ваниль GLS">Протеин порошок (вес, мышцы, энергия) 900г Ваниль GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает рост и восстановление мышц после тренировок.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает рост и восстановление мышц после тренировок.</li><li>Способствует здоровому набору веса и мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3729,15 +3679,14 @@
 
           <h3 class="card-title" title="Протеин порошок (вес, мышцы, энергия) 900г Клубника GLS">Протеин порошок (вес, мышцы, энергия) 900г Клубника GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает рост и восстановление мышц после тренировок.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает рост и восстановление мышц после тренировок.</li><li>Способствует здоровому набору веса и мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3793,15 +3742,14 @@
 
           <h3 class="card-title" title="Протеин порошок (вес, мышцы, энергия) 900г Сливочный банан GLS">Протеин порошок (вес, мышцы, энергия) 900г Сливочный банан GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает рост и восстановление мышц после тренировок.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает рост и восстановление мышц после тренировок.</li><li>Способствует здоровому набору веса и мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3829,15 +3777,14 @@
 
           <h3 class="card-title" title="Протеин порошок (вес, мышцы, энергия) 900г Шоколад GLS">Протеин порошок (вес, мышцы, энергия) 900г Шоколад GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает рост и восстановление мышц после тренировок.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает рост и восстановление мышц после тренировок.</li><li>Способствует здоровому набору веса и мышечной массы.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> помощью шейкера с 200 мл воды или молока, принимать 1-3 раза в день, в зависимости от веса</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3865,15 +3812,14 @@
 
           <h3 class="card-title" title="Селен 100мкг капс. (красота, иммунитет) 270мг №60 GLS">Селен 100мкг капс. (красота, иммунитет) 270мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Мощный антиоксидант, защищает клетки от повреждений.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Мощный антиоксидант, защищает клетки от повреждений.</li><li>Поддерживает крепкий иммунитет, повышает сопротивляемость организма.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по применению: взрослым по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по применению: взрослым по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -3901,15 +3847,14 @@
 
           <h3 class="card-title" title="Таурин 1000МЕ капс. (мышцы, похудение, выносливость) 400мг №90 GLS">Таурин 1000МЕ капс. (мышцы, похудение, выносливость) 400мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает выносливость, энергию во время физических нагрузок.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает выносливость, энергию во время физических нагрузок.</li><li>Способствует ускорению метаболизма, эффективному похудению.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в первой половине дня во время еды</div>
-            <div class="instruction-sub">🕒 Утром / в первой половине дня &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в первой половине дня во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Утром / в первой половине дня &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -3965,15 +3910,14 @@
 
           <h3 class="card-title" title="Тирозин капс. (похудение, сердце) 500мг №90 GLS">Тирозин капс. (похудение, сердце) 500мг №90 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Способствует ускорению метаболизма, поддержке похудения.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Способствует ускорению метаболизма, поддержке похудения.</li><li>Улучшает настроение, помогает справляться со стрессом.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4001,15 +3945,14 @@
 
           <h3 class="card-title" title="Фолиевая кислота капс. (для беременных) №60 GLS">Фолиевая кислота капс. (для беременных) №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Обеспечивает здоровое развитие плода на ранних сроках.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Обеспечивает здоровое развитие плода на ранних сроках.</li><li>Снижает риск врожденных дефектов нервной трубки.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым, в том числе беременным и кормящим женщинам по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым, в том числе беременным и кормящим женщинам по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4037,15 +3980,14 @@
 
           <h3 class="card-title" title="Формула очищение капс.400мг №60 GLS">Формула очищение капс.400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает естественные процессы детоксикации организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает естественные процессы детоксикации организма.</li><li>Способствует улучшению пищеварения и работы ЖКТ.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4073,15 +4015,14 @@
 
           <h3 class="card-title" title="Формула памяти &quot;Ноофит&quot; капс.400мг №60 GLS">Формула памяти "Ноофит" капс.400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Улучшает память, концентрацию и внимание.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Улучшает память, концентрацию и внимание.</li><li>Повышает умственную работоспособность и обучаемость.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы в первой половине дня во время еды</div>
-            <div class="instruction-sub">🕒 Утром / в первой половине дня &bull; 📅 2–3 недели</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы в первой половине дня во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Утром / в первой половине дня &bull; 📅 <strong>Курс:</strong> 2–3 недели</div>
           </div>
         </div>
 
@@ -4137,15 +4078,14 @@
 
           <h3 class="card-title" title="Хлорофилл капс. (очищение, энергия) №60 GLS">Хлорофилл капс. (очищение, энергия) №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Естественное детоксицирующее средство для очищения организма.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Естественное детоксицирующее средство для очищения организма.</li><li>Поддерживает здоровую микрофлору кишечника, улучшая пищеварение.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым принимать 25 мл 1 раз в день, смешав со 100 мл тёплой воды или любым напитком во время приёма пищи</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым принимать 25 мл 1 раз в день, смешав со 100 мл тёплой воды или любым напитком во время приёма пищи</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4173,15 +4113,14 @@
 
           <h3 class="card-title" title="Хрома пиколинат 250мкг капс. (похудение, метаболизм) 240мг №120 GLS">Хрома пиколинат 250мкг капс. (похудение, метаболизм) 240мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровый уровень сахара в крови.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровый уровень сахара в крови.</li><li>Способствует снижению тяги к сладкому.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4209,15 +4148,14 @@
 
           <h3 class="card-title" title="Цинк без сахара шипучие таб.№20 м.3,8г лимон GLS">Цинк без сахара шипучие таб.№20 м.3,8г лимон GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет иммунную систему, борется с инфекциями.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет иммунную систему, борется с инфекциями.</li><li>Поддерживает здоровье кожи, волос, ногтей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 таблетке в день во время еды, предварительно растворив таблетку в 1 стакане воды (200 мл)</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 таблетке в день во время еды, предварительно растворив таблетку в 1 стакане воды (200 мл)</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4245,15 +4183,14 @@
 
           <h3 class="card-title" title="Цинк селен капс. (красота, фетильность) 320мг №60 GLS">Цинк селен капс. (красота, фетильность) 320мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает сильный иммунитет и защиту клеток.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает сильный иммунитет и защиту клеток.</li><li>Улучшает здоровье кожи, волос и ногтей.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4309,15 +4246,14 @@
 
           <h3 class="card-title" title="Цинк хелат капс. (для мужчин и волос) 400мг №60 GLS">Цинк хелат капс. (для мужчин и волос) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4345,15 +4281,14 @@
 
           <h3 class="card-title" title="Цинк цитрат капс. (для силы мужчин и женщин)350мг №60 GLS">Цинк цитрат капс. (для силы мужчин и женщин)350мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает сильный иммунитет, защищая организм от вирусов.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает сильный иммунитет, защищая организм от вирусов.</li><li>Улучшает состояние кожи, волос и ногтей, придавая им здоровый вид.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4381,15 +4316,14 @@
 
           <h3 class="card-title" title="Черника+А+Е капс.(зрение, глаз) 400мг №60 GLS">Черника+А+Е капс.(зрение, глаз) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает остроту зрения и здоровье глаз.</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает остроту зрения и здоровье глаз.</li><li>Защищает глаза от усталости и цифрового напряжения.</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> детям 7-10 лет по 1 капсуле в день во время еды, детям старше 11 лет и взрослым по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> детям 7-10 лет по 1 капсуле в день во время еды, детям старше 11 лет и взрослым по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4417,15 +4351,14 @@
 
           <h3 class="card-title" title="Чеснок капс. (очищение, иммунитет) 400мг №60 GLS">Чеснок капс. (очищение, иммунитет) 400мг №60 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Укрепляет иммунную защиту организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Укрепляет иммунную защиту организма</li><li>Поддерживает естественную детоксикацию и очищение</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 2 капсулы в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 2 капсулы в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4481,15 +4414,14 @@
 
           <h3 class="card-title" title="MSM комплекс капс.400мг №120 GLS">MSM комплекс капс.400мг №120 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддерживает здоровье и гибкость суставов</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддерживает здоровье и гибкость суставов</li><li>Снижает воспаление и мышечные боли</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> по применению: взрослым по 2 капсулы 2 раза в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> по применению: взрослым по 2 капсулы 2 раза в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 
@@ -4517,15 +4449,14 @@
 
           <h3 class="card-title" title="PQQ комплекс капс. (энергия, продуктивность) 400мг №30 GLS">PQQ комплекс капс. (энергия, продуктивность) 400мг №30 GLS</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">Поддержание общего тонуса и активности организма</span>
-          </div>
+          <ul class="properties-list">
+            <li>Поддержание общего тонуса и активности организма</li><li>Восполнение дефицита полезных макро- и микроэлементов</li>
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> Взрослым по 1 капсуле в день во время еды</div>
-            <div class="instruction-sub">🕒 Во время приема пищи &bull; 📅 Курс 1 месяц (1 упаковка)</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> Взрослым по 1 капсуле в день во время еды</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> Во время приема пищи &bull; 📅 <strong>Курс:</strong> Курс 1 месяц (1 упаковка)</div>
           </div>
         </div>
 

@@ -232,15 +232,14 @@ async function main() {
 
           <h3 class="card-title" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</h3>
           
-          <div class="card-prop">
-            <span class="bullet">•</span>
-            <span class="prop-text">${p.properties[0] || 'Сертифицированное качество GLS'}</span>
-          </div>
+          <ul class="properties-list">
+            ${p.properties.slice(0, 2).map(pr => `<li>${pr}</li>`).join('')}
+          </ul>
 
           <div class="instructions-box">
             <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> ${p.usage}</div>
-            <div class="instruction-sub">🕒 ${p.timing} &bull; 📅 ${p.course}</div>
+            <div class="instruction-row">👉 <strong>Схема:</strong> ${p.usage}</div>
+            <div class="instruction-sub">🕒 <strong>Время:</strong> ${p.timing} &bull; 📅 <strong>Курс:</strong> ${p.course}</div>
           </div>
         </div>
 
@@ -353,8 +352,6 @@ async function main() {
     .back-cover-page {
       max-width: 860px;
       width: 100%;
-      min-height: 281mm;
-      max-height: 281mm;
       margin: 0 auto 30px auto;
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -521,7 +518,7 @@ async function main() {
 
     .image-box {
       width: 100%;
-      height: 135px;
+      height: 115px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -532,7 +529,7 @@ async function main() {
       flex-shrink: 0;
     }
     .image-box img {
-      max-height: 125px;
+      max-height: 105px;
       max-width: 100%;
       object-fit: contain;
     }
@@ -547,42 +544,64 @@ async function main() {
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      height: 30px;
+      min-height: 30px;
     }
 
-    .card-prop {
-      font-size: 10px;
-      color: #64748b;
+    .properties-list {
+      list-style: none;
       margin-bottom: 6px;
+    }
+    .properties-list li {
+      font-size: 10px;
+      color: #475569;
+      line-height: 1.25;
+      margin-bottom: 2px;
+      padding-left: 10px;
+      position: relative;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
-    .card-prop .bullet {
+    .properties-list li::before {
+      content: "•";
       color: #10b981;
+      position: absolute;
+      left: 0;
       font-weight: bold;
     }
 
     .instructions-box {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
-      border-radius: 8px;
-      padding: 5px 8px;
+      border-radius: 10px;
+      padding: 6px 8px;
       margin-bottom: 6px;
-      font-size: 9.5px;
+      font-size: 10px;
       color: #065f46;
     }
     .instructions-header {
       font-weight: 800;
       margin-bottom: 2px;
-      font-size: 8.5px;
+      font-size: 9px;
       letter-spacing: 0.3px;
     }
-    .instruction-row { line-height: 1.2; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .instruction-sub { font-size: 8.5px; color: #047857; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .instruction-row {
+      line-height: 1.3;
+      margin-bottom: 2px;
+      color: #1e293b;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .instruction-sub {
+      font-size: 9px;
+      color: #047857;
+      line-height: 1.2;
+      padding-top: 2px;
+      border-top: 1px solid rgba(167, 243, 208, 0.6);
+      font-weight: 600;
+    }
 
     .card-footer {
       display: flex;
@@ -649,7 +668,7 @@ async function main() {
     @media print {
       @page {
         size: A4 portrait;
-        margin: 6mm 8mm 6mm 8mm !important;
+        margin: 5mm 6mm 5mm 6mm !important;
       }
       html, body {
         background: #ffffff !important;
@@ -663,7 +682,7 @@ async function main() {
       .cover-page,
       .catalog-page,
       .back-cover-page {
-        margin: 0 !important;
+        margin: 0 auto !important;
         box-shadow: none !important;
         border: none !important;
         border-radius: 0 !important;
@@ -671,21 +690,22 @@ async function main() {
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        height: 284mm !important;
-        max-height: 284mm !important;
-        min-height: 284mm !important;
+        height: 255mm !important;
+        max-height: 255mm !important;
+        min-height: 255mm !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
-        padding: 3mm 4mm !important;
+        padding: 2mm 3mm !important;
       }
       .page-cards-container {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         grid-template-rows: repeat(2, 1fr) !important;
-        gap: 3.5mm !important;
-        height: calc(100% - 16mm) !important;
-        max-height: calc(100% - 16mm) !important;
+        gap: 2.5mm !important;
+        height: calc(100% - 14mm) !important;
+        max-height: calc(100% - 14mm) !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
       }
       .product-card-2x2 {
         height: 100% !important;
@@ -694,14 +714,18 @@ async function main() {
         box-sizing: border-box !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        padding: 2.5mm !important;
+        padding: 2mm !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px !important;
       }
       .image-box {
-        height: 38mm !important;
-        max-height: 38mm !important;
+        height: 28mm !important;
+        max-height: 28mm !important;
       }
       .image-box img {
-        max-height: 36mm !important;
+        max-height: 26mm !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
       }
     }
   </style>

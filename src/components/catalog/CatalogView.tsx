@@ -217,7 +217,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 6mm 8mm 6mm 8mm !important;
+            margin: 5mm 6mm 5mm 6mm !important;
           }
           html, body {
             background: #ffffff !important;
@@ -227,16 +227,22 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .catalog-page-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: none !important;
+          }
           .cover-page,
           .catalog-page,
           .back-cover-page {
             width: 100% !important;
-            height: 284mm !important;
-            max-height: 284mm !important;
-            min-height: 284mm !important;
-            margin: 0 !important;
-            padding: 4mm 5mm !important;
+            height: 255mm !important;
+            max-height: 255mm !important;
+            min-height: 255mm !important;
+            margin: 0 auto !important;
+            padding: 2mm 3mm !important;
             box-shadow: none !important;
+            border: none !important;
             border-radius: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
@@ -253,11 +259,12 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
             grid-template-rows: repeat(2, 1fr) !important;
-            gap: 3.5mm !important;
+            gap: 2.5mm !important;
             flex: 1 !important;
-            height: calc(100% - 16mm) !important;
-            max-height: calc(100% - 16mm) !important;
+            height: calc(100% - 14mm) !important;
+            max-height: calc(100% - 14mm) !important;
             overflow: hidden !important;
+            box-sizing: border-box !important;
           }
           .product-card-2x2 {
             height: 100% !important;
@@ -269,13 +276,18 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 2.5mm !important;
+            padding: 2mm !important;
             border: 1px solid #e2e8f0 !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
           }
           .product-photo-box {
-            height: 38mm !important;
-            max-height: 38mm !important;
+            height: 28mm !important;
+            max-height: 28mm !important;
+          }
+          .product-photo-box img {
+            max-height: 26mm !important;
+            max-width: 100% !important;
+            object-fit: contain !important;
           }
         }
       `}} />
@@ -284,7 +296,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
       <div className="catalog-page-container max-w-4xl mx-auto px-3 sm:px-4 py-6 print:p-0 print:max-w-none">
 
         {/* ===================== PAGE 1: COVER (CLEAN LUXURY LIGHT) ===================== */}
-        <section className="cover-page w-full min-h-[281mm] max-h-[281mm] bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg flex flex-col justify-between mb-8 overflow-hidden print:rounded-none print:shadow-none print:border-none print:mb-0">
+        <section className="cover-page w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg flex flex-col justify-between mb-8 overflow-hidden print:rounded-none print:shadow-none print:border-none print:mb-0">
           <div>
             {/* Top row: Brand & Distributor badge */}
             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
@@ -392,7 +404,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
           return (
             <div 
               key={`page-${pageIdx}`}
-              className="catalog-page w-full min-h-[281mm] max-h-[281mm] bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-lg flex flex-col justify-between mb-8 overflow-hidden print:rounded-none print:shadow-none print:border-none print:mb-0"
+              className="catalog-page w-full bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-lg flex flex-col justify-between mb-8 overflow-hidden print:rounded-none print:shadow-none print:border-none print:mb-0"
             >
               {/* Page Running Header */}
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 h-[10mm]">
@@ -434,7 +446,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                         </div>
 
                         {/* Product Image: Centered, prominent photo without wasted margins */}
-                        <div className="product-photo-box w-full h-32 sm:h-36 flex items-center justify-center bg-slate-50/80 rounded-xl p-1.5 mb-1.5 relative shrink-0">
+                        <div className="product-photo-box w-full h-28 sm:h-32 flex items-center justify-center bg-slate-50/80 rounded-xl p-1.5 mb-1 relative shrink-0">
                           <img
                             src={p.imageUrl}
                             alt={p.name}
@@ -449,32 +461,38 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                           {p.name}
                         </h3>
 
-                        {/* Key benefit (1 main bullet point) */}
-                        <div className="text-[10px] text-slate-600 line-clamp-1 flex items-start gap-1 mb-1.5 leading-tight">
-                          <span className="text-emerald-500 font-bold shrink-0">•</span>
-                          <span className="truncate">{p.properties[0] || 'Сертифицированное качество GLS'}</span>
-                        </div>
+                        {/* Key benefits (2 bullet points) */}
+                        <ul className="space-y-0.5 mb-1.5">
+                          {p.properties.slice(0, 2).map((prop, i) => (
+                            <li key={i} className="text-[10px] text-slate-600 flex items-start gap-1 leading-tight">
+                              <span className="text-emerald-500 font-bold shrink-0">•</span>
+                              <span className="line-clamp-1">{prop}</span>
+                            </li>
+                          ))}
+                        </ul>
 
-                        {/* Dosage & Usage Instruction Box */}
-                        <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-lg p-1.5 mb-1.5 text-slate-900">
-                          <div className="flex items-center gap-1 text-[9px] font-extrabold text-emerald-900 mb-0.5 tracking-wider">
-                            <Clock size={11} className="text-emerald-600 shrink-0" />
-                            <span>КАК И СКОЛЬКО ПРИНИМАТЬ:</span>
+                        {/* Dosage & Usage Instruction Box - Full text without clipping */}
+                        <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2 mb-2 text-slate-900">
+                          <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-emerald-950 mb-1 tracking-wider uppercase">
+                            <Clock size={12} className="text-emerald-600 shrink-0" />
+                            <span>Как и сколько принимать:</span>
                           </div>
                           
-                          <div className="text-[9.5px] space-y-0.5 font-medium leading-tight">
-                            <p className="line-clamp-1 text-slate-800">
-                              👉 <strong>Прием:</strong> {p.instructions.usage}
+                          <div className="text-[10px] sm:text-[10.5px] space-y-1 font-medium leading-snug">
+                            <p className="text-slate-800 line-clamp-2">
+                              👉 <strong>Схема:</strong> {p.instructions.usage}
                             </p>
-                            <p className="text-[8.5px] text-emerald-800 line-clamp-1">
-                              🕒 {p.instructions.timing} &bull; 📅 {p.instructions.course}
-                            </p>
+                            <div className="text-[9.5px] text-emerald-900 flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 border-t border-emerald-200/60 font-semibold">
+                              <span>🕒 <strong>Время:</strong> {p.instructions.timing}</span>
+                              <span>&bull;</span>
+                              <span>📅 <strong>Курс:</strong> {p.instructions.course}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Price & Order Action */}
-                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
                         <div>
                           <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
                             Цена
@@ -488,9 +506,9 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                           href={p.waLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-[10.5px] font-bold shadow-xs transition-all shrink-0"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all shrink-0"
                         >
-                          <MessageCircle size={12} />
+                          <MessageCircle size={13} />
                           <span>Заказать</span>
                         </a>
                       </div>
@@ -528,7 +546,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
         })}
 
         {/* ===================== LAST PAGE: BACK COVER ===================== */}
-        <section className="back-cover-page w-full min-h-[281mm] max-h-[281mm] bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg flex flex-col justify-between overflow-hidden print:rounded-none print:shadow-none print:border-none">
+        <section className="back-cover-page w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg flex flex-col justify-between overflow-hidden print:rounded-none print:shadow-none print:border-none">
           <div className="flex items-center justify-between pb-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1.5 flex items-center justify-center">
