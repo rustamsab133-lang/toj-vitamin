@@ -16,13 +16,16 @@ import { PharmacyOrdersDashboard } from './components/PharmacyOrdersDashboard';
 import { BloggerDashboard } from './components/BloggerDashboard';
 import { ComboEditor } from './components/ComboEditor';
 import { DocumentsDashboard } from './components/DocumentsDashboard';
+import { ConsultantCopilot } from './components/ConsultantCopilot';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents' | 'consultant-copilot';
 
 const MODULES = [
+  { id: 'consultant-copilot' as AdminView, title: 'ИИ-Нутрициолог (Copilot)', desc: 'Схемы приёма, анализы, скрипты продаж', icon: <Sparkles size={24} className="text-emerald-600" />, color: '#ECFDF5' },
+  { id: 'orders' as AdminView, title: 'АРМ Оператора', desc: 'Прием и статусы заказов', icon: <ShoppingBag size={24} />, color: '#F0F9FF' },
   { id: 'pharmacy-orders' as AdminView, title: 'Закупки аптек', desc: 'B2B заказы, ссылки партнеров', icon: <Building2 size={24} />, color: '#F0FDF4' },
   { id: 'crm' as AdminView, title: 'CRM Система', desc: 'Лояльность, задачи и клиенты', icon: <Users size={24} />, color: '#ECFDF5' },
   { id: 'instagram-agent' as AdminView, title: 'Instagram ИИ', desc: 'Авто-генерация постов', icon: <Instagram size={24} />, color: '#FDF4FF' },
@@ -35,7 +38,6 @@ const MODULES = [
   { id: 'products' as AdminView, title: 'Товары', desc: 'Каталог, цены, фото', icon: <Package size={24} />, color: '#F8FAFC' },
   { id: 'categories' as AdminView, title: 'Умные комплексы', desc: 'Управление подбором', icon: <Layers size={24} />, color: '#F8FAFC' },
   { id: 'complexes' as AdminView, title: 'Синергия', desc: 'Клинические связки', icon: <BarChart3 size={24} />, color: '#F8FAFC' },
-  { id: 'orders' as AdminView, title: 'АРМ Оператора', desc: 'Прием и статусы', icon: <ShoppingBag size={24} />, color: '#F8FAFC' },
   { id: 'settings' as AdminView, title: 'Настройки', desc: 'Сайт, тексты', icon: <Settings size={24} />, color: '#F8FAFC' },
   { id: 'combos' as AdminView, title: 'Комбо-баннеры', desc: 'Управление комбо на главной', icon: <Layers size={24} />, color: '#F0FDFA' },
 ];
@@ -265,6 +267,12 @@ export default function AdminPage() {
                   setWarehouseInitialCustomerId(undefined);
                 }}
               />
+            </motion.div>
+          )}
+
+          {view === 'consultant-copilot' && (
+            <motion.div key="consultant-copilot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <ConsultantCopilot onBack={() => setView('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>

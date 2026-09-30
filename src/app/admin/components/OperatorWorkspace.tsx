@@ -6,7 +6,8 @@ import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
 import { 
   Phone, MessageCircle, Send, Instagram, Globe, Store, 
   Search, Plus, Package, Truck, CheckCircle, XCircle, 
-  ChevronRight, Clock, UserPlus, Save, AlertCircle, Eye, X, User, MapPin, CreditCard, Calendar, Edit3, RefreshCw 
+  ChevronRight, Clock, UserPlus, Save, AlertCircle, Eye, X, User, MapPin, CreditCard, Calendar, Edit3, RefreshCw,
+  Sparkles, Sunrise, Sun, Moon, Copy, Check
 } from 'lucide-react';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -54,6 +55,48 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
   const [editableAddress, setEditableAddress] = useState('');
   const [isSavingDetails, setIsSavingDetails] = useState(false);
 
+  // Copilot (ИИ-Нутрициолог) state
+  const [copilotLoading, setCopilotLoading] = useState(false);
+  const [copilotResult, setCopilotResult] = useState<any>(null);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const runOrderCopilot = async () => {
+    if (!selectedOrder || !selectedOrder.items || selectedOrder.items.length === 0) return;
+    setCopilotLoading(true);
+    try {
+      const res = await fetch('/api/agents/consultant-copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyze_order',
+          items: selectedOrder.items,
+          customerPhone: selectedOrder.phone || '',
+          customerNotes: editableNotes || selectedOrder.delivery_notes || '',
+          lang: 'ru'
+        })
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCopilotResult(json.data);
+        setCopilotOpen(true);
+      } else {
+        alert(json.error || 'Не удалось проанализировать заказ');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при вызове ИИ-Нутрициолога');
+    } finally {
+      setCopilotLoading(false);
+    }
+  };
+
   // Lock body scroll when order detail modal is open
   useEffect(() => {
     if (selectedOrder) {
@@ -69,6 +112,8 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
     setEditableCourier(order.courier_name || '');
     setEditableNotes(order.operator_notes || '');
     setEditableAddress(order.delivery_address || '');
+    setCopilotResult(null);
+    setCopilotOpen(false);
   };
 
   const saveOrderDetails = async () => {
@@ -1161,6 +1206,143 @@ export const OperatorWorkspace: React.FC<{ onBack: () => void }> = ({ onBack }) 
                   </div>
                 </div>
 
+              </div>
+
+              {/* Copilot (ИИ-Нутрициолог) Trigger & Schedule Card */}
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div className="flex flex-wrap justify-between items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 p-3.5 rounded-2xl border border-emerald-100/80">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+                      <Sparkles size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">ИИ-Нутрициолог (Copilot)</p>
+                      <p className="text-[10px] text-slate-500">Схема приёма, совместимость и скрипт допродажи</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={runOrderCopilot}
+                    disabled={copilotLoading || !selectedOrder.items?.length}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all disabled:opacity-50"
+                  >
+                    {copilotLoading ? (
+                      <>
+                        <RefreshCw size={13} className="animate-spin" />
+                        <span>Анализируем состав...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={13} />
+                        <span>{copilotResult ? 'Обновить схему' : 'Рассчитать схему приёма'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {copilotResult && copilotOpen && (
+                  <div className="bg-slate-50/90 rounded-2xl p-4 border border-emerald-100 space-y-3.5 animate-in fade-in duration-200">
+                    {/* Summary */}
+                    <div className="text-xs text-slate-700 leading-relaxed font-medium bg-white p-3 rounded-xl border border-slate-100">
+                      💡 <span className="font-bold text-slate-900">Заключение:</span> {copilotResult.summary}
+                    </div>
+
+                    {/* Schedule 3 cols */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="bg-amber-50/80 border border-amber-100 rounded-xl p-2.5 space-y-1">
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-amber-800">
+                          <Sunrise size={13} className="text-amber-600" /> 🌅 Утро
+                        </div>
+                        {copilotResult.schedule?.morning?.length > 0 ? (
+                          copilotResult.schedule.morning.map((m: any, i: number) => (
+                            <div key={i} className="text-[11px] bg-white/80 p-1.5 rounded-lg border border-amber-100">
+                              <p className="font-bold text-slate-800">{m.product}</p>
+                              <p className="text-amber-900">{m.dosage}</p>
+                            </div>
+                          ))
+                        ) : <p className="text-[10px] text-slate-400 italic">Нет назначений</p>}
+                      </div>
+
+                      <div className="bg-orange-50/80 border border-orange-100 rounded-xl p-2.5 space-y-1">
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-orange-800">
+                          <Sun size={13} className="text-orange-600" /> ☀️ Обед
+                        </div>
+                        {copilotResult.schedule?.afternoon?.length > 0 ? (
+                          copilotResult.schedule.afternoon.map((m: any, i: number) => (
+                            <div key={i} className="text-[11px] bg-white/80 p-1.5 rounded-lg border border-orange-100">
+                              <p className="font-bold text-slate-800">{m.product}</p>
+                              <p className="text-orange-900">{m.dosage}</p>
+                            </div>
+                          ))
+                        ) : <p className="text-[10px] text-slate-400 italic">Нет назначений</p>}
+                      </div>
+
+                      <div className="bg-indigo-50/80 border border-indigo-100 rounded-xl p-2.5 space-y-1">
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-800">
+                          <Moon size={13} className="text-indigo-600" /> 🌙 Вечер
+                        </div>
+                        {copilotResult.schedule?.evening?.length > 0 ? (
+                          copilotResult.schedule.evening.map((m: any, i: number) => (
+                            <div key={i} className="text-[11px] bg-white/80 p-1.5 rounded-lg border border-indigo-100">
+                              <p className="font-bold text-slate-800">{m.product}</p>
+                              <p className="text-indigo-900">{m.dosage}</p>
+                            </div>
+                          ))
+                        ) : <p className="text-[10px] text-slate-400 italic">Нет назначений</p>}
+                      </div>
+                    </div>
+
+                    {/* Upsell Script */}
+                    {copilotResult.upsell && (
+                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 rounded-xl border border-indigo-100 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-indigo-700 text-[11px] uppercase tracking-wide">
+                            🚀 Допродажа: {copilotResult.upsell.recommended_product}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(copilotResult.upsell.operator_phone_script, 'modal_upsell')}
+                            className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                          >
+                            {copiedKey === 'modal_upsell' ? <Check size={11} /> : <Copy size={11} />}
+                            {copiedKey === 'modal_upsell' ? 'Скопировано!' : 'Скопировать фразу'}
+                          </button>
+                        </div>
+                        <p className="text-slate-600 italic bg-white/80 p-2 rounded-lg border border-indigo-100/50">
+                          «{copilotResult.upsell.operator_phone_script}»
+                        </p>
+                      </div>
+                    )}
+
+                    {/* WhatsApp Message */}
+                    {copilotResult.whatsapp_message && (
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                        <span className="text-[11px] text-slate-500 font-medium">Готова схема приёма для клиента</span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(copilotResult.whatsapp_message, 'modal_wa')}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            {copiedKey === 'modal_wa' ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                            {copiedKey === 'modal_wa' ? 'Скопировано' : 'Скопировать'}
+                          </button>
+                          {selectedOrder.phone && (
+                            <a
+                              href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(copilotResult.whatsapp_message)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                            >
+                              <MessageCircle size={12} /> В WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Composition of Order */}
