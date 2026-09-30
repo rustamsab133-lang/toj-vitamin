@@ -13,8 +13,10 @@ interface CopilotItem {
 }
 
 interface CopilotRequestBody {
-  action: 'analyze_order' | 'clinical_consult' | 'decode_labs' | 'verify_auth';
+  action: 'analyze_order' | 'clinical_consult' | 'decode_labs' | 'verify_auth' | 'product_dossier';
   password?: string;
+  productName?: string;
+  productId?: string;
   items?: CopilotItem[];
   customerPhone?: string;
   customerNotes?: string;
@@ -47,6 +49,8 @@ export async function POST(request: NextRequest) {
     const {
       action = 'analyze_order',
       password = '',
+      productName = '',
+      productId = '',
       items = [],
       customerPhone = '',
       customerNotes = '',
@@ -335,6 +339,89 @@ ${langInstruction}
   },
   "operator_phone_script": "Тактичный, профессиональный скрипт для звонка клиенту: как объяснить результаты анализов без запугивания и предложить решение из магазина.",
   "whatsapp_message": "Готовый подробный разбор анализов и рекомендованный курс для WhatsApp клиенту."
+}`;
+
+      const model = genAI.getGenerativeModel({
+        model: AGENT_MODEL,
+        systemInstruction: SYSTEM_INSTRUCTION_BASE,
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      });
+
+      const res = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      });
+
+      const text = res.response.text().trim();
+      const parsed = JSON.parse(text);
+      return NextResponse.json({ success: true, action, data: parsed });
+    }
+
+    if (action === 'product_dossier') {
+      const targetName = (productName || '').trim();
+      if (!targetName) {
+        return NextResponse.json(
+          { success: false, error: 'Укажите название товара для формирования досье' },
+          { status: 400 }
+        );
+      }
+
+      // Находим продукт в каталоге
+      const foundProduct = activeProducts.find((p: any) => 
+        (productId && p.id === productId) ||
+        p.name?.toLowerCase().includes(targetName.toLowerCase()) ||
+        p.full_name?.toLowerCase().includes(targetName.toLowerCase())
+      ) || { name: targetName, price: 0 };
+
+      const enrich = findEnrichmentForProduct(foundProduct.name, enrichedData);
+
+      // Подбираем релевантные товары со склада для связки (Cross-sell)
+      const relevantProducts = await getRelevantProducts(foundProduct.name, activeProducts, 6);
+      const crossSellCatalog = await formatCatalogProducts(
+        relevantProducts.filter((p: any) => p.id !== foundProduct.id),
+        lang
+      );
+
+      const prompt = `ДЕЙСТВИЕ: Экспертное досье на конкретный продукт для консультанта TOJ-VITAMIN.
+
+Клиент интересуется конкретным товаром: "${foundProduct.name}" (Полное название: ${foundProduct.full_name || foundProduct.name})
+Цена: ${foundProduct.price || 'по прайсу'} сомони.
+
+Клинические данные производителя GLS:
+Свойства: ${enrich?.properties ? enrich.properties.join('; ') : 'Общее оздоровление'}
+Синергия производителя: ${enrich?.synergies ? enrich.synergies.join('; ') : 'Отсутствует'}
+Маркетинговые триггеры: ${enrich?.marketing_hooks ? enrich.marketing_hooks.join('; ') : 'Здоровье и профилактика'}
+Инструкция производителя: ${JSON.stringify(enrich?.instructions || {})}
+
+Другие товары в наличии со склада для связки (Cross-sell / Up-sell):
+${crossSellCatalog}
+
+${langInstruction}
+
+ТРЕБУЕМЫЙ ФОРМАТ JSON ОТВЕТА:
+{
+  "product_name": "${foundProduct.name}",
+  "pitch_one_liner": "Главная суть в 1 предложение: что это за продукт и какую главную боль клиента он решает.",
+  "form_and_bioavailability": "Особенности формы выпуска и биодоступность (хелат, цитрат, триглицериды, усвояемость).",
+  "key_benefits": [
+    "Клинический эффект 1 с понятным объяснением пользы для клиента",
+    "Клинический эффект 2",
+    "Клинический эффект 3"
+  ],
+  "usage_instructions": {
+    "dosage": "Точная дозировка производителя (например: по 1 капсуле 2 раза в день)",
+    "timing": "Время приёма (Утро / Обед / Вечер, до еды или во время)",
+    "course_duration": "Рекомендуемый курс (например: 1-2 месяца)",
+    "food_interaction": "С чем принимать (например: с жирной пищей для жирорастворимых, запивать 1 стаканом воды)"
+  },
+  "cautions_and_contraindications": "Противопоказания, совместимость с лекарствами, можно ли при беременности/ГВ или детям.",
+  "cross_sell_bundle": {
+    "recommended_product": "Конкретный товар-партнер из наличия со склада",
+    "medical_synergy": "Почему в связке эффект удваивается (медицинское обоснование)",
+    "phone_pitch": "Дословный скрипт для консультанта при разговоре с клиентом: 'Отличный выбор! Кстати, чтобы этот препарат усвоился на 100%, нутрициологи всегда рекомендуют добавить... Добавим к заказу?'"
+  },
+  "whatsapp_card": "Готовое красивое продающее сообщение в WhatsApp для отправки клиенту: название, эмодзи, для чего полезен, как принимать, цена и призыв оформить доставку."
 }`;
 
       const model = genAI.getGenerativeModel({

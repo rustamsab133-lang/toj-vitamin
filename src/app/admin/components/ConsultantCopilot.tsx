@@ -40,7 +40,7 @@ const PRESET_LABS = [
 ];
 
 export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, onLogout, initialOrderId }) => {
-  const [activeTab, setActiveTab] = useState<'order' | 'consult' | 'labs'>('order');
+  const [activeTab, setActiveTab] = useState<'order' | 'consult' | 'labs' | 'dossier'>('dossier');
   const [lang, setLang] = useState<'ru' | 'tj'>('ru');
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +69,13 @@ export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, on
   const [labsGender, setLabsGender] = useState<'female' | 'male' | 'unknown'>('female');
   const [labsLoading, setLabsLoading] = useState(false);
   const [labsResult, setLabsResult] = useState<any>(null);
+
+  // --- TAB 4: Product Dossier State (Когда клиент спрашивает про 1 конкретный товар) ---
+  const [dossierProductName, setDossierProductName] = useState('');
+  const [dossierProductId, setDossierProductId] = useState('');
+  const [dossierLoading, setDossierLoading] = useState(false);
+  const [dossierResult, setDossierResult] = useState<any>(null);
+  const [dossierPhone, setDossierPhone] = useState('');
 
   // Copy feedback
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -261,6 +268,39 @@ export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, on
     }
   };
 
+  const handleGenerateDossier = async (prodName?: string, prodId?: string) => {
+    const name = (prodName || dossierProductName).trim();
+    if (!name) {
+      alert('Укажите или выберите товар из каталога');
+      return;
+    }
+    setDossierLoading(true);
+    setDossierResult(null);
+    try {
+      const res = await fetch('/api/agents/consultant-copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'product_dossier',
+          productName: name,
+          productId: prodId || dossierProductId,
+          lang
+        })
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setDossierResult(json.data);
+      } else {
+        alert(json.error || 'Ошибка формирования досье товара');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Не удалось связаться с сервером ИИ-Нутрициолога');
+    } finally {
+      setDossierLoading(false);
+    }
+  };
+
   const filteredCatalog = products.filter(p => 
     searchQuery.trim().length > 1 &&
     (p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -333,6 +373,18 @@ export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, on
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200/80 pb-1">
         <button
+          onClick={() => setActiveTab('dossier')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all ${
+            activeTab === 'dossier'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
+          }`}
+        >
+          <Pill size={16} />
+          Досье на 1 товар & Продажа
+        </button>
+
+        <button
           onClick={() => setActiveTab('order')}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all ${
             activeTab === 'order'
@@ -375,6 +427,300 @@ export const ConsultantCopilot: React.FC<ConsultantCopilotProps> = ({ onBack, on
           Расшифровка анализов
         </button>
       </div>
+
+      {/* TAB 0: PRODUCT DOSSIER (Клиент спросил про 1 конкретный товар) */}
+      {activeTab === 'dossier' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-5 space-y-4">
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-5">
+              <div>
+                <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                  <Pill size={18} className="text-emerald-600" /> Досье на конкретный товар
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Клиент спросил про отдельный препарат? Получите клинические свойства, точную инструкцию по приёму, предостережения и скрипт допродажи.
+                </p>
+              </div>
+
+              {/* Popular quick chips */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Популярные запросы клиентов:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Коллаген с витамином C',
+                    'Магний Хелат',
+                    'Магния цитрат с B6',
+                    'Омега 3',
+                    'Витамин D3',
+                    'Железо хелат',
+                    'Цинк хелат',
+                    '5-HTP (Триптофан)',
+                    'Хрома пиколинат'
+                  ].map((pName, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setDossierProductName(pName);
+                        handleGenerateDossier(pName);
+                      }}
+                      className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 transition-colors font-medium"
+                    >
+                      {pName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Searchable input */}
+              <div className="relative">
+                <label className="text-[11px] font-bold text-slate-500">
+                  Название товара:
+                </label>
+                <div className="relative mt-1">
+                  <Search size={14} className="absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type="text"
+                    value={dossierProductName}
+                    onChange={e => setDossierProductName(e.target.value)}
+                    placeholder="Введите название (например: Берберин, Кальций...)"
+                    className="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* Dropdown if matches products */}
+                {dossierProductName.trim().length > 1 && products.filter(p => 
+                  p.name?.toLowerCase().includes(dossierProductName.toLowerCase()) || 
+                  p.full_name?.toLowerCase().includes(dossierProductName.toLowerCase())
+                ).slice(0, 5).length > 0 && !dossierResult && (
+                  <div className="mt-1 bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden divide-y divide-slate-100">
+                    {products.filter(p => 
+                      p.name?.toLowerCase().includes(dossierProductName.toLowerCase()) || 
+                      p.full_name?.toLowerCase().includes(dossierProductName.toLowerCase())
+                    ).slice(0, 5).map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setDossierProductName(p.name);
+                          setDossierProductId(p.id);
+                          handleGenerateDossier(p.name, p.id);
+                        }}
+                        className="p-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between text-xs transition-colors"
+                      >
+                        <span className="font-semibold text-slate-800">{p.name}</span>
+                        <span className="font-bold text-emerald-600">{p.price} смн</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500">Телефон клиента (для отправки в WhatsApp):</label>
+                <input
+                  type="text"
+                  value={dossierPhone}
+                  onChange={e => setDossierPhone(e.target.value)}
+                  placeholder="+992 90 000 0000"
+                  className="w-full mt-1 text-xs py-2 px-3 rounded-xl border border-slate-200 focus:border-emerald-500"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleGenerateDossier()}
+                disabled={dossierLoading || !dossierProductName.trim()}
+                className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
+              >
+                {dossierLoading ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    Составляем досье и скрипт продаж...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    Получить досье, инструкцию и скрипт
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Dossier Result */}
+          <div className="lg:col-span-7 space-y-4">
+            {dossierResult ? (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                {/* One liner & Bioavailability */}
+                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+                      <Stethoscope size={15} /> Клиническое досье: {dossierResult.product_name}
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      GLS Pharmaceuticals
+                    </span>
+                  </div>
+
+                  <p className="text-sm font-semibold text-slate-800 leading-snug">
+                    {dossierResult.pitch_one_liner}
+                  </p>
+
+                  {dossierResult.form_and_bioavailability && (
+                    <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100/70 text-xs text-emerald-950">
+                      <span className="font-bold">Биодоступность & форма:</span> {dossierResult.form_and_bioavailability}
+                    </div>
+                  )}
+                </div>
+
+                {/* Key Benefits */}
+                {dossierResult.key_benefits && (
+                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-2.5">
+                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-emerald-600" /> Основные действия и терапевтическая польза
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {dossierResult.key_benefits.map((b: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                          <Check size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{b}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Usage Instructions */}
+                {dossierResult.usage_instructions && (
+                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <Clock size={16} className="text-emerald-600" /> Как правильно принимать (Инструкция)
+                      </h4>
+                      {dossierResult.usage_instructions.course_duration && (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center gap-1">
+                          <Calendar size={12} /> {dossierResult.usage_instructions.course_duration}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
+                        <p className="font-bold text-slate-500 text-[10px] uppercase">Дозировка и приём:</p>
+                        <p className="font-bold text-slate-900">{dossierResult.usage_instructions.dosage}</p>
+                        <p className="text-slate-600">{dossierResult.usage_instructions.timing}</p>
+                      </div>
+
+                      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
+                        <p className="font-bold text-slate-500 text-[10px] uppercase">Взаимодействие с пищей:</p>
+                        <p className="text-slate-700">{dossierResult.usage_instructions.food_interaction || 'Запивать достаточным количеством воды'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cautions */}
+                {dossierResult.cautions_and_contraindications && (
+                  <div className="bg-amber-50/80 rounded-3xl p-4 border border-amber-200 text-amber-900 space-y-1 text-xs">
+                    <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] text-amber-800">
+                      <ShieldAlert size={14} className="text-amber-600" /> Противопоказания и предостережения:
+                    </div>
+                    <p>{dossierResult.cautions_and_contraindications}</p>
+                  </div>
+                )}
+
+                {/* Cross-sell Bundle & Phone Script */}
+                {dossierResult.cross_sell_bundle && (
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-5 border border-indigo-100 space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                        <TrendingUp size={15} /> 🚀 Идеальная связка для допродажи (Cross-sell)
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-200/60 text-indigo-800">
+                        +30-50% к чеку
+                      </span>
+                    </div>
+
+                    <div className="bg-white/80 p-3 rounded-2xl border border-indigo-100 space-y-1">
+                      <p className="font-bold text-slate-900 text-sm">
+                        Предложите вместе: <span className="text-indigo-600">{dossierResult.cross_sell_bundle.recommended_product}</span>
+                      </p>
+                      <p className="text-xs text-slate-600">{dossierResult.cross_sell_bundle.medical_synergy}</p>
+                    </div>
+
+                    {dossierResult.cross_sell_bundle.phone_pitch && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Скрипт для звонка оператора:
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(dossierResult.cross_sell_bundle.phone_pitch, 'dossier_pitch')}
+                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                          >
+                            {copiedKey === 'dossier_pitch' ? <Check size={12} /> : <Copy size={12} />}
+                            {copiedKey === 'dossier_pitch' ? 'Скопировано!' : 'Скопировать скрипт'}
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-700 bg-white p-3 rounded-2xl border border-indigo-100 italic">
+                          «{dossierResult.cross_sell_bundle.phone_pitch}»
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* WhatsApp Showcase */}
+                {dossierResult.whatsapp_card && (
+                  <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+                        <MessageCircle size={15} /> Карточка товара для WhatsApp клиенту
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(dossierResult.whatsapp_card, 'dossier_wa')}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                        >
+                          {copiedKey === 'dossier_wa' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                          {copiedKey === 'dossier_wa' ? 'Скопировано!' : 'Скопировать'}
+                        </button>
+                        {dossierPhone && (
+                          <a
+                            href={`https://wa.me/${dossierPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(dossierResult.whatsapp_card)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                          >
+                            <ExternalLink size={13} /> В WhatsApp
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <pre className="text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-100 whitespace-pre-wrap font-sans max-h-64 overflow-y-auto">
+                      {dossierResult.whatsapp_card}
+                    </pre>
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                  <Pill size={28} />
+                </div>
+                <h4 className="font-bold text-slate-700 text-sm">Здесь появится досье на товар</h4>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                  Выберите товар слева или кликните один из популярных быстрых шаблонов (Коллаген, Магний, Омега-3...), чтобы мгновенно получить клинические свойства, инструкцию и продающий скрипт.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: ORDER ANALYSIS */}
       {activeTab === 'order' && (
