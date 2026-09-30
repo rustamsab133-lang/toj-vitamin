@@ -261,8 +261,8 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             grid-template-rows: repeat(2, 1fr) !important;
             gap: 2.5mm !important;
             flex: 1 !important;
-            height: calc(100% - 14mm) !important;
-            max-height: calc(100% - 14mm) !important;
+            height: calc(100% - 10mm) !important;
+            max-height: calc(100% - 10mm) !important;
             overflow: hidden !important;
             box-sizing: border-box !important;
           }
@@ -529,17 +529,6 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                     </span>
                   </div>
                 ))}
-              </div>
-
-              {/* Page Running Footer */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px] text-slate-500 h-[8mm]">
-                <div>
-                  📞 Заказ в WhatsApp: <strong>{data.company.phoneFormatted}</strong>
-                </div>
-                <div>www.toj-vitamin.tj</div>
-                <div className="font-bold text-slate-700">
-                  Стр. {pageNum} из {totalPagesCount}
-                </div>
               </div>
             </div>
           );

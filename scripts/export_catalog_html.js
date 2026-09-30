@@ -282,15 +282,6 @@ async function main() {
             </div>
           `).join('') : ''}
         </div>
-
-        <!-- Page Running Footer -->
-        <div class="page-running-footer">
-          <div class="footer-left">
-            📞 Заказ в WhatsApp: <strong>${OFFICIAL_PHONE_FORMATTED}</strong>
-          </div>
-          <div class="footer-center">www.toj-vitamin.tj</div>
-          <div class="footer-right">Стр. ${pageNum} из ${totalPagesCount}</div>
-        </div>
       </div>
     `;
   }).join('\n');
@@ -623,18 +614,6 @@ async function main() {
       border-radius: 6px;
     }
 
-    .page-running-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 6px;
-      border-top: 1px solid #f1f5f9;
-      font-size: 10px;
-      color: #64748b;
-      height: 24px;
-    }
-    .footer-left strong { color: #0f172a; }
-
     /* ================= BACK COVER ================= */
     .back-cover-page {
       background: #ffffff;
@@ -702,8 +681,8 @@ async function main() {
         grid-template-columns: repeat(2, 1fr) !important;
         grid-template-rows: repeat(2, 1fr) !important;
         gap: 2.5mm !important;
-        height: calc(100% - 14mm) !important;
-        max-height: calc(100% - 14mm) !important;
+        height: calc(100% - 10mm) !important;
+        max-height: calc(100% - 10mm) !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
       }
