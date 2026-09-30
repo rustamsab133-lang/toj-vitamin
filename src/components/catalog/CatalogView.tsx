@@ -36,23 +36,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
   const [data, setData] = useState<CatalogDataResult>(initialData);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [priceType, setPriceType] = useState<'retail' | 'wholesale' | 'none'>('retail');
   const [isPreparingPrint, setIsPreparingPrint] = useState(false);
-
-  // Switch price mode
-  const handlePriceTypeChange = async (newType: 'retail' | 'wholesale' | 'none') => {
-    if (newType === priceType) return;
-    setPriceType(newType);
-    try {
-      const res = await fetch(`/api/catalog/data?priceType=${newType}`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } catch (e) {
-      console.error('Failed to change price mode:', e);
-    }
-  };
 
   // Filter products by search and category
   const filteredProducts = useMemo(() => {
@@ -152,40 +136,6 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                 {filteredProducts.length} позиций • 2 товара на лист (крупные фото)
               </p>
             </div>
-          </div>
-
-          {/* Price Selector */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600">
-            <button
-              onClick={() => handlePriceTypeChange('retail')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                priceType === 'retail'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold'
-                  : 'hover:text-slate-900'
-              }`}
-            >
-              Розничные цены
-            </button>
-            <button
-              onClick={() => handlePriceTypeChange('wholesale')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                priceType === 'wholesale'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold text-emerald-700'
-                  : 'hover:text-slate-900'
-              }`}
-            >
-              Оптовые (B2B)
-            </button>
-            <button
-              onClick={() => handlePriceTypeChange('none')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                priceType === 'none'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold'
-                  : 'hover:text-slate-900'
-              }`}
-            >
-              Без цен
-            </button>
           </div>
 
           {/* Quick Actions */}
@@ -510,20 +460,12 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                         {/* Price & Order Action */}
                         <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 mt-auto">
                           <div>
-                            {priceType !== 'none' ? (
-                              <div>
-                                <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
-                                  {priceType === 'wholesale' ? 'Оптовая цена' : 'Цена'}
-                                </span>
-                                <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
-                                  {p.displayPrice}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs font-bold text-slate-500">
-                                По запросу
-                              </span>
-                            )}
+                            <span className="text-[8px] text-slate-400 uppercase font-semibold block leading-none">
+                              Цена
+                            </span>
+                            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+                              {p.retailPrice} смн
+                            </span>
                           </div>
 
                           <a
