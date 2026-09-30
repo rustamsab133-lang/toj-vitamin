@@ -2,8 +2,9 @@
  * export_catalog_html.js
  * 
  * Скрипт генерации постраничного PDF/HTML каталога TOJ-VITAMIN
- * со строгой разбивкой по листам A4 (ровно 4 товара на страницу).
- * Исключает разрезание карточек и текста между страницами.
+ * со строгой разбивкой по листам A4 (ровно 2 крупных товара на страницу).
+ * Чистый светлый дизайн, крупные фотографии товаров (150-180px),
+ * отсутствие черного фона и гарантия, что ни одна строчка не сползает на другую страницу.
  * 
  * Запуск: node scripts/export_catalog_html.js
  */
@@ -119,7 +120,7 @@ function chunkArray(array, size) {
 }
 
 async function main() {
-  console.log('\n📄 === ПОСТРАНИЧНАЯ ГЕНЕРАЦИЯ КАТАЛОГА TOJ-VITAMIN ===');
+  console.log('\n📄 === ПОСТРАНИЧНАЯ ГЕНЕРАЦИЯ КАТАЛОГА TOJ-VITAMIN (2 ТОВАРА НА ЛИСТ) ===');
   console.log('⏳ Загрузка товаров и настроек из Supabase...');
 
   const [
@@ -164,7 +165,7 @@ async function main() {
 
   const dateStr = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Map products to structured objects
+  // Map products
   const items = activeProducts.map((p, index) => {
     const codeNum = index + 1;
     const code = `#${codeNum < 10 ? '0' + codeNum : codeNum}`;
@@ -208,8 +209,8 @@ async function main() {
     };
   });
 
-  // Chunk products: exactly 4 items per page!
-  const ITEMS_PER_PAGE = 4;
+  // Strict 2 products per physical A4 sheet (Large horizontal cards)
+  const ITEMS_PER_PAGE = 2;
   const productPages = chunkArray(items, ITEMS_PER_PAGE);
   const totalPagesCount = productPages.length + 2; // Cover + Product Pages + Back Cover
 
@@ -217,27 +218,31 @@ async function main() {
 
   function renderCard(p) {
     return `
-      <div class="card">
-        <div class="card-header">
-          <span class="category-pill">${p.category}</span>
-          <span class="code-badge">${p.code}</span>
-        </div>
-        
+      <div class="product-card-row">
+        <!-- Big Product Image -->
         <div class="image-box">
-          <img src="${p.imgUrl}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy" />
+          <img src="${p.imgUrl}" alt="${p.name.replace(/"/g, '&quot;')}" loading="eager" decoding="sync" />
         </div>
 
-        <div class="card-body">
-          <div class="card-title" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</div>
-          
-          <ul class="properties-list">
-            ${p.properties.map(pr => `<li>${pr}</li>`).join('')}
-          </ul>
+        <!-- Product Details -->
+        <div class="card-details">
+          <div>
+            <div class="card-header">
+              <span class="category-pill">${p.category}</span>
+              <span class="code-badge">${p.code}</span>
+            </div>
 
-          <div class="instructions-box">
-            <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
-            <div class="instruction-row">👉 <strong>Прием:</strong> ${p.usage}</div>
-            <div class="instruction-sub">🕒 <strong>Время:</strong> ${p.timing} &bull; 📅 <strong>Курс:</strong> ${p.course}</div>
+            <h3 class="card-title" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</h3>
+            
+            <ul class="properties-list">
+              ${p.properties.map(pr => `<li>${pr}</li>`).join('')}
+            </ul>
+
+            <div class="instructions-box">
+              <div class="instructions-header">💊 КАК И СКОЛЬКО ПРИНИМАТЬ:</div>
+              <div class="instruction-row">👉 <strong>Прием:</strong> ${p.usage}</div>
+              <div class="instruction-sub">🕒 ${p.timing} &bull; 📅 ${p.course}</div>
+            </div>
           </div>
 
           <div class="card-footer">
@@ -245,7 +250,7 @@ async function main() {
               <span class="price-label">Цена:</span>
               <span class="price-val">${p.retailPrice} смн</span>
             </div>
-            <a href="${p.waLink}" target="_blank" class="order-btn">📲 Заказать</a>
+            <a href="${p.waLink}" target="_blank" class="order-btn">📲 Заказать в WhatsApp</a>
           </div>
         </div>
       </div>
@@ -253,8 +258,7 @@ async function main() {
   }
 
   const pagesHtml = productPages.map((pageItems, pageIdx) => {
-    const pageNum = pageIdx + 2; // Cover is page 1
-    // Primary category on this page
+    const pageNum = pageIdx + 2;
     const pageCategory = pageItems[0]?.category || 'Витамины и минералы';
 
     return `
@@ -270,16 +274,16 @@ async function main() {
           </div>
         </div>
 
-        <!-- 2x2 Products Grid (Fixed Page Content) -->
-        <div class="page-grid-2x2">
+        <!-- 2 Large Products Container -->
+        <div class="page-cards-container">
           ${pageItems.map(p => renderCard(p)).join('\n')}
-          ${pageItems.length < 4 ? '<div class="card-placeholder"></div>'.repeat(4 - pageItems.length) : ''}
+          ${pageItems.length === 1 ? '<div class="product-card-placeholder">TOJ-VITAMIN &bull; Доставка по Таджикистану</div>' : ''}
         </div>
 
         <!-- Page Running Footer -->
         <div class="page-running-footer">
           <div class="footer-left">
-            📞 Заказ и консультация в WhatsApp: <strong>${OFFICIAL_PHONE_FORMATTED}</strong>
+            📞 Заказ в WhatsApp: <strong>${OFFICIAL_PHONE_FORMATTED}</strong>
           </div>
           <div class="footer-center">www.toj-vitamin.tj</div>
           <div class="footer-right">Стр. ${pageNum} из ${totalPagesCount}</div>
@@ -304,7 +308,7 @@ async function main() {
       background: #f1f5f9;
       color: #0f172a;
       line-height: 1.4;
-      padding: 20px 0;
+      padding: 16px 8px;
     }
     
     /* Top sticky action bar */
@@ -312,7 +316,7 @@ async function main() {
       position: sticky;
       top: 10px;
       z-index: 100;
-      max-width: 210mm;
+      max-width: 860px;
       margin: 0 auto 20px auto;
       background: #ffffff;
       padding: 12px 20px;
@@ -321,10 +325,10 @@ async function main() {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
     }
     .print-btn {
-      background: #0f172a;
+      background: #059669;
       color: #fff;
       border: none;
       padding: 10px 22px;
@@ -337,135 +341,170 @@ async function main() {
       gap: 8px;
       transition: background 0.2s;
     }
-    .print-btn:hover { background: #1e293b; }
+    .print-btn:hover { background: #047857; }
 
-    /* Each physical A4 Page container */
+    /* Each physical Page container on Screen & Mobile */
     .cover-page,
     .catalog-page,
     .back-cover-page {
-      width: 210mm;
-      min-height: 297mm;
-      max-height: 297mm;
-      height: 297mm;
+      max-width: 860px;
+      width: 100%;
+      min-height: 281mm;
+      max-height: 281mm;
       margin: 0 auto 30px auto;
       background: #ffffff;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.05);
       box-sizing: border-box;
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      padding: 24px;
     }
 
     /* ================= COVER PAGE ================= */
     .cover-page {
-      background: linear-gradient(145deg, #090e17 0%, #172033 60%, #0d1527 100%);
-      color: #ffffff;
-      padding: 14mm 16mm;
+      background: #ffffff;
+      border: 2px solid #a7f3d0;
+      padding: 32px;
     }
     .cover-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 6mm;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f1f5f9;
     }
     .brand-wrap { display: flex; align-items: center; gap: 14px; }
-    .brand-logo { width: 52px; height: 52px; border-radius: 12px; background: #fff; padding: 6px; object-fit: contain; }
-    .brand-name { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
-    .brand-sub { font-size: 10px; text-transform: uppercase; color: #34d399; font-weight: 700; letter-spacing: 1px; }
+    .brand-logo { width: 56px; height: 56px; border-radius: 14px; background: #fff; border: 1px solid #e2e8f0; padding: 6px; object-fit: contain; }
+    .brand-name { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; color: #0f172a; }
+    .brand-sub { font-size: 11px; text-transform: uppercase; color: #059669; font-weight: 800; letter-spacing: 1px; }
     .distributor-badge {
-      background: rgba(16,185,129,0.15);
-      border: 1px solid rgba(16,185,129,0.35);
-      color: #6ee7b7;
-      padding: 6px 14px;
-      border-radius: 10px;
-      font-size: 11px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 12px;
       font-weight: 700;
     }
-    .cover-hero { margin: 10mm 0; }
+    .cover-hero { margin: 24px 0; }
     .cover-badge-year {
       display: inline-block;
-      background: rgba(255,255,255,0.1);
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 11px;
-      font-weight: 600;
-      color: #94a3b8;
-      margin-bottom: 12px;
+      font-weight: 700;
+      color: #065f46;
+      margin-bottom: 14px;
     }
-    .cover-title { font-size: 32px; font-weight: 900; line-height: 1.25; margin-bottom: 12px; }
-    .cover-desc { font-size: 13px; color: #cbd5e1; line-height: 1.6; max-width: 600px; }
+    .cover-title { font-size: 34px; font-weight: 900; line-height: 1.25; margin-bottom: 12px; color: #0f172a; }
+    .cover-desc { font-size: 14px; color: #475569; line-height: 1.6; max-width: 620px; }
     .how-to-order {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 8mm;
+      gap: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
     }
-    .step-box h4 { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-    .step-box p { font-size: 11px; color: #cbd5e1; line-height: 1.45; }
+    .step-box h4 { font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .step-box p { font-size: 11px; color: #64748b; line-height: 1.5; }
     .cover-contacts {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 6mm;
-      border-top: 1px solid rgba(255,255,255,0.15);
-      font-size: 11px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
     }
-    .contact-item { color: #fff; text-decoration: none; font-weight: 700; }
+    .contact-item { color: #0f172a; text-decoration: none; font-weight: 700; }
     .contact-item span { display: block; font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
 
     /* ================= CATALOG PRODUCT PAGE ================= */
     .catalog-page {
-      padding: 10mm 12mm 8mm 12mm;
+      padding: 16px 20px 12px 20px;
     }
     .page-running-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 3.5mm;
-      border-bottom: 1.5px solid #e2e8f0;
-      margin-bottom: 4mm;
-      height: 10mm;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid #f1f5f9;
+      height: 32px;
     }
     .header-left { display: flex; align-items: center; gap: 8px; }
-    .mini-logo { width: 22px; height: 22px; object-fit: contain; }
+    .mini-logo { width: 20px; height: 20px; object-fit: contain; }
     .header-brand { font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
-    .header-cat { font-size: 11px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 2px 10px; border-radius: 6px; }
+    .header-cat { font-size: 10px; font-weight: 700; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 10px; border-radius: 6px; }
 
-    /* 2x2 Grid exactly on one page */
-    .page-grid-2x2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 12px;
-      flex: 1;
-      height: 250mm;
-      max-height: 250mm;
-    }
-
-    .card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 12px;
+    /* 2 Large Cards Container */
+    .page-cards-container {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-      height: 100%;
+      flex: 1;
+      margin: 12px 0;
+      gap: 14px;
+    }
+
+    .product-card-row {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 20px;
+      height: calc((100% - 14px) / 2);
       box-sizing: border-box;
       overflow: hidden;
     }
-    .card-placeholder {
-      border: 1px dashed #e2e8f0;
+    .product-card-placeholder {
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: #f8fafc;
+      height: calc((100% - 14px) / 2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .image-box {
+      width: 170px;
+      height: 100%;
+      min-height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
       border-radius: 14px;
-      background: #fafafa;
+      padding: 10px;
+      flex-shrink: 0;
+    }
+    .image-box img {
+      max-height: 140px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .card-details {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      height: 100%;
+      min-width: 0;
     }
     .card-header {
       display: flex;
@@ -474,69 +513,42 @@ async function main() {
       margin-bottom: 6px;
     }
     .category-pill {
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 700;
-      background: #f8fafc;
-      color: #475569;
+      background: #f1f5f9;
+      color: #334155;
       padding: 3px 8px;
       border-radius: 6px;
       border: 1px solid #e2e8f0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 140px;
     }
     .code-badge {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 800;
       background: #0f172a;
       color: #ffffff;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 5px;
     }
-    .image-box {
-      height: 95px;
-      max-height: 95px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 6px;
-    }
-    .image-box img {
-      max-height: 90px;
-      max-width: 100%;
-      object-fit: contain;
-    }
-    .card-body {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      flex: 1;
-    }
     .card-title {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 800;
       color: #0f172a;
       line-height: 1.3;
       margin-bottom: 6px;
-      height: 32px;
+      white-space: nowrap;
       overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
     }
     .properties-list {
       list-style: none;
       margin-bottom: 8px;
-      height: 36px;
-      overflow: hidden;
     }
     .properties-list li {
-      font-size: 10px;
+      font-size: 11px;
       color: #475569;
       line-height: 1.35;
       margin-bottom: 2px;
-      padding-left: 10px;
+      padding-left: 12px;
       position: relative;
       white-space: nowrap;
       overflow: hidden;
@@ -553,19 +565,20 @@ async function main() {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
       border-radius: 10px;
-      padding: 6px 8px;
+      padding: 6px 10px;
       margin-bottom: 8px;
-      font-size: 10px;
+      font-size: 10.5px;
       color: #065f46;
     }
     .instructions-header {
       font-weight: 800;
       margin-bottom: 2px;
-      font-size: 9px;
+      font-size: 9.5px;
       letter-spacing: 0.3px;
     }
-    .instruction-row { line-height: 1.25; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .instruction-sub { font-size: 9px; color: #047857; line-height: 1.2; }
+    .instruction-row { line-height: 1.25; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .instruction-sub { font-size: 9.5px; color: #047857; line-height: 1.2; }
+
     .card-footer {
       display: flex;
       justify-content: space-between;
@@ -575,70 +588,69 @@ async function main() {
       margin-top: auto;
     }
     .price-box .price-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; line-height: 1; }
-    .price-box .price-val { font-size: 14px; font-weight: 900; color: #0f172a; line-height: 1.2; }
+    .price-box .price-val { font-size: 16px; font-weight: 900; color: #0f172a; line-height: 1.2; }
     .order-btn {
       background: #059669;
       color: #ffffff;
       text-decoration: none;
       font-weight: 700;
-      font-size: 10px;
-      padding: 5px 12px;
-      border-radius: 7px;
+      font-size: 11px;
+      padding: 7px 14px;
+      border-radius: 8px;
     }
 
     .page-running-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 3mm;
-      border-top: 1px solid #e2e8f0;
-      font-size: 9px;
+      padding-top: 6px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 10px;
       color: #64748b;
-      margin-top: 3mm;
-      height: 8mm;
+      height: 24px;
     }
     .footer-left strong { color: #0f172a; }
 
     /* ================= BACK COVER ================= */
     .back-cover-page {
-      background: #0f172a;
-      color: #ffffff;
-      padding: 14mm 16mm;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 32px;
     }
     .back-cover-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 16px;
       margin: auto 0;
     }
     .back-cover-col {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 14px;
       padding: 18px;
     }
-    .back-cover-col h4 { font-size: 14px; font-weight: 800; color: #34d399; margin-bottom: 8px; }
-    .back-cover-col p, .back-cover-col li { font-size: 12px; color: #cbd5e1; line-height: 1.6; }
+    .back-cover-col h4 { font-size: 14px; font-weight: 800; color: #059669; margin-bottom: 8px; }
+    .back-cover-col p, .back-cover-col li { font-size: 12px; color: #475569; line-height: 1.6; }
     .disclaimer-box {
-      border-top: 1px solid rgba(255,255,255,0.15);
+      border-top: 1px solid #e2e8f0;
       padding-top: 14px;
       text-align: center;
       font-size: 10px;
-      color: #64748b;
+      color: #94a3b8;
       line-height: 1.5;
     }
 
-    /* PRINT RULES */
+    /* ================= PRINT RULES (EXACT A4 WITH ZERO SPILLOVER) ================= */
     @media print {
       @page {
         size: A4 portrait;
-        margin: 0 !important;
+        margin: 8mm 10mm 8mm 10mm !important;
       }
       html, body {
         background: #ffffff !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 210mm !important;
+        width: 100% !important;
       }
       .action-bar { display: none !important; }
       .cover-page,
@@ -646,15 +658,27 @@ async function main() {
       .back-cover-page {
         margin: 0 !important;
         box-shadow: none !important;
+        border: none !important;
         border-radius: 0 !important;
         page-break-after: always !important;
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        height: 297mm !important;
-        max-height: 297mm !important;
-        min-height: 297mm !important;
+        height: 281mm !important;
+        max-height: 281mm !important;
+        min-height: 281mm !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
+        padding: 4mm 6mm !important;
+      }
+      .product-card-row {
+        height: 122mm !important;
+        max-height: 122mm !important;
+        min-height: 122mm !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
     }
   </style>
@@ -665,7 +689,7 @@ async function main() {
     <div>
       <strong style="font-size: 15px;">Каталог продукции TOJ-VITAMIN</strong>
       <span style="font-size: 12px; color: #64748b; margin-left: 8px;">
-        105 товаров &bull; ${totalPagesCount} страниц (ровно 4 товара на лист)
+        105 товаров &bull; ${totalPagesCount} страниц (2 товара на страницу, крупные фото)
       </span>
     </div>
     <button onclick="window.print()" class="print-btn">
@@ -673,7 +697,7 @@ async function main() {
     </button>
   </div>
 
-  <!-- PAGE 1: COVER -->
+  <!-- PAGE 1: COVER (CLEAN LIGHT THEME) -->
   <div class="cover-page">
     <div class="cover-top">
       <div class="brand-wrap">
@@ -699,7 +723,7 @@ async function main() {
     <div class="how-to-order">
       <div class="step-box">
         <h4>1. Заказ одного товара</h4>
-        <p>Нажмите <strong>«Заказать»</strong> под любым выбранным товаром — сразу откроется WhatsApp с готовым текстом заказа.</p>
+        <p>Нажмите <strong>«Заказать»</strong> под выбранным товаром — сразу откроется WhatsApp с готовым текстом заказа.</p>
       </div>
       <div class="step-box">
         <h4>2. Заказ нескольких позиций (списком)</h4>
@@ -727,7 +751,7 @@ async function main() {
     </div>
   </div>
 
-  <!-- PAGES 2..N: 4 PRODUCTS PER SHEET -->
+  <!-- PAGES 2..N: 2 LARGE PRODUCTS PER SHEET -->
   ${pagesHtml}
 
   <!-- LAST PAGE: BACK COVER -->
@@ -773,7 +797,7 @@ async function main() {
 
   const outputPath = path.join(__dirname, '../public/catalog.html');
   fs.writeFileSync(outputPath, fullHtml, 'utf8');
-  console.log(`✅ Постраничный каталог сохранен: ${outputPath} (${(fullHtml.length / 1024).toFixed(1)} КБ)`);
+  console.log(`✅ Каталог (2 товара на лист) успешно сохранен: ${outputPath} (${(fullHtml.length / 1024).toFixed(1)} КБ)`);
 }
 
 main().catch(console.error);
