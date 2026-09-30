@@ -331,12 +331,12 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
             font-size: 9.5px !important;
           }
           .product-photo-box {
-            height: 26mm !important;
-            max-height: 26mm !important;
-            margin-bottom: 1mm !important;
+            height: 44mm !important;
+            max-height: 44mm !important;
+            margin-bottom: 1.5mm !important;
           }
           .product-photo-box img {
-            max-height: 24mm !important;
+            max-height: 42mm !important;
             max-width: 100% !important;
             object-fit: contain !important;
           }
@@ -501,7 +501,7 @@ export default function CatalogView({ initialData }: CatalogViewProps) {
                         </div>
 
                         {/* Product Image: Centered, prominent photo without wasted margins */}
-                        <div className="product-photo-box w-full h-28 sm:h-32 flex items-center justify-center bg-slate-50/80 rounded-xl p-1.5 mb-1 relative shrink-0">
+                        <div className="product-photo-box w-full h-36 sm:h-44 flex items-center justify-center bg-slate-50/80 rounded-xl p-2 mb-2 relative shrink-0">
                           <img
                             src={p.imageUrl}
                             alt={p.name}

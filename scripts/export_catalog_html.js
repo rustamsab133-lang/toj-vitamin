@@ -509,18 +509,18 @@ async function main() {
 
     .image-box {
       width: 100%;
-      height: 115px;
+      height: 155px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #f8fafc;
       border-radius: 10px;
-      padding: 6px;
-      margin-bottom: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
       flex-shrink: 0;
     }
     .image-box img {
-      max-height: 105px;
+      max-height: 145px;
       max-width: 100%;
       object-fit: contain;
     }
@@ -749,12 +749,12 @@ async function main() {
         font-size: 9.5px !important;
       }
       .image-box {
-        height: 26mm !important;
-        max-height: 26mm !important;
-        margin-bottom: 1mm !important;
+        height: 44mm !important;
+        max-height: 44mm !important;
+        margin-bottom: 1.5mm !important;
       }
       .image-box img {
-        max-height: 24mm !important;
+        max-height: 42mm !important;
         max-width: 100% !important;
         object-fit: contain !important;
       }
