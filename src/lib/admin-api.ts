@@ -15,7 +15,9 @@ export async function adminDbQuery(payload: {
   id?: any;
   filters?: Record<string, any>;
 }) {
-  const password = sessionStorage.getItem('toj-admin-password') || '';
+  const password = typeof window !== 'undefined' 
+    ? (sessionStorage.getItem('toj-admin-password') || localStorage.getItem('toj-admin-password') || '') 
+    : '';
   
   const localNow = Date.now();
   const response = await fetch('/api/admin/db', {
@@ -43,6 +45,8 @@ export async function adminDbQuery(payload: {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('toj-admin-auth');
         sessionStorage.removeItem('toj-admin-password');
+        localStorage.removeItem('toj-admin-auth');
+        localStorage.removeItem('toj-admin-password');
         window.location.reload();
       }
     }

@@ -17,15 +17,17 @@ import { BloggerDashboard } from './components/BloggerDashboard';
 import { ComboEditor } from './components/ComboEditor';
 import { DocumentsDashboard } from './components/DocumentsDashboard';
 import { ConsultantCopilot } from './components/ConsultantCopilot';
+import { VideoStudio } from './components/VideoStudio';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText, Sparkles } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText, Sparkles, Film, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents' | 'consultant-copilot';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents' | 'consultant-copilot' | 'video-studio';
 
-const MODULES = [
-  { id: 'consultant-copilot' as AdminView, title: 'ИИ-Нутрициолог (Copilot)', desc: 'Схемы приёма, анализы, скрипты продаж', icon: <Sparkles size={24} className="text-emerald-600" />, color: '#ECFDF5' },
-  { id: 'orders' as AdminView, title: 'АРМ Оператора', desc: 'Прием и статусы заказов', icon: <ShoppingBag size={24} />, color: '#F0F9FF' },
+const MODULES: Array<{ id: AdminView; title: string; desc: string; icon: React.ReactNode; color: string; standaloneHref?: string }> = [
+  { id: 'video-studio', title: 'AI Видеостудия 3D', desc: 'MoA-ролики, синергия, монтаж', icon: <Film size={24} className="text-emerald-500" />, color: '#ECFDF5' },
+  { id: 'consultant-copilot', title: 'ИИ-Нутрициолог (Copilot)', desc: 'Схемы приёма, анализы, скрипты продаж', icon: <Sparkles size={24} className="text-emerald-600" />, color: '#ECFDF5', standaloneHref: '/copilot' },
+  { id: 'orders', title: 'АРМ Оператора', desc: 'Прием и статусы заказов', icon: <ShoppingBag size={24} />, color: '#F0F9FF', standaloneHref: '/admin/orders' },
   { id: 'pharmacy-orders' as AdminView, title: 'Закупки аптек', desc: 'B2B заказы, ссылки партнеров', icon: <Building2 size={24} />, color: '#F0FDF4' },
   { id: 'crm' as AdminView, title: 'CRM Система', desc: 'Лояльность, задачи и клиенты', icon: <Users size={24} />, color: '#ECFDF5' },
   { id: 'instagram-agent' as AdminView, title: 'Instagram ИИ', desc: 'Авто-генерация постов', icon: <Instagram size={24} />, color: '#FDF4FF' },
@@ -55,8 +57,25 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    const saved = sessionStorage.getItem('toj-admin-auth');
-    if (saved === 'true') setIsAuth(true);
+    const sessionSaved = sessionStorage.getItem('toj-admin-auth');
+    const localSaved = localStorage.getItem('toj-admin-auth');
+    const localPass = localStorage.getItem('toj-admin-password');
+
+    if (sessionSaved === 'true') {
+      setIsAuth(true);
+    } else if (localSaved === 'true' && localPass) {
+      sessionStorage.setItem('toj-admin-auth', 'true');
+      sessionStorage.setItem('toj-admin-password', localPass);
+      setIsAuth(true);
+    }
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlView = (params.get('view') || params.get('tab')) as AdminView;
+      if (urlView && MODULES.some(m => m.id === urlView)) {
+        setView(urlView);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -77,6 +96,9 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('toj-admin-auth');
+    sessionStorage.removeItem('toj-admin-password');
+    localStorage.removeItem('toj-admin-auth');
+    localStorage.removeItem('toj-admin-password');
     setIsAuth(false);
   };
 
@@ -134,11 +156,25 @@ export default function AdminPage() {
                     whileHover={{ y: -4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setView(mod.id)}
-                    className="p-6 rounded-2xl cursor-pointer border border-slate-100 hover:border-slate-200 transition-all hover:shadow-lg hover:shadow-slate-100/50"
+                    className="p-6 rounded-2xl cursor-pointer border border-slate-100 hover:border-slate-200 transition-all hover:shadow-lg hover:shadow-slate-100/50 relative group"
                     style={{ backgroundColor: mod.color }}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center mb-4 text-slate-600">
-                      {mod.icon}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center text-slate-600">
+                        {mod.icon}
+                      </div>
+                      {mod.standaloneHref && (
+                        <a
+                          href={mod.standaloneHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-8 h-8 rounded-lg bg-white/70 hover:bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all shadow-sm opacity-70 group-hover:opacity-100"
+                          title={`Открыть отдельной ссылкой (${mod.standaloneHref})`}
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
                     </div>
                     <h3 className="font-bold text-slate-800 mb-1">{mod.title}</h3>
                     <p className="text-xs text-slate-500">{mod.desc}</p>
@@ -273,6 +309,12 @@ export default function AdminPage() {
           {view === 'consultant-copilot' && (
             <motion.div key="consultant-copilot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <ConsultantCopilot onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'video-studio' && (
+            <motion.div key="video-studio" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <VideoStudio onBack={() => setView('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>
