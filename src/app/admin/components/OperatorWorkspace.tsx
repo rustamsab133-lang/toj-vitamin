@@ -26,6 +26,196 @@ const CHANNEL_MAP: Record<string, { label: string; icon: React.ReactNode; color:
   offline: { label: 'Офлайн', icon: <Store size={14} />, color: 'text-orange-600 bg-orange-50' },
 };
 
+export interface ParsedContact {
+  phone: string | null;
+  rawDigits: string;
+  instagram: string | null;
+  telegram: string | null;
+  pickupNote: string | null;
+  isPickup: boolean;
+  raw: string;
+}
+
+export function extractInstagramNick(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  const urlMatch = trimmed.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/i);
+  if (urlMatch && urlMatch[1]) {
+    const candidate = urlMatch[1].replace(/\/+$/, '');
+    const reserved = ['p', 'reel', 'reels', 'stories', 'explore', 'direct'];
+    if (!reserved.includes(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
+  return trimmed.replace(/^@+/, '').replace(/\/+$/, '');
+}
+
+export function extractTelegramNick(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  const urlMatch = trimmed.match(/(?:https?:\/\/)?(?:www\.)?(?:t\.me|telegram\.me)\/([a-zA-Z0-9_.]+)/i);
+  if (urlMatch && urlMatch[1]) {
+    return urlMatch[1].replace(/\/+$/, '');
+  }
+  return trimmed.replace(/^@+/, '').replace(/\/+$/, '');
+}
+
+export function formatOrderContact(opts: {
+  phone?: string | null;
+  instagram?: string | null;
+  telegram?: string | null;
+  pickupNote?: string | null;
+}): string {
+  const cleanPhone = (opts.phone || '').trim();
+  const cleanIg = extractInstagramNick(opts.instagram || '');
+  const cleanTg = extractTelegramNick(opts.telegram || '');
+  const cleanPickup = (opts.pickupNote || '').trim();
+
+  const tags: string[] = [];
+  if (cleanIg && cleanTg) {
+    tags.push(`IG: @${cleanIg}`);
+    tags.push(`TG: @${cleanTg}`);
+  } else if (cleanIg) {
+    tags.push(`@${cleanIg}`);
+  } else if (cleanTg) {
+    tags.push(`TG: @${cleanTg}`);
+  }
+
+  if (cleanPickup) {
+    tags.push(`Самовывоз: ${cleanPickup}`);
+  }
+
+  if (cleanPhone && tags.length > 0) {
+    return `${cleanPhone} (${tags.join(', ')})`;
+  } else if (cleanPhone) {
+    return cleanPhone;
+  } else if (tags.length > 0) {
+    return tags.join(' | ');
+  }
+
+  return '';
+}
+
+export function parseOrderContact(contactStr: string | null | undefined, channel?: string): ParsedContact {
+  const raw = (contactStr || '').trim();
+  if (!raw) {
+    return {
+      phone: null,
+      rawDigits: '',
+      instagram: null,
+      telegram: null,
+      pickupNote: null,
+      isPickup: channel === 'offline',
+      raw: ''
+    };
+  }
+
+  // 1. Detect profile URLs or tags or @nick
+  let instagram: string | null = null;
+  let telegram: string | null = null;
+
+  // 1a. Explicit tags: IG: @nick or TG: @nick
+  const igTagged = raw.match(/(?:IG|Instagram|Инстаграм|Инста)[:\s]*@?([a-zA-Z0-9_.]+)/i);
+  if (igTagged && igTagged[1]) {
+    const candidate = igTagged[1].replace(/\/+$/, '');
+    const reserved = ['p', 'reel', 'reels', 'stories', 'explore', 'direct'];
+    if (!reserved.includes(candidate.toLowerCase())) {
+      instagram = candidate;
+    }
+  }
+
+  const tgTagged = raw.match(/(?:TG|Telegram|Телеграм|ТГ)[:\s]*@?([a-zA-Z0-9_.]+)/i);
+  if (tgTagged && tgTagged[1]) {
+    telegram = tgTagged[1].replace(/\/+$/, '');
+  }
+
+  // 1b. Instagram URL match (e.g. instagram.com/username)
+  if (!instagram) {
+    const igUrlMatch = raw.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/i);
+    if (igUrlMatch && igUrlMatch[1]) {
+      const candidate = igUrlMatch[1].replace(/\/+$/, '');
+      const reserved = ['p', 'reel', 'reels', 'stories', 'explore', 'direct'];
+      if (!reserved.includes(candidate.toLowerCase())) {
+        instagram = candidate;
+      }
+    }
+  }
+
+  // 1c. Telegram URL match (e.g. t.me/username or telegram.me/username)
+  if (!telegram) {
+    const tgUrlMatch = raw.match(/(?:https?:\/\/)?(?:www\.)?(?:t\.me|telegram\.me)\/([a-zA-Z0-9_.]+)/i);
+    if (tgUrlMatch && tgUrlMatch[1]) {
+      telegram = tgUrlMatch[1].replace(/\/+$/, '');
+    }
+  }
+
+  // 1d. Generic @nick(s)
+  if (!instagram || !telegram) {
+    const allNicks = Array.from(raw.matchAll(/@([a-zA-Z0-9_.]+)/g)).map(m => m[1]);
+    if (allNicks.length === 1) {
+      if (!instagram && !telegram) {
+        if (channel === 'telegram') telegram = allNicks[0];
+        else instagram = allNicks[0];
+      }
+    } else if (allNicks.length >= 2) {
+      if (!instagram) instagram = allNicks[0];
+      if (!telegram) telegram = allNicks[1];
+    }
+  }
+
+  // 2. Check for pickup note
+  const isPickup = raw.toLowerCase().includes('самовывоз') || channel === 'offline';
+  let pickupNote: string | null = null;
+  if (isPickup) {
+    pickupNote = raw.replace(/\+?[\d\s()-]{6,}/, '').replace(/[()]/g, '').trim();
+    if (!pickupNote || pickupNote === 'Самовывоз') pickupNote = 'Самовывоз из магазина';
+  }
+
+  // 3. Extract phone (look for standard phone patterns or digit blocks)
+  const phonePattern = /(?:\+?992|8|\+7)?\s*\(?\d{2,4}\)?[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}/;
+  const match = raw.match(phonePattern);
+  let phone: string | null = null;
+  let rawDigits = '';
+
+  if (match) {
+    phone = match[0].trim();
+    rawDigits = phone.replace(/[^0-9]/g, '');
+  } else {
+    // Check if there is any block of digits >= 6
+    const blockMatch = raw.match(/\+?\d[\d\s-]{5,}\d/);
+    if (blockMatch) {
+      phone = blockMatch[0].trim();
+      rawDigits = phone.replace(/[^0-9]/g, '');
+    }
+  }
+
+  // 4. Fallback if no phone and no @nick found
+  if (!phone && !instagram && channel === 'instagram') {
+    const clean = raw.replace(/^@/, '').trim();
+    // Only if it doesn't look like phone digits and isn't pickup
+    if (clean && clean.replace(/[^0-9]/g, '').length < 5 && !clean.toLowerCase().includes('самовывоз')) {
+      instagram = clean;
+    }
+  }
+
+  if (!phone && !telegram && channel === 'telegram') {
+    const clean = raw.replace(/^@/, '').trim();
+    if (clean && clean.replace(/[^0-9]/g, '').length < 5 && !clean.toLowerCase().includes('самовывоз')) {
+      telegram = clean;
+    }
+  }
+
+  return {
+    phone,
+    rawDigits,
+    instagram,
+    telegram,
+    pickupNote,
+    isPickup,
+    raw
+  };
+}
+
 interface OperatorWorkspaceProps {
   onBack?: () => void;
   onLogout?: () => void;
@@ -63,6 +253,10 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   const [editableCourier, setEditableCourier] = useState('');
   const [editableNotes, setEditableNotes] = useState('');
   const [editableAddress, setEditableAddress] = useState('');
+  const [editablePhone, setEditablePhone] = useState('');
+  const [editableIg, setEditableIg] = useState('');
+  const [editableTg, setEditableTg] = useState('');
+  const [isEditingContact, setIsEditingContact] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
 
   // Order items editing state inside modal
@@ -212,7 +406,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
         body: JSON.stringify({
           action: 'analyze_order',
           items: itemsToAnalyze,
-          customerPhone: selectedOrder.phone || '',
+          customerPhone: parseOrderContact(selectedOrder.phone, selectedOrder.channel).phone || selectedOrder.phone || '',
           customerNotes: editableNotes || selectedOrder.delivery_notes || '',
           lang: 'ru'
         })
@@ -247,6 +441,11 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     setEditableCourier(order.courier_name || '');
     setEditableNotes(order.operator_notes || '');
     setEditableAddress(order.delivery_address || '');
+    const parsed = parseOrderContact(order.phone, order.channel);
+    setEditablePhone(parsed.phone || (!parsed.instagram && !parsed.telegram ? (order.phone || '') : ''));
+    setEditableIg(parsed.instagram || '');
+    setEditableTg(parsed.telegram || '');
+    setIsEditingContact(false);
     setEditableItems(order.items && Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : []);
     setItemSearchQuery('');
     setItemsSaveSuccess(false);
@@ -258,10 +457,20 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     if (!selectedOrder) return;
     setIsSavingDetails(true);
     try {
+      const parsedOriginal = parseOrderContact(selectedOrder.phone, selectedOrder.channel);
+      const newContactString = formatOrderContact({
+        phone: editablePhone,
+        instagram: editableIg,
+        telegram: editableTg,
+        pickupNote: parsedOriginal.pickupNote
+      });
+
+      const isContactChanged = newContactString.trim() !== (selectedOrder.phone || '').trim();
       const updatePayload: any = {
         courier_name: editableCourier,
         operator_notes: editableNotes,
-        delivery_address: editableAddress
+        delivery_address: editableAddress,
+        phone: newContactString.trim()
       };
 
       if (isOrderCompositionChanged) {
@@ -277,8 +486,24 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
         data: updatePayload,
         id: selectedOrder.id
       });
+      if (isContactChanged && selectedOrder.customer_id) {
+        try {
+          const notesParts: string[] = [];
+          const ig = extractInstagramNick(editableIg);
+          const tg = extractTelegramNick(editableTg);
+          if (ig) notesParts.push(`Instagram: @${ig}`);
+          if (tg) notesParts.push(`Telegram: @${tg}`);
+          if (parsedOriginal.pickupNote) notesParts.push(`Самовывоз: ${parsedOriginal.pickupNote}`);
+          const custUpdate: any = { notes: notesParts.join(' | ') };
+          if (editablePhone.trim()) custUpdate.phone = editablePhone.trim();
+          await adminDbQuery({ action: 'update', table: 'offline_customers', data: custUpdate, id: selectedOrder.customer_id });
+        } catch (custErr) {
+          console.warn("Failed to sync customer contacts", custErr);
+        }
+      }
       const updated: Order = {
         ...selectedOrder,
+        phone: newContactString.trim(),
         courier_name: editableCourier,
         operator_notes: editableNotes,
         delivery_address: editableAddress,
@@ -291,7 +516,8 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
       };
       setSelectedOrder(updated);
       setOrders(prev => prev.map(o => o.id === selectedOrder.id ? updated : o));
-      if (isOrderCompositionChanged) {
+      setIsEditingContact(false);
+      if (isOrderCompositionChanged || isContactChanged) {
         setItemsSaveSuccess(true);
         setTimeout(() => setItemsSaveSuccess(false), 3000);
       }
@@ -339,33 +565,46 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   };
 
   const handleClientLookup = async () => {
-    let q = '';
-    if (contactMode === 'phone') q = customerPhone.trim();
-    else if (contactMode === 'instagram') q = instagramNick.replace(/^@/, '').trim();
-    else if (contactMode === 'telegram') q = telegramNick.replace(/^@/, '').trim();
-    else if (contactMode === 'pickup') q = pickupNote.trim();
+    let qPhone = customerPhone.replace(/[^0-9]/g, '');
+    let qIg = extractInstagramNick(instagramNick);
+    let qTg = extractTelegramNick(telegramNick);
+    let qPickup = pickupNote.trim();
 
-    if (!q || q.length < 2) return;
+    let queryParams: any = {};
+    if (qPhone && qPhone.length >= 5) {
+      queryParams = { search: { column: 'phone', query: qPhone } };
+    } else if (qIg && qIg.length >= 2) {
+      queryParams = { search: { or: `name.ilike.%${qIg}%,notes.ilike.%${qIg}%` } };
+    } else if (qTg && qTg.length >= 2) {
+      queryParams = { search: { or: `name.ilike.%${qTg}%,notes.ilike.%${qTg}%` } };
+    } else if (qPickup && qPickup.length >= 2) {
+      queryParams = { search: { or: `name.ilike.%${qPickup}%,notes.ilike.%${qPickup}%` } };
+    } else {
+      return;
+    }
+
     try {
-      let queryParams: any = {};
-      if (contactMode === 'phone') {
-        queryParams = { search: { column: 'phone', query: q } };
-      } else {
-        queryParams = { search: { or: `name.ilike.%${q}%,notes.ilike.%${q}%` } };
-      }
-
       const { data } = await adminDbQuery({
         action: 'select',
         table: 'offline_customers',
         data: queryParams
       });
       if (data && data.length > 0) {
-        setFoundCustomer(data[0]);
+        const cust = data[0];
+        setFoundCustomer(cust);
         setNewOrder(prev => ({ 
           ...prev, 
-          customer_id: data[0].id, 
-          phone: data[0].phone || q 
+          customer_id: cust.id 
         }));
+        if (cust.phone && !customerPhone) {
+          setCustomerPhone(cust.phone);
+        }
+        if (cust.notes) {
+          const igM = cust.notes.match(/Instagram:\s*@?([a-zA-Z0-9_.]+)/i);
+          if (igM && !instagramNick) setInstagramNick(igM[1]);
+          const tgM = cust.notes.match(/Telegram:\s*@?([a-zA-Z0-9_.]+)/i);
+          if (tgM && !telegramNick) setTelegramNick(tgM[1]);
+        }
       } else {
         setFoundCustomer(null);
       }
@@ -401,44 +640,48 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   const saveOrder = async () => {
     if (!newOrder.items?.length) return alert("Добавьте товары в заказ");
 
-    let finalIdentifier = '';
-    let customerName = 'Новый клиент (заказ)';
-    let orderChannel = newOrder.channel || 'phone';
+    const cleanPhone = customerPhone.trim();
+    const cleanIg = extractInstagramNick(instagramNick);
+    const cleanTg = extractTelegramNick(telegramNick);
+    const cleanPickup = pickupNote.trim();
 
-    if (contactMode === 'phone') {
-      finalIdentifier = (newOrder.phone || customerPhone).trim();
-      if (!finalIdentifier) return alert("Укажите номер телефона клиента");
-      customerName = 'Новый клиент (заказ)';
-    } else if (contactMode === 'instagram') {
-      const raw = instagramNick.trim();
-      if (!raw) return alert("Укажите никнейм клиента в Instagram");
-      finalIdentifier = raw.startsWith('@') ? raw : `@${raw}`;
-      customerName = `Instagram: ${finalIdentifier}`;
-      orderChannel = 'instagram';
-    } else if (contactMode === 'telegram') {
-      const raw = telegramNick.trim();
-      if (!raw) return alert("Укажите никнейм клиента в Telegram");
-      finalIdentifier = raw.startsWith('@') ? raw : `@${raw}`;
-      customerName = `Telegram: ${finalIdentifier}`;
-      orderChannel = 'telegram';
-    } else if (contactMode === 'pickup') {
-      finalIdentifier = pickupNote.trim() ? `Самовывоз: ${pickupNote.trim()}` : 'Самовывоз из магазина';
-      customerName = pickupNote.trim() ? `Самовывоз: ${pickupNote.trim()}` : 'Клиент (Самовывоз)';
-      orderChannel = 'offline';
+    if (!cleanPhone && !cleanIg && !cleanTg && !cleanPickup) {
+      return alert("Укажите хотя бы один контакт клиента (телефон, Instagram, Telegram или самовывоз)");
     }
+
+    const finalIdentifier = formatOrderContact({
+      phone: cleanPhone,
+      instagram: cleanIg,
+      telegram: cleanTg,
+      pickupNote: cleanPickup
+    });
+
+    let customerName = cleanPhone 
+      ? `Клиент ${cleanPhone}` 
+      : cleanIg 
+      ? `Instagram: @${cleanIg}` 
+      : cleanTg 
+      ? `Telegram: @${cleanTg}` 
+      : 'Клиент (Самовывоз)';
+
+    let orderChannel = newOrder.channel || (cleanIg ? 'instagram' : cleanTg ? 'telegram' : cleanPickup ? 'offline' : 'phone');
 
     // Auto-create customer if doesn't exist
     let cid = newOrder.customer_id;
     if (!foundCustomer) {
       try {
+        const notesParts: string[] = [];
+        if (cleanIg) notesParts.push(`Instagram: @${cleanIg}`);
+        if (cleanTg) notesParts.push(`Telegram: @${cleanTg}`);
+        if (cleanPickup) notesParts.push(`Самовывоз: ${cleanPickup}`);
+
         const custPayload: any = {
           name: customerName,
-          total_spent: 0
+          total_spent: 0,
+          notes: notesParts.join(' | ')
         };
-        if (contactMode === 'phone') {
-          custPayload.phone = finalIdentifier;
-        } else {
-          custPayload.notes = `Контакт: ${finalIdentifier}`;
+        if (cleanPhone) {
+          custPayload.phone = cleanPhone;
         }
         const { data: newCustData } = await adminDbQuery({
           action: 'insert',
@@ -788,7 +1031,14 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                   {Object.entries(CHANNEL_MAP).map(([k, v]) => (
                     <button 
                       key={k}
-                      onClick={() => setNewOrder(prev => ({ ...prev, channel: k as any }))}
+                      type="button"
+                      onClick={() => {
+                        setNewOrder(prev => ({ ...prev, channel: k as any }));
+                        if (k === 'instagram') setContactMode('instagram');
+                        else if (k === 'telegram') setContactMode('telegram');
+                        else if (k === 'offline') setContactMode('pickup');
+                        else setContactMode('phone');
+                      }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                         newOrder.channel === k ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                       }`}
@@ -799,118 +1049,77 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Способ связи / Идентификатор</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2.5">
-                  {[
-                    { id: 'phone' as ContactMode, label: 'Телефон / WA', icon: <Phone size={13} />, channel: 'phone' },
-                    { id: 'instagram' as ContactMode, label: 'Instagram', icon: <Instagram size={13} />, channel: 'instagram' },
-                    { id: 'telegram' as ContactMode, label: 'Telegram', icon: <Send size={13} />, channel: 'telegram' },
-                    { id: 'pickup' as ContactMode, label: 'Самовывоз', icon: <Store size={13} />, channel: 'offline' }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => {
-                        setContactMode(tab.id);
-                        setFoundCustomer(null);
-                        setNewOrder(prev => ({ ...prev, channel: tab.channel as any }));
-                      }}
-                      className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
-                        contactMode === tab.id
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      {tab.icon} <span className="truncate">{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
+              <div className="bg-slate-50/60 rounded-2xl border border-slate-200 p-3.5 space-y-3">
+                <label className="block text-xs font-semibold text-slate-500 uppercase">Контакты клиента</label>
+                <p className="text-[11px] text-slate-400 -mt-2">Заполните всё, что известно — достаточно одного контакта.</p>
 
-                {contactMode === 'phone' && (
+                <div>
+                  <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 mb-1"><Phone size={12} /> Телефон (звонки / WhatsApp)</label>
                   <div className="flex gap-2">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={customerPhone}
                       onChange={e => setCustomerPhone(e.target.value)}
                       placeholder="+992 900 00 00 00"
-                      className="flex-1 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm px-3 py-2 outline-none"
+                      className="flex-1 rounded-xl border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm px-3 py-2 outline-none"
                     />
-                    <button 
-                      type="button"
-                      onClick={handleClientLookup} 
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 rounded-xl flex items-center justify-center transition-colors"
-                      title="Найти в базе CRM"
-                    >
+                    <button type="button" onClick={handleClientLookup} title="Найти в CRM"
+                      className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 rounded-xl flex items-center justify-center transition-colors">
                       <Search size={16} />
                     </button>
                   </div>
-                )}
+                </div>
 
-                {contactMode === 'instagram' && (
-                  <div>
-                    <div className="flex gap-2">
-                      <div className="flex-1 flex items-center bg-white rounded-xl border border-slate-200 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
-                        <span className="px-3 text-slate-400 font-bold text-sm bg-slate-50 border-r border-slate-200 py-2">@</span>
-                        <input 
-                          type="text" 
-                          value={instagramNick.replace(/^@/, '')}
-                          onChange={e => setInstagramNick(e.target.value)}
-                          placeholder="например: madina_beauty"
-                          className="w-full text-sm px-3 py-2 outline-none"
-                        />
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={handleClientLookup} 
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 rounded-xl flex items-center justify-center transition-colors"
-                        title="Найти в базе CRM"
-                      >
-                        <Search size={16} />
-                      </button>
+                <div>
+                  <label className="flex items-center gap-1 text-[11px] font-semibold text-pink-600 mb-1"><Instagram size={12} /> Instagram (ссылка или @ник)</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 flex items-center bg-white rounded-xl border border-slate-200 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                      <span className="px-3 text-slate-400 font-bold text-sm bg-slate-50 border-r border-slate-200 py-2">@</span>
+                      <input
+                        type="text"
+                        value={instagramNick.replace(/^@/, '')}
+                        onChange={e => setInstagramNick(extractInstagramNick(e.target.value))}
+                        placeholder="https://instagram.com/... или ник"
+                        className="w-full text-sm px-3 py-2 outline-none"
+                      />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">Телефон не обязателен. Будет привязан Instagram профиль.</p>
+                    <button type="button" onClick={handleClientLookup} title="Найти в CRM"
+                      className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 rounded-xl flex items-center justify-center transition-colors">
+                      <Search size={16} />
+                    </button>
                   </div>
-                )}
+                </div>
 
-                {contactMode === 'telegram' && (
-                  <div>
-                    <div className="flex gap-2">
-                      <div className="flex-1 flex items-center bg-white rounded-xl border border-slate-200 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
-                        <span className="px-3 text-slate-400 font-bold text-sm bg-slate-50 border-r border-slate-200 py-2">@</span>
-                        <input 
-                          type="text" 
-                          value={telegramNick.replace(/^@/, '')}
-                          onChange={e => setTelegramNick(e.target.value)}
-                          placeholder="например: farid_dushanbe"
-                          className="w-full text-sm px-3 py-2 outline-none"
-                        />
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={handleClientLookup} 
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 rounded-xl flex items-center justify-center transition-colors"
-                        title="Найти в базе CRM"
-                      >
-                        <Search size={16} />
-                      </button>
+                <div>
+                  <label className="flex items-center gap-1 text-[11px] font-semibold text-sky-600 mb-1"><Send size={12} /> Telegram (ссылка или @юзернейм)</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 flex items-center bg-white rounded-xl border border-slate-200 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                      <span className="px-3 text-slate-400 font-bold text-sm bg-slate-50 border-r border-slate-200 py-2">@</span>
+                      <input
+                        type="text"
+                        value={telegramNick.replace(/^@/, '')}
+                        onChange={e => setTelegramNick(extractTelegramNick(e.target.value))}
+                        placeholder="https://t.me/... или юзернейм"
+                        className="w-full text-sm px-3 py-2 outline-none"
+                      />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">Телефон не обязателен. Будет привязан Telegram аккаунт.</p>
+                    <button type="button" onClick={handleClientLookup} title="Найти в CRM"
+                      className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 rounded-xl flex items-center justify-center transition-colors">
+                      <Search size={16} />
+                    </button>
                   </div>
-                )}
+                </div>
 
-                {contactMode === 'pickup' && (
-                  <div>
-                    <input 
-                      type="text" 
-                      value={pickupNote}
-                      onChange={e => setPickupNote(e.target.value)}
-                      placeholder="Заметка или имя (например: Самовывоз из аптеки / Алишер)"
-                      className="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm px-3 py-2 outline-none"
-                    />
-                    <p className="text-[11px] text-slate-400 mt-1">Оформление для выдачи на месте в магазине / аптеке.</p>
-                  </div>
-                )}
+                <div>
+                  <label className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 mb-1"><Store size={12} /> Заметка / самовывоз (необязательно)</label>
+                  <input
+                    type="text"
+                    value={pickupNote}
+                    onChange={e => setPickupNote(e.target.value)}
+                    placeholder="Например: Самовывоз из аптеки / Алишер"
+                    className="w-full rounded-xl border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm px-3 py-2 outline-none"
+                  />
+                </div>
 
                 {foundCustomer && (
                   <div className="mt-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-sm flex items-start gap-2">
@@ -921,7 +1130,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                     </div>
                   </div>
                 )}
-                {!foundCustomer && (contactMode === 'phone' ? customerPhone.length > 5 : (contactMode === 'instagram' ? instagramNick.length > 2 : contactMode === 'telegram' ? telegramNick.length > 2 : pickupNote.length > 2)) && (
+                {!foundCustomer && (customerPhone.length > 5 || instagramNick.length > 2 || telegramNick.length > 2 || pickupNote.length > 2) && (
                   <p className="text-xs text-slate-500 mt-2 flex items-center gap-1"><AlertCircle size={12}/> Новый клиент (будет создан профиль в CRM)</p>
                 )}
               </div>
@@ -1184,46 +1393,67 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                       </td>
                       <td className="py-3.5 px-5 align-top max-w-xs">
                         {(() => {
-                          const contact = (order.phone || '').trim();
-                          if (!contact) return <p className="text-sm font-semibold text-slate-400">Номер не указан</p>;
-                          if (contact.startsWith('@') || order.channel === 'instagram') {
-                            const clean = contact.replace(/^@/, '');
-                            return (
-                              <a
-                                href={`https://instagram.com/${clean}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 hover:underline"
-                                title="Открыть Instagram"
-                              >
-                                <Instagram size={14} className="shrink-0" /> @{clean}
-                              </a>
-                            );
+                          const parsed = parseOrderContact(order.phone, order.channel);
+                          if (!parsed.raw && !parsed.phone && !parsed.instagram && !parsed.telegram) {
+                            return <p className="text-sm font-semibold text-slate-400">Номер не указан</p>;
                           }
-                          if (contact.startsWith('@') || order.channel === 'telegram') {
-                            const clean = contact.replace(/^@/, '');
-                            return (
-                              <a
-                                href={`https://t.me/${clean}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-sm font-bold text-sky-600 hover:text-sky-700 hover:underline"
-                                title="Открыть Telegram"
-                              >
-                                <Send size={14} className="shrink-0" /> @{clean}
-                              </a>
-                            );
-                          }
-                          if (contact.toLowerCase().includes('самовывоз') || order.channel === 'offline') {
-                            return (
-                              <span className="inline-flex items-center gap-1 text-sm font-bold text-amber-700">
-                                <Store size={14} className="shrink-0 text-amber-600" /> {contact}
-                              </span>
-                            );
-                          }
-                          return <p className="text-sm font-semibold text-slate-900">{contact}</p>;
+
+                          return (
+                            <div className="space-y-1">
+                              {/* Phone if available */}
+                              {parsed.phone && (
+                                <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                  <Phone size={13} className="text-slate-400 shrink-0" />
+                                  <span>{parsed.phone}</span>
+                                </p>
+                              )}
+
+                              {/* Instagram nick if available */}
+                              {parsed.instagram && (
+                                <div>
+                                  <a
+                                    href={`https://instagram.com/${parsed.instagram}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-pink-600 hover:text-pink-700 hover:underline"
+                                    title="Открыть Instagram"
+                                  >
+                                    <Instagram size={13} className="shrink-0" /> @{parsed.instagram}
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* Telegram nick if available */}
+                              {parsed.telegram && (
+                                <div>
+                                  <a
+                                    href={`https://t.me/${parsed.telegram}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline"
+                                    title="Открыть Telegram"
+                                  >
+                                    <Send size={13} className="shrink-0" /> @{parsed.telegram}
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* Pickup note if available */}
+                              {parsed.isPickup && parsed.pickupNote && (
+                                <div className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                  <Store size={12} className="shrink-0 text-amber-600" />
+                                  <span className="truncate max-w-[200px]">{parsed.pickupNote}</span>
+                                </div>
+                              )}
+
+                              {/* Fallback if no phone, no ig, no tg, no pickup note */}
+                              {!parsed.phone && !parsed.instagram && !parsed.telegram && !parsed.pickupNote && (
+                                <p className="text-sm font-semibold text-slate-900">{parsed.raw}</p>
+                              )}
+                            </div>
+                          );
                         })()}
                         {Array.isArray(order.items) && (
                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">
@@ -1353,99 +1583,148 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                 {/* Left Col: Customer & Payment */}
                 <div className="space-y-4">
                   {/* Customer Card */}
-                  <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-2.5">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                      <User size={14} className="text-indigo-500" /> Информация о клиенте
+                  <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        <User size={14} className="text-indigo-500" /> Информация о клиенте
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingContact(!isEditingContact)}
+                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 transition-colors"
+                      >
+                        <Edit3 size={12} /> {isEditingContact ? 'Свернуть' : 'Изменить контакт'}
+                      </button>
                     </div>
-                    <div>
-                      {(() => {
-                        const contact = (selectedOrder.phone || '').trim();
-                        const hasDigits = contact.replace(/[^0-9]/g, '').length >= 5;
-                        const isInstagram = contact.startsWith('@') || selectedOrder.channel === 'instagram';
-                        const isTelegram = (contact.startsWith('@') && selectedOrder.channel === 'telegram') || selectedOrder.channel === 'telegram';
-                        const isPickup = contact.toLowerCase().includes('самовывоз') || selectedOrder.channel === 'offline';
 
-                        if (!contact) {
-                          return <p className="font-semibold text-slate-400 text-base">Контакт не указан</p>;
-                        }
+                    {isEditingContact ? (
+                      <div className="space-y-2 pt-1 pb-1">
+                        <div>
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 mb-1"><Phone size={12} /> Телефон</label>
+                          <input
+                            type="text"
+                            value={editablePhone}
+                            onChange={e => setEditablePhone(e.target.value)}
+                            placeholder="+992 900 00 00 00"
+                            className="w-full text-sm px-3 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none bg-white font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-pink-600 mb-1"><Instagram size={12} /> Instagram (ссылка или ник)</label>
+                          <input
+                            type="text"
+                            value={editableIg}
+                            onChange={e => setEditableIg(extractInstagramNick(e.target.value))}
+                            placeholder="https://instagram.com/... или ник"
+                            className="w-full text-sm px-3 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none bg-white font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="flex items-center gap-1 text-[11px] font-semibold text-sky-600 mb-1"><Send size={12} /> Telegram (ссылка или юзернейм)</label>
+                          <input
+                            type="text"
+                            value={editableTg}
+                            onChange={e => setEditableTg(extractTelegramNick(e.target.value))}
+                            placeholder="https://t.me/... или юзернейм"
+                            className="w-full text-sm px-3 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none bg-white font-medium"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {(() => {
+                          const contactToParse = selectedOrder.phone || '';
+                          const parsed = parseOrderContact(contactToParse, selectedOrder.channel);
 
-                        if (isInstagram && !hasDigits) {
-                          const cleanNick = contact.replace(/^@/, '');
+                          if (!parsed.raw && !parsed.phone && !parsed.instagram && !parsed.telegram) {
+                            return <p className="font-semibold text-slate-400 text-base">Контакт не указан</p>;
+                          }
+
                           return (
-                            <div className="space-y-2">
-                              <p className="font-bold text-slate-900 text-base flex items-center gap-1.5 text-pink-600">
-                                <Instagram size={18} /> @{cleanNick}
-                              </p>
-                              <div className="flex gap-2">
-                                <a
-                                  href={`https://instagram.com/${cleanNick}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-bold shadow-sm transition-all"
-                                >
-                                  <Instagram size={13} /> Открыть в Instagram
-                                </a>
-                              </div>
+                            <div className="space-y-3">
+                              {/* Phone Block */}
+                              {parsed.phone && (
+                                <div>
+                                  <p className="font-bold text-slate-900 text-base flex items-center gap-1.5">
+                                    <Phone size={15} className="text-slate-400" /> {parsed.phone}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    <a 
+                                      href={`tel:${parsed.phone.replace(/[^0-9+]/g, '')}`}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-semibold transition-colors"
+                                    >
+                                      <Phone size={13} /> Позвонить
+                                    </a>
+                                    {parsed.rawDigits.length >= 5 && (
+                                      <a 
+                                        href={`https://wa.me/${parsed.rawDigits}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-semibold transition-colors"
+                                      >
+                                        <MessageCircle size={13} /> WhatsApp
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Instagram Block */}
+                              {parsed.instagram && (
+                                <div className={`${parsed.phone ? 'pt-2.5 border-t border-slate-200/60' : ''}`}>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="font-bold text-pink-600 text-sm flex items-center gap-1.5">
+                                      <Instagram size={15} /> @{parsed.instagram}
+                                    </p>
+                                    <a
+                                      href={`https://instagram.com/${parsed.instagram}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-bold shadow-sm transition-all"
+                                    >
+                                      <Instagram size={13} /> Открыть в Instagram
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Telegram Block */}
+                              {parsed.telegram && (
+                                <div className={`${parsed.phone ? 'pt-2.5 border-t border-slate-200/60' : ''}`}>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="font-bold text-sky-600 text-sm flex items-center gap-1.5">
+                                      <Send size={15} /> @{parsed.telegram}
+                                    </p>
+                                    <a
+                                      href={`https://t.me/${parsed.telegram}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold shadow-sm transition-all"
+                                    >
+                                      <Send size={13} /> Открыть в Telegram
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Pickup Block */}
+                              {parsed.isPickup && (
+                                <div className={`${parsed.phone ? 'pt-2.5 border-t border-slate-200/60' : ''}`}>
+                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+                                    <Store size={14} className="text-amber-600" /> {parsed.pickupNote || 'Самовывоз из магазина'}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Fallback text if none matched */}
+                              {!parsed.phone && !parsed.instagram && !parsed.telegram && !parsed.isPickup && (
+                                <p className="font-semibold text-slate-800 text-base">{parsed.raw}</p>
+                              )}
                             </div>
                           );
-                        }
-
-                        if (isTelegram && !hasDigits) {
-                          const cleanNick = contact.replace(/^@/, '');
-                          return (
-                            <div className="space-y-2">
-                              <p className="font-bold text-slate-900 text-base flex items-center gap-1.5 text-sky-600">
-                                <Send size={18} /> @{cleanNick}
-                              </p>
-                              <div className="flex gap-2">
-                                <a
-                                  href={`https://t.me/${cleanNick}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold shadow-sm transition-all"
-                                >
-                                  <Send size={13} /> Открыть в Telegram
-                                </a>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        if (isPickup && !hasDigits) {
-                          return (
-                            <div className="space-y-1.5">
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
-                                <Store size={14} className="text-amber-600" /> Самовывоз из магазина
-                              </div>
-                              <p className="font-semibold text-slate-800 text-sm">{contact}</p>
-                            </div>
-                          );
-                        }
-
-                        // Default: phone number
-                        return (
-                          <div>
-                            <p className="font-semibold text-slate-800 text-base">{contact}</p>
-                            <div className="flex gap-2 mt-2">
-                              <a 
-                                href={`tel:${contact}`}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-semibold transition-colors"
-                              >
-                                <Phone size={13} /> Позвонить
-                              </a>
-                              <a 
-                                href={`https://wa.me/${contact.replace(/[^0-9]/g, '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-semibold transition-colors"
-                              >
-                                <MessageCircle size={13} /> WhatsApp
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   {/* Delivery Address & Notes */}
@@ -1761,16 +2040,22 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                             {copiedKey === 'modal_wa' ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
                             {copiedKey === 'modal_wa' ? 'Скопировано' : 'Скопировать'}
                           </button>
-                          {selectedOrder.phone && selectedOrder.phone.replace(/[^0-9]/g, '').length >= 5 && (
-                            <a
-                              href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(copilotResult.whatsapp_message)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors"
-                            >
-                              <MessageCircle size={12} /> В WhatsApp
-                            </a>
-                          )}
+                          {(() => {
+                            const parsed = parseOrderContact(selectedOrder.phone, selectedOrder.channel);
+                            if (parsed.rawDigits && parsed.rawDigits.length >= 5) {
+                              return (
+                                <a
+                                  href={`https://wa.me/${parsed.rawDigits}?text=${encodeURIComponent(copilotResult.whatsapp_message)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                >
+                                  <MessageCircle size={12} /> В WhatsApp
+                                </a>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
                     )}
