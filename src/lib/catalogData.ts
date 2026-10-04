@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { getMarkupSettings, applyMarkupToProduct } from './markup';
 import { getHiddenProductIds, filterVisibleProducts } from './hiddenProducts';
+import { getRetailOnlyProductIds } from './retailOnlyProducts';
 import fs from 'fs';
 import path from 'path';
 
@@ -154,10 +155,11 @@ function parseInstructionDetails(rawUsage: string, fullText?: string): { usage: 
 }
 
 export async function getCatalogData(priceType: 'retail' | 'wholesale' | 'none' = 'retail'): Promise<CatalogDataResult> {
-  const [{ data: rawProducts, error }, hiddenIds, markupSettings] = await Promise.all([
+  const [{ data: rawProducts, error }, hiddenIds, markupSettings, retailOnlyIds] = await Promise.all([
     supabase.from('products').select('*').order('name'),
     getHiddenProductIds(),
-    getMarkupSettings()
+    getMarkupSettings(),
+    getRetailOnlyProductIds()
   ]);
 
   if (error || !rawProducts) {
@@ -183,7 +185,11 @@ export async function getCatalogData(priceType: 'retail' | 'wholesale' | 'none' 
   }
 
   // Filter visible
-  const visible = filterVisibleProducts(rawProducts, hiddenIds);
+  let visible = filterVisibleProducts(rawProducts, hiddenIds);
+  // Если запрашивается оптовый каталог — исключаем товары "Только для розницы"
+  if (priceType === 'wholesale') {
+    visible = visible.filter(p => !retailOnlyIds.includes(String(p.id)));
+  }
   const enriched = loadEnrichedData();
 
   // Sort alphabetically

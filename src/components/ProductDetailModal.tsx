@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product, Lang, Article } from '@/lib/types';
-import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle, Check } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight, ShieldCheck, Plus, AlertCircle, CheckCircle2, MessageCircle, Check, ZoomIn, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ShareButton } from './ShareButton';
 import { slugify } from '@/lib/slugify';
@@ -165,6 +165,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const { addItem, addMultiple, setIsOpen: setIsCartOpen, triggerAnimation, triggerToast } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [addedBundles, setAddedBundles] = useState<Record<string, boolean>>({});
   const [synergies, setSynergies] = useState<SynergyLink[]>([]);
   const [loadingSynergies, setLoadingSynergies] = useState(false);
@@ -172,6 +174,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   useEffect(() => {
     setImageError(false);
+    setActiveImageIndex(0);
+    setIsZoomOpen(false);
   }, [product?.id]);
 
   useEffect(() => {
@@ -430,40 +434,192 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
 
             {/* 1. LEFT COLUMN: PURE IMAGE STUDIO */}
-            <div className="shrink-0 w-full md:w-[400px] lg:w-[460px] h-[240px] sm:h-[280px] md:h-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 relative overflow-hidden transform-gpu border-b md:border-b-0 md:border-r border-black/[0.04]">
-               {/* Background Studio Glow */}
-               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#F8FAFC_0%,_#FFFFFF_70%)] opacity-50" />
-               
-               <div className="relative w-full h-full max-h-[200px] sm:max-h-[240px] md:max-h-[380px] transform-gpu flex items-center justify-center">
-                 {product.image_url && !imageError ? (
-                   <Image 
-                     src={product.image_url} 
-                     alt={product.name} 
-                     fill
-                     priority
-                     unoptimized
-                     onError={() => setImageError(true)}
-                     sizes="(max-width: 768px) 100vw, 460px"
-                     className="object-contain sm:drop-shadow-[0_12px_36px_rgba(0,0,0,0.06)]"
-                    />
-                 ) : (
-                    <div className="flex flex-col items-center justify-center text-center p-6 space-y-2">
-                      <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-400">
-                        <ShoppingBag size={30} strokeWidth={1.2} />
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-outfit">
-                        TOJ-VITAMIN
-                      </span>
-                    </div>
-                 )}
-               </div>
+            {(() => {
+              const enrichment = product ? findEnrichmentForProduct(product.name, enrichedData) : {};
+              const galleryImages: string[] = (product.images && product.images.length > 0)
+                ? product.images
+                : (enrichment?.gallery && Array.isArray(enrichment.gallery) && enrichment.gallery.length > 0)
+                  ? enrichment.gallery
+                  : (product.image_url ? [product.image_url] : []);
+              const currentImage = galleryImages[activeImageIndex] || product.image_url || '';
 
-               {/* Desktop Quality Standard */}
-               <div className="hidden md:flex items-center gap-2 mt-4 text-[#64748B] text-[11px] font-medium tracking-wide">
-                  <ShieldCheck size={14} className="text-[#1E40AF]" />
-                  <span>{lang === 'en' ? '100% Original GLS Pharmaceuticals' : (lang === 'ru' ? '100% Оригинал GLS Pharmaceuticals' : '100% Асл GLS Pharmaceuticals')}</span>
-               </div>
-            </div>
+              const getAngleLabel = (idx: number) => {
+                if (idx === 0) return lang === 'en' ? 'Front' : (lang === 'tj' ? 'Рӯ' : 'Лицо');
+                if (idx === 1) return lang === 'en' ? 'Back' : (lang === 'tj' ? 'Қафо' : 'Оборот');
+                if (idx === 2) return lang === 'en' ? 'Facts' : (lang === 'tj' ? 'Ҷадвал' : 'Таблица');
+                return `№${idx + 1}`;
+              };
+
+              return (
+                <div className="shrink-0 w-full md:w-[400px] lg:w-[460px] min-h-[290px] sm:min-h-[320px] md:h-full bg-[#F8FAFC] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 relative overflow-hidden transform-gpu border-b md:border-b-0 md:border-r border-black/[0.04]">
+                  {/* Background Studio Glow */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#F8FAFC_0%,_#FFFFFF_70%)] opacity-50 pointer-events-none" />
+
+                  {/* Main Image Area with Zoom click */}
+                  <div 
+                    onClick={() => currentImage && setIsZoomOpen(true)}
+                    className="relative w-full flex-1 max-h-[190px] sm:max-h-[220px] md:max-h-[360px] transform-gpu flex items-center justify-center cursor-zoom-in group/img mt-2 select-none"
+                    title={lang === 'en' ? 'Click to zoom and inspect' : 'Нажмите, чтобы увеличить и прочитать состав'}
+                  >
+                    {currentImage && !imageError ? (
+                      <div className="relative w-full h-full">
+                        <Image 
+                          key={currentImage}
+                          src={currentImage} 
+                          alt={`${product.name} - ${getAngleLabel(activeImageIndex)}`} 
+                          fill
+                          priority
+                          unoptimized
+                          onError={() => setImageError(true)}
+                          sizes="(max-width: 768px) 100vw, 460px"
+                          className="object-contain sm:drop-shadow-[0_12px_36px_rgba(0,0,0,0.06)] group-hover/img:scale-[1.03] transition-transform duration-500 ease-out"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-6 space-y-2">
+                        <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-400">
+                          <ShoppingBag size={30} strokeWidth={1.2} />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-outfit">
+                          TOJ-VITAMIN
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Prev / Next Arrows (if > 1 image) */}
+                    {galleryImages.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveImageIndex(prev => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+                          }}
+                          className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-black/5 shadow-sm text-slate-700 flex items-center justify-center hover:scale-110 active:scale-95 transition-all opacity-80 hover:opacity-100 z-20"
+                          aria-label="Previous angle"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveImageIndex(prev => (prev < galleryImages.length - 1 ? prev + 1 : 0));
+                          }}
+                          className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-black/5 shadow-sm text-slate-700 flex items-center justify-center hover:scale-110 active:scale-95 transition-all opacity-80 hover:opacity-100 z-20"
+                          aria-label="Next angle"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Zoom In Badge */}
+                    {currentImage && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsZoomOpen(true);
+                        }}
+                        className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-black/5 text-[#475569] hover:text-[#1E40AF] text-[10px] font-bold transition-all z-20 group-hover/img:scale-105"
+                      >
+                        <ZoomIn size={13} className="text-[#1E40AF]" />
+                        <span className="hidden sm:inline">{lang === 'en' ? 'Zoom' : 'Зум'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Multi-angle Thumbnails Switcher */}
+                  {galleryImages.length > 1 && (
+                    <div className="flex items-center gap-2 mt-3 z-20 overflow-x-auto max-w-full px-2 py-1 scrollbar-none">
+                      {galleryImages.map((imgUrl, idx) => {
+                        const isActive = activeImageIndex === idx;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveImageIndex(idx);
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all duration-300 ${
+                              isActive
+                                ? 'bg-[#1E40AF] text-white border-[#1E40AF] shadow-md shadow-blue-500/20 scale-105'
+                                : 'bg-white/90 hover:bg-white text-slate-600 border-black/10 hover:border-black/20'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-400'}`} />
+                            <span>{getAngleLabel(idx)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Desktop Quality Standard */}
+                  <div className="hidden md:flex items-center gap-2 mt-3 text-[#64748B] text-[11px] font-medium tracking-wide">
+                    <ShieldCheck size={14} className="text-[#1E40AF]" />
+                    <span>{lang === 'en' ? '100% Original GLS Pharmaceuticals' : (lang === 'ru' ? '100% Оригинал GLS Pharmaceuticals' : '100% Асл GLS Pharmaceuticals')}</span>
+                  </div>
+
+                  {/* Fullscreen Lightbox / Zoom Modal */}
+                  <AnimatePresence>
+                    {isZoomOpen && currentImage && (
+                      <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="relative max-w-4xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center"
+                        >
+                          {/* Close Zoom */}
+                          <button
+                            type="button"
+                            onClick={() => setIsZoomOpen(false)}
+                            className="absolute top-2 right-2 sm:top-4 sm:right-4 w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition-all z-50 shadow-lg"
+                          >
+                            <X size={24} />
+                          </button>
+
+                          {/* Large Image */}
+                          <div className="relative w-full h-[70vh] sm:h-[75vh]">
+                            <Image
+                              src={currentImage}
+                              alt={`${product.name} - zoom`}
+                              fill
+                              unoptimized
+                              className="object-contain drop-shadow-2xl"
+                            />
+                          </div>
+
+                          {/* Zoom Gallery Nav / Thumbnails */}
+                          {galleryImages.length > 1 && (
+                            <div className="flex items-center gap-2 mt-4 z-50 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
+                              {galleryImages.map((_, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setActiveImageIndex(idx)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    activeImageIndex === idx
+                                      ? 'bg-[#1E40AF] text-white shadow-lg'
+                                      : 'text-white/70 hover:text-white bg-white/10'
+                                  }`}
+                                >
+                                  {getAngleLabel(idx)}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })()}
 
             {/* 2. RIGHT COLUMN: SCROLLABLE CONTENT BODY + STICKY FOOTER */}
             <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative">

@@ -7,14 +7,16 @@ import { Search, Plus, Save, Trash2, X, Upload, Image as ImageIcon, ChevronLeft,
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage } from '@/lib/imageUtils';
 import { invalidateHiddenProductsCache } from '@/lib/hiddenProducts';
+import { invalidateRetailOnlyCache } from '@/lib/retailOnlyProducts';
 
 import { Product } from '@/lib/types';
 
 export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: string }> = ({ onBack, initialProductId }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [hiddenProductIds, setHiddenProductIds] = useState<string[]>([]);
+  const [retailOnlyProductIds, setRetailOnlyProductIds] = useState<string[]>([]);
   const [customRetailPrices, setCustomRetailPrices] = useState<Record<string, number>>({});
-  const [statusFilter, setStatusFilter] = useState<'all' | 'visible' | 'hidden'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'wholesale_and_retail' | 'retail_only' | 'visible' | 'hidden'>('all');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
@@ -46,10 +48,11 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
 
   const loadProducts = async () => {
     try {
-      const [{ data: prodData }, { data: settingsData }, { data: customPricesData }, markupRes] = await Promise.all([
+      const [{ data: prodData }, { data: settingsData }, { data: customPricesData }, { data: retailOnlyData }, markupRes] = await Promise.all([
         supabase.from('products').select('*').order('name'),
         supabase.from('site_settings').select('value').eq('key', 'hidden_product_ids').maybeSingle(),
         supabase.from('site_settings').select('value').eq('key', 'custom_retail_prices').maybeSingle(),
+        supabase.from('site_settings').select('value').eq('key', 'retail_only_product_ids').maybeSingle(),
         getMarkupSettings(true)
       ]);
 
@@ -61,6 +64,15 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
         } catch (e) {}
       }
       setHiddenProductIds(hiddenIds);
+
+      let retailOnlyIds: string[] = [];
+      if (retailOnlyData?.value) {
+        try {
+          const parsed = JSON.parse(retailOnlyData.value);
+          if (Array.isArray(parsed)) retailOnlyIds = parsed.map(String);
+        } catch (e) {}
+      }
+      setRetailOnlyProductIds(retailOnlyIds);
 
       let customPrices: Record<string, number> = {};
       if (customPricesData?.value) {
@@ -81,11 +93,13 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
         const collator = new Intl.Collator(['ru', 'tg', 'en'], { sensitivity: 'base', numeric: true });
         const sorted = [...prodData].map(p => {
           const pId = String(p.id);
+          const isRetailOnly = retailOnlyIds.includes(pId);
           const customPrice = customPrices[pId] || (p.retail_price ? Number(p.retail_price) : undefined);
           return {
             ...p,
             retail_price: customPrice,
-            is_hidden: Boolean(p.is_hidden || hiddenIds.includes(pId))
+            is_hidden: Boolean(p.is_hidden || hiddenIds.includes(pId)),
+            is_retail_only: isRetailOnly
           };
         }).sort((a, b) => collator.compare((a.name || '').trim(), (b.name || '').trim()));
         setProducts(sorted);
@@ -103,6 +117,8 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
         String(p.id).includes(search);
       if (!matchesSearch) return false;
 
+      if (statusFilter === 'wholesale_and_retail') return !p.is_hidden && !p.is_retail_only;
+      if (statusFilter === 'retail_only') return !p.is_hidden && p.is_retail_only;
       if (statusFilter === 'visible') return !p.is_hidden;
       if (statusFilter === 'hidden') return p.is_hidden;
       return true;
@@ -153,6 +169,13 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
     setSaving(true);
     setMsg('');
     try {
+      const isRetailOnly = Boolean(target.is_retail_only);
+      const targetPrice = Number(target.price) || 0;
+      const targetRetail = target.retail_price !== undefined && target.retail_price !== null ? Number(target.retail_price) : 0;
+      
+      // Для товаров "Только розница" цена товара на сайте является прямой розничной ценой
+      const effectivePrice = isRetailOnly ? (targetRetail > 0 ? targetRetail : targetPrice) : targetPrice;
+
       // 1. Сохраняем основные данные товара
       await adminDbQuery({
         action: 'upsert',
@@ -162,7 +185,7 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
           name: target.name,
           full_name: target.full_name,
           description: target.description,
-          price: target.price,
+          price: effectivePrice,
           icon_type: target.icon_type,
           image_url: target.image_url,
           barcode: target.barcode || null,
@@ -192,10 +215,35 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
       setHiddenProductIds(updatedHiddenIds);
       invalidateHiddenProductsCache();
 
-      // 3. Сохраняем индивидуальную розничную цену (если задана вручную)
+      // 3. Сохраняем статус "Только для розницы"
+      let updatedRetailOnlyIds = [...retailOnlyProductIds];
+      if (isRetailOnly) {
+        if (!updatedRetailOnlyIds.includes(String(target.id))) {
+          updatedRetailOnlyIds.push(String(target.id));
+        }
+      } else {
+        updatedRetailOnlyIds = updatedRetailOnlyIds.filter(id => id !== String(target.id));
+      }
+
+      await adminDbQuery({
+        action: 'upsert',
+        table: 'site_settings',
+        data: {
+          key: 'retail_only_product_ids',
+          value: JSON.stringify(updatedRetailOnlyIds)
+        }
+      });
+      setRetailOnlyProductIds(updatedRetailOnlyIds);
+      invalidateRetailOnlyCache();
+
+      // 4. Сохраняем индивидуальную розничную цену (если розничный товар или задана вручную)
       const updatedCustomPrices = { ...customRetailPrices };
-      const targetRetail = target.retail_price !== undefined && target.retail_price !== null ? Number(target.retail_price) : 0;
-      if (targetRetail > 0) {
+      if (isRetailOnly) {
+        // Для чисто розничного товара фиксируем финальную цену продажи без наценок
+        if (effectivePrice > 0) {
+          updatedCustomPrices[String(target.id)] = Math.round(effectivePrice);
+        }
+      } else if (targetRetail > 0) {
         updatedCustomPrices[String(target.id)] = Math.round(targetRetail);
       } else {
         delete updatedCustomPrices[String(target.id)];
@@ -262,6 +310,21 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
           });
           setHiddenProductIds(updated);
           invalidateHiddenProductsCache();
+        }
+
+        // Очищаем из списка "Только розница"
+        if (retailOnlyProductIds.includes(String(id))) {
+          const updatedRetail = retailOnlyProductIds.filter(rId => rId !== String(id));
+          await adminDbQuery({
+            action: 'upsert',
+            table: 'site_settings',
+            data: {
+              key: 'retail_only_product_ids',
+              value: JSON.stringify(updatedRetail)
+            }
+          });
+          setRetailOnlyProductIds(updatedRetail);
+          invalidateRetailOnlyCache();
         }
 
         // Очищаем из кастомных розничных цен если был
@@ -353,6 +416,7 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
       barcode: '',
       stock_quantity: 0,
       is_hidden: false,
+      is_retail_only: false,
       retail_price: undefined
     });
   };
@@ -416,6 +480,8 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
 
   const visibleCount = products.filter(p => !p.is_hidden).length;
   const hiddenCount = products.filter(p => p.is_hidden).length;
+  const retailOnlyCount = products.filter(p => !p.is_hidden && p.is_retail_only).length;
+  const wholesaleCount = products.filter(p => !p.is_hidden && !p.is_retail_only).length;
 
   return (
     <div className="space-y-6">
@@ -461,15 +527,27 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
           </button>
           <button
             type="button"
-            onClick={() => setStatusFilter('visible')}
+            onClick={() => setStatusFilter('wholesale_and_retail')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
-              statusFilter === 'visible'
-                ? 'bg-emerald-600 text-white shadow-sm'
+              statusFilter === 'wholesale_and_retail'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-100 hover:border-slate-200'
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            В наличии ({visibleCount})
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            Опт + Розница ({wholesaleCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('retail_only')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              statusFilter === 'retail_only'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-100 hover:border-slate-200'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+            Только розница ({retailOnlyCount})
           </button>
           <button
             type="button"
@@ -529,6 +607,15 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
                   <p className={`font-bold text-sm truncate ${editing?.id === p.id ? 'text-white' : 'text-slate-700'}`}>
                     {p.name}
                   </p>
+                  {p.is_retail_only && (
+                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                      editing?.id === p.id 
+                        ? 'bg-purple-400/20 text-purple-200 border border-purple-400/30' 
+                        : 'bg-purple-100 text-purple-800 border border-purple-200'
+                    }`}>
+                      Только розница
+                    </span>
+                  )}
                   {p.is_hidden && (
                     <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
                       editing?.id === p.id 
@@ -544,10 +631,16 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
                   const effectiveRetail = applyMarkupToPrice(p.price, markupSettings, customRetailPrices[String(p.id)]);
                   return (
                     <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                      <p className={`text-xs ${editing?.id === p.id ? 'text-white/60' : 'text-slate-400'}`}>
-                        Опт: <span className="font-semibold">{p.price}</span> → Розница: <span className={`font-bold ${editing?.id === p.id ? 'text-white' : 'text-slate-700'}`}>{effectiveRetail} смн</span>
-                      </p>
-                      {hasCustom && (
+                      {p.is_retail_only ? (
+                        <p className={`text-xs ${editing?.id === p.id ? 'text-white/80' : 'text-purple-700 font-semibold'}`}>
+                          Розница: <span className={`font-bold ${editing?.id === p.id ? 'text-white' : 'text-slate-800'}`}>{effectiveRetail} смн</span> <span className="text-[10px] text-slate-400 font-normal">(без опта)</span>
+                        </p>
+                      ) : (
+                        <p className={`text-xs ${editing?.id === p.id ? 'text-white/60' : 'text-slate-400'}`}>
+                          Опт: <span className="font-semibold">{p.price}</span> → Розница: <span className={`font-bold ${editing?.id === p.id ? 'text-white' : 'text-slate-700'}`}>{effectiveRetail} смн</span>
+                        </p>
+                      )}
+                      {hasCustom && !p.is_retail_only && (
                         <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide uppercase ${
                           editing?.id === p.id 
                             ? 'bg-blue-400/20 text-blue-200 border border-blue-400/30' 
@@ -739,18 +832,71 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
                 </div>
               </div>
 
+              {/* Sales Channel Toggle: Wholesale+Retail vs Retail Only */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                editing.is_retail_only 
+                  ? 'bg-purple-50/70 border-purple-200 text-purple-950' 
+                  : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${editing.is_retail_only ? 'bg-purple-600' : 'bg-blue-500'}`} />
+                      <span className="text-xs font-bold">
+                        {editing.is_retail_only ? 'Только для розницы (B2C)' : 'Опт + Розница (B2B и B2C)'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-tight">
+                      {editing.is_retail_only 
+                        ? 'Товар виден только на сайте. Полностью скрыт из оптового B2B кабинета и прайс-листов аптек.' 
+                        : 'Товар отображается и на сайте, и в оптовом каталоге для партнерских аптек.'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextRetailOnly = !editing.is_retail_only;
+                      setEditing({
+                        ...editing,
+                        is_retail_only: nextRetailOnly,
+                        // При переключении в розницу фиксируем цену
+                        retail_price: nextRetailOnly 
+                          ? (editing.retail_price || editing.price || 0)
+                          : editing.retail_price
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                      editing.is_retail_only
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {editing.is_retail_only ? '🛍️ Только розница' : '🏢 Опт + Розница'}
+                  </button>
+                </div>
+              </div>
+
               {/* Fields */}
               <div className="space-y-3">
                 <Field label="Название" value={editing.name} onChange={(v) => setEditing({...editing, name: v})} />
                 <Field label="Полное название" value={editing.full_name} onChange={(v) => setEditing({...editing, full_name: v})} />
                 <Field label="Описание" value={editing.description || ''} onChange={(v) => setEditing({...editing, description: v})} multiline />
                 {/* Pricing Block: Wholesale vs Retail */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className={`p-4 rounded-xl border space-y-3 transition-colors ${
+                  editing.is_retail_only 
+                    ? 'bg-purple-50/50 border-purple-200' 
+                    : 'bg-slate-50 border-slate-200'
+                }`}>
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       Ценообразование
                     </span>
-                    {Boolean(editing.retail_price && Number(editing.retail_price) > 0) ? (
+                    {editing.is_retail_only ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                        Финальная розничная цена
+                      </span>
+                    ) : Boolean(editing.retail_price && Number(editing.retail_price) > 0) ? (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
                         Индивидуальная розница
                       </span>
@@ -761,90 +907,117 @@ export const ProductEditor: React.FC<{ onBack: () => void; initialProductId?: st
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Оптовая цена */}
-                    <div>
-                      <Field 
-                        label="Оптовая / B2B цена (смн)" 
-                        value={String(editing.price)} 
-                        onChange={(v) => setEditing({...editing, price: Number(v) || 0})} 
-                        type="number" 
+                  {editing.is_retail_only ? (
+                    /* Режим: Только розница — одна прямая финальная цена */
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-semibold uppercase tracking-widest text-slate-600 block">
+                        Цена продажи на сайте (смн)
+                      </label>
+                      <input
+                        type="number"
+                        value={editing.retail_price !== undefined ? String(editing.retail_price) : (editing.price ? String(editing.price) : '')}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : (Number(e.target.value) || 0);
+                          setEditing({
+                            ...editing,
+                            price: val,
+                            retail_price: val
+                          });
+                        }}
+                        placeholder="Укажите розничную цену в сомони"
+                        className="w-full h-11 px-3.5 rounded-xl border border-purple-300 bg-white text-base text-purple-950 font-bold focus:border-purple-600 focus:ring-2 focus:ring-purple-100 outline-none transition-all shadow-xs"
                       />
-                      <p className="text-[10px] text-slate-400 mt-1">Базовая оптовая цена для аптек и складов</p>
+                      <p className="text-[11px] text-purple-900 font-medium">
+                        🎯 Это точная розничная цена для покупателей на сайте. Автоматические наценки сайта не накладываются. В оптовом каталоге и заказах аптек товар отображаться не будет.
+                      </p>
                     </div>
+                  ) : (
+                    /* Режим: Опт + Розница */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Оптовая цена */}
+                      <div>
+                        <Field 
+                          label="Оптовая / B2B цена (смн)" 
+                          value={String(editing.price)} 
+                          onChange={(v) => setEditing({...editing, price: Number(v) || 0})} 
+                          type="number" 
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Базовая оптовая цена для аптек и складов</p>
+                      </div>
 
-                    {/* Розничная цена */}
-                    <div>
-                      {(() => {
-                        const autoPrice = applyMarkupToPrice(editing.price, markupSettings);
-                        const hasCustom = Boolean(editing.retail_price && Number(editing.retail_price) > 0);
+                      {/* Розничная цена */}
+                      <div>
+                        {(() => {
+                          const autoPrice = applyMarkupToPrice(editing.price, markupSettings);
+                          const hasCustom = Boolean(editing.retail_price && Number(editing.retail_price) > 0);
 
-                        return (
-                          <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <label className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 block">
-                                Розничная цена (смн)
-                              </label>
-                              {hasCustom ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setEditing({ ...editing, retail_price: undefined })}
-                                  className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
-                                  title="Вернуть автоматический расчет по формуле сайта"
-                                >
-                                  <RotateCcw size={10} /> Сбросить на авто
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => setEditing({ ...editing, retail_price: autoPrice })}
-                                  className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
-                                >
-                                  <Sparkles size={10} /> Задать вручную
-                                </button>
-                              )}
-                            </div>
+                          return (
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 block">
+                                  Розничная цена (смн)
+                                </label>
+                                {hasCustom ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditing({ ...editing, retail_price: undefined })}
+                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+                                    title="Вернуть автоматический расчет по формуле сайта"
+                                  >
+                                    <RotateCcw size={10} /> Сбросить на авто
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditing({ ...editing, retail_price: autoPrice })}
+                                    className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
+                                  >
+                                    <Sparkles size={10} /> Задать вручную
+                                  </button>
+                                )}
+                              </div>
 
-                            <input
-                              type="number"
-                              value={hasCustom ? String(editing.retail_price) : ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setEditing({
-                                  ...editing,
-                                  retail_price: val === '' ? undefined : (Number(val) || 0)
-                                });
-                              }}
-                              placeholder={`Авто: ${autoPrice} смн`}
-                              className={`w-full h-10 px-3 rounded-lg border text-sm font-medium outline-none transition-colors ${
-                                hasCustom 
-                                  ? 'bg-white border-blue-300 text-blue-900 font-bold focus:border-blue-500 shadow-sm' 
-                                  : 'bg-slate-100/70 border-slate-200 text-slate-600 placeholder:text-slate-400 focus:bg-white'
-                              }`}
-                            />
+                              <input
+                                type="number"
+                                value={hasCustom ? String(editing.retail_price) : ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditing({
+                                    ...editing,
+                                    retail_price: val === '' ? undefined : (Number(val) || 0)
+                                  });
+                                }}
+                                placeholder={`Авто: ${autoPrice} смн`}
+                                className={`w-full h-10 px-3 rounded-lg border text-sm font-medium outline-none transition-colors ${
+                                  hasCustom 
+                                    ? 'bg-white border-blue-300 text-blue-900 font-bold focus:border-blue-500 shadow-sm' 
+                                    : 'bg-slate-100/70 border-slate-200 text-slate-600 placeholder:text-slate-400 focus:bg-white'
+                                }`}
+                              />
 
-                            <div className="mt-1.5">
-                              {hasCustom ? (
-                                <p className="text-[11px] text-blue-700 font-semibold flex items-center gap-1">
-                                  <span>✨ Фиксированная розница: {editing.retail_price} смн. Опт ({editing.price} смн) не меняется.</span>
-                                </p>
-                              ) : (
-                                <p className="text-[11px] text-slate-500 flex items-center gap-1">
-                                  <TrendingUp size={11} className="text-emerald-500 shrink-0" />
-                                  <span>
-                                    По формуле: {autoPrice} смн
-                                    <span className="text-slate-400 ml-1">
-                                      ({markupSettings.percent > 0 ? `+${markupSettings.percent}%` : ''}{markupSettings.flat > 0 ? ` +${markupSettings.flat} смн` : ''})
+                              <div className="mt-1.5">
+                                {hasCustom ? (
+                                  <p className="text-[11px] text-blue-700 font-semibold flex items-center gap-1">
+                                    <span>✨ Фиксированная розница: {editing.retail_price} смн. Опт ({editing.price} смн) не меняется.</span>
+                                  </p>
+                                ) : (
+                                  <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                                    <TrendingUp size={11} className="text-emerald-500 shrink-0" />
+                                    <span>
+                                      По формуле: {autoPrice} смн
+                                      <span className="text-slate-400 ml-1">
+                                        ({markupSettings.percent > 0 ? `+${markupSettings.percent}%` : ''}{markupSettings.flat > 0 ? ` +${markupSettings.flat} смн` : ''})
+                                      </span>
                                     </span>
-                                  </span>
-                                </p>
-                              )}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })()}
+                          );
+                        })()}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

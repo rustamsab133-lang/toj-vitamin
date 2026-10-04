@@ -135,7 +135,8 @@ export async function formatCatalogProducts(dbProducts: any[], lang: string = 'r
     return dbProducts
       .map((p: any) => {
         const enrich = findEnrichmentForProduct(p.name, enrichedData);
-        const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings);
+        const customPrice = markupSettings.customRetailPrices?.[String(p.id)];
+        const markedPrice = applyMarkupToPrice(Number(p.price) || 0, markupSettings, customPrice);
 
         if (lang === 'en') {
           const props = (enrich.properties_en && enrich.properties_en.length > 0)

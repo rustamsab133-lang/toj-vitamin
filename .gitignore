@@ -48,6 +48,7 @@ google-key.json
 /scratch/
 tsconfig.tsbuildinfo
 *.txt
+*.HEIC
 
 .vercel
 .env*

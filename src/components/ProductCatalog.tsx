@@ -17,7 +17,8 @@ import {
   Activity,
   ArrowRight,
   Plus,
-  Check
+  Check,
+  RotateCcw
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
 import { useCart } from '@/store/useCart';
@@ -343,17 +344,43 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
                                   whileHover={{ y: -8 }}
                                   transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
                                 >
+                                  {/* Front Image */}
                                   <Image
                                     src={product.image_url}
                                     alt={getLocalizedProductName(product.name, lang)}
                                     fill
                                     unoptimized
                                     sizes="(max-width: 640px) 250px, 300px"
-                                    className="object-contain p-4"
+                                    className={`object-contain p-4 transition-all duration-500 ease-out ${
+                                      (product.back_image_url || (product.images && product.images[1]))
+                                        ? 'group-hover:opacity-0 group-hover:scale-95'
+                                        : ''
+                                    }`}
                                   />
+                                  {/* Back Image (Revealed smoothly on hover) */}
+                                  {(product.back_image_url || (product.images && product.images[1])) && (
+                                    <Image
+                                      src={product.back_image_url || product.images![1]}
+                                      alt={`${getLocalizedProductName(product.name, lang)} - ${lang === 'en' ? 'Back side' : 'Обратная сторона'}`}
+                                      fill
+                                      unoptimized
+                                      sizes="(max-width: 640px) 250px, 300px"
+                                      className="object-contain p-4 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out scale-95 group-hover:scale-100 absolute inset-0"
+                                    />
+                                  )}
                                 </motion.div>
                               ) : (
                                 <ShoppingBag size={42} strokeWidth={1} className="text-[#E2E8F0]" />
+                              )}
+
+                              {/* Hover Indicator Badge */}
+                              {(product.back_image_url || (product.images && product.images[1])) && (
+                                <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-20">
+                                  <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md border border-black/5 text-[9px] font-bold text-slate-700 shadow-sm flex items-center gap-1.5">
+                                    <RotateCcw size={10} className="text-[#1E40AF]" />
+                                    <span>{lang === 'en' ? 'Back side' : (lang === 'tj' ? 'Қафо' : 'Оборот')}</span>
+                                  </span>
+                                </div>
                               )}
 
                               <div className="absolute bottom-6 right-6">

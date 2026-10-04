@@ -6,9 +6,11 @@ import {
   ChevronLeft, Building2, TrendingUp, BarChart3, Search, 
   UserPlus, Phone, Calendar, ClipboardList, Trash2, X, Plus, Minus,
   Edit, Copy, Check, ShoppingCart, Clock, ShieldAlert, Award, Package, RefreshCw,
-  MessageSquare, MapPin, User, ExternalLink, Filter
+  MessageSquare, MapPin, User, ExternalLink, Filter, Printer, Edit3, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import B2BInvoiceTemplate, { B2BInvoiceProps } from './print/B2BInvoiceTemplate';
+import { numberToWordsRu } from '@/lib/numberToWords';
 
 type SubTab = 'dashboard' | 'pharmacies' | 'new-order' | 'prices';
 
@@ -90,6 +92,48 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
   const [ordersFilterQuery, setOrdersFilterQuery] = useState('');
   const [ordersFilterStatus, setOrdersFilterStatus] = useState<string>('all');
 
+  // Order Correction & Invoice Print States
+  const [isOrderEditorOpen, setIsOrderEditorOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<PharmacyOrder | null>(null);
+  const [editingItems, setEditingItems] = useState<Array<{
+    product_id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    base_price: number;
+  }>>([]);
+  const [editingDiscountPercent, setEditingDiscountPercent] = useState<number>(0);
+  const [saveDiscountAsPharmacyDefault, setSaveDiscountAsPharmacyDefault] = useState(false);
+  const [editingNotes, setEditingNotes] = useState('');
+  const [editingDeliveryDate, setEditingDeliveryDate] = useState('');
+  const [orderProductSearch, setOrderProductSearch] = useState('');
+  const [isSavingOrderEdits, setIsSavingOrderEdits] = useState(false);
+  const [printInvoiceData, setPrintInvoiceData] = useState<B2BInvoiceProps | null>(null);
+
+  // Computed values with guaranteed zero-drift arithmetic
+  const editorSubtotal = useMemo(() => {
+    return Math.round(
+      editingItems.reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.price) || 0), 0) * 100
+    ) / 100;
+  }, [editingItems]);
+
+  const editorDiscountAmount = useMemo(() => {
+    if (editingDiscountPercent <= 0) return 0;
+    return Math.round(((editorSubtotal * editingDiscountPercent) / 100) * 100) / 100;
+  }, [editorSubtotal, editingDiscountPercent]);
+
+  const editorFinalTotal = useMemo(() => {
+    return Math.max(0, Math.round((editorSubtotal - editorDiscountAmount) * 100) / 100);
+  }, [editorSubtotal, editorDiscountAmount]);
+
+  const filteredAvailableProducts = useMemo(() => {
+    if (!orderProductSearch.trim()) return [];
+    const q = orderProductSearch.toLowerCase().trim();
+    return products
+      .filter((p: any) => p.name.toLowerCase().includes(q) || String(p.id).includes(q))
+      .slice(0, 6);
+  }, [products, orderProductSearch]);
+
   // Fast map lookup for pharmacies
   const pharmacyMap = useMemo(() => {
     const map = new Map<string, Pharmacy>();
@@ -140,15 +184,15 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     });
   }, [orders, ordersFilterQuery, ordersFilterStatus, pharmacyMap]);
 
-  // Lock body scroll when pharmacy modal is open
+  // Lock body scroll when pharmacy modal, order editor or invoice print is open
   useEffect(() => {
-    if (isModalOpen) {
+    if (isModalOpen || isOrderEditorOpen || !!printInvoiceData) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [isModalOpen]);
+  }, [isModalOpen, isOrderEditorOpen, printInvoiceData]);
 
   useEffect(() => {
     loadAllData(true);
@@ -198,15 +242,25 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
       };
       setMarkupSettings(newMarkupSettings);
 
-      // 4. Fetch Products
+      const retailOnlySetting = settingsData?.find((s: any) => s.key === 'retail_only_product_ids');
+      let retailOnlyIds: string[] = [];
+      if (retailOnlySetting?.value) {
+        try {
+          const parsed = JSON.parse(retailOnlySetting.value);
+          if (Array.isArray(parsed)) retailOnlyIds = parsed.map(String);
+        } catch (e) {}
+      }
+
+      // 4. Fetch Products (исключаем товары «Только для розницы» из оптовых заказов)
       const { data: prodData } = await adminDbQuery({
         action: 'select',
         table: 'products',
         data: { order: { column: 'name', ascending: true } }
       });
       if (prodData) {
+        const wholesaleProds = prodData.filter((p: any) => !retailOnlyIds.includes(String(p.id)));
         // Apply retail markup
-        const markedUp = prodData.map((p: any) => {
+        const markedUp = wholesaleProds.map((p: any) => {
           let retail = Number(p.price) || 0;
           if (newMarkupSettings.percent > 0) retail = retail * (1 + newMarkupSettings.percent / 100);
           retail = retail + newMarkupSettings.flat;
@@ -426,6 +480,226 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
       loadAllData();
     } catch (e) {
       alert('Ошибка отмены заказа: ' + e);
+    }
+  };
+
+  // Open Order Correction Modal
+  const handleOpenOrderEditor = (order: PharmacyOrder) => {
+    const ph = getOrderPharmacy(order);
+    const orderItems = Array.isArray(order.items) ? order.items : [];
+    
+    const mappedItems = orderItems.map((it: any) => {
+      const catalogProd = products.find(p => String(p.id) === String(it.product_id));
+      const basePrice = catalogProd ? Number(catalogProd.price) : Number(it.price);
+      return {
+        product_id: String(it.product_id || ''),
+        name: it.name || catalogProd?.name || 'Товар',
+        quantity: Math.max(1, parseInt(it.quantity) || 1),
+        price: Number(it.price) || basePrice || 0,
+        base_price: basePrice || Number(it.price) || 0
+      };
+    });
+
+    setEditingOrder(order);
+    setEditingItems(mappedItems);
+    setEditingDiscountPercent(Number(ph.discount_percent) || 0);
+    setSaveDiscountAsPharmacyDefault(false);
+    setEditingNotes(order.notes || '');
+    setEditingDeliveryDate(order.delivery_date || '');
+    setOrderProductSearch('');
+    setIsOrderEditorOpen(true);
+  };
+
+  // Stepper for quantity in editor
+  const handleUpdateItemQty = (index: number, newQty: number) => {
+    if (newQty < 1) return;
+    setEditingItems(prev => prev.map((item, idx) => idx === index ? { ...item, quantity: newQty } : item));
+  };
+
+  // Remove item ("Out of stock" / "Нет в наличии")
+  const handleRemoveItemFromOrder = (index: number) => {
+    const itemToRemove = editingItems[index];
+    if (editingItems.length === 1) {
+      if (!confirm(`Вы действительно хотите исключить единственный товар "${itemToRemove?.name || ''}" из заказа?`)) {
+        return;
+      }
+    }
+    setEditingItems(prev => prev.filter((_, idx) => idx !== index));
+  };
+
+  // Add replacement / new product from warehouse
+  const handleAddProductToEditor = (prod: any) => {
+    const existingIndex = editingItems.findIndex(i => String(i.product_id) === String(prod.id));
+    if (existingIndex >= 0) {
+      setEditingItems(prev => prev.map((item, idx) => 
+        idx === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
+      ));
+    } else {
+      setEditingItems(prev => [
+        ...prev,
+        {
+          product_id: String(prod.id),
+          name: prod.name,
+          quantity: 1,
+          price: Number(prod.price) || 0,
+          base_price: Number(prod.price) || 0
+        }
+      ]);
+    }
+    setOrderProductSearch('');
+  };
+
+  // Save Order Edits (updates order, balance & optionally pharmacy default discount)
+  const handleSaveOrderEdits = async (andPrint = false) => {
+    if (!editingOrder) return;
+    if (editingItems.length === 0) {
+      alert('В заказе должен оставаться хотя бы один товар. Если заказ полностью аннулирован, используйте кнопку «Отменить заказ».');
+      return;
+    }
+
+    setIsSavingOrderEdits(true);
+    try {
+      const oldTotal = Number(editingOrder.total_amount) || 0;
+      const diff = editorFinalTotal - oldTotal;
+
+      const dbItems = editingItems.map(it => ({
+        product_id: it.product_id,
+        name: it.name,
+        quantity: it.quantity,
+        price: it.price,
+        base_price: it.base_price
+      }));
+
+      // 1. Update pharmacy_orders
+      await adminDbQuery({
+        action: 'update',
+        table: 'pharmacy_orders',
+        id: editingOrder.id,
+        data: {
+          items: dbItems,
+          total_amount: editorFinalTotal,
+          notes: editingNotes.trim(),
+          delivery_date: editingDeliveryDate || null
+        }
+      });
+
+      // 2. Adjust debt balance if unpaid
+      if (editingOrder.payment_status !== 'paid' && diff !== 0) {
+        const ph = pharmacies.find(p => p.id === editingOrder.pharmacy_id);
+        if (ph) {
+          const newBalance = Math.max(0, Math.round(((Number(ph.balance) || 0) + diff) * 100) / 100);
+          await adminDbQuery({
+            action: 'update',
+            table: 'pharmacies',
+            id: ph.id,
+            data: { balance: newBalance }
+          });
+        }
+      }
+
+      // 3. Update Pharmacy default discount if requested
+      if (saveDiscountAsPharmacyDefault && editingOrder.pharmacy_id) {
+        await adminDbQuery({
+          action: 'update',
+          table: 'pharmacies',
+          id: editingOrder.pharmacy_id,
+          data: { discount_percent: editingDiscountPercent }
+        });
+      }
+
+      // 4. If andPrint, trigger print preview
+      if (andPrint) {
+        const ph = getOrderPharmacy(editingOrder);
+        setPrintInvoiceData({
+          orderId: editingOrder.id,
+          createdAt: editingOrder.created_at || new Date().toISOString(),
+          pharmacy: {
+            ...ph,
+            name: ph.name || 'Оптовый покупатель',
+            phone: ph.phone || '',
+            address: ph.address || '',
+            contact_person: ph.contact_person || '',
+            discount_percent: editingDiscountPercent
+          },
+          items: dbItems,
+          subtotal: editorSubtotal,
+          discountPercent: editingDiscountPercent,
+          discountAmount: editorDiscountAmount,
+          finalTotal: editorFinalTotal,
+          notes: editingNotes.trim(),
+          deliveryDate: editingDeliveryDate || null,
+          onClose: () => setPrintInvoiceData(null)
+        });
+      }
+
+      setIsOrderEditorOpen(false);
+      await loadAllData(false);
+    } catch (e: any) {
+      alert('Ошибка при сохранении изменений заказа: ' + (e.message || e));
+    } finally {
+      setIsSavingOrderEdits(false);
+    }
+  };
+
+  // Direct print invoice for existing order without editing
+  const handleDirectPrintInvoice = (order: PharmacyOrder) => {
+    const ph = getOrderPharmacy(order);
+    const orderItems = Array.isArray(order.items) ? order.items : [];
+    
+    const subtotal = Math.round(
+      orderItems.reduce((acc: number, it: any) => acc + (Number(it.quantity) || 0) * (Number(it.price) || 0), 0) * 100
+    ) / 100;
+    
+    const discountPercent = Number(ph.discount_percent) || 0;
+    let discountAmount = 0;
+    const finalTotal = Number(order.total_amount) || subtotal;
+
+    if (discountPercent > 0 && subtotal > finalTotal) {
+      discountAmount = Math.round((subtotal - finalTotal) * 100) / 100;
+    } else if (subtotal > finalTotal) {
+      discountAmount = Math.round((subtotal - finalTotal) * 100) / 100;
+    }
+
+    setPrintInvoiceData({
+      orderId: order.id,
+      createdAt: order.created_at || new Date().toISOString(),
+      pharmacy: {
+        ...ph,
+        name: ph.name || 'Оптовый покупатель',
+        phone: ph.phone || '',
+        address: ph.address || '',
+        contact_person: ph.contact_person || '',
+        discount_percent: discountPercent
+      },
+      items: orderItems,
+      subtotal: subtotal,
+      discountPercent: discountPercent,
+      discountAmount: discountAmount,
+      finalTotal: finalTotal,
+      notes: order.notes || '',
+      deliveryDate: order.delivery_date || null,
+      onClose: () => setPrintInvoiceData(null)
+    });
+  };
+
+  // Send corrected order to WhatsApp
+  const handleSendUpdatedWa = () => {
+    if (!editingOrder) return;
+    const ph = getOrderPharmacy(editingOrder);
+    const cleanPhone = (ph.phone || '').replace(/[^0-9]/g, '');
+    const itemsText = editingItems
+      .map((item, idx) => `${idx + 1}. ${item.name} — ${item.quantity} шт. (${Math.round(item.price * item.quantity).toLocaleString()} смн)`)
+      .join('\n');
+    const discountText = editingDiscountPercent > 0 
+      ? `\n🎁 Индивидуальная скидка: ${editingDiscountPercent}% (-${editorDiscountAmount.toLocaleString()} смн)` 
+      : '';
+    const msg = `Здравствуйте! Ваш оптовый заказ #${editingOrder.id.slice(0, 8).toUpperCase()} для аптеки "${ph.name}" скорректирован по наличию на складе:\n\n${itemsText}${discountText}\n\nИТОГО К ОПЛАТЕ: ${editorFinalTotal.toLocaleString()} смн\n\nТоварная накладная подготовлена. Пожалуйста, подтвердите готовность к доставке.`;
+    
+    if (cleanPhone) {
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    } else {
+      navigator.clipboard.writeText(msg);
+      alert('Текст скопирован в буфер обмена!');
     }
   };
 
@@ -827,6 +1101,28 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
                             </div>
                           )}
 
+                          {/* Quick Action Buttons */}
+                          <div className="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-slate-100" onClick={e => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenOrderEditor(order)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 text-xs font-bold transition-all shadow-2xs active:scale-95"
+                              title="Скорректировать наличие товаров, количество и скидку"
+                            >
+                              <Edit3 size={13} className="text-amber-700" />
+                              <span>Скорректировать заказ</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDirectPrintInvoice(order)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200/80 text-xs font-bold transition-all shadow-2xs active:scale-95"
+                              title="Распечатать официальную товарную накладную"
+                            >
+                              <Printer size={13} className="text-emerald-700" />
+                              <span>Накладная (Печать)</span>
+                            </button>
+                          </div>
+
                           {/* Expanded content */}
                           <AnimatePresence>
                             {isExpanded && (
@@ -941,7 +1237,23 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex flex-wrap gap-2 pt-2">
+                                <div className="flex flex-wrap items-center gap-2 pt-2">
+                                  <button 
+                                    type="button"
+                                    onClick={() => handleOpenOrderEditor(order)}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                                  >
+                                    <Edit3 size={14} /> Скорректировать заказ и скидку
+                                  </button>
+
+                                  <button 
+                                    type="button"
+                                    onClick={() => handleDirectPrintInvoice(order)}
+                                    className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                                  >
+                                    <Printer size={14} /> Товарная накладная (А4)
+                                  </button>
+
                                   {statusInfo.next && (
                                     <button 
                                       onClick={() => handleUpdateOrderStatus(order.id, statusInfo.next!)}
@@ -1566,6 +1878,331 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
           </div>
         )}
       </AnimatePresence>
+
+      {/* MODAL: ORDER CORRECTION & INVOICE BUILDER */}
+      <AnimatePresence>
+        {isOrderEditorOpen && editingOrder && (() => {
+          const ph = getOrderPharmacy(editingOrder);
+
+          return (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 10 }}
+                className="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-4xl shadow-2xl space-y-5 my-8 max-h-[92vh] flex flex-col"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-slate-100 pb-4 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-800 shrink-0">
+                      <Edit3 size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 font-outfit">
+                        Корректировка заказа #{editingOrder.id.slice(0, 8).toUpperCase()}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Аптека: <strong className="text-slate-800">{ph.name || 'Оптовый покупатель'}</strong>
+                        {ph.phone && <span> • Тел: <strong>{ph.phone}</strong></span>}
+                        {ph.contact_person && <span> • Контакт: {ph.contact_person}</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsOrderEditorOpen(false)}
+                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Scrollable Body */}
+                <div className="overflow-y-auto pr-1 space-y-5 flex-1 text-xs">
+                  {/* 1. Items List (Наличие и количество) */}
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                        <span>1. Контроль наличия и количества товаров</span>
+                        <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                          {editingItems.length} поз.
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Скорректируйте количество штук или исключите отсутствующие на складе товары перед печатью накладной.
+                      </p>
+                    </div>
+
+                    {editingItems.length === 0 ? (
+                      <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-4 text-center">
+                        В заказе не осталось товаров. Добавьте товар из каталога ниже.
+                      </div>
+                    ) : (
+                      <div className="border border-slate-200/80 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
+                        <div className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider grid grid-cols-12 px-4 py-2.5">
+                          <div className="col-span-5 sm:col-span-6">Товар</div>
+                          <div className="col-span-3 sm:col-span-2 text-center">Цена (TJS)</div>
+                          <div className="col-span-4 sm:col-span-4 text-right">Кол-во / Сумма</div>
+                        </div>
+
+                        {editingItems.map((item, idx) => {
+                          const lineTotal = Math.round((Number(item.quantity) * Number(item.price)) * 100) / 100;
+                          return (
+                            <div key={idx} className="grid grid-cols-12 px-4 py-3 items-center hover:bg-slate-50/50 transition-colors">
+                              <div className="col-span-5 sm:col-span-6 pr-2">
+                                <p className="font-bold text-slate-900 text-xs sm:text-sm">{item.name}</p>
+                                <p className="text-[10px] text-slate-400">ID: {item.product_id}</p>
+                              </div>
+
+                              <div className="col-span-3 sm:col-span-2 text-center">
+                                <span className="font-bold text-slate-700 text-xs sm:text-sm">
+                                  {item.price} смн
+                                </span>
+                              </div>
+
+                              <div className="col-span-4 sm:col-span-4 flex items-center justify-end gap-2 sm:gap-3">
+                                {/* Quantity stepper */}
+                                <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateItemQty(idx, item.quantity - 1)}
+                                    className="px-2 py-1.5 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors active:scale-90"
+                                    title="Уменьшить на 1"
+                                  >
+                                    <Minus size={13} />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={e => handleUpdateItemQty(idx, parseInt(e.target.value) || 1)}
+                                    className="w-11 sm:w-12 text-center bg-white font-extrabold text-slate-900 text-xs py-1 outline-none border-x border-slate-200"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateItemQty(idx, item.quantity + 1)}
+                                    className="px-2 py-1.5 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors active:scale-90"
+                                    title="Увеличить на 1"
+                                  >
+                                    <Plus size={13} />
+                                  </button>
+                                </div>
+
+                                {/* Line sum */}
+                                <div className="w-16 sm:w-20 text-right font-black text-slate-900 text-xs sm:text-sm shrink-0">
+                                  {lineTotal.toLocaleString()} смн
+                                </div>
+
+                                {/* Out of stock / Remove */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveItemFromOrder(idx)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                  title="Нет в наличии (исключить из партии)"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Add replacement or extra product */}
+                    <div className="relative">
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 focus-within:border-slate-800 transition-colors">
+                        <Search size={15} className="text-slate-400 shrink-0" />
+                        <input
+                          type="text"
+                          value={orderProductSearch}
+                          onChange={e => setOrderProductSearch(e.target.value)}
+                          placeholder="Добавить замену или товар со склада (поиск по названию)..."
+                          className="w-full bg-transparent text-xs font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                        />
+                        {orderProductSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setOrderProductSearch('')}
+                            className="p-1 text-slate-400 hover:text-slate-600"
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      {filteredAvailableProducts.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 overflow-hidden divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                          {filteredAvailableProducts.map((p: any) => (
+                            <div
+                              key={p.id}
+                              onClick={() => handleAddProductToEditor(p)}
+                              className="px-4 py-2.5 hover:bg-emerald-50/60 cursor-pointer flex items-center justify-between transition-colors"
+                            >
+                              <div>
+                                <p className="font-bold text-slate-800 text-xs">{p.name}</p>
+                                <p className="text-[10px] text-slate-400">ID: {p.id}</p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="font-black text-emerald-700 text-xs">{p.price} смн</span>
+                                <span className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[10px] flex items-center gap-1 shadow-2xs">
+                                  <Plus size={12} /> Добавить
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Individual Discount Section */}
+                  <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-4 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-extrabold text-emerald-950 text-sm flex items-center gap-1.5">
+                          <Sparkles size={16} className="text-emerald-600" />
+                          <span>2. Индивидуальная скидка перед печатью накладной</span>
+                        </h4>
+                        <p className="text-[11px] text-emerald-700/80 mt-0.5">
+                          Примените согласованный процент скидки. Итоговая сумма и накладная будут рассчитаны с абсолютной математической точностью.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1 bg-white border border-emerald-200 rounded-xl p-1 shadow-2xs">
+                        {[0, 3, 5, 7, 10, 15, 20].map(pct => (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => setEditingDiscountPercent(pct)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all ${
+                              editingDiscountPercent === pct
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'text-emerald-800 hover:bg-emerald-100/60'
+                            }`}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-emerald-200/60">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-bold text-slate-700">Свой % скидки:</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          value={editingDiscountPercent}
+                          onChange={e => setEditingDiscountPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                          className="w-20 bg-white border border-emerald-300 rounded-xl px-2.5 py-1 text-xs font-extrabold text-emerald-900 outline-none focus:border-emerald-600 text-center shadow-2xs"
+                        />
+                        <span className="text-xs font-bold text-emerald-800">%</span>
+                      </div>
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-[11px] font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={saveDiscountAsPharmacyDefault}
+                          onChange={e => setSaveDiscountAsPharmacyDefault(e.target.checked)}
+                          className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                        />
+                        <span>Сохранить {editingDiscountPercent}% как постоянную скидку в профиле этой аптеки</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 3. Mathematical Summary */}
+                  <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 space-y-3 shadow-lg">
+                    <div className="flex justify-between items-center text-xs text-slate-300 pb-2 border-b border-slate-800">
+                      <span>Сумма по позициям (Подитог без скидки):</span>
+                      <span className="font-extrabold text-sm text-white">
+                        {editorSubtotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} смн
+                      </span>
+                    </div>
+
+                    {editingDiscountPercent > 0 && (
+                      <div className="flex justify-between items-center text-xs text-emerald-400 pb-2 border-b border-slate-800">
+                        <span>Индивидуальная скидка ({editingDiscountPercent}%):</span>
+                        <span className="font-extrabold text-sm">
+                          - {editorDiscountAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} смн
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-1">
+                      <div>
+                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">ИТОГО К ОПЛАТЕ:</span>
+                        <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
+                          {editorFinalTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} смн
+                        </span>
+                      </div>
+
+                      <div className="sm:text-right max-w-md">
+                        <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Сумма прописью:</span>
+                        <span className="text-xs font-semibold text-slate-200 italic">
+                          {numberToWordsRu(editorFinalTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Footer */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-100 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleSendUpdatedWa}
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold transition-all shadow-sm active:scale-95"
+                    title="Отправить обновленный состав в WhatsApp аптеке"
+                  >
+                    <MessageSquare size={14} /> Отправить в WhatsApp
+                  </button>
+
+                  <div className="flex items-center gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsOrderEditorOpen(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+                    >
+                      Отмена
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isSavingOrderEdits}
+                      onClick={() => handleSaveOrderEdits(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm"
+                    >
+                      {isSavingOrderEdits ? 'Сохранение...' : 'Сохранить изменения'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isSavingOrderEdits}
+                      onClick={() => handleSaveOrderEdits(true)}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-black transition-all shadow-md flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Printer size={15} />
+                      <span>Сохранить и распечатать накладную</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* PRINT INVOICE MODAL */}
+      {printInvoiceData && (
+        <B2BInvoiceTemplate {...printInvoiceData} />
+      )}
     </div>
   );
 };

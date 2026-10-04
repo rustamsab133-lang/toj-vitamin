@@ -6,6 +6,8 @@ export interface Product {
   price: number;
   icon_type: string;
   image_url: string | null;
+  images?: string[];
+  back_image_url?: string;
   synergy_product_id?: string;
   synergy_reason?: string;
   tags?: string[];
@@ -14,6 +16,7 @@ export interface Product {
   barcode?: string;
   stock_quantity?: number;
   is_hidden?: boolean;
+  is_retail_only?: boolean;
   retail_price?: number;
   wholesale_price?: number;
 }

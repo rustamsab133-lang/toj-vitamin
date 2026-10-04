@@ -7,7 +7,7 @@ import {
   Phone, MessageCircle, Send, Instagram, Globe, Store, 
   Search, Plus, Package, Truck, CheckCircle, XCircle, 
   ChevronRight, Clock, UserPlus, Save, AlertCircle, Eye, X, User, MapPin, CreditCard, Calendar, Edit3, RefreshCw,
-  Sparkles, Sunrise, Sun, Moon, Copy, Check, LogOut
+  Sparkles, Sunrise, Sun, Moon, Copy, Check, LogOut, Minus, Trash2, RotateCcw
 } from 'lucide-react';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -46,8 +46,13 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     payment_status: 'unpaid'
   });
   
-  // Customer lookup
+  // Customer & Contact lookup
+  type ContactMode = 'phone' | 'instagram' | 'telegram' | 'pickup';
+  const [contactMode, setContactMode] = useState<ContactMode>('phone');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [instagramNick, setInstagramNick] = useState('');
+  const [telegramNick, setTelegramNick] = useState('');
+  const [pickupNote, setPickupNote] = useState('');
   const [foundCustomer, setFoundCustomer] = useState<OfflineCustomer | null>(null);
   
   // Product lookup
@@ -59,6 +64,130 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   const [editableNotes, setEditableNotes] = useState('');
   const [editableAddress, setEditableAddress] = useState('');
   const [isSavingDetails, setIsSavingDetails] = useState(false);
+
+  // Order items editing state inside modal
+  const [editableItems, setEditableItems] = useState<OrderItem[]>([]);
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
+  const [isSavingItems, setIsSavingItems] = useState(false);
+  const [itemsSaveSuccess, setItemsSaveSuccess] = useState(false);
+
+  // Recalculate totals for editable items in selectedOrder
+  const editedSubtotal = useMemo(() => {
+    return editableItems.reduce((acc, item) => acc + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
+  }, [editableItems]);
+
+  const editedDiscount = useMemo(() => {
+    if (!selectedOrder) return 0;
+    const baseDiscount = Number(selectedOrder.discount) || 0;
+    return Math.min(baseDiscount, editedSubtotal);
+  }, [selectedOrder, editedSubtotal]);
+
+  const editedTotal = useMemo(() => {
+    return Math.max(0, editedSubtotal - editedDiscount);
+  }, [editedSubtotal, editedDiscount]);
+
+  // Check if items or quantities differ from selectedOrder
+  const isOrderCompositionChanged = useMemo(() => {
+    if (!selectedOrder) return false;
+    const originalItems = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
+    if (originalItems.length !== editableItems.length) return true;
+    for (let i = 0; i < originalItems.length; i++) {
+      const orig = originalItems[i];
+      const curr = editableItems[i];
+      if (!curr || String(orig.id) !== String(curr.id) || orig.quantity !== curr.quantity || orig.price !== curr.price) {
+        return true;
+      }
+    }
+    return false;
+  }, [selectedOrder, editableItems]);
+
+  const updateItemQuantity = (index: number, newQty: number) => {
+    if (newQty < 1) return;
+    setEditableItems(prev => prev.map((item, i) => i === index ? { ...item, quantity: newQty } : item));
+  };
+
+  const removeItemFromOrder = (index: number) => {
+    const itemToRemove = editableItems[index];
+    if (editableItems.length === 1) {
+      if (!confirm(`Вы действительно хотите удалить единственный товар "${itemToRemove?.name || ''}" из заказа?`)) {
+        return;
+      }
+    }
+    setEditableItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addItemToOrder = (prod: Product) => {
+    setEditableItems(prev => {
+      const existingIndex = prev.findIndex(i => String(i.id) === String(prod.id));
+      if (existingIndex >= 0) {
+        return prev.map((item, idx) => idx === existingIndex ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, {
+        id: prod.id,
+        name: prod.name,
+        price: Number(prod.price) || 0,
+        quantity: 1
+      }];
+    });
+    setItemSearchQuery('');
+  };
+
+  const resetItemsToOriginal = () => {
+    if (!selectedOrder) return;
+    setEditableItems(selectedOrder.items && Array.isArray(selectedOrder.items) ? JSON.parse(JSON.stringify(selectedOrder.items)) : []);
+    setItemSearchQuery('');
+  };
+
+  const matchingCatalogProducts = useMemo(() => {
+    if (!itemSearchQuery.trim()) return [];
+    const q = itemSearchQuery.toLowerCase().trim();
+    return products.filter(p => 
+      p.name?.toLowerCase().includes(q) || 
+      p.full_name?.toLowerCase().includes(q) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
+    ).slice(0, 8);
+  }, [itemSearchQuery, products]);
+
+  const saveOrderItems = async () => {
+    if (!selectedOrder) return;
+    if (editableItems.length === 0) {
+      if (!confirm("Внимание: в заказе не осталось товаров. Сохранить заказ с пустым составом?")) {
+        return;
+      }
+    }
+    setIsSavingItems(true);
+    try {
+      await adminDbQuery({
+        action: 'update',
+        table: 'orders',
+        id: selectedOrder.id,
+        data: {
+          items: editableItems,
+          total: editedTotal,
+          original_total: editedSubtotal,
+          discount: editedDiscount
+        }
+      });
+
+      const updated: Order = {
+        ...selectedOrder,
+        items: editableItems,
+        total: editedTotal,
+        original_total: editedSubtotal,
+        discount: editedDiscount
+      };
+
+      setSelectedOrder(updated);
+      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? updated : o));
+      setItemsSaveSuccess(true);
+      setTimeout(() => setItemsSaveSuccess(false), 3000);
+    } catch (e: any) {
+      console.error("Failed to update order items:", e);
+      alert("Ошибка при сохранении состава заказа: " + (e?.message || e));
+    } finally {
+      setIsSavingItems(false);
+    }
+  };
 
   // Copilot (ИИ-Нутрициолог) state
   const [copilotLoading, setCopilotLoading] = useState(false);
@@ -73,7 +202,8 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   };
 
   const runOrderCopilot = async () => {
-    if (!selectedOrder || !selectedOrder.items || selectedOrder.items.length === 0) return;
+    const itemsToAnalyze = editableItems && editableItems.length > 0 ? editableItems : selectedOrder?.items;
+    if (!selectedOrder || !itemsToAnalyze || itemsToAnalyze.length === 0) return;
     setCopilotLoading(true);
     try {
       const res = await fetch('/api/agents/consultant-copilot', {
@@ -81,7 +211,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'analyze_order',
-          items: selectedOrder.items,
+          items: itemsToAnalyze,
           customerPhone: selectedOrder.phone || '',
           customerNotes: editableNotes || selectedOrder.delivery_notes || '',
           lang: 'ru'
@@ -117,6 +247,9 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     setEditableCourier(order.courier_name || '');
     setEditableNotes(order.operator_notes || '');
     setEditableAddress(order.delivery_address || '');
+    setEditableItems(order.items && Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : []);
+    setItemSearchQuery('');
+    setItemsSaveSuccess(false);
     setCopilotResult(null);
     setCopilotOpen(false);
   };
@@ -125,24 +258,43 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     if (!selectedOrder) return;
     setIsSavingDetails(true);
     try {
-      await adminDbQuery({
-        action: 'update',
-        table: 'orders',
-        data: {
-          courier_name: editableCourier,
-          operator_notes: editableNotes,
-          delivery_address: editableAddress
-        },
-        id: selectedOrder.id
-      });
-      const updated = {
-        ...selectedOrder,
+      const updatePayload: any = {
         courier_name: editableCourier,
         operator_notes: editableNotes,
         delivery_address: editableAddress
       };
+
+      if (isOrderCompositionChanged) {
+        updatePayload.items = editableItems;
+        updatePayload.total = editedTotal;
+        updatePayload.original_total = editedSubtotal;
+        updatePayload.discount = editedDiscount;
+      }
+
+      await adminDbQuery({
+        action: 'update',
+        table: 'orders',
+        data: updatePayload,
+        id: selectedOrder.id
+      });
+      const updated: Order = {
+        ...selectedOrder,
+        courier_name: editableCourier,
+        operator_notes: editableNotes,
+        delivery_address: editableAddress,
+        ...(isOrderCompositionChanged ? {
+          items: editableItems,
+          total: editedTotal,
+          original_total: editedSubtotal,
+          discount: editedDiscount
+        } : {})
+      };
       setSelectedOrder(updated);
       setOrders(prev => prev.map(o => o.id === selectedOrder.id ? updated : o));
+      if (isOrderCompositionChanged) {
+        setItemsSaveSuccess(true);
+        setTimeout(() => setItemsSaveSuccess(false), 3000);
+      }
     } catch (e) {
       console.error("Failed to save order details", e);
       alert("Не удалось сохранить данные заказа");
@@ -186,27 +338,39 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     }
   };
 
-  const handleCustomerSearch = async () => {
-    if (customerPhone.length <= 4) return;
+  const handleClientLookup = async () => {
+    let q = '';
+    if (contactMode === 'phone') q = customerPhone.trim();
+    else if (contactMode === 'instagram') q = instagramNick.replace(/^@/, '').trim();
+    else if (contactMode === 'telegram') q = telegramNick.replace(/^@/, '').trim();
+    else if (contactMode === 'pickup') q = pickupNote.trim();
+
+    if (!q || q.length < 2) return;
     try {
+      let queryParams: any = {};
+      if (contactMode === 'phone') {
+        queryParams = { search: { column: 'phone', query: q } };
+      } else {
+        queryParams = { search: { or: `name.ilike.%${q}%,notes.ilike.%${q}%` } };
+      }
+
       const { data } = await adminDbQuery({
         action: 'select',
         table: 'offline_customers',
-        data: { search: { column: 'phone', query: customerPhone } }
+        data: queryParams
       });
       if (data && data.length > 0) {
         setFoundCustomer(data[0]);
         setNewOrder(prev => ({ 
           ...prev, 
           customer_id: data[0].id, 
-          phone: data[0].phone || customerPhone 
+          phone: data[0].phone || q 
         }));
       } else {
         setFoundCustomer(null);
-        setNewOrder(prev => ({ ...prev, phone: customerPhone }));
       }
     } catch (e) {
-      console.error(e);
+      console.error("Client lookup error:", e);
     }
   };
 
@@ -235,25 +399,62 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   const cartTotal = (newOrder.items || []).reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
   const saveOrder = async () => {
-    const finalPhone = newOrder.phone || customerPhone;
-    if (!newOrder.items?.length || !finalPhone) return alert("Добавьте товары и номер телефона");
-    
+    if (!newOrder.items?.length) return alert("Добавьте товары в заказ");
+
+    let finalIdentifier = '';
+    let customerName = 'Новый клиент (заказ)';
+    let orderChannel = newOrder.channel || 'phone';
+
+    if (contactMode === 'phone') {
+      finalIdentifier = (newOrder.phone || customerPhone).trim();
+      if (!finalIdentifier) return alert("Укажите номер телефона клиента");
+      customerName = 'Новый клиент (заказ)';
+    } else if (contactMode === 'instagram') {
+      const raw = instagramNick.trim();
+      if (!raw) return alert("Укажите никнейм клиента в Instagram");
+      finalIdentifier = raw.startsWith('@') ? raw : `@${raw}`;
+      customerName = `Instagram: ${finalIdentifier}`;
+      orderChannel = 'instagram';
+    } else if (contactMode === 'telegram') {
+      const raw = telegramNick.trim();
+      if (!raw) return alert("Укажите никнейм клиента в Telegram");
+      finalIdentifier = raw.startsWith('@') ? raw : `@${raw}`;
+      customerName = `Telegram: ${finalIdentifier}`;
+      orderChannel = 'telegram';
+    } else if (contactMode === 'pickup') {
+      finalIdentifier = pickupNote.trim() ? `Самовывоз: ${pickupNote.trim()}` : 'Самовывоз из магазина';
+      customerName = pickupNote.trim() ? `Самовывоз: ${pickupNote.trim()}` : 'Клиент (Самовывоз)';
+      orderChannel = 'offline';
+    }
+
     // Auto-create customer if doesn't exist
     let cid = newOrder.customer_id;
     if (!foundCustomer) {
       try {
+        const custPayload: any = {
+          name: customerName,
+          total_spent: 0
+        };
+        if (contactMode === 'phone') {
+          custPayload.phone = finalIdentifier;
+        } else {
+          custPayload.notes = `Контакт: ${finalIdentifier}`;
+        }
         const { data: newCustData } = await adminDbQuery({
           action: 'insert',
           table: 'offline_customers',
-          data: [{ phone: finalPhone, name: 'Новый клиент (заказ)' }]
+          data: [custPayload]
         });
         if (newCustData && newCustData[0]) cid = newCustData[0].id;
-      } catch (e) { console.error("Customer create failed", e); }
+      } catch (e) { 
+        console.error("Customer create failed", e); 
+      }
     }
     
     const fullPayload = {
       ...newOrder,
-      phone: finalPhone,
+      channel: orderChannel,
+      phone: finalIdentifier,
       customer_id: cid,
       total: cartTotal,
       created_at: getCorrectNow().toISOString()
@@ -271,7 +472,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
         console.warn("Full payload insert failed, falling back to base columns:", e);
         // Fallback: strip extra columns if Supabase Postgres table doesn't have them yet
         const basePayload = {
-          phone: finalPhone,
+          phone: finalIdentifier,
           total: cartTotal,
           status: newOrder.status || 'new',
           items: newOrder.items || [],
@@ -308,11 +509,15 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
       setIsCreating(false);
       setNewOrder({ channel: 'phone', status: 'new', items: [], payment_method: 'cash', payment_status: 'unpaid' });
       setCustomerPhone('');
+      setInstagramNick('');
+      setTelegramNick('');
+      setPickupNote('');
+      setContactMode('phone');
       setFoundCustomer(null);
       loadData();
     } catch (e) {
       console.error(e);
-      alert("Ошибка при сохранении");
+      alert("Ошибка при сохранении заказа");
     }
   };
 
@@ -595,30 +800,129 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Телефон клиента</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={customerPhone}
-                    onChange={e => setCustomerPhone(e.target.value)}
-                    placeholder="+992..."
-                    className="flex-1 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                  />
-                  <button onClick={handleCustomerSearch} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 rounded-xl flex items-center justify-center">
-                    <Search size={16} />
-                  </button>
+                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Способ связи / Идентификатор</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2.5">
+                  {[
+                    { id: 'phone' as ContactMode, label: 'Телефон / WA', icon: <Phone size={13} />, channel: 'phone' },
+                    { id: 'instagram' as ContactMode, label: 'Instagram', icon: <Instagram size={13} />, channel: 'instagram' },
+                    { id: 'telegram' as ContactMode, label: 'Telegram', icon: <Send size={13} />, channel: 'telegram' },
+                    { id: 'pickup' as ContactMode, label: 'Самовывоз', icon: <Store size={13} />, channel: 'offline' }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setContactMode(tab.id);
+                        setFoundCustomer(null);
+                        setNewOrder(prev => ({ ...prev, channel: tab.channel as any }));
+                      }}
+                      className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
+                        contactMode === tab.id
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {tab.icon} <span className="truncate">{tab.label}</span>
+                    </button>
+                  ))}
                 </div>
+
+                {contactMode === 'phone' && (
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={customerPhone}
+                      onChange={e => setCustomerPhone(e.target.value)}
+                      placeholder="+992 900 00 00 00"
+                      className="flex-1 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm px-3 py-2 outline-none"
+                    />
+                    <button 
+                      type="button"
+                      onClick={handleClientLookup} 
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 rounded-xl flex items-center justify-center transition-colors"
+                      title="Найти в базе CRM"
+                    >
+                      <Search size={16} />
+                    </button>
+                  </div>
+                )}
+
+                {contactMode === 'instagram' && (
+                  <div>
+                    <div className="flex gap-2">
+                      <div className="flex-1 flex items-center bg-white rounded-xl border border-slate-200 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                        <span className="px-3 text-slate-400 font-bold text-sm bg-slate-50 border-r border-slate-200 py-2">@</span>
+                        <input 
+                          type="text" 
+                          value={instagramNick.replace(/^@/, '')}
+                          onChange={e => setInstagramNick(e.target.value)}
+                          placeholder="например: madina_beauty"
+                          className="w-full text-sm px-3 py-2 outline-none"
+                        />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={handleClientLookup} 
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 rounded-xl flex items-center justify-center transition-colors"
+                        title="Найти в базе CRM"
+                      >
+                        <Search size={16} />
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">Телефон не обязателен. Будет привязан Instagram профиль.</p>
+                  </div>
+                )}
+
+                {contactMode === 'telegram' && (
+                  <div>
+                    <div className="flex gap-2">
+                      <div className="flex-1 flex items-center bg-white rounded-xl border border-slate-200 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                        <span className="px-3 text-slate-400 font-bold text-sm bg-slate-50 border-r border-slate-200 py-2">@</span>
+                        <input 
+                          type="text" 
+                          value={telegramNick.replace(/^@/, '')}
+                          onChange={e => setTelegramNick(e.target.value)}
+                          placeholder="например: farid_dushanbe"
+                          className="w-full text-sm px-3 py-2 outline-none"
+                        />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={handleClientLookup} 
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 rounded-xl flex items-center justify-center transition-colors"
+                        title="Найти в базе CRM"
+                      >
+                        <Search size={16} />
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">Телефон не обязателен. Будет привязан Telegram аккаунт.</p>
+                  </div>
+                )}
+
+                {contactMode === 'pickup' && (
+                  <div>
+                    <input 
+                      type="text" 
+                      value={pickupNote}
+                      onChange={e => setPickupNote(e.target.value)}
+                      placeholder="Заметка или имя (например: Самовывоз из аптеки / Алишер)"
+                      className="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm px-3 py-2 outline-none"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Оформление для выдачи на месте в магазине / аптеке.</p>
+                  </div>
+                )}
+
                 {foundCustomer && (
                   <div className="mt-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-sm flex items-start gap-2">
                     <UserPlus size={16} className="mt-0.5 shrink-0" />
                     <div>
                       <p className="font-semibold">{foundCustomer.name || 'Без имени'}</p>
-                      <p className="text-emerald-600 text-xs">Постоянный клиент. Потрачено: {foundCustomer.total_spent || 0} смн</p>
+                      <p className="text-emerald-600 text-xs">Клиент найден в CRM. Всего покупок: {foundCustomer.total_spent || 0} смн</p>
                     </div>
                   </div>
                 )}
-                {!foundCustomer && customerPhone.length > 5 && (
-                  <p className="text-xs text-slate-500 mt-2 flex items-center gap-1"><AlertCircle size={12}/> Новый клиент (будет создан)</p>
+                {!foundCustomer && (contactMode === 'phone' ? customerPhone.length > 5 : (contactMode === 'instagram' ? instagramNick.length > 2 : contactMode === 'telegram' ? telegramNick.length > 2 : pickupNote.length > 2)) && (
+                  <p className="text-xs text-slate-500 mt-2 flex items-center gap-1"><AlertCircle size={12}/> Новый клиент (будет создан профиль в CRM)</p>
                 )}
               </div>
 
@@ -879,7 +1183,48 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                         </span>
                       </td>
                       <td className="py-3.5 px-5 align-top max-w-xs">
-                        <p className="text-sm font-semibold text-slate-900">{order.phone || 'Не указан'}</p>
+                        {(() => {
+                          const contact = (order.phone || '').trim();
+                          if (!contact) return <p className="text-sm font-semibold text-slate-400">Номер не указан</p>;
+                          if (contact.startsWith('@') || order.channel === 'instagram') {
+                            const clean = contact.replace(/^@/, '');
+                            return (
+                              <a
+                                href={`https://instagram.com/${clean}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-sm font-bold text-pink-600 hover:text-pink-700 hover:underline"
+                                title="Открыть Instagram"
+                              >
+                                <Instagram size={14} className="shrink-0" /> @{clean}
+                              </a>
+                            );
+                          }
+                          if (contact.startsWith('@') || order.channel === 'telegram') {
+                            const clean = contact.replace(/^@/, '');
+                            return (
+                              <a
+                                href={`https://t.me/${clean}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-sm font-bold text-sky-600 hover:text-sky-700 hover:underline"
+                                title="Открыть Telegram"
+                              >
+                                <Send size={14} className="shrink-0" /> @{clean}
+                              </a>
+                            );
+                          }
+                          if (contact.toLowerCase().includes('самовывоз') || order.channel === 'offline') {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-sm font-bold text-amber-700">
+                                <Store size={14} className="shrink-0 text-amber-600" /> {contact}
+                              </span>
+                            );
+                          }
+                          return <p className="text-sm font-semibold text-slate-900">{contact}</p>;
+                        })()}
                         {Array.isArray(order.items) && (
                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                             {order.items.map((i: OrderItem) => `${i.name} ×${i.quantity}`).join(', ')}
@@ -1013,25 +1358,93 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                       <User size={14} className="text-indigo-500" /> Информация о клиенте
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800 text-base">{selectedOrder.phone || 'Номер не указан'}</p>
-                      {selectedOrder.phone && (
-                        <div className="flex gap-2 mt-2">
-                          <a 
-                            href={`tel:${selectedOrder.phone}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-semibold transition-colors"
-                          >
-                            <Phone size={13} /> Позвонить
-                          </a>
-                          <a 
-                            href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-semibold transition-colors"
-                          >
-                            <MessageCircle size={13} /> WhatsApp
-                          </a>
-                        </div>
-                      )}
+                      {(() => {
+                        const contact = (selectedOrder.phone || '').trim();
+                        const hasDigits = contact.replace(/[^0-9]/g, '').length >= 5;
+                        const isInstagram = contact.startsWith('@') || selectedOrder.channel === 'instagram';
+                        const isTelegram = (contact.startsWith('@') && selectedOrder.channel === 'telegram') || selectedOrder.channel === 'telegram';
+                        const isPickup = contact.toLowerCase().includes('самовывоз') || selectedOrder.channel === 'offline';
+
+                        if (!contact) {
+                          return <p className="font-semibold text-slate-400 text-base">Контакт не указан</p>;
+                        }
+
+                        if (isInstagram && !hasDigits) {
+                          const cleanNick = contact.replace(/^@/, '');
+                          return (
+                            <div className="space-y-2">
+                              <p className="font-bold text-slate-900 text-base flex items-center gap-1.5 text-pink-600">
+                                <Instagram size={18} /> @{cleanNick}
+                              </p>
+                              <div className="flex gap-2">
+                                <a
+                                  href={`https://instagram.com/${cleanNick}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-bold shadow-sm transition-all"
+                                >
+                                  <Instagram size={13} /> Открыть в Instagram
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (isTelegram && !hasDigits) {
+                          const cleanNick = contact.replace(/^@/, '');
+                          return (
+                            <div className="space-y-2">
+                              <p className="font-bold text-slate-900 text-base flex items-center gap-1.5 text-sky-600">
+                                <Send size={18} /> @{cleanNick}
+                              </p>
+                              <div className="flex gap-2">
+                                <a
+                                  href={`https://t.me/${cleanNick}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold shadow-sm transition-all"
+                                >
+                                  <Send size={13} /> Открыть в Telegram
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (isPickup && !hasDigits) {
+                          return (
+                            <div className="space-y-1.5">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+                                <Store size={14} className="text-amber-600" /> Самовывоз из магазина
+                              </div>
+                              <p className="font-semibold text-slate-800 text-sm">{contact}</p>
+                            </div>
+                          );
+                        }
+
+                        // Default: phone number
+                        return (
+                          <div>
+                            <p className="font-semibold text-slate-800 text-base">{contact}</p>
+                            <div className="flex gap-2 mt-2">
+                              <a 
+                                href={`tel:${contact}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-semibold transition-colors"
+                              >
+                                <Phone size={13} /> Позвонить
+                              </a>
+                              <a 
+                                href={`https://wa.me/${contact.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-semibold transition-colors"
+                              >
+                                <MessageCircle size={13} /> WhatsApp
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -1348,7 +1761,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                             {copiedKey === 'modal_wa' ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
                             {copiedKey === 'modal_wa' ? 'Скопировано' : 'Скопировать'}
                           </button>
-                          {selectedOrder.phone && (
+                          {selectedOrder.phone && selectedOrder.phone.replace(/[^0-9]/g, '').length >= 5 && (
                             <a
                               href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(copilotResult.whatsapp_message)}`}
                               target="_blank"
@@ -1366,38 +1779,215 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
               </div>
 
               {/* Composition of Order */}
-              <div className="pt-2 border-t border-slate-100">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    <Package size={16} className="text-indigo-600" /> Состав заказа ({selectedOrder.items?.length || 0} товаров)
-                  </h4>
-                  <div className="text-right">
-                    {selectedOrder.discount && Number(selectedOrder.discount) > 0 && (
-                      <span className="block text-xs font-semibold text-red-500">Скидка: -{selectedOrder.discount} смн</span>
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                      <Package size={16} className="text-indigo-600" /> Состав заказа ({editableItems.length} поз.)
+                    </h4>
+                    {isOrderCompositionChanged && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 animate-pulse">
+                        Не сохранен
+                      </span>
                     )}
-                    <span className="text-lg font-bold text-slate-900">Итого: {selectedOrder.total} смн</span>
+                    {itemsSaveSuccess && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                        <Check size={12} /> Сохранено!
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                    {isOrderCompositionChanged ? (
+                      <div className="text-right">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <span>Было: <span className="line-through">{selectedOrder.total} смн</span></span>
+                          <span className="text-slate-300">➔</span>
+                          <span className="font-bold text-emerald-600 text-sm">Стало: {editedTotal} смн</span>
+                        </div>
+                        {editedDiscount > 0 && (
+                          <span className="block text-[11px] font-semibold text-red-500">Скидка: -{editedDiscount} смн</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-right">
+                        {selectedOrder.discount && Number(selectedOrder.discount) > 0 && (
+                          <span className="block text-xs font-semibold text-red-500">Скидка: -{selectedOrder.discount} смн</span>
+                        )}
+                        <span className="text-lg font-bold text-slate-900">Итого: {selectedOrder.total} смн</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="bg-slate-50/70 rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
-                  {Array.isArray(selectedOrder.items) && selectedOrder.items.map((item, idx) => (
-                    <div key={idx} className="p-3.5 flex items-center justify-between hover:bg-white transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
-                          {idx + 1}
+                {/* Catalog Search & Quick Add to Order */}
+                <div className="relative">
+                  <div className="flex items-center gap-2 bg-slate-100/80 rounded-xl px-3 py-2 border border-slate-200/80 focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+                    <Search size={15} className="text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={itemSearchQuery}
+                      onChange={e => setItemSearchQuery(e.target.value)}
+                      placeholder="Добавить товар в заказ: введите название или штрихкод..."
+                      className="bg-transparent text-xs w-full outline-none placeholder:text-slate-400"
+                    />
+                    {itemSearchQuery && (
+                      <button 
+                        type="button"
+                        onClick={() => setItemSearchQuery('')}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search Autocomplete Dropdown */}
+                  {itemSearchQuery.trim() && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-30 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                      {matchingCatalogProducts.length > 0 ? (
+                        matchingCatalogProducts.map(p => {
+                          const inOrder = editableItems.find(i => String(i.id) === String(p.id));
+                          return (
+                            <div 
+                              key={p.id}
+                              onClick={() => addItemToOrder(p)}
+                              className="p-2.5 px-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 overflow-hidden">
+                                {p.image_url ? (
+                                  <img src={p.image_url} alt="" className="w-8 h-8 rounded-lg object-contain bg-slate-50 border border-slate-100 shrink-0" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                                    <Package size={14} />
+                                  </div>
+                                )}
+                                <div className="truncate">
+                                  <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+                                  <p className="text-[10px] text-slate-400 truncate">
+                                    {p.barcode ? `Штрихкод: ${p.barcode} • ` : ''}В наличии: <strong className={p.stock_quantity && p.stock_quantity > 0 ? 'text-emerald-600' : 'text-amber-600'}>{p.stock_quantity || 0} шт</strong>
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs font-bold text-slate-900">{p.price} смн</span>
+                                <button
+                                  type="button"
+                                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm"
+                                >
+                                  <Plus size={12} /> {inOrder ? `+1 (в заказе ${inOrder.quantity})` : 'Добавить'}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="p-3 text-center text-xs text-slate-400">
+                          Товары не найдены по запросу «{itemSearchQuery}»
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-800 text-sm">{item.name}</p>
-                          <p className="text-xs text-slate-400">{item.price} смн × {item.quantity} шт.</p>
-                        </div>
-                      </div>
-                      <p className="font-bold text-slate-900 text-sm">{item.price * item.quantity} смн</p>
+                      )}
                     </div>
-                  ))}
-                  {(!selectedOrder.items || selectedOrder.items.length === 0) && (
-                    <p className="p-4 text-center text-slate-400 text-xs">Состав заказа не указан</p>
                   )}
                 </div>
+
+                {/* Items List */}
+                <div className="bg-slate-50/70 rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
+                  {editableItems.map((item, idx) => (
+                    <div key={item.id ? `${item.id}-${idx}` : idx} className="p-3 flex items-center justify-between hover:bg-white transition-colors gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 text-xs sm:text-sm truncate">{item.name}</p>
+                          <p className="text-[11px] text-slate-400">{item.price} смн / шт.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        {/* Quantity Stepper */}
+                        <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-xs">
+                          <button
+                            type="button"
+                            onClick={() => updateItemQuantity(idx, Math.max(1, item.quantity - 1))}
+                            disabled={item.quantity <= 1}
+                            className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-white transition-colors"
+                            title="Уменьшить на 1"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={e => {
+                              const val = parseInt(e.target.value);
+                              if (!isNaN(val) && val >= 1) updateItemQuantity(idx, val);
+                            }}
+                            className="w-10 text-center font-bold text-xs text-slate-800 outline-none bg-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateItemQuantity(idx, item.quantity + 1)}
+                            className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                            title="Увеличить на 1"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+
+                        {/* Item Total */}
+                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm w-20 text-right">
+                          {item.price * item.quantity} смн
+                        </span>
+
+                        {/* Delete Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeItemFromOrder(idx)}
+                          className="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors"
+                          title="Удалить позицию из заказа"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {editableItems.length === 0 && (
+                    <div className="p-6 text-center text-slate-400 text-xs">
+                      В заказе нет товаров. Воспользуйтесь поиском выше, чтобы добавить товары.
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Save Bar if Composition Changed */}
+                {isOrderCompositionChanged && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl">
+                    <div className="flex items-center gap-2 text-xs text-indigo-900">
+                      <AlertCircle size={15} className="text-indigo-600 shrink-0" />
+                      <span>Состав заказа изменен. Не забудьте сохранить!</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={resetItemsToOriginal}
+                        disabled={isSavingItems}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold flex items-center gap-1 transition-colors"
+                      >
+                        <RotateCcw size={12} /> Сбросить
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveOrderItems}
+                        disabled={isSavingItems}
+                        className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+                      >
+                        <Save size={13} /> {isSavingItems ? 'Сохранение...' : 'Сохранить состав заказа'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>

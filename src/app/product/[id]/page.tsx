@@ -8,6 +8,7 @@ import { ProductBuyButton } from '@/components/ProductBuyButton';
 import { ShareButton } from '@/components/ShareButton';
 import { notFound } from 'next/navigation';
 import { ProductPageHeader, ProductCartSection } from '@/components/ProductCartSection';
+import { ProductPageGallery } from '@/components/ProductPageGallery';
 import { supabase } from '@/lib/supabase';
 
 export const revalidate = 300; // Revalidate pages every 5 minutes
@@ -341,21 +342,22 @@ export default async function ProductPage({ params, searchParams }: Props) {
       <main className="max-w-5xl mx-auto px-6 py-12 space-y-16">
         {/* Two-column Hero Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          {/* Left: Premium Glassmorphic Image Container */}
-          <div className="relative group bg-white rounded-[40px] p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.02)] border border-black/[0.03] flex items-center justify-center min-h-[350px] md:min-h-[420px] overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/[0.01]" />
-            {product.image_url ? (
-              <img
-                src={product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`}
-                alt={getLocalizedProductName(product.name, lang)}
-                className="w-full max-h-[320px] object-contain group-hover:scale-[1.03] transition-transform duration-700 ease-out relative z-10"
+          {/* Left: Premium Interactive Multi-Angle Gallery */}
+          {(() => {
+            const galleryList: string[] = (product.images && product.images.length > 0)
+              ? product.images
+              : (enriched?.gallery && Array.isArray(enriched.gallery) && enriched.gallery.length > 0)
+                ? enriched.gallery
+                : (product.image_url ? [product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`] : []);
+
+            return (
+              <ProductPageGallery
+                images={galleryList}
+                name={localizedName}
+                lang={lang}
               />
-            ) : (
-              <div className="text-[#94A3B8] text-sm">
-                {lang === 'en' ? 'Product image' : (lang === 'tj' ? 'Тасвири маҳсулот' : 'Изображение товара')}
-              </div>
-            )}
-          </div>
+            );
+          })()}
 
           {/* Right: Product Details & Purchase Actions */}
           <div className="space-y-6">

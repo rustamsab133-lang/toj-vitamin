@@ -78,6 +78,18 @@ export async function GET(request: Request) {
       } catch (e) {}
     }
 
+    const retailOnlySetting = settingsData?.find((s: any) => s.key === 'retail_only_product_ids');
+    let retailOnlyIds: string[] = [];
+    if (retailOnlySetting?.value) {
+      try {
+        const parsed = JSON.parse(retailOnlySetting.value);
+        if (Array.isArray(parsed)) retailOnlyIds = parsed.map(String);
+      } catch (e) {}
+    }
+
+    // Исключаем товары «Только для розницы» из оптового B2B каталога
+    const wholesaleProducts = products.filter((p: any) => !retailOnlyIds.includes(String(p.id)));
+
     const customPricesSetting = settingsData?.find((s: any) => s.key === 'custom_retail_prices');
     let customPrices: Record<string, number> = {};
     if (customPricesSetting?.value) {
@@ -106,7 +118,7 @@ export async function GET(request: Request) {
       }
 
       // Пересчитываем товары со скидкой аптеки
-      const b2bProducts = products.map((p: any) => {
+      const b2bProducts = wholesaleProducts.map((p: any) => {
         const baseWholesale = Number(p.price) || 0;
         const pId = String(p.id);
         const customRetail = customPrices[pId] || (p.retail_price ? Number(p.retail_price) : undefined);
@@ -151,7 +163,7 @@ export async function GET(request: Request) {
     }
 
     // Формируем чистые оптовые товары для публичного доступа
-    const b2bProducts = products.map((p: any) => {
+    const b2bProducts = wholesaleProducts.map((p: any) => {
       const isHidden = Boolean(p.is_hidden || hiddenIds.includes(String(p.id)));
       return {
         id: p.id,
@@ -297,18 +309,25 @@ export async function POST(request: Request) {
       throw prodError || new Error('Ошибка при проверке каталога товаров');
     }
 
-    // Проверяем скрытые товары (которых нет в наличии)
-    const { data: hiddenSettingData } = await supabaseAdmin
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'hidden_product_ids')
-      .maybeSingle();
+    // Проверяем скрытые товары (которых нет в наличии) и розничные товары
+    const [{ data: hiddenSettingData }, { data: retailOnlySettingData }] = await Promise.all([
+      supabaseAdmin.from('site_settings').select('value').eq('key', 'hidden_product_ids').maybeSingle(),
+      supabaseAdmin.from('site_settings').select('value').eq('key', 'retail_only_product_ids').maybeSingle()
+    ]);
 
     let postHiddenIds: string[] = [];
     if (hiddenSettingData?.value) {
       try {
         const parsed = JSON.parse(hiddenSettingData.value);
         if (Array.isArray(parsed)) postHiddenIds = parsed.map(String);
+      } catch (e) {}
+    }
+
+    let postRetailOnlyIds: string[] = [];
+    if (retailOnlySettingData?.value) {
+      try {
+        const parsed = JSON.parse(retailOnlySettingData.value);
+        if (Array.isArray(parsed)) postRetailOnlyIds = parsed.map(String);
       } catch (e) {}
     }
 
@@ -321,6 +340,10 @@ export async function POST(request: Request) {
 
       if (postHiddenIds.includes(String(dbProd.id))) {
         throw new Error(`Товар "${dbProd.name}" временно отсутствует на складе и недоступен для заказа`);
+      }
+
+      if (postRetailOnlyIds.includes(String(dbProd.id))) {
+        throw new Error(`Товар "${dbProd.name}" доступен только для розничной продажи и не может быть включен в оптовый заказ`);
       }
 
       // Берем оптовую цену со скидкой аптеки

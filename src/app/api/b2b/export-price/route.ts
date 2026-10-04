@@ -18,22 +18,40 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    // 1. Получаем товары из базы данных
-    const { data: products, error } = await supabaseAdmin
-      .from('products')
-      .select('name, price, description')
-      .order('name');
+    // 1. Получаем товары из базы данных и список товаров только для розницы
+    const [{ data: products, error }, { data: retailOnlySetting }] = await Promise.all([
+      supabaseAdmin
+        .from('products')
+        .select('id, name, price, description')
+        .order('name'),
+      supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'retail_only_product_ids')
+        .maybeSingle()
+    ]);
 
     if (error || !products) {
       throw error || new Error('Не удалось получить товары');
     }
+
+    let retailOnlyIds: string[] = [];
+    if (retailOnlySetting?.value) {
+      try {
+        const parsed = JSON.parse(retailOnlySetting.value);
+        if (Array.isArray(parsed)) retailOnlyIds = parsed.map(String);
+      } catch (e) {}
+    }
+
+    // Исключаем товары «Только для розницы»
+    const wholesaleProducts = products.filter(p => !retailOnlyIds.includes(String(p.id)));
 
     // Фильтруем или помечаем как GLS Pharmaceuticals
     const filename = 'price_gls_pharmaceuticals_tojvitamin.csv';
 
     // 2. Формируем CSV контент
     const headers = ['Бренд', 'Название товара', 'Базовая оптовая цена (TJS)', 'Форма выпуска / Описание'];
-    const rows = products.map(p => [
+    const rows = wholesaleProducts.map(p => [
       '"GLS Pharmaceuticals"',
       `"${p.name.replace(/"/g, '""')}"`,
       p.price || 0,

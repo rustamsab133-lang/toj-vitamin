@@ -3,6 +3,8 @@ import { getMarkupSettings, applyMarkupToProduct } from './markup';
 import { Product } from './types';
 import { getHiddenProductIds, filterVisibleProducts, isProductHidden } from './hiddenProducts';
 
+import enrichedData from '@/data/enriched_gls_products.json';
+
 /**
  * Unified helper to fetch all active products from Supabase with the pricing markup automatically applied.
  * ALWAYS use this helper in new components, pages, or API routes instead of querying supabase.from('products') directly!
@@ -27,7 +29,18 @@ export async function getProductsWithMarkup(): Promise<Product[]> {
 
     // Apply pricing markup dynamically
     const markupSettings = await getMarkupSettings();
-    return visibleProducts.map(p => applyMarkupToProduct(p, markupSettings));
+    return visibleProducts.map(p => {
+      const marked = applyMarkupToProduct(p, markupSettings);
+      const enriched = findEnrichmentForProduct(marked.name, enrichedData);
+      const gallery: string[] = (marked as any).images || enriched?.gallery || [];
+      const images = gallery.length > 0 ? gallery : (marked.image_url ? [marked.image_url] : []);
+      const back_image_url = images.length > 1 ? images[1] : undefined;
+      return {
+        ...marked,
+        images,
+        back_image_url
+      };
+    });
   } catch (err) {
     console.error('❌ Failed to load products with markup:', err);
     return [];
@@ -61,7 +74,16 @@ export async function getProductByIdWithMarkup(id: string | number): Promise<Pro
 
     // Apply pricing markup dynamically
     const markupSettings = await getMarkupSettings();
-    return applyMarkupToProduct(product, markupSettings);
+    const marked = applyMarkupToProduct(product, markupSettings);
+    const enriched = findEnrichmentForProduct(marked.name, enrichedData);
+    const gallery: string[] = (marked as any).images || enriched?.gallery || [];
+    const images = gallery.length > 0 ? gallery : (marked.image_url ? [marked.image_url] : []);
+    const back_image_url = images.length > 1 ? images[1] : undefined;
+    return {
+      ...marked,
+      images,
+      back_image_url
+    };
   } catch (err) {
     console.error(`❌ Failed to load product ID ${id} with markup:`, err);
     return null;
