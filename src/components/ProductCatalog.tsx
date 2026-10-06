@@ -321,7 +321,10 @@ export const ProductCatalog: React.FC<{ lang: Lang }> = ({ lang }) => {
 
                             {/* 2. TOP BADGES */}
                             <div className="absolute top-7 left-7 z-20 flex flex-wrap gap-1.5 pointer-events-none">
-                               {product.tags && Array.isArray(product.tags) && product.tags.slice(0, 1).map((tag: string, idx: number) => (
+                               {product.tags && Array.isArray(product.tags) && product.tags
+                                 .filter((tag: string) => tag && !/спарсен|парсинг|parsed/i.test(tag))
+                                 .slice(0, 1)
+                                 .map((tag: string, idx: number) => (
                                  <span key={idx} className="px-3 py-1 rounded-lg bg-[#1D1D1F] text-white text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
                                    {getLocalizedProductTag(tag, lang)}
                                  </span>

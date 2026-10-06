@@ -1,3 +1,12 @@
+export interface ProductInstruction {
+  usage: string;
+  course: string;
+  contraindications: string;
+  age?: string;
+  full_text?: string;
+  source_url?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -8,6 +17,10 @@ export interface Product {
   image_url: string | null;
   images?: string[];
   back_image_url?: string;
+  instructions?: ProductInstruction;
+  instructions_en?: ProductInstruction;
+  properties?: string[];
+  properties_en?: string[];
   synergy_product_id?: string;
   synergy_reason?: string;
   tags?: string[];

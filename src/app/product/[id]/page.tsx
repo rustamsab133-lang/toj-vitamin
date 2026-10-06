@@ -44,7 +44,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const product = await getProduct(params.id);
   const nameToMatch = product ? product.name : decodeURIComponent(params.id);
-  const enriched = findEnrichmentForProduct(nameToMatch, enrichedData);
+  const enriched = findEnrichmentForProduct(nameToMatch, enrichedData, product?.id);
   const lang: Lang = searchParams?.lang === 'en' ? 'en' : (searchParams?.lang === 'tj' ? 'tj' : 'ru');
 
   if (!product) {
@@ -215,7 +215,7 @@ function getDynamicReviews(productName: string, tags: string[] = [], lang: Lang 
 export default async function ProductPage({ params, searchParams }: Props) {
   const product = await getProduct(params.id);
   const id = decodeURIComponent(params.id).toLowerCase().trim();
-  const enriched = product ? findEnrichmentForProduct(product.name, enrichedData) : {};
+  const enriched = product ? findEnrichmentForProduct(product.name, enrichedData, product.id) : {};
 
   if (!product) {
     notFound();
@@ -224,14 +224,23 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const lang: Lang = searchParams?.lang === 'en' ? 'en' : (searchParams?.lang === 'tj' ? 'tj' : 'ru');
 
   const localizedName = getLocalizedProductName(product.name, lang);
-  const description = enriched?.properties?.slice(0, 3).join('. ') || (
+  const pName = product.name || '';
+  const brandName = pName.includes('NOW')
+    ? 'NOW Foods'
+    : (pName.includes('Solaray')
+      ? 'Solaray'
+      : (pName.toLowerCase().includes('qeep')
+        ? 'QEEP'
+        : 'GLS Pharmaceuticals'));
+
+  const description = enriched?.properties?.slice(0, 3).join('. ') || product.description || (
     lang === 'en'
       ? `Order ${localizedName} for ${product.price} TJS with fast delivery at toj-vitamin.`
       : (lang === 'tj'
         ? `Фармоиши ${localizedName} бо нархи ${product.price} смн бо интиқоли фаврӣ дар мағозаи интернетии toj-vitamin.`
         : `Заказать ${product.name} по цене ${product.price} смн с быстрой доставкой в интернет-магазине toj-vitamin.`)
   );
-  const productReviews = getDynamicReviews(product.name, enriched?.tags || [], lang);
+  const productReviews = getDynamicReviews(product.name, (enriched?.tags || product.tags || []).filter((t: string) => t && !/спарсен|парсинг|parsed/i.test(t)), lang);
 
   const jsonLd = [
     {
@@ -242,7 +251,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       "description": enriched?.properties?.join('. ') || product.description || localizedName,
       "brand": {
         "@type": "Brand",
-        "name": "GLS"
+        "name": brandName
       },
       "sku": product.id,
       "category": enriched?.tags?.[0] || "Health & Beauty",
@@ -317,7 +326,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   const displayProduct = {
     ...(enriched || {}),
-    ...product
+    ...product,
+    properties: (enriched?.properties && enriched.properties.length > 0) ? enriched.properties : product.properties,
+    description: (product.description && product.description.length > 25) ? product.description : (enriched?.description || product.description),
+    instructions: product.instructions || enriched?.instructions,
+    instructions_en: product.instructions_en || enriched?.instructions_en
   };
 
   const isEn = lang === 'en';

@@ -31,14 +31,23 @@ export async function getProductsWithMarkup(): Promise<Product[]> {
     const markupSettings = await getMarkupSettings();
     return visibleProducts.map(p => {
       const marked = applyMarkupToProduct(p, markupSettings);
-      const enriched = findEnrichmentForProduct(marked.name, enrichedData);
+      const enriched = findEnrichmentForProduct(marked.name, enrichedData, marked.id);
       const gallery: string[] = (marked as any).images || enriched?.gallery || [];
       const images = gallery.length > 0 ? gallery : (marked.image_url ? [marked.image_url] : []);
       const back_image_url = images.length > 1 ? images[1] : undefined;
+      const byId = (enrichedData as any).by_product_id?.[String(marked.id)];
+      const properties = (byId?.properties && byId.properties.length > 0) ? byId.properties : enriched?.properties;
+      const description = marked.description || byId?.description || enriched?.description;
+      const instructions = byId?.instructions || enriched?.instructions;
+      const instructions_en = byId?.instructions_en || enriched?.instructions_en;
       return {
         ...marked,
+        description,
+        properties,
         images,
-        back_image_url
+        back_image_url,
+        instructions,
+        instructions_en
       };
     });
   } catch (err) {
@@ -75,14 +84,23 @@ export async function getProductByIdWithMarkup(id: string | number): Promise<Pro
     // Apply pricing markup dynamically
     const markupSettings = await getMarkupSettings();
     const marked = applyMarkupToProduct(product, markupSettings);
-    const enriched = findEnrichmentForProduct(marked.name, enrichedData);
+    const enriched = findEnrichmentForProduct(marked.name, enrichedData, marked.id);
     const gallery: string[] = (marked as any).images || enriched?.gallery || [];
     const images = gallery.length > 0 ? gallery : (marked.image_url ? [marked.image_url] : []);
     const back_image_url = images.length > 1 ? images[1] : undefined;
+    const byId = (enrichedData as any).by_product_id?.[String(marked.id)];
+    const properties = (byId?.properties && byId.properties.length > 0) ? byId.properties : enriched?.properties;
+    const description = marked.description || byId?.description || enriched?.description;
+    const instructions = byId?.instructions || enriched?.instructions;
+    const instructions_en = byId?.instructions_en || enriched?.instructions_en;
     return {
       ...marked,
+      description,
+      properties,
       images,
-      back_image_url
+      back_image_url,
+      instructions,
+      instructions_en
     };
   } catch (err) {
     console.error(`❌ Failed to load product ID ${id} with markup:`, err);
@@ -95,26 +113,60 @@ export async function getProductByIdWithMarkup(id: string | number): Promise<Pro
  * with the simplified keys of the local RAG enriched product details file.
  * Returns the enrichment object if found, or an empty object.
  */
-export function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>): any {
+export function findEnrichmentForProduct(pName: string, enrichedData: Record<string, any>, productId?: string | number): any {
   if (!pName || !enrichedData) return {};
   const name = pName.toLowerCase().trim();
 
+  // Helper to attach exact verified data by product ID if available
+  const attachIdData = (res: any) => {
+    if (!res || typeof res !== 'object') res = {};
+    if (productId && (enrichedData as any).by_product_id?.[String(productId)]) {
+      const byId = (enrichedData as any).by_product_id[String(productId)];
+      return {
+        ...res,
+        description: byId.description || res.description,
+        properties: (byId.properties && byId.properties.length > 0) ? byId.properties : res.properties,
+        instructions: byId.instructions || res.instructions,
+        instructions_en: byId.instructions_en || res.instructions_en,
+        properties_en: (byId.properties_en && byId.properties_en.length > 0) ? byId.properties_en : res.properties_en
+      };
+    }
+    return res;
+  };
+
+  // Non-GLS brand protection: products from other brands (NOW, Solaray, QEEP, etc.)
+  // have their own rich data in Supabase and should not be matched to GLS enrichment.
+  const nonGlsBrandMarkers = [
+    'now foods', 'now', 'solaray', 'qeep', 'solgar', 'thorne',
+    'life extension', 'california gold', 'swanson', "doctor's best",
+    '21st century', 'optimum nutrition', 'natrol', 'jarrow',
+    'nordic naturals', 'pure encapsulations'
+  ];
+  if (nonGlsBrandMarkers.some(brand => name.startsWith(brand) || name.includes(brand))) {
+    return attachIdData({});
+  }
+
   // Priority specific formulas & aliases
-  if (name.includes('максиферт') || name.includes('инозитол')) return enrichedData['инозитол (максиферт)'] || {};
-  if (name.includes('термо')) return enrichedData['термо комплекс'] || {};
-  if (name.includes('глюко баланс') || name.includes('глюкобаланс')) return enrichedData['глюко баланс'] || {};
-  if (name.includes('климмикс')) return enrichedData['климмикс'] || {};
-  if (name.includes('хлорофил')) return enrichedData['жидкий хлорофил'] || enrichedData['хлорофилл'] || {};
-  if (name.includes('карнитин')) return enrichedData['л-карнитин'] || {};
-  if (name.includes('аргинин')) return enrichedData['аргинин 1000'] || enrichedData['л аргинин'] || {};
-  if (name.includes('мужчин') && (name.includes('комплекс') || name.includes('формула'))) return enrichedData['мужская формула'] || {};
-  if (name.includes('женская формула') || (name.includes('женщин') && name.includes('формула'))) return enrichedData['женская формула'] || {};
-  if (name.includes('коллаген') && name.includes('сустав')) return enrichedData['коллаген для суставов с мартинией'] || enrichedData['коллаген'] || {};
-  if (name.includes('коллаген')) return enrichedData['коллаген'] || {};
-  if (name.includes('в-комплекс') || name.includes('b-complex') || (name.includes('комплекс') && name.includes('в'))) return enrichedData['в-комплекс'] || {};
+  if (name.includes('максиферт')) return attachIdData(enrichedData['инозитол (максиферт)'] || {});
+  if (name.includes('термо')) return attachIdData(enrichedData['термо комплекс'] || {});
+  if (name.includes('глюко баланс') || name.includes('глюкобаланс')) return attachIdData(enrichedData['глюко баланс'] || {});
+  if (name.includes('климмикс')) return attachIdData(enrichedData['климмикс'] || {});
+  if (name.includes('хлорофил')) return attachIdData(enrichedData['жидкий хлорофил'] || enrichedData['хлорофилл'] || {});
+  if (name.includes('карнитин') && (name.includes('gls') || !name.includes(' '))) return attachIdData(enrichedData['л-карнитин'] || {});
+  if (name.includes('аргинин') && (name.includes('gls') || !name.includes(' '))) return attachIdData(enrichedData['аргинин 1000'] || enrichedData['л аргинин'] || {});
+  if (name.includes('мужчин') && (name.includes('комплекс') || name.includes('формула'))) return attachIdData(enrichedData['мужская формула'] || {});
+  if (name.includes('женская формула') || (name.includes('женщин') && name.includes('формула'))) return attachIdData(enrichedData['женская формула'] || {});
+  if (name.includes('берберин') || name.includes('барбарис')) return attachIdData(enrichedData['барбарис берберин'] || {});
+  if (name.includes('коллаген')) {
+    if (name.includes('сустав')) return attachIdData(enrichedData['коллаген для суставов с мартинией'] || enrichedData['коллаген'] || {});
+    return attachIdData(enrichedData['коллаген'] || {});
+  }
+  if (name.includes('в-комплекс') || name.includes('b-complex') || (name.includes('комплекс') && (/\bв\b/i.test(name) || /\bb\b/i.test(name)))) {
+    return attachIdData(enrichedData['в-комплекс'] || {});
+  }
   
   // 1. Try exact match
-  if (enrichedData[name]) return enrichedData[name];
+  if (enrichedData[name]) return attachIdData(enrichedData[name]);
 
   // Helper to normalize strings for comparison (remove spaces, symbols)
   const normalize = (str: string) => str.replace(/[\(\)\d№мгг\-\+\s_%—]/g, '');
@@ -124,7 +176,7 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
   const keys = Object.keys(enrichedData);
   for (const key of keys) {
     if (normalize(key) === nameNorm) {
-      return enrichedData[key];
+      return attachIdData(enrichedData[key]);
     }
   }
 
@@ -141,7 +193,7 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
   for (const key of keys) {
     const keyNorm = normalize(key);
     if (keyNorm.length > 3 && (cleanedNorm.includes(keyNorm) || keyNorm.includes(cleanedNorm))) {
-      return enrichedData[key];
+      return attachIdData(enrichedData[key]);
     }
   }
 
@@ -149,7 +201,7 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
   const sortedKeys = [...keys].sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     if (cleaned.includes(key) || key.includes(cleaned)) {
-      return enrichedData[key];
+      return attachIdData(enrichedData[key]);
     }
   }
 
@@ -157,13 +209,13 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
   const words = cleaned.split(/\s+/).filter(Boolean);
   if (words.length >= 1) {
     const firstWord = words[0];
-    if (enrichedData[firstWord]) return enrichedData[firstWord];
+    if (enrichedData[firstWord]) return attachIdData(enrichedData[firstWord]);
     if (words.length >= 2) {
       const firstTwo = firstWord + ' ' + words[1];
-      if (enrichedData[firstTwo]) return enrichedData[firstTwo];
+      if (enrichedData[firstTwo]) return attachIdData(enrichedData[firstTwo]);
     }
   }
 
-  return {};
+  return attachIdData({});
 }
 

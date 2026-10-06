@@ -282,9 +282,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   if (!product || !mounted) return null;
 
+  const enrichment = findEnrichmentForProduct(product.name, enrichedData as any, product.id);
+  const fullProduct = { 
+    ...enrichment, 
+    ...product,
+    properties: (enrichment.properties && enrichment.properties.length > 0) ? enrichment.properties : product.properties,
+    description: (product.description && product.description.length > 25) ? product.description : (enrichment.description || product.description),
+    instructions: product.instructions || enrichment.instructions,
+    instructions_en: product.instructions_en || enrichment.instructions_en
+  };
+
   const isEn = lang === 'en';
-  const enrichment = findEnrichmentForProduct(product.name, enrichedData as any);
-  const fullProduct = { ...enrichment, ...product };
+  const pName = product.name || '';
+  const brandName = pName.includes('NOW')
+    ? 'NOW Foods'
+    : (pName.includes('Solaray')
+      ? 'Solaray'
+      : (pName.toLowerCase().includes('qeep')
+        ? 'QEEP'
+        : 'GLS Pharmaceuticals'));
 
   const propertiesList: string[] = (isEn && fullProduct.properties_en && fullProduct.properties_en.length > 0)
     ? fullProduct.properties_en
@@ -301,13 +317,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const rawDescription = fullProduct.description || '';
   const fallbackEnDesc = rawDescription.includes('GLS')
     ? 'Premium certified GLS nutraceutical formula designed for comprehensive health support and cellular vitality.'
-    : 'Premium certified TOJ-VITAMIN nutraceutical formula designed for comprehensive health support and cellular vitality.';
+    : `Premium certified ${brandName} nutraceutical formula designed for comprehensive health support and cellular vitality.`;
 
   const descriptionLines: string[] = propertiesList.length > 0
     ? propertiesList
     : (rawDescription ? (isEn ? [fallbackEnDesc] : rawDescription.split('\n').filter((line: string) => line.trim().length > 0)) : []);
-
-
 
   const jsonLd = {
     "@context": "https://schema.org/",
@@ -317,7 +331,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     "description": product.description || product.name,
     "brand": {
       "@type": "Brand",
-      "name": "GLS"
+      "name": brandName
     },
     "seller": {
       "@type": "Store",
@@ -435,7 +449,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
             {/* 1. LEFT COLUMN: PURE IMAGE STUDIO */}
             {(() => {
-              const enrichment = product ? findEnrichmentForProduct(product.name, enrichedData) : {};
+              const enrichment = product ? findEnrichmentForProduct(product.name, enrichedData, product.id) : {};
               const galleryImages: string[] = (product.images && product.images.length > 0)
                 ? product.images
                 : (enrichment?.gallery && Array.isArray(enrichment.gallery) && enrichment.gallery.length > 0)
@@ -560,7 +574,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   {/* Desktop Quality Standard */}
                   <div className="hidden md:flex items-center gap-2 mt-3 text-[#64748B] text-[11px] font-medium tracking-wide">
                     <ShieldCheck size={14} className="text-[#1E40AF]" />
-                    <span>{lang === 'en' ? '100% Original GLS Pharmaceuticals' : (lang === 'ru' ? '100% Оригинал GLS Pharmaceuticals' : '100% Асл GLS Pharmaceuticals')}</span>
+                    <span>{lang === 'en' ? `100% Original ${brandName}` : (lang === 'ru' ? `100% Оригинал ${brandName}` : `100% Асл ${brandName}`)}</span>
                   </div>
 
                   {/* Fullscreen Lightbox / Zoom Modal */}
@@ -649,7 +663,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                      {product.tags && product.tags.length > 0 && (
                        <div className="flex flex-wrap gap-2">
-                         {product.tags.map((tag, idx) => (
+                         {product.tags
+                           .filter((tag: string) => tag && !/спарсен|парсинг|parsed/i.test(tag))
+                           .map((tag, idx) => (
                            <span key={idx} className="px-3.5 py-1 rounded-full bg-black/[0.04] text-[10px] font-bold text-[#1D1D1F] uppercase tracking-widest">
                              {getLocalizedProductTag(tag, lang)}
                            </span>
