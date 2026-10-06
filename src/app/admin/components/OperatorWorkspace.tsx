@@ -7,7 +7,8 @@ import {
   Phone, MessageCircle, Send, Instagram, Globe, Store, 
   Search, Plus, Package, Truck, CheckCircle, XCircle, 
   ChevronRight, Clock, UserPlus, Save, AlertCircle, Eye, X, User, MapPin, CreditCard, Calendar, Edit3, RefreshCw,
-  Sparkles, Sunrise, Sun, Moon, Copy, Check, LogOut, Minus, Trash2, RotateCcw
+  Sparkles, Sunrise, Sun, Moon, Copy, Check, LogOut, Minus, Trash2, RotateCcw,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -258,6 +259,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   const [editableTg, setEditableTg] = useState('');
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [expandedOrderItems, setExpandedOrderItems] = useState<Record<number, boolean>>({});
 
   // Order items editing state inside modal
   const [editableItems, setEditableItems] = useState<OrderItem[]>([]);
@@ -1355,8 +1357,200 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
             </div>
           </div>
 
-          {/* Orders Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Mobile Orders View: Clean, readable cards with FULL product titles */}
+          <div className="md:hidden space-y-3">
+            {filteredOrders.map(order => {
+              const ch = CHANNEL_MAP[order.channel || 'website'] || CHANNEL_MAP.website;
+              const st = STATUS_MAP[order.status] || STATUS_MAP.new;
+              return (
+                <div 
+                  key={order.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3 hover:border-slate-300 transition-all"
+                >
+                  {/* Card Header: ID, Date, Channel */}
+                  <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => openOrderModal(order)}
+                        className="font-extrabold text-base text-slate-900 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+                      >
+                        #{order.id}
+                        <Eye size={14} className="text-slate-400" />
+                      </button>
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        {new Date(order.created_at).toLocaleDateString('ru-RU')} {new Date(order.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold shrink-0 ${ch.color}`}>
+                      {ch.icon} {ch.label}
+                    </span>
+                  </div>
+
+                  {/* Client Contact Info */}
+                  <div className="text-xs">
+                    {(() => {
+                      const parsed = parseOrderContact(order.phone, order.channel);
+                      return (
+                        <div className="space-y-1">
+                          {parsed.phone && (
+                            <div className="flex items-center gap-2">
+                              <a 
+                                href={`tel:${parsed.phone.replace(/[^\d+]/g, '')}`}
+                                className="font-bold text-slate-900 hover:text-indigo-600 flex items-center gap-1.5 text-sm"
+                              >
+                                <Phone size={13} className="text-slate-400 shrink-0" />
+                                {parsed.phone}
+                              </a>
+                              {parsed.rawDigits && parsed.rawDigits.length >= 5 && (
+                                <a
+                                  href={`https://wa.me/${parsed.rawDigits}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="p-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                  title="Написать в WhatsApp"
+                                >
+                                  <MessageCircle size={13} />
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {parsed.instagram && (
+                            <div>
+                              <a
+                                href={`https://instagram.com/${parsed.instagram}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-xs font-bold text-pink-600 hover:underline"
+                              >
+                                <Instagram size={12} className="shrink-0" /> @{parsed.instagram}
+                              </a>
+                            </div>
+                          )}
+                          {parsed.telegram && (
+                            <div>
+                              <a
+                                href={`https://t.me/${parsed.telegram}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:underline"
+                              >
+                                <Send size={12} className="shrink-0" /> @{parsed.telegram}
+                              </a>
+                            </div>
+                          )}
+                          {parsed.isPickup && parsed.pickupNote && (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              <Store size={12} className="text-amber-600 shrink-0" /> {parsed.pickupNote}
+                            </span>
+                          )}
+                          {!parsed.phone && !parsed.instagram && !parsed.telegram && !parsed.pickupNote && (
+                            <span className="font-medium text-slate-500">{parsed.raw || 'Номер не указан'}</span>
+                          )}
+                          {order.delivery_address && (
+                            <p className="text-[11px] text-slate-500 break-words mt-1">📍 {order.delivery_address}</p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Order Items (Состав заказа) with full product names */}
+                  {Array.isArray(order.items) && order.items.length > 0 && (
+                    <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="flex items-center gap-1.5 text-indigo-700">
+                          <Package size={13} className="text-indigo-600 shrink-0" /> 
+                          Состав заказа ({order.items.length} поз.)
+                        </span>
+                        <span className="text-slate-400 font-semibold normal-case">
+                          {order.items.reduce((s: number, i: OrderItem) => s + (i.quantity || 1), 0)} шт.
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 divide-y divide-slate-100">
+                        {(expandedOrderItems[order.id] ? order.items : order.items.slice(0, 3)).map((item: OrderItem, itemIdx: number) => (
+                          <div key={itemIdx} className={`flex items-start justify-between gap-2 text-xs leading-snug ${itemIdx > 0 ? 'pt-1.5' : ''}`}>
+                            <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                              <span className="text-slate-400 text-[11px] font-bold mt-0.5 shrink-0">{itemIdx + 1}.</span>
+                              <span className="font-semibold text-slate-800 break-words flex-1">
+                                {item.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 pl-1 pt-0.5">
+                              <span className="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
+                                ×{item.quantity}
+                              </span>
+                              <span className="font-semibold text-slate-600 text-[11px]">
+                                {item.price * item.quantity} с.
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {order.items.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedOrderItems(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
+                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1.5 flex items-center gap-1 w-full justify-center transition-colors border-t border-slate-200/50"
+                        >
+                          {expandedOrderItems[order.id] ? (
+                            <>Свернуть <ChevronUp size={12} /></>
+                          ) : (
+                            <>Показать все {order.items.length} товаров (+{order.items.length - 3}) <ChevronDown size={12} /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Card Footer: Amount, Status Dropdown, and Open Modal */}
+                  <div className="flex flex-wrap items-center justify-between pt-2.5 border-t border-slate-100 gap-2">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">К оплате:</span>
+                      <span className="text-base font-extrabold text-slate-900">{order.total} смн</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <select 
+                        value={order.status || 'new'}
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                        disabled={updatingOrderId === order.id}
+                        className={`text-xs font-bold px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${updatingOrderId === order.id ? 'opacity-50 cursor-wait' : ''} ${st.color}`}
+                      >
+                        <option value="new">🟡 Новый</option>
+                        <option value="delivering">🚚 В доставке</option>
+                        <option value="paid">💰 Оплачен</option>
+                        <option value="cancelled">❌ Отменен</option>
+                      </select>
+
+                      <button 
+                        type="button"
+                        onClick={() => openOrderModal(order)}
+                        className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all shadow-xs"
+                        title="Открыть карточку заказа"
+                      >
+                        <Eye size={13} /> Карточка
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {filteredOrders.length === 0 && !loading && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
+                Заказов не найдено
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Orders Table */}
+          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -2178,20 +2372,20 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                 {/* Items List */}
                 <div className="bg-slate-50/70 rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
                   {editableItems.map((item, idx) => (
-                    <div key={item.id ? `${item.id}-${idx}` : idx} className="p-3 flex items-center justify-between hover:bg-white transition-colors gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                    <div key={item.id ? `${item.id}-${idx}` : idx} className="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white transition-colors gap-2.5 sm:gap-3">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 sm:mt-0">
                           {idx + 1}
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 text-xs sm:text-sm truncate">{item.name}</p>
-                          <p className="text-[11px] text-slate-400">{item.price} смн / шт.</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-800 text-xs sm:text-sm break-words leading-snug">{item.name}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{item.price} смн / шт.</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t border-slate-100 sm:border-0 pl-8 sm:pl-0">
                         {/* Quantity Stepper */}
-                        <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-xs">
+                        <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
                           <button
                             type="button"
                             onClick={() => updateItemQuantity(idx, Math.max(1, item.quantity - 1))}
@@ -2222,7 +2416,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                         </div>
 
                         {/* Item Total */}
-                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm w-20 text-right">
+                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm sm:w-20 text-right">
                           {item.price * item.quantity} смн
                         </span>
 
