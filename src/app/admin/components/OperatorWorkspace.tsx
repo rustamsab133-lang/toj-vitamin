@@ -18,6 +18,25 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Rea
   cancelled: { label: 'Отменен', color: 'bg-red-50 text-red-600 border-red-200', icon: <XCircle size={14} /> },
 };
 
+const STATUS_THEME: Record<string, { accentBorder: string; headerBg: string }> = {
+  new: {
+    accentBorder: 'border-l-[6px] border-l-blue-500',
+    headerBg: 'bg-gradient-to-r from-blue-50/90 via-slate-50/60 to-white',
+  },
+  delivering: {
+    accentBorder: 'border-l-[6px] border-l-amber-500',
+    headerBg: 'bg-gradient-to-r from-amber-50/90 via-slate-50/60 to-white',
+  },
+  paid: {
+    accentBorder: 'border-l-[6px] border-l-emerald-500',
+    headerBg: 'bg-gradient-to-r from-emerald-50/90 via-slate-50/60 to-white',
+  },
+  cancelled: {
+    accentBorder: 'border-l-[6px] border-l-rose-500',
+    headerBg: 'bg-gradient-to-r from-rose-50/90 via-slate-50/60 to-white',
+  },
+};
+
 const CHANNEL_MAP: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   phone: { label: 'Звонок', icon: <Phone size={14} />, color: 'text-indigo-600 bg-indigo-50' },
   whatsapp: { label: 'WhatsApp', icon: <MessageCircle size={14} />, color: 'text-green-600 bg-green-50' },
@@ -1357,162 +1376,172 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
             </div>
           </div>
 
-          {/* Mobile Orders View: Clean, readable cards with FULL product titles */}
-          <div className="md:hidden space-y-3">
+          {/* Mobile Orders View: Distinct, framed cards with status accent and full product titles */}
+          <div className="md:hidden space-y-5">
             {filteredOrders.map(order => {
               const ch = CHANNEL_MAP[order.channel || 'website'] || CHANNEL_MAP.website;
               const st = STATUS_MAP[order.status] || STATUS_MAP.new;
+              const theme = STATUS_THEME[order.status] || STATUS_THEME.new;
               return (
                 <div 
                   key={order.id}
-                  className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3 hover:border-slate-300 transition-all"
+                  className={`bg-white rounded-3xl border border-slate-200/90 shadow-md shadow-slate-200/60 overflow-hidden transition-all ${theme.accentBorder}`}
                 >
-                  {/* Card Header: ID, Date, Channel */}
-                  <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                  {/* Card Header Bar with Status Gradient, Bold ID Pill, and Channel */}
+                  <div className={`px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2 ${theme.headerBg}`}>
                     <div className="flex items-center gap-2">
                       <button 
                         type="button"
                         onClick={() => openOrderModal(order)}
-                        className="font-extrabold text-base text-slate-900 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+                        className="px-3 py-1 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-black text-sm tracking-tight flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
                       >
                         #{order.id}
-                        <Eye size={14} className="text-slate-400" />
+                        <Eye size={13} className="text-slate-300" />
                       </button>
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        {new Date(order.created_at).toLocaleDateString('ru-RU')} {new Date(order.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                        <Clock size={12} className="text-slate-400 shrink-0" />
+                        <span>{new Date(order.created_at).toLocaleDateString('ru-RU')}</span>
+                        <span className="text-slate-300">•</span>
+                        <span>{new Date(order.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold shadow-2xs ${ch.color}`}>
+                        {ch.icon} {ch.label}
                       </span>
                     </div>
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold shrink-0 ${ch.color}`}>
-                      {ch.icon} {ch.label}
-                    </span>
                   </div>
 
-                  {/* Client Contact Info */}
-                  <div className="text-xs">
-                    {(() => {
-                      const parsed = parseOrderContact(order.phone, order.channel);
-                      return (
-                        <div className="space-y-1">
-                          {parsed.phone && (
-                            <div className="flex items-center gap-2">
-                              <a 
-                                href={`tel:${parsed.phone.replace(/[^\d+]/g, '')}`}
-                                className="font-bold text-slate-900 hover:text-indigo-600 flex items-center gap-1.5 text-sm"
-                              >
-                                <Phone size={13} className="text-slate-400 shrink-0" />
-                                {parsed.phone}
-                              </a>
-                              {parsed.rawDigits && parsed.rawDigits.length >= 5 && (
+                  {/* Card Body */}
+                  <div className="p-4 space-y-3">
+                    {/* Client Contact Info */}
+                    <div className="text-xs">
+                      {(() => {
+                        const parsed = parseOrderContact(order.phone, order.channel);
+                        return (
+                          <div className="space-y-1">
+                            {parsed.phone && (
+                              <div className="flex items-center gap-2">
+                                <a 
+                                  href={`tel:${parsed.phone.replace(/[^\d+]/g, '')}`}
+                                  className="font-bold text-slate-900 hover:text-indigo-600 flex items-center gap-1.5 text-sm"
+                                >
+                                  <Phone size={13} className="text-slate-400 shrink-0" />
+                                  {parsed.phone}
+                                </a>
+                                {parsed.rawDigits && parsed.rawDigits.length >= 5 && (
+                                  <a
+                                    href={`https://wa.me/${parsed.rawDigits}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    className="p-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                    title="Написать в WhatsApp"
+                                  >
+                                    <MessageCircle size={13} />
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            {parsed.instagram && (
+                              <div>
                                 <a
-                                  href={`https://wa.me/${parsed.rawDigits}`}
+                                  href={`https://instagram.com/${parsed.instagram}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={e => e.stopPropagation()}
-                                  className="p-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
-                                  title="Написать в WhatsApp"
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-pink-600 hover:underline"
                                 >
-                                  <MessageCircle size={13} />
+                                  <Instagram size={12} className="shrink-0" /> @{parsed.instagram}
                                 </a>
-                              )}
-                            </div>
-                          )}
-                          {parsed.instagram && (
-                            <div>
-                              <a
-                                href={`https://instagram.com/${parsed.instagram}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-xs font-bold text-pink-600 hover:underline"
-                              >
-                                <Instagram size={12} className="shrink-0" /> @{parsed.instagram}
-                              </a>
-                            </div>
-                          )}
-                          {parsed.telegram && (
-                            <div>
-                              <a
-                                href={`https://t.me/${parsed.telegram}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:underline"
-                              >
-                                <Send size={12} className="shrink-0" /> @{parsed.telegram}
-                              </a>
-                            </div>
-                          )}
-                          {parsed.isPickup && parsed.pickupNote && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                              <Store size={12} className="text-amber-600 shrink-0" /> {parsed.pickupNote}
-                            </span>
-                          )}
-                          {!parsed.phone && !parsed.instagram && !parsed.telegram && !parsed.pickupNote && (
-                            <span className="font-medium text-slate-500">{parsed.raw || 'Номер не указан'}</span>
-                          )}
-                          {order.delivery_address && (
-                            <p className="text-[11px] text-slate-500 break-words mt-1">📍 {order.delivery_address}</p>
-                          )}
+                              </div>
+                            )}
+                            {parsed.telegram && (
+                              <div>
+                                <a
+                                  href={`https://t.me/${parsed.telegram}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:underline"
+                                >
+                                  <Send size={12} className="shrink-0" /> @{parsed.telegram}
+                                </a>
+                              </div>
+                            )}
+                            {parsed.isPickup && parsed.pickupNote && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                <Store size={12} className="text-amber-600 shrink-0" /> {parsed.pickupNote}
+                              </span>
+                            )}
+                            {!parsed.phone && !parsed.instagram && !parsed.telegram && !parsed.pickupNote && (
+                              <span className="font-medium text-slate-500">{parsed.raw || 'Номер не указан'}</span>
+                            )}
+                            {order.delivery_address && (
+                              <p className="text-[11px] text-slate-500 break-words mt-1">📍 {order.delivery_address}</p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Order Items (Состав заказа) with full product names */}
+                    {Array.isArray(order.items) && order.items.length > 0 && (
+                      <div className="bg-slate-50/90 rounded-2xl p-3 border border-slate-100 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          <span className="flex items-center gap-1.5 text-indigo-700">
+                            <Package size={13} className="text-indigo-600 shrink-0" /> 
+                            Состав заказа ({order.items.length} поз.)
+                          </span>
+                          <span className="text-slate-400 font-semibold normal-case">
+                            {order.items.reduce((s: number, i: OrderItem) => s + (i.quantity || 1), 0)} шт.
+                          </span>
                         </div>
-                      );
-                    })()}
+
+                        <div className="space-y-1.5 divide-y divide-slate-100">
+                          {(expandedOrderItems[order.id] ? order.items : order.items.slice(0, 3)).map((item: OrderItem, itemIdx: number) => (
+                            <div key={itemIdx} className={`flex items-start justify-between gap-2 text-xs leading-snug ${itemIdx > 0 ? 'pt-1.5' : ''}`}>
+                              <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                                <span className="text-slate-400 text-[11px] font-bold mt-0.5 shrink-0">{itemIdx + 1}.</span>
+                                <span className="font-semibold text-slate-800 break-words flex-1">
+                                  {item.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0 pl-1 pt-0.5">
+                                <span className="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
+                                  ×{item.quantity}
+                                </span>
+                                <span className="font-semibold text-slate-600 text-[11px]">
+                                  {item.price * item.quantity} с.
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {order.items.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedOrderItems(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
+                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1.5 flex items-center gap-1 w-full justify-center transition-colors border-t border-slate-200/50"
+                          >
+                            {expandedOrderItems[order.id] ? (
+                              <>Свернуть <ChevronUp size={12} /></>
+                            ) : (
+                              <>Показать все {order.items.length} товаров (+{order.items.length - 3}) <ChevronDown size={12} /></>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Order Items (Состав заказа) with full product names */}
-                  {Array.isArray(order.items) && order.items.length > 0 && (
-                    <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-100 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        <span className="flex items-center gap-1.5 text-indigo-700">
-                          <Package size={13} className="text-indigo-600 shrink-0" /> 
-                          Состав заказа ({order.items.length} поз.)
-                        </span>
-                        <span className="text-slate-400 font-semibold normal-case">
-                          {order.items.reduce((s: number, i: OrderItem) => s + (i.quantity || 1), 0)} шт.
-                        </span>
-                      </div>
-
-                      <div className="space-y-1.5 divide-y divide-slate-100">
-                        {(expandedOrderItems[order.id] ? order.items : order.items.slice(0, 3)).map((item: OrderItem, itemIdx: number) => (
-                          <div key={itemIdx} className={`flex items-start justify-between gap-2 text-xs leading-snug ${itemIdx > 0 ? 'pt-1.5' : ''}`}>
-                            <div className="flex items-start gap-1.5 min-w-0 flex-1">
-                              <span className="text-slate-400 text-[11px] font-bold mt-0.5 shrink-0">{itemIdx + 1}.</span>
-                              <span className="font-semibold text-slate-800 break-words flex-1">
-                                {item.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0 pl-1 pt-0.5">
-                              <span className="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
-                                ×{item.quantity}
-                              </span>
-                              <span className="font-semibold text-slate-600 text-[11px]">
-                                {item.price * item.quantity} с.
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {order.items.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedOrderItems(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
-                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1.5 flex items-center gap-1 w-full justify-center transition-colors border-t border-slate-200/50"
-                        >
-                          {expandedOrderItems[order.id] ? (
-                            <>Свернуть <ChevronUp size={12} /></>
-                          ) : (
-                            <>Показать все {order.items.length} товаров (+{order.items.length - 3}) <ChevronDown size={12} /></>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Card Footer: Amount, Status Dropdown, and Open Modal */}
-                  <div className="flex flex-wrap items-center justify-between pt-2.5 border-t border-slate-100 gap-2">
+                  {/* Card Footer Bar */}
+                  <div className="px-4 py-3 bg-slate-50/90 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">К оплате:</span>
-                      <span className="text-base font-extrabold text-slate-900">{order.total} смн</span>
+                      <span className="text-lg font-black text-slate-900 tracking-tight">{order.total} смн</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1531,7 +1560,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                       <button 
                         type="button"
                         onClick={() => openOrderModal(order)}
-                        className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all shadow-xs"
+                        className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 transition-all shadow-xs"
                         title="Открыть карточку заказа"
                       >
                         <Eye size={13} /> Карточка
