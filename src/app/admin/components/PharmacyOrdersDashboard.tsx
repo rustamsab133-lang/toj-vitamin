@@ -184,15 +184,15 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     });
   }, [orders, ordersFilterQuery, ordersFilterStatus, pharmacyMap]);
 
-  // Lock body scroll when pharmacy modal, order editor or invoice print is open
+  // Lock body scroll when pharmacy modal or order editor is open
   useEffect(() => {
-    if (isModalOpen || isOrderEditorOpen || !!printInvoiceData) {
+    if (isModalOpen || isOrderEditorOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [isModalOpen, isOrderEditorOpen, printInvoiceData]);
+  }, [isModalOpen, isOrderEditorOpen]);
 
   useEffect(() => {
     loadAllData(true);
