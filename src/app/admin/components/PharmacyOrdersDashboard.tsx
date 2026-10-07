@@ -184,7 +184,7 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     });
   }, [orders, ordersFilterQuery, ordersFilterStatus, pharmacyMap]);
 
-  // Lock body scroll when pharmacy modal or order editor is open
+  // Lock body scroll when pharmacy modal or order editor is open (never lock during invoice print)
   useEffect(() => {
     if (isModalOpen || isOrderEditorOpen) {
       document.body.style.overflow = 'hidden';
@@ -487,27 +487,60 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
   const handleOpenOrderEditor = (order: PharmacyOrder) => {
     const ph = getOrderPharmacy(order);
     const orderItems = Array.isArray(order.items) ? order.items : [];
-    
+    const phDiscount = Number(ph.discount_percent) || 0;
+
+    const storedItemsSum = Math.round(
+      orderItems.reduce((acc: number, it: any) => acc + (Number(it.quantity) || 0) * (Number(it.price) || 0), 0) * 100
+    ) / 100;
+    const orderTotalAmount = Number(order.total_amount) || storedItemsSum;
+
+    // Check if items can be mapped to catalog base price
+    // If the items in the order were already saved with discounted price (storedItemsSum === orderTotalAmount and phDiscount > 0),
+    // we restore item price to catalog base wholesale price so that:
+    // Base Price * Qty = Subtotal, and discount = phDiscount %, yielding exact orderTotalAmount!
+    let initialDiscount = phDiscount;
     const mappedItems = orderItems.map((it: any) => {
       const catalogProd = products.find(p => String(p.id) === String(it.product_id));
       const basePrice = catalogProd ? Number(catalogProd.price) : Number(it.price);
+      
+      let itemPrice = Number(it.price) || basePrice || 0;
+      if (phDiscount > 0 && basePrice > itemPrice) {
+        // Stored price was already discounted, restore base wholesale price
+        itemPrice = basePrice;
+      }
       return {
         product_id: String(it.product_id || ''),
         name: it.name || catalogProd?.name || 'Товар',
         quantity: Math.max(1, parseInt(it.quantity) || 1),
-        price: Number(it.price) || basePrice || 0,
-        base_price: basePrice || Number(it.price) || 0
+        price: itemPrice,
+        base_price: basePrice || itemPrice
       };
     });
 
+    // Check if mapped items subtotal already equals order total
+    const mappedSubtotal = Math.round(
+      mappedItems.reduce((acc, it) => acc + it.quantity * it.price, 0) * 100
+    ) / 100;
+
+    if (Math.abs(mappedSubtotal - orderTotalAmount) < 0.05) {
+      // Items prices already equal final total, no additional discount should be compounded
+      initialDiscount = 0;
+    }
+
     setEditingOrder(order);
     setEditingItems(mappedItems);
-    setEditingDiscountPercent(Number(ph.discount_percent) || 0);
+    setEditingDiscountPercent(initialDiscount);
     setSaveDiscountAsPharmacyDefault(false);
     setEditingNotes(order.notes || '');
     setEditingDeliveryDate(order.delivery_date || '');
     setOrderProductSearch('');
     setIsOrderEditorOpen(true);
+  };
+
+  // Direct unit price edit in editor
+  const handleUpdateItemPrice = (index: number, newPrice: number) => {
+    if (newPrice < 0) return;
+    setEditingItems(prev => prev.map((item, idx) => idx === index ? { ...item, price: newPrice } : item));
   };
 
   // Stepper for quantity in editor
@@ -646,18 +679,44 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     const ph = getOrderPharmacy(order);
     const orderItems = Array.isArray(order.items) ? order.items : [];
     
-    const subtotal = Math.round(
+    const storedSubtotal = Math.round(
       orderItems.reduce((acc: number, it: any) => acc + (Number(it.quantity) || 0) * (Number(it.price) || 0), 0) * 100
     ) / 100;
     
-    const discountPercent = Number(ph.discount_percent) || 0;
-    let discountAmount = 0;
-    const finalTotal = Number(order.total_amount) || subtotal;
+    const finalTotal = Number(order.total_amount) || storedSubtotal;
+    const phDiscount = Number(ph.discount_percent) || 0;
 
-    if (discountPercent > 0 && subtotal > finalTotal) {
-      discountAmount = Math.round((subtotal - finalTotal) * 100) / 100;
-    } else if (subtotal > finalTotal) {
-      discountAmount = Math.round((subtotal - finalTotal) * 100) / 100;
+    let subtotal = storedSubtotal;
+    let discountPercent = 0;
+    let discountAmount = 0;
+    let printItems = orderItems;
+
+    if (storedSubtotal > finalTotal) {
+      discountAmount = Math.round((storedSubtotal - finalTotal) * 100) / 100;
+      discountPercent = phDiscount > 0 ? phDiscount : Math.round((discountAmount / storedSubtotal) * 100);
+    } else if (phDiscount > 0 && products.length > 0) {
+      // Check if catalog products have base prices higher than stored prices
+      const canRestore = orderItems.some(it => {
+        const prod = products.find(p => String(p.id) === String(it.product_id));
+        return prod && Number(prod.price) > Number(it.price);
+      });
+
+      if (canRestore) {
+        const restored = orderItems.map(it => {
+          const prod = products.find(p => String(p.id) === String(it.product_id));
+          const bp = prod ? Number(prod.price) : Number(it.price);
+          return { ...it, price: bp };
+        });
+        const restoredSubtotal = Math.round(
+          restored.reduce((acc, it) => acc + (Number(it.quantity) || 0) * Number(it.price), 0) * 100
+        ) / 100;
+        if (restoredSubtotal > finalTotal) {
+          printItems = restored;
+          subtotal = restoredSubtotal;
+          discountAmount = Math.round((subtotal - finalTotal) * 100) / 100;
+          discountPercent = phDiscount;
+        }
+      }
     }
 
     setPrintInvoiceData({
@@ -671,7 +730,7 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
         contact_person: ph.contact_person || '',
         discount_percent: discountPercent
       },
-      items: orderItems,
+      items: printItems,
       subtotal: subtotal,
       discountPercent: discountPercent,
       discountAmount: discountAmount,
@@ -682,24 +741,37 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     });
   };
 
-  // Send corrected order to WhatsApp
-  const handleSendUpdatedWa = () => {
+  // Send corrected order to WhatsApp (auto-saves edits to DB first, includes invoice link)
+  const handleSendUpdatedWa = async () => {
     if (!editingOrder) return;
+    if (editingItems.length === 0) {
+      alert('В заказе должен оставаться хотя бы один товар.');
+      return;
+    }
+
+    // Auto-save edits first so database is updated
+    await handleSaveOrderEdits(false);
+
     const ph = getOrderPharmacy(editingOrder);
     const cleanPhone = (ph.phone || '').replace(/[^0-9]/g, '');
+    const shortId = editingOrder.id.slice(0, 8).toUpperCase();
+    const invoiceUrl = `https://www.toj-vitamin.tj/b2b/invoice/${editingOrder.id}`;
+
     const itemsText = editingItems
-      .map((item, idx) => `${idx + 1}. ${item.name} — ${item.quantity} шт. (${Math.round(item.price * item.quantity).toLocaleString()} смн)`)
+      .map((item, idx) => `${idx + 1}. ${item.name} — ${item.quantity} шт. по ${item.price} смн (= ${Math.round(item.price * item.quantity).toLocaleString('ru-RU')} смн)`)
       .join('\n');
-    const discountText = editingDiscountPercent > 0 
-      ? `\n🎁 Индивидуальная скидка: ${editingDiscountPercent}% (-${editorDiscountAmount.toLocaleString()} смн)` 
+
+    const discountText = editingDiscountPercent > 0 && editorDiscountAmount > 0
+      ? `\n🎁 Индивидуальная скидка (${editingDiscountPercent}%): -${editorDiscountAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} смн`
       : '';
-    const msg = `Здравствуйте! Ваш оптовый заказ #${editingOrder.id.slice(0, 8).toUpperCase()} для аптеки "${ph.name}" скорректирован по наличию на складе:\n\n${itemsText}${discountText}\n\nИТОГО К ОПЛАТЕ: ${editorFinalTotal.toLocaleString()} смн\n\nТоварная накладная подготовлена. Пожалуйста, подтвердите готовность к доставке.`;
+
+    const msg = `Здравствуйте! Ваш оптовый заказ № ${shortId} для аптеки "${ph.name}" согласован и укомплектован:\n\n${itemsText}${discountText}\n\nИТОГО К ОПЛАТЕ: ${editorFinalTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} смн\n\n📄 Электронная накладная: ${invoiceUrl}\n\nПожалуйста, подтвердите готовность к доставке.`;
     
     if (cleanPhone) {
       window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
     } else {
       navigator.clipboard.writeText(msg);
-      alert('Текст скопирован в буфер обмена!');
+      alert('Текст с ссылкой на накладную скопирован в буфер обмена!\n\n' + msg);
     }
   };
 
@@ -747,11 +819,18 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
     setIsSubmittingManualOrder(true);
 
     try {
+      const discountPercent = Number(selectedPharmObj?.discount_percent) || 0;
+      const baseSubtotal = Math.round(
+        manualOrderItems.reduce((acc, it) => acc + (Number(it.product.price) || it.b2bPrice) * it.quantity, 0) * 100
+      ) / 100;
+      const discountAmount = Math.max(0, Math.round((baseSubtotal - manualOrderTotal) * 100) / 100);
+
       const dbItems = manualOrderItems.map(item => ({
         product_id: item.product.id,
         name: item.product.name,
         quantity: item.quantity,
-        price: item.b2bPrice
+        price: item.b2bPrice,
+        base_price: Number(item.product.price) || item.b2bPrice
       }));
 
       // Insert Order
@@ -781,14 +860,44 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
         });
       }
 
-      alert('Оптовый заказ успешно создан!');
+      const createdOrder = res?.data?.[0];
+      const newOrderId = createdOrder?.id || 'new';
+
+      // Open Invoice preview immediately for the admin!
+      setPrintInvoiceData({
+        orderId: newOrderId,
+        createdAt: createdOrder?.created_at || new Date().toISOString(),
+        pharmacy: {
+          ...selectedPharmObj,
+          name: selectedPharmObj?.name || 'Оптовый покупатель',
+          phone: selectedPharmObj?.phone || '',
+          address: selectedPharmObj?.address || '',
+          contact_person: selectedPharmObj?.contact_person || '',
+          discount_percent: discountPercent
+        },
+        items: manualOrderItems.map(item => ({
+          product_id: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          price: discountPercent > 0 && discountAmount > 0 ? (Number(item.product.price) || item.b2bPrice) : item.b2bPrice
+        })),
+        subtotal: discountPercent > 0 && discountAmount > 0 ? baseSubtotal : manualOrderTotal,
+        discountPercent: discountAmount > 0 ? discountPercent : 0,
+        discountAmount: discountAmount,
+        finalTotal: manualOrderTotal,
+        notes: orderNotes.trim(),
+        deliveryDate: orderDeliveryDate || null,
+        onClose: () => setPrintInvoiceData(null)
+      });
+
       setOrderCart({});
       setOrderNotes('');
       setOrderDeliveryDate('');
       setSelectedPharmacyForOrder('');
       setActiveTab('dashboard');
-    } catch (e) {
-      alert('Ошибка при создании заказа: ' + e);
+      await loadAllData(false);
+    } catch (e: any) {
+      alert('Ошибка при создании заказа: ' + (e?.message || e));
     } finally {
       setIsSubmittingManualOrder(false);
     }
@@ -844,7 +953,8 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6 print:hidden">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -1957,10 +2067,17 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
                                 <p className="text-[10px] text-slate-400">ID: {item.product_id}</p>
                               </div>
 
-                              <div className="col-span-3 sm:col-span-2 text-center">
-                                <span className="font-bold text-slate-700 text-xs sm:text-sm">
-                                  {item.price} смн
-                                </span>
+                              <div className="col-span-3 sm:col-span-2 text-center flex items-center justify-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.5"
+                                  value={item.price}
+                                  onChange={e => handleUpdateItemPrice(idx, Math.max(0, parseFloat(e.target.value) || 0))}
+                                  className="w-16 sm:w-20 bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-center font-extrabold text-slate-900 text-xs sm:text-sm outline-none focus:border-slate-800 focus:bg-white transition-colors"
+                                  title="Скорректировать цену за единицу"
+                                />
+                                <span className="text-[10px] text-slate-400 font-semibold">смн</span>
                               </div>
 
                               <div className="col-span-4 sm:col-span-4 flex items-center justify-end gap-2 sm:gap-3">
@@ -2199,10 +2316,11 @@ export const PharmacyOrdersDashboard: React.FC<PharmacyOrdersDashboardProps> = (
         })()}
       </AnimatePresence>
 
-      {/* PRINT INVOICE MODAL */}
+      </div>
+      {/* PRINT INVOICE MODAL (Standalone overlay, completely visible during print) */}
       {printInvoiceData && (
         <B2BInvoiceTemplate {...printInvoiceData} />
       )}
-    </div>
+    </>
   );
 };
