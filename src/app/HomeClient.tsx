@@ -216,6 +216,7 @@ export default function HomeClient({ initialSettings }: HomeClientProps) {
         setLang={setLang} 
         settings={settings} 
         isImmersiveMode={isImmersiveMode} 
+        availableLangs={['ru', 'tj']}
       />
  
 

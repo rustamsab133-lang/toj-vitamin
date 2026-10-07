@@ -17,9 +17,10 @@ interface HeaderProps {
   setLang?: (lang: Lang) => void;
   settings: Record<string, string>;
   isImmersiveMode: boolean;
+  availableLangs?: Lang[];
 }
 
-export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmersiveMode }) => {
+export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmersiveMode, availableLangs = ['ru', 'tj', 'en'] }) => {
   const router = useRouter();
   const activeZone = useThemeStore(state => state.activeZone);
   const search = useThemeStore(state => state.search);
@@ -222,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, settings, isImmer
                 </button>
 
                 <div className="flex items-center p-0.5 rounded-full bg-white/75 border border-white/50 md:backdrop-blur-sm">
-                  {(['ru', 'tj', 'en'] as Lang[]).map((l) => (
+                  {availableLangs.map((l) => (
                     <button
                       key={l}
                       type="button"
