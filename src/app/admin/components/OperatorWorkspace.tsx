@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { adminDbQuery, getCorrectNow } from '@/lib/admin-api';
 import { Order, OrderItem, Product, OfflineCustomer } from '@/lib/types';
 import { getMarkupSettings, applyMarkupToProduct } from '@/lib/markup';
@@ -280,6 +280,34 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [expandedOrderItems, setExpandedOrderItems] = useState<Record<number, boolean>>({});
 
+  // Map of products for instant name resolution & fallback
+  const productsMap = useMemo(() => new Map(products.map(p => [String(p.id), p])), [products]);
+
+  // Robust parser for order items (handles JSON strings, missing fields, or empty names)
+  const getOrderItems = useCallback((order: Partial<Order> | null | undefined): OrderItem[] => {
+    if (!order || !order.items) return [];
+    let raw: any = order.items;
+    if (typeof raw === 'string') {
+      try {
+        raw = JSON.parse(raw);
+      } catch {
+        return [];
+      }
+    }
+    if (!Array.isArray(raw)) return [];
+    return raw.map((it: any) => {
+      const pId = String(it.id || it.product_id || '');
+      const matchedProduct = pId ? productsMap.get(pId) : null;
+      const name = it.name || it.title || it.product_name || matchedProduct?.name || (pId ? `Товар #${pId}` : 'Товар');
+      return {
+        id: pId,
+        name,
+        price: Number(it.price) || (matchedProduct ? Number(matchedProduct.price) : 0),
+        quantity: Number(it.quantity) || 1
+      };
+    });
+  }, [productsMap]);
+
   // Order items editing state inside modal
   const [editableItems, setEditableItems] = useState<OrderItem[]>([]);
   const [itemSearchQuery, setItemSearchQuery] = useState('');
@@ -304,7 +332,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
   // Check if items or quantities differ from selectedOrder
   const isOrderCompositionChanged = useMemo(() => {
     if (!selectedOrder) return false;
-    const originalItems = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
+    const originalItems = getOrderItems(selectedOrder);
     if (originalItems.length !== editableItems.length) return true;
     for (let i = 0; i < originalItems.length; i++) {
       const orig = originalItems[i];
@@ -314,7 +342,7 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
       }
     }
     return false;
-  }, [selectedOrder, editableItems]);
+  }, [selectedOrder, editableItems, getOrderItems]);
 
   const updateItemQuantity = (index: number, newQty: number) => {
     if (newQty < 1) return;
@@ -349,7 +377,8 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
 
   const resetItemsToOriginal = () => {
     if (!selectedOrder) return;
-    setEditableItems(selectedOrder.items && Array.isArray(selectedOrder.items) ? JSON.parse(JSON.stringify(selectedOrder.items)) : []);
+    const parsed = getOrderItems(selectedOrder);
+    setEditableItems(JSON.parse(JSON.stringify(parsed)));
     setItemSearchQuery('');
   };
 
@@ -467,7 +496,8 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
     setEditableIg(parsed.instagram || '');
     setEditableTg(parsed.telegram || '');
     setIsEditingContact(false);
-    setEditableItems(order.items && Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : []);
+    const parsedItems = getOrderItems(order);
+    setEditableItems(parsedItems.length > 0 ? JSON.parse(JSON.stringify(parsedItems)) : []);
     setItemSearchQuery('');
     setItemsSaveSuccess(false);
     setCopilotResult(null);
@@ -1487,54 +1517,63 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                     </div>
 
                     {/* Order Items (Состав заказа) with full product names */}
-                    {Array.isArray(order.items) && order.items.length > 0 && (
-                      <div className="bg-slate-50/90 rounded-2xl p-3 border border-slate-100 space-y-2">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          <span className="flex items-center gap-1.5 text-indigo-700">
-                            <Package size={13} className="text-indigo-600 shrink-0" /> 
-                            Состав заказа ({order.items.length} поз.)
-                          </span>
-                          <span className="text-slate-400 font-semibold normal-case">
-                            {order.items.reduce((s: number, i: OrderItem) => s + (i.quantity || 1), 0)} шт.
-                          </span>
-                        </div>
+                    {(() => {
+                      const orderItems = getOrderItems(order);
+                      if (orderItems.length === 0) return null;
+                      const isExpanded = !!expandedOrderItems[order.id];
+                      const visibleItems = isExpanded ? orderItems : orderItems.slice(0, 4);
 
-                        <div className="space-y-1.5 divide-y divide-slate-100">
-                          {(expandedOrderItems[order.id] ? order.items : order.items.slice(0, 3)).map((item: OrderItem, itemIdx: number) => (
-                            <div key={itemIdx} className={`flex items-start justify-between gap-2 text-xs leading-snug ${itemIdx > 0 ? 'pt-1.5' : ''}`}>
-                              <div className="flex items-start gap-1.5 min-w-0 flex-1">
-                                <span className="text-slate-400 text-[11px] font-bold mt-0.5 shrink-0">{itemIdx + 1}.</span>
-                                <span className="font-semibold text-slate-800 break-words flex-1">
-                                  {item.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0 pl-1 pt-0.5">
-                                <span className="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
-                                  ×{item.quantity}
-                                </span>
-                                <span className="font-semibold text-slate-600 text-[11px]">
-                                  {item.price * item.quantity} с.
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                      return (
+                        <div className="bg-slate-50/90 rounded-2xl p-3 sm:p-3.5 border border-slate-200/80 space-y-2.5">
+                          <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                            <span className="flex items-center gap-1.5 text-indigo-700">
+                              <Package size={14} className="text-indigo-600 shrink-0" /> 
+                              Товары в заказе ({orderItems.length} поз.)
+                            </span>
+                            <span className="text-slate-500 font-bold normal-case">
+                              {orderItems.reduce((s: number, i: OrderItem) => s + (i.quantity || 1), 0)} шт.
+                            </span>
+                          </div>
 
-                        {order.items.length > 3 && (
-                          <button
-                            type="button"
-                            onClick={() => setExpandedOrderItems(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
-                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1.5 flex items-center gap-1 w-full justify-center transition-colors border-t border-slate-200/50"
-                          >
-                            {expandedOrderItems[order.id] ? (
-                              <>Свернуть <ChevronUp size={12} /></>
-                            ) : (
-                              <>Показать все {order.items.length} товаров (+{order.items.length - 3}) <ChevronDown size={12} /></>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
+                          <div className="space-y-2 divide-y divide-slate-100">
+                            {visibleItems.map((item: OrderItem, itemIdx: number) => (
+                              <div key={itemIdx} className={`flex items-start justify-between gap-2.5 ${itemIdx > 0 ? 'pt-2' : ''}`}>
+                                <div className="flex items-start gap-2 min-w-0 flex-1">
+                                  <span className="w-5 h-5 rounded-md bg-indigo-100/80 text-indigo-700 font-extrabold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                                    {itemIdx + 1}
+                                  </span>
+                                  <span className="font-bold text-slate-900 text-[13px] sm:text-sm break-words flex-1 leading-snug">
+                                    {item.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0 pl-1 pt-0.5">
+                                  <span className="font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded-lg text-xs">
+                                    ×{item.quantity}
+                                  </span>
+                                  <span className="font-bold text-slate-800 text-xs whitespace-nowrap">
+                                    {item.price * item.quantity} с.
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {orderItems.length > 4 && (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedOrderItems(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
+                              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 pt-2 flex items-center gap-1 w-full justify-center transition-colors border-t border-slate-200/60"
+                            >
+                              {isExpanded ? (
+                                <>Свернуть <ChevronUp size={13} /></>
+                              ) : (
+                                <>Показать все {orderItems.length} товаров (+{orderItems.length - 4}) <ChevronDown size={13} /></>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Card Footer Bar */}
@@ -1586,16 +1625,18 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500">ID / Дата</th>
                     <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500">Канал</th>
-                    <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500">Клиент / Состав</th>
+                    <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500">Клиент / Адрес</th>
+                    <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500 min-w-[220px]">Товары в заказе</th>
                     <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500">Сумма</th>
                     <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500">Изменить статус</th>
-                    <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500 text-right">Быстрый действия</th>
+                    <th className="py-4 px-5 text-[11px] uppercase tracking-widest font-semibold text-slate-500 text-right">Быстрые действия</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredOrders.map(order => {
                   const ch = CHANNEL_MAP[order.channel || 'website'] || CHANNEL_MAP.website;
                   const st = STATUS_MAP[order.status] || STATUS_MAP.new;
+                  const orderItems = getOrderItems(order);
                   return (
                     <tr 
                       key={order.id} 
@@ -1675,20 +1716,34 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                               {!parsed.phone && !parsed.instagram && !parsed.telegram && !parsed.pickupNote && (
                                 <p className="text-sm font-semibold text-slate-900">{parsed.raw}</p>
                               )}
+
+                              {order.delivery_address && (
+                                <p className="text-[11px] text-slate-500 mt-1 break-words">📍 {order.delivery_address}</p>
+                              )}
                             </div>
                           );
                         })()}
-                        {Array.isArray(order.items) && (
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                            {order.items.map((i: OrderItem) => `${i.name} ×${i.quantity}`).join(', ')}
-                          </p>
-                        )}
-                        {order.delivery_address && (
-                          <p className="text-[11px] text-slate-400 mt-0.5 truncate">📍 {order.delivery_address}</p>
+                      </td>
+                      <td className="py-3.5 px-5 align-top max-w-sm">
+                        {orderItems.length > 0 ? (
+                          <div className="space-y-1.5">
+                            {orderItems.map((i, idx) => (
+                              <div key={idx} className="flex items-start justify-between gap-2 text-xs">
+                                <span className="font-bold text-slate-900 break-words flex-1 leading-snug">
+                                  {idx + 1}. {i.name}
+                                </span>
+                                <span className="font-black text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded text-[11px] shrink-0">
+                                  ×{i.quantity}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Нет товаров</span>
                         )}
                       </td>
                       <td className="py-3.5 px-5 align-top">
-                        <p className="text-sm font-bold text-slate-900">{order.total} смн</p>
+                        <p className="text-sm font-extrabold text-slate-900">{order.total} смн</p>
                       </td>
                       <td className="py-3.5 px-5 align-top" onClick={e => e.stopPropagation()}>
                         {/* Direct dropdown for instant status change */}
@@ -2407,8 +2462,8 @@ export const OperatorWorkspace: React.FC<OperatorWorkspaceProps> = ({ onBack, on
                           {idx + 1}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-slate-800 text-xs sm:text-sm break-words leading-snug">{item.name}</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">{item.price} смн / шт.</p>
+                          <p className="font-bold text-slate-900 text-sm sm:text-base break-words leading-snug">{item.name}</p>
+                          <p className="text-[12px] font-semibold text-slate-500 mt-0.5">{item.price} смн / шт.</p>
                         </div>
                       </div>
 
