@@ -1,7 +1,7 @@
 "use client";
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, X, Minus, Plus, Trash2, Zap, ShieldCheck, ArrowRight, Ticket, Gift, Phone, Trash } from 'lucide-react';
+import { ShoppingBag, X, Minus, Plus, Trash2, Zap, ShieldCheck, ArrowRight, Ticket, Gift, Phone, Trash, Loader2 } from 'lucide-react';
 import { useCart } from '@/store/useCart';
 import { useClient } from '@/store/useClient';
 import { Lang, Product } from '@/lib/types';
@@ -88,6 +88,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
   const [shakePromo, setShakePromo] = useState(false);
 
   const [isVerifying, setIsVerifying] = useState(false);
+  const isSubmittingRef = useRef(false);
+  const lastSubmittedTimeRef = useRef<number>(0);
 
   // Lock body scroll when cart drawer is open to prevent background scroll chaining
   useEffect(() => {
@@ -263,16 +265,33 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
     setManuallyRemovedPromo(true);
   };
 
-  // Secure checkout
+  // Secure checkout with anti-duplication & slow-network locks
   const handleCheckout = async () => {
-    setIsVerifying(true);
+    // 🛡️ 1. SYNCHRONOUS MUTEX LOCK:
+    // Instantly blocks any second/third click in the same microtask before React re-render
+    if (isSubmittingRef.current || isVerifying) {
+      return;
+    }
+
+    // 🛡️ 2. SUBMISSION COOLDOWN:
+    // Prevents submitting again within 15 seconds of a previous order completion
+    if (Date.now() - lastSubmittedTimeRef.current < 15000) {
+      return;
+    }
 
     const cleanPhone = clientPhone.replace(/\D/g, '');
     if (cleanPhone.length < 9) {
       alert(lang === 'en' ? 'Please enter a valid phone number (9 digits)' : (lang === 'ru' ? 'Введите корректный номер телефона (9 цифр)' : 'Рақами телефони дурустро ворид кунед (9 рақам)'));
-      setIsVerifying(false);
       return;
     }
+
+    if (items.length === 0) {
+      return;
+    }
+
+    // Lock immediately
+    isSubmittingRef.current = true;
+    setIsVerifying(true);
     const fullPhone = '+992' + cleanPhone;
 
     try {
@@ -306,39 +325,76 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
       // Re-verify promo code on database via secure API
       let verifiedDiscount = 0;
       if (appliedPromo) {
-        const promoRes = await fetch('/api/promo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'verify', code: appliedPromo.code })
-        });
-        
-        if (promoRes.ok) {
-          const promoResult = await promoRes.json();
-          if (promoResult.found && promoResult.promocode) {
-            const dbPromo = promoResult.promocode;
-            // Check minimum order amount requirement
-            if (verifiedTotal >= Number(dbPromo.min_order_amount || 0)) {
-              if (dbPromo.discount_type === 'percentage') {
-                verifiedDiscount = Math.round((verifiedTotal * Number(dbPromo.discount_value)) / 100);
+        try {
+          const promoRes = await fetch('/api/promo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verify', code: appliedPromo.code })
+          });
+          
+          if (promoRes.ok) {
+            const promoResult = await promoRes.json();
+            if (promoResult.found && promoResult.promocode) {
+              const dbPromo = promoResult.promocode;
+              // Check minimum order amount requirement
+              if (verifiedTotal >= Number(dbPromo.min_order_amount || 0)) {
+                if (dbPromo.discount_type === 'percentage') {
+                  verifiedDiscount = Math.round((verifiedTotal * Number(dbPromo.discount_value)) / 100);
+                } else {
+                  verifiedDiscount = Math.min(Number(dbPromo.discount_value), verifiedTotal);
+                }
               } else {
-                verifiedDiscount = Math.min(Number(dbPromo.discount_value), verifiedTotal);
+                console.warn("Promocode minimum order amount check failed at checkout");
               }
-            } else {
-              console.warn("Promocode minimum order amount check failed at checkout");
             }
           }
+        } catch (promoErr) {
+          console.warn("Promocode verification skipped:", promoErr);
         }
       }
 
       const verifiedDiscountedTotal = Math.max(verifiedTotal - verifiedDiscount, 0);
 
+      // 🛡️ 3. DATABASE IDEMPOTENCY / ANTI-DUPLICATION CHECK:
+      // If customer tapped multiple times on slow internet, or if a previous request succeeded
+      // while browser was lagging, verify if an identical order from this phone was already created in last 30s.
+      try {
+        const thirtySecAgo = new Date(Date.now() - 30000).toISOString();
+        const { data: recentOrders } = await supabase
+          .from('orders')
+          .select('id, total, created_at')
+          .eq('phone', fullPhone)
+          .gte('created_at', thirtySecAgo)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (recentOrders && recentOrders.length > 0) {
+          const recent = recentOrders[0];
+          if (Math.abs(Number(recent.total) - Number(verifiedDiscountedTotal)) < 0.1) {
+            console.warn(`[Anti-duplicate] Order #${recent.id} already exists within last 30s. Preventing duplicate order creation.`);
+            lastSubmittedTimeRef.current = Date.now();
+            onOrderSuccess?.();
+            setIsOpen(false);
+            clearCart();
+            setAppliedPromo(null);
+            return;
+          }
+        }
+      } catch (dedupErr) {
+        console.warn("Deduplication check error:", dedupErr);
+      }
+
       // Get UTM tags from localStorage via analytics helper
-      const { getValidUtmParams } = await import('@/lib/analytics');
-      const utms = getValidUtmParams();
-      
+      let utms: any = null;
       let utmNotes = '';
-      if (utms && utms.utm_source) {
-        utmNotes = `[UTM: source=${utms.utm_source}${utms.utm_medium ? `, medium=${utms.utm_medium}` : ''}${utms.utm_campaign ? `, campaign=${utms.utm_campaign}` : ''}]`;
+      try {
+        const { getValidUtmParams } = await import('@/lib/analytics');
+        utms = getValidUtmParams();
+        if (utms && utms.utm_source) {
+          utmNotes = `[UTM: source=${utms.utm_source}${utms.utm_medium ? `, medium=${utms.utm_medium}` : ''}${utms.utm_campaign ? `, campaign=${utms.utm_campaign}` : ''}]`;
+        }
+      } catch (utmErr) {
+        console.warn("UTM retrieval error:", utmErr);
       }
 
       // Save order in database!
@@ -369,28 +425,38 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
             ? 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз.' 
             : 'Ҳангоми сабти фармоиш хатогӣ рӯй дод. Лутфан, дубора кӯшиш кунед.')
         );
-        setIsVerifying(false);
         return;
       }
 
       // Increment promocode usage count in Supabase via secure API
       if (appliedPromo) {
-        await fetch('/api/promo', {
+        fetch('/api/promo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'increment', code: appliedPromo.code })
         }).catch(err => console.error("Failed to increment promo code usage:", err));
       }
 
+      lastSubmittedTimeRef.current = Date.now();
       onOrderSuccess?.();
       setIsOpen(false);
       clearCart();
       setAppliedPromo(null);
 
-    } catch (err) {
-      console.error("Validation failed", err);
+    } catch (err: any) {
+      console.error("Order submission failed:", err);
+      alert(lang === 'en'
+        ? 'Connection issue. Please check your internet connection and try again.'
+        : (lang === 'ru'
+          ? 'Проблема с подключением к сети. Пожалуйста, проверьте интернет и попробуйте еще раз.'
+          : 'Хатогӣ дар пайвастшавӣ. Лутфан, интернетро санҷед ва дубора кӯшиш кунед.')
+      );
     } finally {
       setIsVerifying(false);
+      // Small debounce delay before clearing ref to prevent instant re-tap
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+      }, 1500);
     }
   };
 
@@ -403,7 +469,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
+            onClick={() => !isVerifying && setIsOpen(false)}
             className="absolute inset-0 bg-black/60 md:backdrop-blur-[12px]"
           />
 
@@ -437,8 +503,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                 </div>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
-                className="w-10 h-10 rounded-full bg-[#F0F0F5] hover:bg-[#1D1D1F] hover:text-white text-[#86868B] transition-all flex items-center justify-center active:scale-90"
+                onClick={() => !isVerifying && setIsOpen(false)}
+                disabled={isVerifying}
+                className="w-10 h-10 rounded-full bg-[#F0F0F5] hover:bg-[#1D1D1F] hover:text-white text-[#86868B] transition-all flex items-center justify-center active:scale-90 disabled:opacity-40 disabled:pointer-events-none"
               >
                 <X size={20} />
               </button>
@@ -544,8 +611,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                               </h4>
                               {/* DELETE BUTTON — always red */}
                               <button 
-                                onClick={() => removeItem(item.id)} 
-                                className="text-red-400 bg-red-50 hover:text-red-600 hover:bg-red-100 transition-all p-1.5 rounded-lg active:scale-90 shrink-0"
+                                onClick={() => !isVerifying && removeItem(item.id)} 
+                                disabled={isVerifying}
+                                className="text-red-400 bg-red-50 hover:text-red-600 hover:bg-red-100 transition-all p-1.5 rounded-lg active:scale-90 shrink-0 disabled:opacity-40 disabled:pointer-events-none"
                               >
                                 <Trash2 size={15} />
                               </button>
@@ -553,9 +621,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
 
                             <div className="flex items-center justify-between mt-2.5">
                               <div className="flex items-center gap-0.5 bg-[#F5F5F7] rounded-xl p-0.5 border border-[#E8E8ED]">
-                                <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 rounded-lg hover:bg-[#1D1D1F] hover:text-white transition-all flex items-center justify-center text-[#86868B]"><Minus size={13} /></button>
+                                <button disabled={isVerifying} onClick={() => !isVerifying && updateQuantity(item.id, -1)} className="w-7 h-7 rounded-lg hover:bg-[#1D1D1F] hover:text-white transition-all flex items-center justify-center text-[#86868B] disabled:opacity-40 disabled:pointer-events-none"><Minus size={13} /></button>
                                 <span className="w-7 text-center text-[14px] font-bold font-outfit text-[#1D1D1F]">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 rounded-lg hover:bg-[#1D1D1F] hover:text-white transition-all flex items-center justify-center text-[#86868B]"><Plus size={13} /></button>
+                                <button disabled={isVerifying} onClick={() => !isVerifying && updateQuantity(item.id, 1)} className="w-7 h-7 rounded-lg hover:bg-[#1D1D1F] hover:text-white transition-all flex items-center justify-center text-[#86868B] disabled:opacity-40 disabled:pointer-events-none"><Plus size={13} /></button>
                               </div>
                               <p className="text-[16px] font-bold text-[#1D1D1F] font-outfit">
                                 {item.price * item.quantity} <span className="text-[10px] text-[#94A3B8]">{lang === 'en' ? 'TJS' : 'смн'}</span>
@@ -632,6 +700,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       </div>
                       <input
                         type="tel"
+                        disabled={isVerifying}
                         placeholder="90 123 45 67"
                         maxLength={9}
                         value={clientPhone}
@@ -639,7 +708,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                           const val = e.target.value.replace(/\D/g, '').slice(0, 9);
                           setClientPhone(val);
                         }}
-                        className="flex-1 h-11 px-4 rounded-xl bg-white border border-[#D8D8E0] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold text-[15px] outline-none transition-all font-outfit tracking-wider text-[#1D1D1F] placeholder:text-[#C4C4C9] placeholder:tracking-widest"
+                        className="flex-1 h-11 px-4 rounded-xl bg-white border border-[#D8D8E0] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold text-[15px] outline-none transition-all font-outfit tracking-wider text-[#1D1D1F] placeholder:text-[#C4C4C9] placeholder:tracking-widest disabled:opacity-60 disabled:bg-[#F5F5F7]"
                       />
                     </div>
                   </div>
@@ -679,15 +748,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                           <div className="flex-1 relative">
                             <input
                               type="text"
+                              disabled={isCheckingPromo || isVerifying}
                               placeholder={lang === 'en' ? 'Enter promo code' : (lang === 'ru' ? 'Введите промокод' : 'Ворид кардани промокод')}
                               value={promoInput}
                               onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                              className="w-full h-11 px-4 rounded-xl bg-white border border-[#D8D8E0] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 font-bold text-[13px] uppercase tracking-wider outline-none transition-all font-outfit text-[#1D1D1F] placeholder:text-[#C4C4C9] placeholder:normal-case"
+                              className="w-full h-11 px-4 rounded-xl bg-white border border-[#D8D8E0] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 font-bold text-[13px] uppercase tracking-wider outline-none transition-all font-outfit text-[#1D1D1F] placeholder:text-[#C4C4C9] placeholder:normal-case disabled:opacity-50"
                             />
                           </div>
                           <button
                             onClick={handleApplyPromo}
-                            disabled={isCheckingPromo || !promoInput.trim()}
+                            disabled={isCheckingPromo || isVerifying || !promoInput.trim()}
                             className="h-11 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[12px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center disabled:opacity-30 disabled:scale-100 shrink-0 shadow-sm shadow-indigo-600/20 font-outfit"
                           >
                             {isCheckingPromo ? (
@@ -721,14 +791,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                   <button
                     onClick={handleCheckout}
                     disabled={isVerifying}
-                    className="w-full h-14 bg-[#1D1D1F] hover:bg-indigo-600 disabled:opacity-70 disabled:hover:bg-[#1D1D1F] text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-black/15 transition-all flex items-center justify-center gap-3 group/btn active:scale-[0.98] disabled:scale-100 relative overflow-hidden"
+                    className="w-full h-14 bg-[#1D1D1F] hover:bg-indigo-600 disabled:opacity-75 disabled:pointer-events-none disabled:cursor-not-allowed disabled:hover:bg-[#1D1D1F] text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-black/15 transition-all flex items-center justify-center gap-3 group/btn active:scale-[0.98] disabled:scale-100 relative overflow-hidden"
                   >
                     {/* shimmer effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.07] to-transparent animate-[shimmer_3s_linear_infinite]" style={{ backgroundSize: '200% 100%' }} />
                     
                     <div className="relative flex items-center gap-3">
-                      <Zap size={16} fill="currentColor" className={isVerifying ? 'animate-pulse' : ''} />
-                      <span>{isVerifying ? (lang === 'en' ? 'Processing...' : (lang === 'ru' ? 'Оформление...' : 'Фармоиш...')) : (lang === 'en' ? 'Place Order' : (lang === 'ru' ? 'Оформить заказ' : 'Фармоиш додан'))}</span>
+                      {isVerifying ? (
+                        <Loader2 size={18} className="animate-spin text-white shrink-0" />
+                      ) : (
+                        <Zap size={16} fill="currentColor" />
+                      )}
+                      <span>
+                        {isVerifying
+                          ? (lang === 'en' ? 'Placing order...' : (lang === 'ru' ? 'Оформляем заказ...' : 'Фармоиш сабт шуда истодааст...'))
+                          : (lang === 'en' ? 'Place Order' : (lang === 'ru' ? 'Оформить заказ' : 'Фармоиш додан'))
+                        }
+                      </span>
                       <span className="text-white/50">•</span>
                       {appliedPromo ? (
                         <span className="font-extrabold">{discountedTotal} {lang === 'en' ? 'TJS' : 'смн'}</span>
@@ -738,6 +817,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ lang, onOrderSuccess }) 
                       {!isVerifying && <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />}
                     </div>
                   </button>
+
+                  {/* Submitting slow-network helper hint */}
+                  {isVerifying && (
+                    <p className="text-[11px] font-medium text-[#86868B] text-center pt-1.5 animate-pulse font-outfit">
+                      {lang === 'en'
+                        ? 'Connecting to server, please wait...'
+                        : (lang === 'ru'
+                          ? 'Связь с сервером, пожалуйста, подождите...'
+                          : 'Пайвастшавӣ бо сервер, лутфан каме сабр кунед...')}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
