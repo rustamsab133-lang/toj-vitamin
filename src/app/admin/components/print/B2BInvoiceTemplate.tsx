@@ -140,92 +140,83 @@ export default function B2BInvoiceTemplate({
       onClose={onClose}
       actions={customActions}
     >
-      <div className="text-slate-900 font-sans text-xs leading-relaxed">
-        {/* Top Header / Company details */}
-        <div className="border-b-2 border-slate-900 pb-4 mb-5">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-slate-900 uppercase">
-                  TOJ-VITAMIN DISTRIBUTION
-                </span>
-                <span className="text-[10px] bg-slate-900 text-white font-bold px-2 py-0.5 rounded">
-                  B2B PHARMA
-                </span>
-              </div>
-              <p className="text-[11px] font-bold text-slate-700 mt-0.5">
-                ООО «Саховати Истаравшан» • Национальный фармацевтический дистрибьютор
-              </p>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Официальные прямые контракты GLS Pharmaceuticals • Климатические склады: г. Худжанд, г. Душанбе
-              </p>
+      <div className="text-slate-900 font-sans text-[10px] leading-tight print:text-[9.5px]">
+        {/* Compact Header */}
+        <div className="border-b-2 border-slate-900 pb-1.5 mb-2 flex justify-between items-end">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm sm:text-base font-black tracking-tight text-slate-950 uppercase">
+                TOJ-VITAMIN DISTRIBUTION
+              </span>
+              <span className="text-[9px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded leading-none">
+                B2B PHARMA
+              </span>
             </div>
-            <div className="text-right text-[11px] text-slate-600">
-              <p className="font-bold text-slate-900">Отдел оптовых продаж:</p>
-              <p>Тел / WhatsApp: <span className="font-bold text-slate-900">+992 17 666 0707</span></p>
-              <p>Email: <span className="font-medium">b2b@tojvitamin.tj</span></p>
-            </div>
+            <p className="text-[10px] font-bold text-slate-700 mt-0.5">
+              ООО «Саховати Истаравшан» • Национальный дистрибьютор GLS Pharmaceuticals
+            </p>
+          </div>
+          <div className="text-right text-[10px] text-slate-600 leading-tight">
+            <p><span className="font-bold text-slate-900">Оптовый отдел: </span><span className="font-bold text-slate-950">+992 17 666 0707</span></p>
+            <p>Email: <span className="font-medium text-slate-700">b2b@tojvitamin.tj</span></p>
           </div>
         </div>
 
         {/* Title */}
-        <div className="text-center my-6">
-          <h1 className="text-xl font-black uppercase tracking-wide text-slate-950">
+        <div className="text-center my-2">
+          <h1 className="text-sm sm:text-base font-black uppercase tracking-wide text-slate-950 inline-block">
             ТОВАРНАЯ НАКЛАДНАЯ № {docNumber}
           </h1>
-          <p className="text-xs font-semibold text-slate-600 mt-1">
+          <span className="text-xs font-semibold text-slate-600 ml-2">
             от {formattedDate}
-          </p>
+          </span>
         </div>
 
         {/* Parties Box */}
-        <div className="bg-slate-50/80 border border-slate-300 rounded-lg p-3.5 mb-6 space-y-2 text-xs">
+        <div className="bg-slate-50/90 border border-slate-300 rounded p-2 mb-2 space-y-1 text-[10px] leading-tight">
           <div className="flex">
-            <span className="font-bold w-36 shrink-0 text-slate-700">Поставщик:</span>
+            <span className="font-bold w-24 shrink-0 text-slate-700">Поставщик:</span>
             <div className="flex-1 font-semibold text-slate-900">
               ООО «Саховати Истаравшан» (TOJ-VITAMIN DISTRIBUTION), РТ, г. Худжанд / г. Душанбе, тел: +992 17 666 0707
             </div>
           </div>
-          <div className="flex border-t border-slate-200/80 pt-2">
-            <span className="font-bold w-36 shrink-0 text-slate-700">Покупатель (Аптека):</span>
+          <div className="flex border-t border-slate-200/80 pt-1">
+            <span className="font-bold w-24 shrink-0 text-slate-700">Покупатель:</span>
             <div className="flex-1 text-slate-900">
-              <span className="font-black text-sm">{pharmacy.name || 'Оптовый покупатель'}</span>
+              <strong className="font-black text-slate-950">{pharmacy.name || 'Оптовый покупатель'}</strong>
               {pharmacy.phone && (
                 <span className="ml-2 font-semibold text-slate-700">| Тел: {pharmacy.phone}</span>
               )}
               {pharmacy.contact_person && (
                 <span className="ml-2 text-slate-600">| Контакт: {pharmacy.contact_person}</span>
               )}
+              {pharmacy.address && (
+                <span className="ml-2 text-slate-700">| Адрес: {pharmacy.address}</span>
+              )}
             </div>
           </div>
-          {pharmacy.address && (
-            <div className="flex border-t border-slate-200/80 pt-2">
-              <span className="font-bold w-36 shrink-0 text-slate-700">Адрес доставки:</span>
-              <div className="flex-1 font-semibold text-slate-800">
-                {pharmacy.address}
+          {(notes || formattedDeliveryDate) && (
+            <div className="flex border-t border-slate-200/80 pt-1 text-[9.5px] text-slate-600">
+              <span className="font-bold w-24 shrink-0 text-slate-700">Основание:</span>
+              <div className="flex-1">
+                Оптовый заказ №{shortId}
+                {formattedDeliveryDate ? ` • Дата отгрузки: ${formattedDeliveryDate}` : ''}
+                {notes ? ` • Прим.: "${notes}"` : ''}
               </div>
             </div>
           )}
-          <div className="flex border-t border-slate-200/80 pt-2 text-[11px] text-slate-600">
-            <span className="font-bold w-36 shrink-0 text-slate-700">Основание / Прим.:</span>
-            <div className="flex-1">
-              Оптовый заказ №{shortId}
-              {formattedDeliveryDate ? ` • Дата отгрузки: ${formattedDeliveryDate}` : ''}
-              {notes ? ` • Примечание: "${notes}"` : ''}
-            </div>
-          </div>
         </div>
 
         {/* Products Table */}
-        <table className="w-full mb-5 border-collapse border border-slate-400 text-xs">
+        <table className="w-full mb-2 border-collapse border border-slate-400 text-[10px]">
           <thead>
             <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-400" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-              <th className="border border-slate-400 p-2 text-center w-10">№</th>
-              <th className="border border-slate-400 p-2 text-left">Наименование товара и форма выпуска</th>
-              <th className="border border-slate-400 p-2 text-center w-14">Ед.</th>
-              <th className="border border-slate-400 p-2 text-center w-16">Кол-во</th>
-              <th className="border border-slate-400 p-2 text-right w-24">Цена (TJS)</th>
-              <th className="border border-slate-400 p-2 text-right w-28">Сумма (TJS)</th>
+              <th className="border border-slate-400 py-1 px-1.5 text-center w-7">№</th>
+              <th className="border border-slate-400 py-1 px-1.5 text-left">Наименование товара и форма выпуска</th>
+              <th className="border border-slate-400 py-1 px-1 text-center w-8">Ед.</th>
+              <th className="border border-slate-400 py-1 px-1.5 text-center w-12">Кол-во</th>
+              <th className="border border-slate-400 py-1 px-2 text-right w-20">Цена (TJS)</th>
+              <th className="border border-slate-400 py-1 px-2 text-right w-24">Сумма (TJS)</th>
             </tr>
           </thead>
           <tbody>
@@ -233,14 +224,14 @@ export default function B2BInvoiceTemplate({
               const lineTotal = Math.round((Number(item.quantity) * Number(item.price)) * 100) / 100;
               return (
                 <tr key={idx} className="hover:bg-slate-50/50" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                  <td className="border border-slate-400 p-1.5 text-center text-slate-600">{idx + 1}</td>
-                  <td className="border border-slate-400 p-1.5 font-medium text-slate-900">{item.name}</td>
-                  <td className="border border-slate-400 p-1.5 text-center text-slate-600">шт</td>
-                  <td className="border border-slate-400 p-1.5 text-center font-bold text-slate-950">{item.quantity}</td>
-                  <td className="border border-slate-400 p-1.5 text-right font-medium text-slate-800">
+                  <td className="border border-slate-400 py-0.5 px-1 text-center text-slate-600">{idx + 1}</td>
+                  <td className="border border-slate-400 py-0.5 px-1.5 font-medium text-slate-900 leading-tight">{item.name}</td>
+                  <td className="border border-slate-400 py-0.5 px-1 text-center text-slate-600">шт</td>
+                  <td className="border border-slate-400 py-0.5 px-1 text-center font-bold text-slate-950">{item.quantity}</td>
+                  <td className="border border-slate-400 py-0.5 px-2 text-right font-medium text-slate-800">
                     {formatMoney(item.price)}
                   </td>
-                  <td className="border border-slate-400 p-1.5 text-right font-bold text-slate-950">
+                  <td className="border border-slate-400 py-0.5 px-2 text-right font-bold text-slate-950">
                     {formatMoney(lineTotal)}
                   </td>
                 </tr>
@@ -250,32 +241,32 @@ export default function B2BInvoiceTemplate({
           <tfoot>
             {/* Subtotal row */}
             <tr className="font-semibold text-slate-700 bg-slate-50 border-t-2 border-slate-400" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-              <td colSpan={3} className="border border-slate-400 p-2 text-right">
+              <td colSpan={3} className="border border-slate-400 py-1 px-2 text-right">
                 {discountPercent > 0 && discountAmount > 0 ? 'Подитог (без скидки):' : 'Итого по позициям:'}
               </td>
-              <td className="border border-slate-400 p-2 text-center font-bold">{totalQuantity} шт</td>
-              <td className="border border-slate-400 p-2"></td>
-              <td className="border border-slate-400 p-2 text-right font-bold">{formatMoney(subtotal)}</td>
+              <td className="border border-slate-400 py-1 px-1 text-center font-bold">{totalQuantity} шт</td>
+              <td className="border border-slate-400 py-1 px-2"></td>
+              <td className="border border-slate-400 py-1 px-2 text-right font-bold">{formatMoney(subtotal)}</td>
             </tr>
 
             {/* Discount row if applicable and > 0 */}
             {discountPercent > 0 && discountAmount > 0 && (
               <tr className="font-semibold text-emerald-800 bg-emerald-50/60" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                <td colSpan={5} className="border border-slate-400 p-2 text-right">
+                <td colSpan={5} className="border border-slate-400 py-1 px-2 text-right">
                   Индивидуальная скидка ({discountPercent}%):
                 </td>
-                <td className="border border-slate-400 p-2 text-right font-bold text-emerald-800">
+                <td className="border border-slate-400 py-1 px-2 text-right font-bold text-emerald-800">
                   - {formatMoney(discountAmount)}
                 </td>
               </tr>
             )}
 
             {/* Total Row */}
-            <tr className="font-black text-sm bg-slate-100 text-slate-950 border-t-2 border-slate-900" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-              <td colSpan={5} className="border border-slate-400 p-2.5 text-right uppercase tracking-wider">
+            <tr className="font-black text-xs sm:text-sm bg-slate-100 text-slate-950 border-t-2 border-slate-900" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+              <td colSpan={5} className="border border-slate-400 py-1.5 px-2 text-right uppercase tracking-wider">
                 ВСЕГО К ОПЛАТЕ:
               </td>
-              <td className="border border-slate-400 p-2.5 text-right text-base text-slate-950 font-black">
+              <td className="border border-slate-400 py-1.5 px-2 text-right text-xs sm:text-sm text-slate-950 font-black">
                 {formatMoney(finalTotal)}
               </td>
             </tr>
@@ -283,72 +274,24 @@ export default function B2BInvoiceTemplate({
         </table>
 
         {/* Text Summary */}
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-6 space-y-1.5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-          <p className="text-xs">
-            <span className="font-bold text-slate-700">Всего отпущено наименований:</span>{' '}
-            <strong className="text-slate-950">{items.length}</strong> (общим количеством{' '}
+        <div className="bg-slate-50 border border-slate-200 rounded p-2 mb-2 space-y-1 text-[10px] leading-tight" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+          <p>
+            <span className="font-bold text-slate-700">Всего отпущено:</span>{' '}
+            <strong className="text-slate-950">{items.length} наим.</strong> (общим количеством{' '}
             <strong className="text-slate-950">{totalQuantity} шт</strong>) на сумму{' '}
             <strong className="text-slate-950">{formatMoney(finalTotal)}</strong>.
           </p>
-          <div className="text-xs pt-1">
+          <div>
             <span className="font-bold text-slate-700">Сумма прописью: </span>
-            <span className="font-bold italic text-slate-950 underline decoration-slate-400 underline-offset-4">
+            <span className="font-bold italic text-slate-950 underline decoration-slate-400 underline-offset-2">
               {numberToWordsRu(finalTotal)}
             </span>
           </div>
         </div>
 
-        {/* Signatures & Seal */}
-        <div className="mt-12 pt-6 border-t border-slate-400" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-          <div className="grid grid-cols-2 gap-12 text-xs">
-            {/* Supplier Signature */}
-            <div className="space-y-6">
-              <p className="font-bold uppercase tracking-wider text-[11px] text-slate-800">
-                Отпустил (со склада Поставщика):
-              </p>
-              <div className="flex items-end gap-2">
-                <span className="text-slate-500 w-24">Должность:</span>
-                <span className="flex-1 border-b border-slate-800 font-semibold text-slate-800">
-                  Заведующий складом / Экспедитор
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <span className="text-slate-500 w-24">Подпись:</span>
-                <span className="flex-1 border-b border-slate-800 h-5"></span>
-                <span className="text-slate-500">/</span>
-                <span className="flex-1 border-b border-slate-800 h-5"></span>
-              </div>
-              <div className="pt-2 text-slate-400 font-bold text-[10px]">
-                М. П. (Место для печати Поставщика)
-              </div>
-            </div>
-
-            {/* Customer Signature */}
-            <div className="space-y-6">
-              <p className="font-bold uppercase tracking-wider text-[11px] text-slate-800">
-                Принял (представитель Аптеки):
-              </p>
-              <div className="flex items-end gap-2">
-                <span className="text-slate-500 w-24">Должность:</span>
-                <span className="flex-1 border-b border-slate-800 font-semibold text-slate-800">
-                  Фармацевт / Зав. аптекой
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <span className="text-slate-500 w-24">Подпись:</span>
-                <span className="flex-1 border-b border-slate-800 h-5"></span>
-                <span className="text-slate-500">/</span>
-                <span className="flex-1 border-b border-slate-800 h-5"></span>
-              </div>
-              <div className="pt-2 text-slate-400 font-bold text-[10px]">
-                М. П. (Место для печати Покупателя)
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center text-[10px] text-slate-400 border-t border-slate-200 pt-3">
-            Претензии по количеству и целостности упаковок принимаются в момент приема-передачи товара.
-          </div>
+        {/* Footnote */}
+        <div className="text-center text-[9px] text-slate-400 border-t border-slate-200 pt-1" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+          Претензии по количеству и качеству упаковок принимаются в момент приема-передачи товара.
         </div>
       </div>
     </PrintLayout>

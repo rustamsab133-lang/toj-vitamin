@@ -63,12 +63,12 @@ export default function PrintLayout({ title, onClose, children, actions, subtitl
       </div>
 
       {/* A4 Container */}
-      <div className="print-a4-sheet max-w-[210mm] mx-auto bg-white min-h-[297mm] p-8 sm:p-12 print:p-0 my-6 sm:my-8 print:my-0 shadow-lg print:shadow-none print:max-w-none print:min-h-0 text-black border border-slate-200 print:border-none rounded-xl print:rounded-none">
+      <div className="print-a4-sheet max-w-[210mm] mx-auto bg-white min-h-[297mm] p-6 sm:p-8 print:p-0 my-4 sm:my-6 print:my-0 shadow-lg print:shadow-none print:max-w-none print:min-h-0 text-black border border-slate-200 print:border-none rounded-xl print:rounded-none">
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
             @page {
               size: A4 portrait;
-              margin: 8mm 10mm;
+              margin: 6mm 8mm;
             }
             html, body {
               overflow: visible !important;
@@ -79,6 +79,9 @@ export default function PrintLayout({ title, onClose, children, actions, subtitl
               padding: 0 !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+            }
+            header, nav, aside {
+              display: none !important;
             }
             .print-wrapper-root {
               position: static !important;

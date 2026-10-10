@@ -108,7 +108,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg))]">
       {/* Admin Header */}
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-100 px-6 py-4 flex justify-between items-center print:hidden">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('dashboard')}>
           <div className="w-8 h-8 rounded-lg overflow-hidden bg-white border border-slate-200 p-0.5 flex items-center justify-center shadow-sm">
             <img src="/logo-square.webp" alt="TOJ-VITAMIN" className="w-full h-full object-contain" />
