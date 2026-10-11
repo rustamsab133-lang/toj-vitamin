@@ -452,9 +452,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               const enrichment = product ? findEnrichmentForProduct(product.name, enrichedData, product.id) : {};
               const galleryImages: string[] = (product.images && product.images.length > 0)
                 ? product.images
-                : (enrichment?.gallery && Array.isArray(enrichment.gallery) && enrichment.gallery.length > 0)
-                  ? enrichment.gallery
-                  : (product.image_url ? [product.image_url] : []);
+                : (product.image_url ? [product.image_url] : []);
               const currentImage = galleryImages[activeImageIndex] || product.image_url || '';
 
               const getAngleLabel = (idx: number) => {

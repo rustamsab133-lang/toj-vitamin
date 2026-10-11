@@ -5,6 +5,48 @@ import { getHiddenProductIds, filterVisibleProducts, isProductHidden } from './h
 
 import enrichedData from '@/data/enriched_gls_products.json';
 
+function resolveProductImages(marked: any, enriched: any, byId: any): { images: string[]; back_image_url?: string } {
+  // 1. If explicit product images exist in DB, use them
+  if (marked.images && Array.isArray(marked.images) && marked.images.length > 0) {
+    const images = marked.images;
+    return { images, back_image_url: images.length > 1 ? images[1] : undefined };
+  }
+
+  // 2. If dedicated gallery is saved in byId for this exact product ID, use it
+  if (byId?.gallery && Array.isArray(byId.gallery) && byId.gallery.length > 0) {
+    const images = byId.gallery;
+    return { images, back_image_url: images.length > 1 ? images[1] : undefined };
+  }
+
+  // 3. If enriched.gallery exists, verify that it strictly belongs to this product ID!
+  // Any image named prod-X where X != marked.id is REJECTED to prevent variant photo hijacking!
+  let validGallery: string[] = [];
+  if (enriched?.gallery && Array.isArray(enriched.gallery) && enriched.gallery.length > 0) {
+    const hasForeignId = enriched.gallery.some((imgUrl: string) => {
+      const match = imgUrl.match(/prod-(\d+)-/);
+      return match && Number(match[1]) !== Number(marked.id);
+    });
+
+    if (!hasForeignId) {
+      validGallery = enriched.gallery;
+    }
+  }
+
+  if (validGallery.length > 0) {
+    return {
+      images: validGallery,
+      back_image_url: validGallery.length > 1 ? validGallery[1] : undefined
+    };
+  }
+
+  // 4. Strict fallback: product's own verified image_url
+  const fallback = marked.image_url ? [marked.image_url] : [];
+  return {
+    images: fallback,
+    back_image_url: undefined
+  };
+}
+
 /**
  * Unified helper to fetch all active products from Supabase with the pricing markup automatically applied.
  * ALWAYS use this helper in new components, pages, or API routes instead of querying supabase.from('products') directly!
@@ -32,10 +74,8 @@ export async function getProductsWithMarkup(): Promise<Product[]> {
     return visibleProducts.map(p => {
       const marked = applyMarkupToProduct(p, markupSettings);
       const enriched = findEnrichmentForProduct(marked.name, enrichedData, marked.id);
-      const gallery: string[] = (marked as any).images || enriched?.gallery || [];
-      const images = gallery.length > 0 ? gallery : (marked.image_url ? [marked.image_url] : []);
-      const back_image_url = images.length > 1 ? images[1] : undefined;
       const byId = (enrichedData as any).by_product_id?.[String(marked.id)];
+      const { images, back_image_url } = resolveProductImages(marked, enriched, byId);
       const properties = (byId?.properties && byId.properties.length > 0) ? byId.properties : enriched?.properties;
       const description = marked.description || byId?.description || enriched?.description;
       const instructions = byId?.instructions || enriched?.instructions;
@@ -85,10 +125,8 @@ export async function getProductByIdWithMarkup(id: string | number): Promise<Pro
     const markupSettings = await getMarkupSettings();
     const marked = applyMarkupToProduct(product, markupSettings);
     const enriched = findEnrichmentForProduct(marked.name, enrichedData, marked.id);
-    const gallery: string[] = (marked as any).images || enriched?.gallery || [];
-    const images = gallery.length > 0 ? gallery : (marked.image_url ? [marked.image_url] : []);
-    const back_image_url = images.length > 1 ? images[1] : undefined;
     const byId = (enrichedData as any).by_product_id?.[String(marked.id)];
+    const { images, back_image_url } = resolveProductImages(marked, enriched, byId);
     const properties = (byId?.properties && byId.properties.length > 0) ? byId.properties : enriched?.properties;
     const description = marked.description || byId?.description || enriched?.description;
     const instructions = byId?.instructions || enriched?.instructions;
@@ -128,7 +166,8 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
         properties: (byId.properties && byId.properties.length > 0) ? byId.properties : res.properties,
         instructions: byId.instructions || res.instructions,
         instructions_en: byId.instructions_en || res.instructions_en,
-        properties_en: (byId.properties_en && byId.properties_en.length > 0) ? byId.properties_en : res.properties_en
+        properties_en: (byId.properties_en && byId.properties_en.length > 0) ? byId.properties_en : res.properties_en,
+        gallery: (byId.gallery && byId.gallery.length > 0) ? byId.gallery : res.gallery
       };
     }
     return res;
@@ -151,7 +190,12 @@ export function findEnrichmentForProduct(pName: string, enrichedData: Record<str
   if (name.includes('термо')) return attachIdData(enrichedData['термо комплекс'] || {});
   if (name.includes('глюко баланс') || name.includes('глюкобаланс')) return attachIdData(enrichedData['глюко баланс'] || {});
   if (name.includes('климмикс')) return attachIdData(enrichedData['климмикс'] || {});
-  if (name.includes('хлорофил')) return attachIdData(enrichedData['жидкий хлорофил'] || enrichedData['хлорофилл'] || {});
+  if (name.includes('хлорофил')) {
+    if (name.includes('капс') || name.includes('таб')) {
+      return attachIdData(enrichedData['хлорофилл'] || enrichedData['жидкий хлорофил'] || {});
+    }
+    return attachIdData(enrichedData['жидкий хлорофил'] || enrichedData['хлорофилл'] || {});
+  }
   if (name.includes('карнитин') && (name.includes('gls') || !name.includes(' '))) return attachIdData(enrichedData['л-карнитин'] || {});
   if (name.includes('аргинин') && (name.includes('gls') || !name.includes(' '))) return attachIdData(enrichedData['аргинин 1000'] || enrichedData['л аргинин'] || {});
   if (name.includes('мужчин') && (name.includes('комплекс') || name.includes('формула'))) return attachIdData(enrichedData['мужская формула'] || {});

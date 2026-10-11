@@ -359,9 +359,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           {(() => {
             const galleryList: string[] = (product.images && product.images.length > 0)
               ? product.images
-              : (enriched?.gallery && Array.isArray(enriched.gallery) && enriched.gallery.length > 0)
-                ? enriched.gallery
-                : (product.image_url ? [product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`] : []);
+              : (product.image_url ? [product.image_url.startsWith('http') ? product.image_url : `https://www.toj-vitamin.tj${product.image_url}`] : []);
 
             return (
               <ProductPageGallery

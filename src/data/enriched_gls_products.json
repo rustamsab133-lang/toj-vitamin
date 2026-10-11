@@ -22,12 +22,12 @@
       "Верните контроль над своими эмоциями! 5-HTP — ваш натуральный путь к душевному равновесию и стрессоустойчивости."
     ],
     "instructions": {
-      "usage": "Взрослым по 2 капсулы во время еды в первой половине дня",
+      "usage": "Взрослым по 1-2 капсулы в день во время еды",
       "course": "Продолжительность приема - 1 месяц",
       "contraindications": "Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью",
       "age": "Возрастные ограничения: 18+",
-      "full_text": "Взрослым по 2 капсулы во время еды в первой половине дня. Продолжительность приема - 1 месяц. При необходимости прием можно повторить. Возрастные ограничения: 18+. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью. Перед применением рекомендуется проконсультироваться с врачом.",
-      "source_url": "https://gls.store/catalog/dlya_pokhudeniya/3879/"
+      "full_text": "Взрослым по 1-2 капсулы в день во время еды. Продолжительность приема - 1 месяц. При необходимости прием можно повторить. Возрастные ограничения: 18+. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью. Перед применением рекомендуется проконсультироваться с врачом.",
+      "source_url": "https://gls.store/catalog/ot_stressa/95598/"
     },
     "name_en": "5-HTP",
     "properties_en": [
@@ -53,7 +53,8 @@
     },
     "gallery": [
       "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-0.jpg",
-      "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-1.jpg"
+      "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-1.jpg",
+      "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-2.jpg"
     ]
   },
   "msm комплекс": {
@@ -5172,12 +5173,12 @@
     "1": {
       "name": "5-HTP капс. (спокойствие, сон) 400мг №60 GLS",
       "instructions": {
-        "usage": "Взрослым по 1 капсуле в день во время еды.",
+        "usage": "Взрослым по 1-2 капсулы в день во время еды.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
         "full_text": "Взрослым по 1 капсуле в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью.",
-        "source_url": "https://gls.store/catalog/ot_stressa/7970/"
+        "source_url": "https://gls.store/catalog/ot_stressa/95598/"
       },
       "instructions_en": {
         "usage": "Adults take 1 capsule daily with meals.",
@@ -5192,6 +5193,11 @@
         "Гидрокситриптофан способствует быстрому засыпанию и хорошему сну, благодаря регуляции выработки мелатонина. Известно антидепрессивное действие 5-НТР, кроме того он способствует выбросу эндорфинов.",
         "Магний способствует передаче информации в головном мозге и снижает нервное перенапряжение. Магний помогает бороться со стрессом, регулирует настроение и нормализует сон.",
         "Шафран, благодаря активным компонентам входящих в его состав, улучшает настроение, снижает тревожность, помогает бороться со стрессом и улучшает память. Так же шафран обладает сильной антиоксидантной активностью, что позволяет защищать нервную систему от окислительного стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-1-2.jpg"
       ]
     },
     "2": {
@@ -5496,12 +5502,12 @@
     "12": {
       "name": "Витамин B12 капс.(кровь, нервы) 190мг №60 GLS",
       "instructions": {
-        "usage": "Взрослым по 2 капсулы в день во время еды.",
+        "usage": "Взрослым по 1 капсуле в день во время еды.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
         "full_text": "Взрослым по 2 капсулы в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью.",
-        "source_url": "https://gls.store/catalog/vitaminy_i_aminokisloty/81490/"
+        "source_url": "https://gls.store/catalog/dlya_mozga/96382/"
       },
       "instructions_en": {
         "usage": "Adults take 2 capsules daily with meals.",
@@ -5519,17 +5525,22 @@
         "Способствуют поддержанию мозговой деятельности, улучшению памяти и концентрации внимания, препятствуют развитию возрастных заболеваний мозга.",
         "Стимулируют кроветворение и улучшают синтез гемоглобина, снижают риск развития анемии.",
         "Способствуют синтезу коллагена и кератина. Поддерживают здоровье кожи, волос, ногтей и слизистых оболочек."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-12-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-12-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-12-2.jpg"
       ]
     },
     "13": {
       "name": "Витамин B5 капс. (жиросжигание. энергия) 400мг №60 GLS",
       "instructions": {
-        "usage": "Взрослым по 2 капсулы в день во время еды.",
+        "usage": "Взрослым по 1 капсуле в день во время еды.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
         "full_text": "Взрослым по 2 капсулы в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью.",
-        "source_url": "https://gls.store/catalog/vitaminy_i_aminokisloty/81490/"
+        "source_url": "https://gls.store/catalog/vitaminy_i_aminokisloty/101179/"
       },
       "instructions_en": {
         "usage": "Adults take 2 capsules daily with meals.",
@@ -5547,6 +5558,11 @@
         "Способствуют поддержанию мозговой деятельности, улучшению памяти и концентрации внимания, препятствуют развитию возрастных заболеваний мозга.",
         "Стимулируют кроветворение и улучшают синтез гемоглобина, снижают риск развития анемии.",
         "Способствуют синтезу коллагена и кератина. Поддерживают здоровье кожи, волос, ногтей и слизистых оболочек."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-13-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-13-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-13-2.jpg"
       ]
     },
     "14": {
@@ -5601,17 +5617,22 @@
         "Укрепляет иммунитет и уменьшает проявления воспалительных реакций. Снижает риск развития и тяжесть течения бактериальных и вирусных заболеваний, ускоряет выздоровление.",
         "Положительно влияет на эмоциональное состояние, позволяет легче справляться со стрессом. Повышает адаптационные возможности детского организма.",
         "Поддерживает нормальный обмен жиров и глюкозы. Способствует регуляции аппетита, снижает риск развития ожирения."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-15-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-15-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-15-2.jpg"
       ]
     },
     "16": {
       "name": "Витамин А 10000МЕ капс. (красота, зрение) 400мг №60 GLS",
       "instructions": {
-        "usage": "Детям старше 7 лет по 1 капсуле в день во время еды, взрослым, в т.ч. женщинам, планирующим беременность, беременным и кормящим женщинам по 2 капсулы в день во время еды.",
+        "usage": "Взрослым по 1 капсуле в день во время еды.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов.",
         "age": "18+",
         "full_text": "Детям старше 7 лет по 1 капсуле в день во время еды, взрослым, в т.ч. женщинам, планирующим беременность, беременным и кормящим женщинам по 2 капсулы в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов.",
-        "source_url": "https://gls.store/catalog/serdtse_i_sosudy/17071/"
+        "source_url": "https://gls.store/catalog/v_sezon_prostud/22688/"
       },
       "instructions_en": {
         "usage": "Children over 7 years take 1 capsule daily with meals; adults (including pregnant/lactating women) take 2 capsules daily with meals.",
@@ -5631,6 +5652,11 @@
         "Оказывает противовоспалительное действие, снижая риск хронических воспалительных заболеваний.",
         "Улучшает метаболизм, способствуя жиросжиганию и набору мышечной массы.",
         "Высокая концентрация активных компонентов и небольшой размер капсулы, обеспечивают высокую эффективность и комфортный прием."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-16-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-16-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-16-2.jpg"
       ]
     },
     "17": {
@@ -5823,6 +5849,11 @@
       "properties": [
         "Витамин С (аскорбиновая кислота) – это водорастворимый витамин, является мощным антиоксидантом.",
         "Витамин С замедляет процесс старения организма, способствует профилактике возрастного снижения когнитивных способностей, предотвращает окисление холестерина и отложение его на сосудистых стенках, оказывая таким образом антиатеросклеротическое воздействие. Витамин С также помогает защитить его организм от негативных последствий стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-23-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-23-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-23-2.jpg"
       ]
     },
     "24": {
@@ -5846,6 +5877,11 @@
       "properties": [
         "Витамин С (аскорбиновая кислота) – это водорастворимый витамин, является мощным антиоксидантом.",
         "Витамин С замедляет процесс старения организма, способствует профилактике возрастного снижения когнитивных способностей, предотвращает окисление холестерина и отложение его на сосудистых стенках, оказывая таким образом антиатеросклеротическое воздействие. Витамин С также помогает защитить его организм от негативных последствий стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-24-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-24-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-24-2.jpg"
       ]
     },
     "25": {
@@ -6009,6 +6045,11 @@
         "Является одним из основных компонентов синовиальной жидкости, который обеспечивает скольжение и подвижность суставов. Защищает хрящи и суставы от разрушения, ускоряет восстановление после травм.",
         "Входит в состав стекловидного тела глаза, способствует устранению сухости глаз.",
         "С возрастом, а также под воздействием негативных факторов количество гиалуроновой кислоты может уменьшаться, что негативно сказывается на здоровье кожи, хрящей и суставов. Дополнительный прием гиалуроновой кислоты позволит уменьшить и избежать этих изменений."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-30-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-30-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-30-2.jpg"
       ]
     },
     "31": {
@@ -6575,7 +6616,7 @@
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
         "full_text": "Взрослым по 2 капсулы 2 раза в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью.",
-        "source_url": "https://gls.store/catalog/dlya_krasoty/22685/"
+        "source_url": "https://gls.store/catalog/dlya_kostey_i_sustavov/22685/"
       },
       "instructions_en": {
         "usage": "Adults take 2 capsules 2 times daily with meals.",
@@ -6590,6 +6631,11 @@
         "Коллаген 1-го типа участвует в формировании кожи, костей, сухожилий, зубов, кровеносных сосудов и соединительной ткани.",
         "Коллаген 3-го типа поддерживает структуру мышц, внутренних органов и крупных артерий, а также участвует в сборке коллагеновых волокон 1 типа.",
         "Витамин С способствует выработке коллагена, ускоряет заживление ран и ожогов, защищает организм от окислительного стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-49-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-49-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-49-2.jpg"
       ]
     },
     "50": {
@@ -6600,7 +6646,7 @@
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
         "full_text": "Взрослым по 2 капсулы 2 раза в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью.",
-        "source_url": "https://gls.store/catalog/dlya_krasoty/22685/"
+        "source_url": "https://gls.store/catalog/dlya_kostey_i_sustavov/22685/"
       },
       "instructions_en": {
         "usage": "Adults take 2 capsules 2 times daily with meals.",
@@ -6615,6 +6661,11 @@
         "Коллаген 1-го типа участвует в формировании кожи, костей, сухожилий, зубов, кровеносных сосудов и соединительной ткани.",
         "Коллаген 3-го типа поддерживает структуру мышц, внутренних органов и крупных артерий, а также участвует в сборке коллагеновых волокон 1 типа.",
         "Витамин С способствует выработке коллагена, ускоряет заживление ран и ожогов, защищает организм от окислительного стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-50-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-50-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-50-2.jpg"
       ]
     },
     "51": {
@@ -6642,6 +6693,11 @@
         "Гиалуроновая кислота - входит в состав кожи, питая и увлажняя ее.",
         "Гиалуроновая кислота удерживает воду, помогая тем самым коллагену поддерживать упругую структуру кожи. Кроме того, она входит в состав синовиальной жидкости, которая смазывает сустав, предохраняя его от повреждений.",
         "Витамин С - способствует выработке коллагена и оказывает антиоксидантную защиту."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-51-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-51-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-51-2.jpg"
       ]
     },
     "52": {
@@ -6669,6 +6725,11 @@
         "Гиалуроновая кислота - входит в состав кожи, питая и увлажняя ее.",
         "Гиалуроновая кислота удерживает воду, помогая тем самым коллагену поддерживать упругую структуру кожи. Кроме того, она входит в состав синовиальной жидкости, которая смазывает сустав, предохраняя его от повреждений.",
         "Витамин С - способствует выработке коллагена и оказывает антиоксидантную защиту."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-52-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-52-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-52-2.jpg"
       ]
     },
     "53": {
@@ -6721,6 +6782,11 @@
         "Прием гидролизованного коллагена укрепляет опорно-двигательный аппарат, восстанавливает целостность и структуру хрящевой ткани, сухожилий, способствует снижению болевого синдрома, возникшего в результате различных травм. Его употребление приводит к повышению прочности и износостойкости костей. Поддерживает структуру мышц, внутренних органов и крупных артерий.",
         "Коллаген способствует улучшению тонуса и эластичности кожи, замедляет процесс старения и формирования морщин, укрепляет ногти, зубы, волосы.",
         "Витамин С способствует выработке коллагена, ускоряет заживление ран и ожогов, защищает организм от окислительного стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-54-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-54-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-54-2.jpg"
       ]
     },
     "55": {
@@ -6747,6 +6813,11 @@
         "Прием гидролизованного коллагена укрепляет опорно-двигательный аппарат, восстанавливает целостность и структуру хрящевой ткани, сухожилий, способствует снижению болевого синдрома, возникшего в результате различных травм. Его употребление приводит к повышению прочности и износостойкости костей. Поддерживает структуру мышц, внутренних органов и крупных артерий.",
         "Коллаген способствует улучшению тонуса и эластичности кожи, замедляет процесс старения и формирования морщин, укрепляет ногти, зубы, волосы.",
         "Витамин С способствует выработке коллагена, ускоряет заживление ран и ожогов, защищает организм от окислительного стресса."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-55-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-55-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-55-2.jpg"
       ]
     },
     "56": {
@@ -6803,7 +6874,7 @@
     "58": {
       "name": "Креатин порошок (мышцы, энергия) малина 300г GLS",
       "instructions": {
-        "usage": "5 г порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день.",
+        "usage": "взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
@@ -6823,12 +6894,16 @@
         "Увеличивает рост сухой мышечной массы при выполнении физических упражнений. Улучшает гидратацию и рельеф мышц. Препятствует разрушению, способствует сохранению мышечной массы и силы при сушке и похудении.",
         "Уменьшает боль и воспаление в мышцах, препятствуя выделению молочной кислоты и ускоряя восстановление после тренировок.",
         "Способствует защите сердечно-сосудистой системы в период интенсивных физических нагрузок и недостатка кислорода. Снижает уровень холестерина в крови и риска развития атеросклероза."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-58-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-58-1.jpg"
       ]
     },
     "59": {
       "name": "Креатин порошок (мышцы, энергия) Цитрус  300г GLS",
       "instructions": {
-        "usage": "5 г порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день.",
+        "usage": "взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
@@ -6848,12 +6923,16 @@
         "Увеличивает рост сухой мышечной массы при выполнении физических упражнений. Улучшает гидратацию и рельеф мышц. Препятствует разрушению, способствует сохранению мышечной массы и силы при сушке и похудении.",
         "Уменьшает боль и воспаление в мышцах, препятствуя выделению молочной кислоты и ускоряя восстановление после тренировок.",
         "Способствует защите сердечно-сосудистой системы в период интенсивных физических нагрузок и недостатка кислорода. Снижает уровень холестерина в крови и риска развития атеросклероза."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-59-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-59-1.jpg"
       ]
     },
     "60": {
       "name": "Креатин порошок (мышцы, энергия) Цитрус 150г GLS",
       "instructions": {
-        "usage": "5 г порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день.",
+        "usage": "взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
@@ -6873,12 +6952,17 @@
         "Увеличивает рост сухой мышечной массы при выполнении физических упражнений. Улучшает гидратацию и рельеф мышц. Препятствует разрушению, способствует сохранению мышечной массы и силы при сушке и похудении.",
         "Уменьшает боль и воспаление в мышцах, препятствуя выделению молочной кислоты и ускоряя восстановление после тренировок.",
         "Способствует защите сердечно-сосудистой системы в период интенсивных физических нагрузок и недостатка кислорода. Снижает уровень холестерина в крови и риска развития атеросклероза."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-60-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-60-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-60-2.jpg"
       ]
     },
     "61": {
       "name": "Креатин порошок (мышцы, энергия) Экзотик 150г GLS",
       "instructions": {
-        "usage": "5 г порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день.",
+        "usage": "взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
@@ -6899,12 +6983,17 @@
         "Уменьшает боль и воспаление в мышцах, препятствуя выделению молочной кислоты и ускоряя восстановление после тренировок.",
         "Способствует защите сердечно-сосудистой системы в период интенсивных физических нагрузок и недостатка кислорода. Снижает уровень холестерина в крови и риска развития атеросклероза.",
         "БАД. Не является лекарственным средством."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-61-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-61-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-61-2.jpg"
       ]
     },
     "62": {
       "name": "Креатин порошок (мышцы, энергия) Экзотик 300г GLS",
       "instructions": {
-        "usage": "5 г порошка (1 мерную ложку) предварительно размешать в 1 стакане (200 мл) воды, сока или другого напитка; взрослым принимать при занятиях спортом 1 раз в день.",
+        "usage": "взрослым принимать при занятиях спортом 1 раз в день. При использовании других напитков пищевая и энергетическая ценность могут увеличиваться.",
         "course": "1 месяц.",
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
@@ -6924,6 +7013,10 @@
         "Увеличивает рост сухой мышечной массы при выполнении физических упражнений. Улучшает гидратацию и рельеф мышц. Препятствует разрушению, способствует сохранению мышечной массы и силы при сушке и похудении.",
         "Уменьшает боль и воспаление в мышцах, препятствуя выделению молочной кислоты и ускоряя восстановление после тренировок.",
         "Способствует защите сердечно-сосудистой системы в период интенсивных физических нагрузок и недостатка кислорода. Снижает уровень холестерина в крови и риска развития атеросклероза."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-62-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-62-1.jpg"
       ]
     },
     "63": {
@@ -7079,6 +7172,11 @@
         "Расслабляет скелетные мышцы и гладкую мускулатуру, снижает артериальное давление, оказывает антиаритмическое действие, предотвращает избыточные спазмы мышц и сосудов, бронхов и кишечника.",
         "Витамин В6 помогает организму усваивать магний. Участвует в многочисленных ферментативных реакциях, в регуляции метаболизма, а также психических функций и настроения.",
         "БАД. Не является лекарственным средством."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-68-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-68-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-68-2.jpg"
       ]
     },
     "69": {
@@ -7296,6 +7394,11 @@
         "Повышает адаптационные возможности детского организма в период обучения в школе и при занятиях спортом.",
         "Положительно влияет на эмоциональное состояние, позволяет легче справляется со стрессом.",
         "Рекомендован к применению для детей с 7 лет."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-75-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-75-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-75-2.jpg"
       ]
     },
     "76": {
@@ -7324,6 +7427,11 @@
         "Витамины группы В, входящие в состав комплекса, участвуют в процессах тканевого дыхания и выработке энергии. Необходимы для процесса кроветворения и для нормальной работы нервной системы.",
         "Применения комплекса, в удобной форме мармеладных пастилок, помогает детям повысить адаптационные возможности организма в период напряженного обучения, при занятиях спортом. Снижает риск заболеваемости в периоды обострения респираторных инфекций и положительно влияет на эмоциональное состояние ребенка, помогая легче справляться со стрессом.",
         "БАД. Не является лекарственнвым средством."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-76-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-76-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-76-2.jpg"
       ]
     },
     "77": {
@@ -7378,6 +7486,11 @@
         "Поддерживает здоровье сердечно-сосудистой системы. Регулирует уровень холестерина в крови, уменьшает риск развития атеросклероза и его осложнений. Снижает вязкость крови, препятствуя тромбообразованию.",
         "Улучшает метаболизм, способствуя жиросжиганию и набору мышечной массы.",
         "БАД. Не является лекарственным средством."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-79-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-79-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-79-2.jpg"
       ]
     },
     "80": {
@@ -7496,6 +7609,11 @@
         "Защищает кожу от неблагоприятного воздействия внешних факторов и помогает удерживать в ней влагу. Поддерживает эластичность и молодость, устраняет сухость и шелушение кожи, улучшает здоровье и внешний вид волос.",
         "Способствует усвоению кальция и фосфора, влияя на метаболизм костной ткани, укрепляет и улучшает состояние костей и зубов, снижает риск развития остеопороза.",
         "Поддерживает здоровье мужской и женской репродуктивной системы."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-83-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-83-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-83-2.jpg"
       ]
     },
     "84": {
@@ -7527,6 +7645,11 @@
         "Защищает кожу от неблагоприятного воздействия внешних факторов и помогает удерживать в ней влагу. Поддерживает эластичность и молодость, устраняет сухость и шелушение кожи, улучшает здоровье и внешний вид волос.",
         "Способствует усвоению кальция и фосфора, влияя на метаболизм костной ткани, укрепляет и улучшает состояние костей и зубов, снижает риск развития остеопороза.",
         "Поддерживает здоровье мужской и женской репродуктивной системы."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-84-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-84-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-84-2.jpg"
       ]
     },
     "85": {
@@ -7583,6 +7706,10 @@
         "Улучшает выработку инсулина, способствует снижению аппетита и лишнего веса.",
         "Способствует поддержанию здоровья сердечно-сосудистой и иммунной систем.",
         "Поддерживает мозговую деятельность и способствует поддержанию хорошего настроения."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-86-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-86-1.jpg"
       ]
     },
     "87": {
@@ -7611,6 +7738,10 @@
         "Улучшает выработку инсулина, способствует снижению аппетита и лишнего веса.",
         "Способствует поддержанию здоровья сердечно-сосудистой и иммунной систем.",
         "Поддерживает мозговую деятельность и способствует поддержанию хорошего настроения."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-87-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-87-1.jpg"
       ]
     },
     "88": {
@@ -7639,6 +7770,10 @@
         "Улучшает выработку инсулина, способствует снижению аппетита и лишнего веса.",
         "Способствует поддержанию здоровья сердечно-сосудистой и иммунной систем.",
         "Поддерживает мозговую деятельность и способствует поддержанию хорошего настроения."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-88-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-88-1.jpg"
       ]
     },
     "89": {
@@ -7649,7 +7784,7 @@
         "contraindications": "индивидуальная непереносимость компонентов, беременность, кормление грудью.",
         "age": "18+",
         "full_text": "Взрослым по 1 капсуле в день во время еды. Продолжительность приема: 1 месяц. Противопоказания: индивидуальная непереносимость компонентов, беременность, кормление грудью.",
-        "source_url": "https://gls.store/catalog/dlya_krasoty/100398/"
+        "source_url": "https://gls.store/catalog/vitaminy_i_aminokisloty/97001/"
       },
       "instructions_en": {
         "usage": "Adults take 1 capsule daily with meals.",
@@ -7669,6 +7804,11 @@
         "Способствует повышению фертильности у женщин и мужчин, повышая шансы на зачатие. Положительно влияет на регуляцию менструального цикла, играет важную роль в восстановлении функции яичников и созревании яйцеклетки. Обладает способностью расслаблять гладкую мускулатуру, что способствует снятию спазмов и боли во время менструаций.",
         "Может косвенно влиять на здоровье суставов, подавляя негативные проявления остеоартрита.",
         "БАД. Не является лекарственным средством."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-89-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-89-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-89-2.jpg"
       ]
     },
     "90": {
@@ -7943,6 +8083,11 @@
         "Положительно влияет на работу щитовидной железы, позволяя нормализовать выработку её гормонов.",
         "Ускоряет жировой обмен, способствуя сжиганию жиров и снижению лишнего веса.",
         "Улучшает эмоциональное состояние, снижает тревожность и помогает легче справляться со стрессом."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-99-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-99-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-99-2.jpg"
       ]
     },
     "100": {
@@ -8021,6 +8166,11 @@
         "Цинк — незаменимый микроэлемент, принимает участие в стимуляции деления и росте клеток, обмене веществ, стимулирует выработку коллагена и кератина, способствуя улучшению состояния кожи, волос и ногтей. Оказывает иммуномодулирующее действие, укрепляет иммунитет.",
         "Витамин С повышает устойчивость организма к инфекциям, снижает риск развития бактериальных и вирусных заболеваний. Участвует в синтезе коллагена, оказывает антиоксидантное действие, снижая уровень окислительного стресса, замедляет процессы старения.",
         "Витамин Е способствует улучшению питания, увлажнению кожи, ускоряет рост волос и ногтей. Укрепляет иммунитет, снижает риск развития и тяжесть течения бактериальных и вирусных заболеваний. Необходим для поддержания здоровья репродуктивной системы у мужчин и женщин. Способствует выработке сперматозоидов у мужчин, участвует в регуляции менструального цикла у женщин."
+      ],
+      "gallery": [
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-102-0.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-102-1.jpg",
+        "https://azbseceyovktqztjslup.supabase.co/storage/v1/object/public/product-images/gallery/prod-102-2.jpg"
       ]
     },
     "103": {
