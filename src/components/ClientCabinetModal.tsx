@@ -2,10 +2,41 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Phone, Lock, LogOut, ShoppingBag, Calendar, CheckCircle2, Clock, Truck, HelpCircle, UserCheck, ShieldAlert, Award } from 'lucide-react';
+import { X, User, Phone, Lock, LogOut, ShoppingBag, Calendar, CheckCircle2, Clock, Truck, HelpCircle, UserCheck, ShieldAlert, Award, Package, ChevronDown, ChevronUp } from 'lucide-react';
 import { useClient, ClientProfile } from '@/store/useClient';
 import { supabase } from '@/lib/supabase';
 import { Lang } from '@/lib/types';
+
+interface NormalizedOrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+const normalizeOrderItems = (raw: any): NormalizedOrderItem[] => {
+  if (!raw) return [];
+  let parsed = raw;
+  if (typeof raw === 'string') {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map((item: any, idx: number) => {
+    if (typeof item === 'string') {
+      return { id: String(idx), name: item, price: 0, quantity: 1 };
+    }
+    return {
+      id: String(item.id || item.product_id || idx),
+      name: String(item.name || item.title || item.product_name || item.full_name || 'Товар'),
+      price: Number(item.price || item.unit_price || 0),
+      quantity: Number(item.quantity || item.count || 1)
+    };
+  });
+};
 
 interface ClientCabinetModalProps {
   isOpen: boolean;
@@ -528,19 +559,20 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                             {orders.map((order) => {
                               const style = STATUS_STYLE[order.status] || STATUS_STYLE.new;
                               const isExpanded = expandedOrder === order.id;
+                              const safeItems = normalizeOrderItems(order.items);
 
                               return (
                                 <div
                                   key={order.id}
-                                  onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                                  className={`bg-white rounded-3xl border p-5 cursor-pointer hover:shadow-md transition-all duration-300 ${
-                                    isExpanded ? 'border-slate-800 shadow-sm' : 'border-black/[0.03]'
+                                  className={`bg-white rounded-3xl border p-5 transition-all duration-300 shadow-sm ${
+                                    isExpanded ? 'border-slate-800' : 'border-black/[0.04]'
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between mb-3.5">
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-sm font-extrabold text-slate-800 font-outfit">#{order.id}</span>
-                                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${style.color}`}>
+                                  {/* Order Header: ID, Status Badge & Timestamp */}
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2.5">
+                                      <span className="text-sm font-extrabold text-slate-900 font-outfit">#{order.id}</span>
+                                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${style.color}`}>
                                         {style.icon}
                                         <span>{style.label[lang]}</span>
                                       </span>
@@ -548,48 +580,59 @@ export const ClientCabinetModal: React.FC<ClientCabinetModalProps> = ({ isOpen, 
                                     <span className="text-[11px] text-[#94A3B8] font-bold">{formatDate(order.created_at)}</span>
                                   </div>
 
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-[13px] text-slate-500 font-medium line-clamp-1 max-w-[250px]">
-                                      {Array.isArray(order.items) 
-                                        ? order.items.map((i: any) => `${i.name} ×${i.quantity}`).join(', ') 
-                                        : (lang === 'en' ? 'Items' : (lang === 'ru' ? 'Товары' : 'Молҳо'))}
-                                    </p>
-                                    <p className="font-extrabold text-slate-800 font-outfit text-base">
-                                      {order.total} <span className="text-[11px] font-bold text-slate-400">{lang === 'en' ? 'TJS' : 'смн'}</span>
-                                    </p>
-                                  </div>
+                                  {/* Full Product Breakdown - visible and clean on mobile */}
+                                  {safeItems.length > 0 && (
+                                    <div className="my-3 p-3.5 bg-slate-50/90 rounded-2xl border border-black/[0.03] space-y-2">
+                                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <span className="flex items-center gap-1.5 text-blue-600">
+                                          <Package size={13} className="shrink-0" />
+                                          {lang === 'en' ? 'Items' : (lang === 'ru' ? 'Товары в заказе' : 'Молҳо')} ({safeItems.length})
+                                        </span>
+                                        <span>
+                                          {safeItems.reduce((acc, it) => acc + (it.quantity || 1), 0)} {lang === 'en' ? 'pcs' : (lang === 'ru' ? 'шт.' : 'дон.')}
+                                        </span>
+                                      </div>
 
-                                  {/* Expandable Order Breakdown */}
-                                  <AnimatePresence>
-                                    {isExpanded && (
-                                      <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="mt-4 pt-4 border-t border-black/[0.05] space-y-3 overflow-hidden"
-                                      >
-                                        <h6 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                          {lang === 'en' ? 'Order items:' : (lang === 'ru' ? 'Состав заказа:' : 'Таркиби фармоиш:')}
-                                        </h6>
-                                        {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
-                                          <div key={idx} className="flex items-center justify-between text-xs font-bold text-slate-700">
-                                            <span className="font-medium text-slate-600">
-                                              {item.name} <span className="text-slate-400 text-[10px]">×{item.quantity}</span>
-                                            </span>
-                                            <span className="font-outfit">{item.price * item.quantity} {lang === 'en' ? 'TJS' : 'смн'}</span>
+                                      <div className="space-y-2 divide-y divide-black/[0.04]">
+                                        {safeItems.map((item, idx) => (
+                                          <div key={idx} className={`flex items-start justify-between gap-2.5 text-xs ${idx > 0 ? 'pt-2' : ''}`}>
+                                            <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                                              <span className="text-slate-400 font-bold text-[11px] mt-0.5 shrink-0">{idx + 1}.</span>
+                                              <span className="font-semibold text-slate-800 break-words flex-1 leading-snug">
+                                                {item.name}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 shrink-0 pl-1 pt-0.5">
+                                              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                ×{item.quantity}
+                                              </span>
+                                              <span className="font-bold text-slate-800 font-outfit text-[11px]">
+                                                {item.price * item.quantity} {lang === 'en' ? 'TJS' : 'смн'}
+                                              </span>
+                                            </div>
                                           </div>
                                         ))}
+                                      </div>
 
-                                        {/* Promocode details if applied */}
-                                        {order.promocode && (
-                                          <div className="flex items-center justify-between text-[11px] font-bold text-green-600 bg-green-500/5 p-2.5 rounded-xl border border-green-500/10">
-                                            <span>{lang === 'en' ? 'Promo code:' : 'Промокод:'} {order.promocode}</span>
-                                            <span>-{order.discount} {lang === 'en' ? 'TJS' : 'смн'}</span>
-                                          </div>
-                                        )}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
+                                      {/* Promo code badge if applied */}
+                                      {order.promocode && (
+                                        <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[11px] font-bold text-emerald-600">
+                                          <span>{lang === 'en' ? 'Promo code:' : 'Промокод:'} {order.promocode}</span>
+                                          <span>-{order.discount} {lang === 'en' ? 'TJS' : 'смн'}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Order Total & Footer */}
+                                  <div className="flex items-center justify-between pt-2 border-t border-black/[0.03]">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                      {lang === 'en' ? 'Total' : (lang === 'ru' ? 'Итого' : 'Ҷамъ')}:
+                                    </span>
+                                    <span className="font-black text-slate-900 font-outfit text-lg">
+                                      {order.total} <span className="text-xs font-bold text-slate-400">{lang === 'en' ? 'TJS' : 'смн'}</span>
+                                    </span>
+                                  </div>
                                 </div>
                               );
                             })}
