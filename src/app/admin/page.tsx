@@ -19,12 +19,13 @@ import { DocumentsDashboard } from './components/DocumentsDashboard';
 import { ConsultantCopilot } from './components/ConsultantCopilot';
 import { VideoStudio } from './components/VideoStudio';
 import { supabase } from '@/lib/supabase';
-import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText, Sparkles, Film, ExternalLink } from 'lucide-react';
+import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText, Sparkles, Film, ExternalLink, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents' | 'consultant-copilot' | 'video-studio';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'complexes' | 'orders' | 'settings' | 'seo-agent' | 'instagram-agent' | 'analytics' | 'warehouse' | 'feed-issues' | 'crm' | 'pharmacy-orders' | 'bloggers' | 'combos' | 'documents' | 'consultant-copilot' | 'video-studio' | 'brand-reps';
 
 const MODULES: Array<{ id: AdminView; title: string; desc: string; icon: React.ReactNode; color: string; standaloneHref?: string }> = [
+  { id: 'brand-reps', title: 'Терминал медпредов', desc: 'GPS-карта аптек, визиты, онбординг', icon: <MapPin size={24} className="text-emerald-600" />, color: '#ECFDF5', standaloneHref: '/rep' },
   { id: 'video-studio', title: 'AI Видеостудия 3D', desc: 'MoA-ролики, синергия, монтаж', icon: <Film size={24} className="text-emerald-500" />, color: '#ECFDF5' },
   { id: 'consultant-copilot', title: 'ИИ-Нутрициолог (Copilot)', desc: 'Схемы приёма, анализы, скрипты продаж', icon: <Sparkles size={24} className="text-emerald-600" />, color: '#ECFDF5', standaloneHref: '/copilot' },
   { id: 'orders', title: 'АРМ Оператора', desc: 'Прием и статусы заказов', icon: <ShoppingBag size={24} />, color: '#F0F9FF', standaloneHref: '/admin/orders' },

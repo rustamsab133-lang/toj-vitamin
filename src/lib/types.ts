@@ -204,7 +204,53 @@ export interface Pharmacy {
   balance: number;
   token: string;
   status?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  rep_id?: string | null;
+  preferred_time?: string | null;
+  category?: 'A' | 'B' | 'C';
+  district?: string | null;
+  rep_notes?: string | null;
+  landmark?: string | null;
+  storefront_photo_url?: string | null;
   created_at?: string;
+}
+
+export interface BrandRep {
+  id: string;
+  name: string;
+  phone: string;
+  pin_code: string;
+  territory: string;
+  brand_name: string;
+  target_monthly_visits: number;
+  target_monthly_sales: number;
+  status: 'active' | 'inactive';
+  avatar_url?: string | null;
+  created_at?: string;
+}
+
+export interface RepVisit {
+  id: string;
+  rep_id: string;
+  pharmacy_id: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  checkin_lat?: number | null;
+  checkin_lng?: number | null;
+  distance_meters?: number | null;
+  is_gps_verified?: boolean;
+  started_at?: string;
+  completed_at?: string;
+  duration_minutes?: number;
+  result_type?: 'order' | 'agreement' | 'presentation' | 'rescheduled' | 'audit_only';
+  notes?: string | null;
+  next_visit_date?: string | null;
+  order_id?: string | null;
+  photos?: string[];
+  created_at?: string;
+  // Joins
+  pharmacies?: Pharmacy;
+  brand_reps?: BrandRep;
 }
 
 export interface PharmacyOrder {
