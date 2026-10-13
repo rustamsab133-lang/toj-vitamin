@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { 
   X, MapPin, Building2, Phone, User, Clock, 
   Tag, FileText, CheckCircle2, Loader2, Sparkles, 
-  ExternalLink, Copy, Check, ArrowRight, Compass 
+  ExternalLink, Copy, Check, ArrowRight, Compass, Plus 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -71,6 +71,34 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [createdPharmacy, setCreatedPharmacy] = useState<any | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  const resetForm = () => {
+    setName('');
+    setAddress('');
+    setLandmark('');
+    setLatitude(null);
+    setLongitude(null);
+    setDistrict('');
+    setContactPerson('');
+    setPhone('');
+    setPreferredTime('');
+    setCategory('B');
+    setRepNotes('');
+    setError(null);
+    setCreatedPharmacy(null);
+    setCopiedLink(false);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  React.useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -163,7 +191,7 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5" />
@@ -213,8 +241,16 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
               <div className="pt-3 flex flex-col sm:flex-row gap-2.5 justify-center">
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 text-white font-medium text-sm hover:bg-slate-800 transition-all"
+                  onClick={resetForm}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-medium text-xs hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  Добавить еще одну аптеку
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 text-white font-medium text-xs hover:bg-slate-800 transition-all"
                 >
                   Вернуться к списку аптек
                 </button>
@@ -401,7 +437,7 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
               <div className="pt-3 flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50 transition-colors"
                 >
                   Отмена

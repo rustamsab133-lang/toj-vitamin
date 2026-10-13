@@ -591,15 +591,17 @@ export default function BrandRepPortalPage() {
       </nav>
 
       {/* Modals */}
-      <AddPharmacyModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        repId={rep.id}
-        existingPharmacies={pharmacies}
-        onPharmacyAdded={(newPharm) => {
-          setPharmacies(prev => [newPharm, ...prev]);
-        }}
-      />
+      {isAddModalOpen && (
+        <AddPharmacyModal
+          isOpen={true}
+          onClose={() => setIsAddModalOpen(false)}
+          repId={rep.id}
+          existingPharmacies={pharmacies}
+          onPharmacyAdded={(newPharm) => {
+            setPharmacies(prev => [newPharm, ...prev]);
+          }}
+        />
+      )}
 
       {activeVisitPharmacy && (
         <ActiveVisitModal
