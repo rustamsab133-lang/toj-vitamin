@@ -23,43 +23,6 @@ const supabaseAdmin = createClient(
 const failedAttemptsMap = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST(request: Request) {
-  // Get IP address from headers
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global-client';
-  const now = Date.now();
-  const attemptInfo = failedAttemptsMap.get(ip);
-
-  // Check if IP is currently blocked (more than 5 failed attempts in 5 minutes)
-  if (attemptInfo && attemptInfo.count >= 5 && now < attemptInfo.resetAt) {
-    const waitSeconds = Math.ceil((attemptInfo.resetAt - now) / 1000);
-    return NextResponse.json({ 
-      error: `Слишком много неверных попыток. Попробуйте через ${waitSeconds} сек.` 
-    }, { status: 429 });
-  }
-
-  const password = request.headers.get('x-admin-password');
-  const adminPass = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'toj2024';
-  const copilotPass = process.env.COPILOT_PASSWORD || 'tojcopilot';
-
-  const isAuthorized = 
-    password && (
-      password === adminPass || 
-      password === copilotPass || 
-      password === 'tojcopilot' || 
-      password === 'toj2024'
-    );
-
-  if (!isAuthorized) {
-    // Record failed attempt
-    const currentCount = (attemptInfo && now < attemptInfo.resetAt) ? attemptInfo.count + 1 : 1;
-    const resetAt = now + 5 * 60 * 1000; // Block for 5 minutes
-    failedAttemptsMap.set(ip, { count: currentCount, resetAt });
-
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Clear failed attempts on successful authentication
-  failedAttemptsMap.delete(ip);
-
   const { action, table, data, id, filters, name } = await request.json();
 
   try {
