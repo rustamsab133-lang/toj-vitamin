@@ -8,35 +8,32 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onAuth }) => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(false);
+    setError('');
 
     try {
-      const response = await fetch('/api/admin/db', {
+      const response = await fetch('/api/admin/auth/sign-in', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password
-        },
-        body: JSON.stringify({ action: 'verify' })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
-        sessionStorage.setItem('toj-admin-auth', 'true');
-        sessionStorage.setItem('toj-admin-password', password);
-        onAuth();
-      } else {
-        setError(true);
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        setError(result.error || 'Не удалось войти. Проверьте данные.');
+        return;
       }
-    } catch (err) {
-      console.error('Authentication error:', err);
-      setError(true);
+
+      onAuth();
+    } catch {
+      setError('Не удалось связаться с сервером. Повторите попытку.');
     } finally {
       setLoading(false);
     }
@@ -58,34 +55,43 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onAuth }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(''); }}
+            placeholder="Email"
+            autoComplete="username"
+            required
+            className="w-full h-14 px-5 rounded-2xl bg-white border border-slate-100 focus:border-slate-300 text-sm font-medium outline-none transition-all placeholder:text-slate-300"
+          />
           <div>
             <input
               type="password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(false); }}
-              placeholder="Введите пароль"
-              autoFocus
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              placeholder="Пароль"
+              autoComplete="current-password"
+              required
               className={`w-full h-14 px-5 rounded-2xl bg-white border text-sm font-medium outline-none transition-all placeholder:text-slate-300 ${
                 error ? 'border-red-300 focus:border-red-400' : 'border-slate-100 focus:border-slate-300'
               }`}
             />
             {error && (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-1.5 text-xs text-red-400 font-medium mt-2 pl-1"
               >
-                <AlertCircle size={12} /> Неверный пароль
+                <AlertCircle size={12} /> {error}
               </motion.p>
             )}
           </div>
-
           <button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading || !email || !password}
             className="w-full h-14 rounded-2xl bg-slate-800 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-slate-800/10"
           >
-            {loading ? 'Проверяем...' : <>Войти <ArrowRight size={16} /></>}
+            {loading ? 'Входим...' : <>Войти <ArrowRight size={16} /></>}
           </button>
         </form>
       </motion.div>
