@@ -103,6 +103,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, visits: visits || [] });
     }
 
+    if (action === 'get_active_shift') {
+      if (!repId) {
+        return NextResponse.json({ error: 'Не указан rep_id' }, { status: 400 });
+      }
+
+      const { data: shift, error } = await supabaseAdmin
+        .from('rep_shifts')
+        .select('*')
+        .eq('rep_id', repId)
+        .eq('status', 'active')
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        return NextResponse.json({ success: true, shift: null });
+      }
+
+      return NextResponse.json({ success: true, shift });
+    }
+
     if (action === 'get_today_track') {
       if (!repId) {
         return NextResponse.json({ error: 'Не указан rep_id' }, { status: 400 });
@@ -343,15 +364,99 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, visit, distanceMeters, isGpsVerified });
     }
 
-    // --- 5. Сохранение точек GPS-трека представителя (Нить Ариадны) ---
+    // --- 5. Управление рабочими сменами (Start / End Shift) ---
+    if (action === 'start_shift') {
+      const { rep_id, start_lat, start_lng } = body;
+      if (!rep_id) {
+        return NextResponse.json({ error: 'Не указан rep_id' }, { status: 400 });
+      }
+
+      const shiftPayload: any = {
+        rep_id,
+        status: 'active',
+        started_at: new Date().toISOString(),
+        start_lat: start_lat ? Number(start_lat) : null,
+        start_lng: start_lng ? Number(start_lng) : null,
+        total_km: 0,
+        visits_count: 0,
+        pharmacies_added: 0
+      };
+
+      const { data: shift, error } = await supabaseAdmin
+        .from('rep_shifts')
+        .insert(shiftPayload)
+        .select()
+        .single();
+
+      if (error) {
+        console.warn('start_shift fallback to local session:', error.message);
+        return NextResponse.json({
+          success: true,
+          shift: {
+            id: randomUUID(),
+            rep_id,
+            status: 'active',
+            started_at: shiftPayload.started_at,
+            start_lat: shiftPayload.start_lat,
+            start_lng: shiftPayload.start_lng,
+            is_fallback: true
+          }
+        });
+      }
+
+      return NextResponse.json({ success: true, shift });
+    }
+
+    if (action === 'end_shift') {
+      const { shift_id, rep_id, end_lat, end_lng, total_km, visits_count, pharmacies_added } = body;
+      if (!shift_id && !rep_id) {
+        return NextResponse.json({ error: 'Не указан shift_id или rep_id' }, { status: 400 });
+      }
+
+      const updateData: any = {
+        status: 'completed',
+        ended_at: new Date().toISOString()
+      };
+      if (end_lat !== undefined && end_lat !== null) updateData.end_lat = Number(end_lat);
+      if (end_lng !== undefined && end_lng !== null) updateData.end_lng = Number(end_lng);
+      if (total_km !== undefined) updateData.total_km = Number(total_km);
+      if (visits_count !== undefined) updateData.visits_count = Number(visits_count);
+      if (pharmacies_added !== undefined) updateData.pharmacies_added = Number(pharmacies_added);
+
+      if (shift_id) {
+        const { data: updated, error } = await supabaseAdmin
+          .from('rep_shifts')
+          .update(updateData)
+          .eq('id', shift_id)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          console.warn('end_shift update warning:', error.message);
+        }
+        return NextResponse.json({ success: true, shift: updated || updateData });
+      } else {
+        const { data: updated } = await supabaseAdmin
+          .from('rep_shifts')
+          .update(updateData)
+          .eq('rep_id', rep_id)
+          .eq('status', 'active')
+          .select();
+
+        return NextResponse.json({ success: true, shifts: updated });
+      }
+    }
+
+    // --- 6. Сохранение точек GPS-трека представителя (Нить Ариадны) ---
     if (action === 'save_track_points') {
-      const { rep_id, points } = body;
+      const { rep_id, shift_id, points } = body;
       if (!rep_id || !Array.isArray(points) || points.length === 0) {
         return NextResponse.json({ success: true, saved: 0 });
       }
 
-      const payload = points.map((p: any) => ({
+      const payloadWithShift = points.map((p: any) => ({
         rep_id,
+        ...(shift_id ? { shift_id } : {}),
         latitude: Number(p.lat || p.latitude),
         longitude: Number(p.lng || p.longitude),
         accuracy: p.accuracy ? Number(p.accuracy) : null,
@@ -359,17 +464,25 @@ export async function POST(request: Request) {
         recorded_at: p.recorded_at || new Date().toISOString()
       })).filter((p: any) => !isNaN(p.latitude) && !isNaN(p.longitude));
 
-      const { error } = await supabaseAdmin
+      let { error } = await supabaseAdmin
         .from('rep_tracks')
-        .insert(payload);
+        .insert(payloadWithShift);
+
+      // Если в таблице еще нет колонки shift_id, вставляем без нее
+      if (error && (error.code === 'PGRST204' || error.message?.includes('shift_id'))) {
+        const payloadWithoutShift = payloadWithShift.map(({ shift_id: _s, ...rest }: any) => rest);
+        const retry = await supabaseAdmin
+          .from('rep_tracks')
+          .insert(payloadWithoutShift);
+        error = retry.error;
+      }
 
       if (error) {
-        // Log warning in case table migration is still being executed
         console.warn('Track points save warning:', error.message);
         return NextResponse.json({ success: false, error: error.message });
       }
 
-      return NextResponse.json({ success: true, saved: payload.length });
+      return NextResponse.json({ success: true, saved: payloadWithShift.length });
     }
 
     return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 });

@@ -5,7 +5,8 @@ import {
   MapPin, List, Clock, User, Phone, CheckCircle2, 
   Plus, Compass, Search, Filter, ShieldCheck, Loader2, 
   TrendingUp, Award, LogOut, RefreshCw, ChevronRight, 
-  Building2, MessageSquare, AlertTriangle, ArrowUpRight 
+  Building2, MessageSquare, AlertTriangle, ArrowUpRight,
+  Play, Pause, Footprints 
 } from 'lucide-react';
 import { Pharmacy, BrandRep } from '@/lib/types';
 import { AddPharmacyModal } from '@/components/rep/AddPharmacyModal';
@@ -62,6 +63,11 @@ export default function BrandRepPortalPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
 
+  // Work Shift (Начать / Завершить смену)
+  const [activeShift, setActiveShift] = useState<any | null>(null);
+  const [isEndShiftModalOpen, setIsEndShiftModalOpen] = useState(false);
+  const [isShiftActionLoading, setIsShiftActionLoading] = useState(false);
+
   // Check saved session
   useEffect(() => {
     const savedRep = localStorage.getItem('toj_brand_rep_session');
@@ -72,6 +78,38 @@ export default function BrandRepPortalPage() {
     }
     setAuthLoading(false);
   }, []);
+
+  // Sync Shift Session with localStorage and Supabase
+  useEffect(() => {
+    if (!rep?.id) return;
+    try {
+      const savedShift = localStorage.getItem('toj_rep_active_shift');
+      if (savedShift) {
+        setActiveShift(JSON.parse(savedShift));
+      }
+    } catch (e) {}
+
+    fetch(`/api/rep?action=get_active_shift&rep_id=${rep.id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (data.shift) {
+            setActiveShift(data.shift);
+            localStorage.setItem('toj_rep_active_shift', JSON.stringify(data.shift));
+          } else {
+            const savedShift = localStorage.getItem('toj_rep_active_shift');
+            if (savedShift) {
+              const parsed = JSON.parse(savedShift);
+              if (!parsed.is_fallback) {
+                setActiveShift(null);
+                localStorage.removeItem('toj_rep_active_shift');
+              }
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, [rep?.id]);
 
   // Track GPS
   useEffect(() => {
@@ -159,6 +197,86 @@ export default function BrandRepPortalPage() {
   const handleLogout = () => {
     localStorage.removeItem('toj_brand_rep_session');
     setRep(null);
+  };
+
+  // Helper: Calculate total km from local trail points
+  const calculateShiftKm = () => {
+    try {
+      const trail = localStorage.getItem('toj_rep_trail_points');
+      if (trail) {
+        const pts = JSON.parse(trail);
+        if (Array.isArray(pts) && pts.length > 1) {
+          let dist = 0;
+          for (let i = 1; i < pts.length; i++) {
+            dist += calculateDistance(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
+          }
+          return (dist / 1000).toFixed(2);
+        }
+      }
+    } catch (e) {}
+    return '0.00';
+  };
+
+  // Start Work Shift
+  const handleStartShift = async () => {
+    if (!rep?.id) return;
+    setIsShiftActionLoading(true);
+    try {
+      const res = await fetch('/api/rep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start_shift',
+          rep_id: rep.id,
+          start_lat: userCoords?.lat || null,
+          start_lng: userCoords?.lng || null
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.shift) {
+        setActiveShift(data.shift);
+        localStorage.setItem('toj_rep_active_shift', JSON.stringify(data.shift));
+      }
+    } catch (err) {
+      console.error('Failed to start shift:', err);
+    } finally {
+      setIsShiftActionLoading(false);
+    }
+  };
+
+  // End Work Shift
+  const handleEndShift = async () => {
+    if (!rep?.id || !activeShift) return;
+    setIsShiftActionLoading(true);
+
+    const totalKm = Number(calculateShiftKm());
+    const shiftStartTime = new Date(activeShift.started_at).getTime();
+    const visitsOnShift = visits.filter(v => new Date(v.created_at).getTime() >= shiftStartTime).length;
+    const pharmsOnShift = pharmacies.filter(p => p.created_at && new Date(p.created_at).getTime() >= shiftStartTime && p.rep_id === rep.id).length;
+
+    try {
+      await fetch('/api/rep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'end_shift',
+          shift_id: activeShift.id,
+          rep_id: rep.id,
+          end_lat: userCoords?.lat || null,
+          end_lng: userCoords?.lng || null,
+          total_km: totalKm,
+          visits_count: visitsOnShift,
+          pharmacies_added: pharmsOnShift
+        })
+      });
+    } catch (err) {
+      console.warn('End shift sync error:', err);
+    } finally {
+      setActiveShift(null);
+      localStorage.removeItem('toj_rep_active_shift');
+      setIsEndShiftModalOpen(false);
+      setIsShiftActionLoading(false);
+    }
   };
 
   // Sort pharmacies by distance to representative
@@ -277,7 +395,16 @@ export default function BrandRepPortalPage() {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-sm text-slate-900 leading-tight">{rep?.name}</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              {activeShift ? (
+                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  На смене
+                </span>
+              ) : (
+                <span className="bg-slate-100 text-slate-500 text-[10px] font-medium px-2 py-0.5 rounded-full">
+                  Вне смены
+                </span>
+              )}
             </div>
             <div className="text-[11px] text-slate-500 flex items-center gap-1">
               <span>{rep?.brand_name || 'TOJ-VITAMIN'}</span>
@@ -317,6 +444,9 @@ export default function BrandRepPortalPage() {
             repId={rep.id}
             userLat={userCoords?.lat}
             userLng={userCoords?.lng}
+            activeShift={activeShift}
+            onStartShift={handleStartShift}
+            onRequestEndShift={() => setIsEndShiftModalOpen(true)}
             onStartVisit={(pharm) => setActiveVisitPharmacy(pharm)}
             onAddNewPharmacy={() => setIsAddModalOpen(true)}
           />
@@ -324,6 +454,23 @@ export default function BrandRepPortalPage() {
 
         {activeTab === 'route' && (
           <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
+            {/* Shift Notice if off duty */}
+            {!activeShift && (
+              <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs text-amber-900 animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Вы вне смены. Начните рабочий день для автоматической записи визитов и маршрута.</span>
+                </div>
+                <button
+                  onClick={handleStartShift}
+                  disabled={isShiftActionLoading}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 shadow-sm transition-all"
+                >
+                  Начать смену
+                </button>
+              </div>
+            )}
+
             {/* Header info in Route tab */}
             <div className="flex items-center justify-between">
               <div>
@@ -616,6 +763,92 @@ export default function BrandRepPortalPage() {
             setVisits(prev => [visit, ...prev]);
           }}
         />
+      )}
+
+      {/* End Shift Summary Modal */}
+      {isEndShiftModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+                <Pause className="w-7 h-7 fill-red-600" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">Завершить рабочий день?</h2>
+              <p className="text-xs text-slate-500">
+                GPS-трекинг будет полностью отключен, а итоги дня сохранены в отчете руководителя.
+              </p>
+            </div>
+
+            {/* Shift Stats Card */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-3 text-xs">
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  Время старта:
+                </span>
+                <span className="font-semibold text-slate-800">
+                  {activeShift?.started_at ? new Date(activeShift.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-1.5">
+                  <Footprints className="w-3.5 h-3.5 text-sky-500" />
+                  Пройденный маршрут:
+                </span>
+                <span className="font-bold text-slate-900">
+                  {calculateShiftKm()} км
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  Визитов за смену:
+                </span>
+                <span className="font-bold text-emerald-700">
+                  {activeShift ? visits.filter(v => new Date(v.created_at).getTime() >= new Date(activeShift.started_at).getTime()).length : 0}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5 text-indigo-500" />
+                  Новых аптек добавлено:
+                </span>
+                <span className="font-bold text-indigo-700">
+                  {activeShift ? pharmacies.filter(p => p.created_at && new Date(p.created_at).getTime() >= new Date(activeShift.started_at).getTime() && p.rep_id === rep.id).length : 0}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-start gap-2 text-[11px] text-emerald-800">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>
+                Ваша приватность гарантирована: после закрытия смены координаты и передвижения не отслеживаются.
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsEndShiftModalOpen(false)}
+                className="py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+              >
+                Продолжить
+              </button>
+
+              <button
+                type="button"
+                disabled={isShiftActionLoading}
+                onClick={handleEndShift}
+                className="py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-600/30 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+              >
+                {isShiftActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Завершить'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
