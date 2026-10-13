@@ -1,15 +1,17 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { 
   Navigation, Layers, Phone, MessageSquare, Compass, 
   Clock, MapPin, Building2, ExternalLink, ShoppingCart, 
-  CheckCircle2, AlertTriangle, Search, Filter 
+  CheckCircle2, AlertTriangle, Search, Filter, Route, 
+  Radio, Play, Pause, CircleDot, Footprints 
 } from 'lucide-react';
 import type { Map as LeafletMap } from 'leaflet';
 import { Pharmacy } from '@/lib/types';
 
 interface PharmaciesOverviewMapProps {
   pharmacies: Pharmacy[];
+  repId?: string;
   userLat?: number | null;
   userLng?: number | null;
   onSelectPharmacy?: (pharmacy: Pharmacy) => void;
@@ -17,8 +19,21 @@ interface PharmaciesOverviewMapProps {
   onAddNewPharmacy: () => void;
 }
 
+function calculateDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
 export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   pharmacies,
+  repId,
   userLat,
   userLng,
   onSelectPharmacy,
@@ -29,6 +44,9 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const userMarkerRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
+  const circlesLayerRef = useRef<any>(null);
+  const trailPolylineRef = useRef<any>(null);
+  const wakeLockRef = useRef<any>(null);
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
@@ -36,19 +54,64 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
 
+  // New Features: Coverage Zones and GPS Breadcrumb Trail
+  const [showCoverageCircles, setShowCoverageCircles] = useState(true);
+  const [isRecordingTrail, setIsRecordingTrail] = useState(false);
+  const [trailPoints, setTrailPoints] = useState<Array<[number, number]>>([]);
+
+  // Load saved trail from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedTrail = localStorage.getItem('toj_rep_trail_points');
+      if (savedTrail) {
+        const parsed = JSON.parse(savedTrail);
+        if (Array.isArray(parsed)) setTrailPoints(parsed);
+      }
+      const savedIsRec = localStorage.getItem('toj_rep_is_recording_trail');
+      if (savedIsRec === 'true') {
+        setIsRecordingTrail(true);
+      }
+    } catch (e) {}
+  }, []);
+
   // Filtered pharmacies with coordinates
-  const validPharmacies = pharmacies.filter(p => {
-    if (!p.latitude || !p.longitude) return false;
-    if (categoryFilter !== 'ALL' && (p.category || 'B') !== categoryFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = p.name?.toLowerCase().includes(q);
-      const matchAddr = p.address?.toLowerCase().includes(q);
-      const matchPerson = p.contact_person?.toLowerCase().includes(q);
-      return matchName || matchAddr || matchPerson;
+  const validPharmacies = useMemo(() => {
+    return pharmacies.filter(p => {
+      if (!p.latitude || !p.longitude) return false;
+      if (categoryFilter !== 'ALL' && (p.category || 'B') !== categoryFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = p.name?.toLowerCase().includes(q);
+        const matchAddr = p.address?.toLowerCase().includes(q);
+        const matchPerson = p.contact_person?.toLowerCase().includes(q);
+        return matchName || matchAddr || matchPerson;
+      }
+      return true;
+    });
+  }, [pharmacies, categoryFilter, searchQuery]);
+
+  // Nearby pharmacies count within 1 km
+  const nearbyCount = useMemo(() => {
+    if (!userLat || !userLng) return 0;
+    return pharmacies.filter(p => {
+      if (!p.latitude || !p.longitude) return false;
+      const d = calculateDistanceMeters(userLat, userLng, Number(p.latitude), Number(p.longitude));
+      return d <= 1000;
+    }).length;
+  }, [pharmacies, userLat, userLng]);
+
+  // Calculate total trail distance in km
+  const totalDistanceKm = useMemo(() => {
+    if (trailPoints.length < 2) return 0;
+    let dist = 0;
+    for (let i = 1; i < trailPoints.length; i++) {
+      dist += calculateDistanceMeters(
+        trailPoints[i - 1][0], trailPoints[i - 1][1],
+        trailPoints[i][0], trailPoints[i][1]
+      );
     }
-    return true;
-  });
+    return (dist / 1000).toFixed(2);
+  }, [trailPoints]);
 
   // Init Leaflet
   useEffect(() => {
@@ -84,8 +147,22 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        // Layers
+        const circlesLayer = L.layerGroup().addTo(map);
         const markersLayer = L.layerGroup().addTo(map);
+
+        // Polyline for GPS Breadcrumbs (Нить Ариадны)
+        const polyline = L.polyline([], {
+          color: '#0284c7',
+          weight: 4,
+          opacity: 0.85,
+          lineJoin: 'round',
+          dashArray: undefined
+        }).addTo(map);
+
+        circlesLayerRef.current = circlesLayer;
         markersLayerRef.current = markersLayer;
+        trailPolylineRef.current = polyline;
         mapInstanceRef.current = map;
         setMapLoaded(true);
       } catch (err) {
@@ -101,8 +178,99 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      if (wakeLockRef.current) {
+        try { wakeLockRef.current.release(); } catch (e) {}
+      }
     };
   }, []);
+
+  // Update Polyline when trailPoints change
+  useEffect(() => {
+    if (trailPolylineRef.current) {
+      trailPolylineRef.current.setLatLngs(trailPoints);
+    }
+  }, [trailPoints]);
+
+  // Handle Recording GPS Points (Breadcrumbs)
+  useEffect(() => {
+    if (!isRecordingTrail || !userLat || !userLng) return;
+
+    setTrailPoints(prev => {
+      const lastPoint = prev[prev.length - 1];
+      if (lastPoint) {
+        const d = calculateDistanceMeters(lastPoint[0], lastPoint[1], userLat, userLng);
+        // Only append if moved more than 15 meters to prevent jitter
+        if (d < 15) return prev;
+      }
+
+      const nextPoints: Array<[number, number]> = [...prev, [userLat, userLng]];
+      try {
+        localStorage.setItem('toj_rep_trail_points', JSON.stringify(nextPoints));
+      } catch (e) {}
+
+      // Batch sync to server every 5 points
+      if (nextPoints.length % 5 === 0 && repId) {
+        fetch('/api/rep', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save_track_points',
+            rep_id: repId,
+            points: [{ lat: userLat, lng: userLng }]
+          })
+        }).catch(() => {});
+      }
+
+      return nextPoints;
+    });
+  }, [isRecordingTrail, userLat, userLng, repId]);
+
+  // Screen Wake Lock API when Recording is active
+  const toggleRecordingTrail = async () => {
+    const nextState = !isRecordingTrail;
+    setIsRecordingTrail(nextState);
+    try {
+      localStorage.setItem('toj_rep_is_recording_trail', String(nextState));
+    } catch (e) {}
+
+    if (nextState) {
+      // Request screen lock
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        } catch (err) {
+          console.warn('Wake lock error:', err);
+        }
+      }
+      // Add current point immediately if available
+      if (userLat && userLng) {
+        setTrailPoints(prev => {
+          const updated: Array<[number, number]> = [...prev, [userLat, userLng]];
+          try {
+            localStorage.setItem('toj_rep_trail_points', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
+      }
+    } else {
+      // Release screen lock
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+        } catch (e) {}
+      }
+    }
+  };
+
+  const handleClearTrail = () => {
+    if (confirm('Сбросить сегодняшний маршрут на карте?')) {
+      setTrailPoints([]);
+      try {
+        localStorage.removeItem('toj_rep_trail_points');
+      } catch (e) {}
+    }
+  };
 
   // Update User Marker
   useEffect(() => {
@@ -116,13 +284,13 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         const userIcon = L.divIcon({
           className: 'user-location-pin',
           html: `
-            <div style="position: relative; width: 22px; height: 22px;">
-              <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #0284c7; opacity: 0.35; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-              <div style="position: relative; width: 14px; height: 14px; top: 4px; left: 4px; border-radius: 50%; background: #0284c7; border: 2.5px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>
+            <div style="position: relative; width: 24px; height: 24px;">
+              <div style="position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #0284c7; opacity: 0.35; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+              <div style="position: relative; width: 14px; height: 14px; top: 5px; left: 5px; border-radius: 50%; background: #0284c7; border: 2.5px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>
             </div>
           `,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
         });
 
         userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon, zIndexOffset: 1000 }).addTo(mapInstanceRef.current);
@@ -134,20 +302,36 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     }
   }, [userLat, userLng, mapLoaded]);
 
-  // Update Pharmacy Markers
+  // Update Pharmacy Markers and Coverage Radiuses (250m)
   useEffect(() => {
-    async function renderPins() {
-      if (!mapInstanceRef.current || !markersLayerRef.current) return;
+    async function renderPinsAndCircles() {
+      if (!mapInstanceRef.current || !markersLayerRef.current || !circlesLayerRef.current) return;
       const L = (await import('leaflet')).default;
 
       markersLayerRef.current.clearLayers();
+      circlesLayerRef.current.clearLayers();
 
       validPharmacies.forEach(pharm => {
         if (!pharm.latitude || !pharm.longitude) return;
+        const lat = Number(pharm.latitude);
+        const lng = Number(pharm.longitude);
 
         const cat = pharm.category || 'B';
         const color = cat === 'A' ? '#f59e0b' : cat === 'B' ? '#10b981' : '#64748b';
 
+        // 1. Coverage Circle (250m radius)
+        if (showCoverageCircles) {
+          L.circle([lat, lng], {
+            radius: 250,
+            color,
+            fillColor: color,
+            fillOpacity: 0.08,
+            weight: 1.5,
+            dashArray: '3, 4'
+          }).addTo(circlesLayerRef.current);
+        }
+
+        // 2. Pharmacy Marker Pin
         const icon = L.divIcon({
           className: 'pharmacy-map-pin',
           html: `
@@ -176,11 +360,11 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           iconAnchor: [40, 30]
         });
 
-        const marker = L.marker([Number(pharm.latitude), Number(pharm.longitude)], { icon });
+        const marker = L.marker([lat, lng], { icon });
         marker.on('click', () => {
           setSelectedPharmacy(pharm);
           if (onSelectPharmacy) onSelectPharmacy(pharm);
-          mapInstanceRef.current?.setView([Number(pharm.latitude), Number(pharm.longitude)], 16, { animate: true });
+          mapInstanceRef.current?.setView([lat, lng], 16, { animate: true });
         });
 
         markersLayerRef.current.addLayer(marker);
@@ -188,9 +372,9 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     }
 
     if (mapLoaded) {
-      renderPins();
+      renderPinsAndCircles();
     }
-  }, [validPharmacies, mapLoaded]);
+  }, [validPharmacies, showCoverageCircles, mapLoaded]);
 
   // Toggle Streets / Satellite
   const toggleMapLayer = async () => {
@@ -227,8 +411,9 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-slate-100">
-      {/* Search & Filter Top Bar */}
+      {/* Top Floating Bar: Search & Territory Progress */}
       <div className="absolute top-3 left-3 right-3 z-[400] flex flex-col gap-2">
+        {/* Search Input */}
         <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/80 p-2 flex items-center gap-2">
           <Search className="w-4 h-4 text-slate-400 ml-2 shrink-0" />
           <input
@@ -248,6 +433,32 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           )}
         </div>
 
+        {/* Territory & Trail Stats Bar */}
+        <div className="flex items-center justify-between gap-2 bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl shadow-md text-[11px]">
+          <div className="flex items-center gap-2 truncate">
+            <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+              <CircleDot className="w-3.5 h-3.5" />
+              В радиусе 1 км: {nearbyCount} аптек
+            </span>
+            <span className="text-slate-500">•</span>
+            <span className="flex items-center gap-1 text-sky-300">
+              <Footprints className="w-3.5 h-3.5" />
+              Пройдено: {totalDistanceKm} км
+            </span>
+          </div>
+
+          {/* Quick Breadcrumb Trail Clear if exists */}
+          {trailPoints.length > 0 && (
+            <button
+              onClick={handleClearTrail}
+              className="text-[10px] text-slate-400 hover:text-slate-200 underline shrink-0"
+              title="Сбросить трек"
+            >
+              Сброс пути
+            </button>
+          )}
+        </div>
+
         {/* Category Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
           {(['ALL', 'A', 'B', 'C'] as const).map((cat) => (
@@ -260,7 +471,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
                   : 'bg-white/90 text-slate-700 hover:bg-white border border-slate-200/60'
               }`}
             >
-              {cat === 'ALL' ? `Все аптеки (${pharmacies.filter(p => p.latitude).length})` : `Категория ${cat}`}
+              {cat === 'ALL' ? `Все (${pharmacies.filter(p => p.latitude).length})` : `Кат. ${cat}`}
             </button>
           ))}
         </div>
@@ -271,6 +482,33 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
 
       {/* Floating Controls Right */}
       <div className="absolute right-3 bottom-24 sm:bottom-28 z-[400] flex flex-col gap-2">
+        {/* Toggle Live Trail Recording ("Нить Ариадны") */}
+        <button
+          onClick={toggleRecordingTrail}
+          className={`w-11 h-11 rounded-2xl shadow-lg border flex items-center justify-center transition-all active:scale-95 ${
+            isRecordingTrail
+              ? 'bg-emerald-600 text-white border-emerald-500 animate-pulse'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          }`}
+          title={isRecordingTrail ? 'Остановить запись пути' : 'Включить запись пути (Нить Ариадны)'}
+        >
+          {isRecordingTrail ? <Pause className="w-5 h-5" /> : <Route className="w-5 h-5 text-emerald-600" />}
+        </button>
+
+        {/* Toggle Coverage Circles (250m) */}
+        <button
+          onClick={() => setShowCoverageCircles(prev => !prev)}
+          className={`w-11 h-11 rounded-2xl shadow-lg border flex items-center justify-center transition-all active:scale-95 ${
+            showCoverageCircles
+              ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+              : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
+          }`}
+          title="Показать/скрыть зоны охвата (250м)"
+        >
+          <Radio className="w-5 h-5" />
+        </button>
+
+        {/* Center on GPS */}
         {userLat && userLng && (
           <button
             onClick={centerOnUser}
@@ -281,6 +519,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           </button>
         )}
 
+        {/* Toggle Map Satellite Layer */}
         <button
           onClick={toggleMapLayer}
           className="w-11 h-11 rounded-2xl bg-white shadow-lg border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center justify-center transition-transform active:scale-95"

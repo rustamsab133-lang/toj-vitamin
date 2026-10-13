@@ -314,6 +314,7 @@ export default function BrandRepPortalPage() {
         {activeTab === 'map' && (
           <PharmaciesOverviewMap
             pharmacies={pharmacies}
+            repId={rep.id}
             userLat={userCoords?.lat}
             userLng={userCoords?.lng}
             onStartVisit={(pharm) => setActiveVisitPharmacy(pharm)}

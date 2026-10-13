@@ -103,6 +103,29 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, visits: visits || [] });
     }
 
+    if (action === 'get_today_track') {
+      if (!repId) {
+        return NextResponse.json({ error: 'Не указан rep_id' }, { status: 400 });
+      }
+
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { data: points, error } = await supabaseAdmin
+        .from('rep_tracks')
+        .select('latitude, longitude, recorded_at')
+        .eq('rep_id', repId)
+        .gte('recorded_at', todayStart.toISOString())
+        .order('recorded_at', { ascending: true });
+
+      if (error) {
+        // Table might not exist yet if migration pending
+        return NextResponse.json({ success: true, points: [] });
+      }
+
+      return NextResponse.json({ success: true, points: points || [] });
+    }
+
     return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 });
   } catch (err: any) {
     console.error('API /api/rep error:', err);
@@ -112,14 +135,14 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/rep
- * Операции: вход по PIN, создание аптеки по GPS, фиксация визита
+ * Операции: вход по PIN, создание аптеки по GPS, фиксация визита, сохранение трека
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { action } = body;
 
-    // --- 1. Авторизация представителя по PIN ---
+    // --- 1. Авторизация представителя по индивидуальному PIN ---
     if (action === 'login') {
       const { phone, pin_code } = body;
       if (!phone || !pin_code) {
@@ -138,7 +161,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Представитель с таким номером не найден' }, { status: 404 });
       }
 
-      if (rep.pin_code !== pin_code && pin_code !== '2024') {
+      if (rep.pin_code !== pin_code) {
         return NextResponse.json({ error: 'Неверный PIN-код доступа' }, { status: 401 });
       }
 
@@ -318,6 +341,35 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json({ success: true, visit, distanceMeters, isGpsVerified });
+    }
+
+    // --- 5. Сохранение точек GPS-трека представителя (Нить Ариадны) ---
+    if (action === 'save_track_points') {
+      const { rep_id, points } = body;
+      if (!rep_id || !Array.isArray(points) || points.length === 0) {
+        return NextResponse.json({ success: true, saved: 0 });
+      }
+
+      const payload = points.map((p: any) => ({
+        rep_id,
+        latitude: Number(p.lat || p.latitude),
+        longitude: Number(p.lng || p.longitude),
+        accuracy: p.accuracy ? Number(p.accuracy) : null,
+        speed: p.speed ? Number(p.speed) : null,
+        recorded_at: p.recorded_at || new Date().toISOString()
+      })).filter((p: any) => !isNaN(p.latitude) && !isNaN(p.longitude));
+
+      const { error } = await supabaseAdmin
+        .from('rep_tracks')
+        .insert(payload);
+
+      if (error) {
+        // Log warning in case table migration is still being executed
+        console.warn('Track points save warning:', error.message);
+        return NextResponse.json({ success: false, error: error.message });
+      }
+
+      return NextResponse.json({ success: true, saved: payload.length });
     }
 
     return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 });
