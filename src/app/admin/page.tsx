@@ -46,7 +46,7 @@ const MODULES: Array<{ id: AdminView; title: string; desc: string; icon: React.R
 ];
 
 export default function AdminPage() {
-  const [isAuth, setIsAuth] = useState(false);
+  const [isAuth, setIsAuth] = useState(true);
   const [view, setView] = useState<AdminView>('dashboard');
   const [stats, setStats] = useState({ products: 0, orders: 0, newOrders: 0 });
   const [selectedFeedProductId, setSelectedFeedProductId] = useState<string | undefined>(undefined);
@@ -58,17 +58,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    const sessionSaved = sessionStorage.getItem('toj-admin-auth');
-    const localSaved = localStorage.getItem('toj-admin-auth');
-    const localPass = localStorage.getItem('toj-admin-password');
-
-    if (sessionSaved === 'true') {
-      setIsAuth(true);
-    } else if (localSaved === 'true' && localPass) {
-      sessionStorage.setItem('toj-admin-auth', 'true');
-      sessionStorage.setItem('toj-admin-password', localPass);
-      setIsAuth(true);
-    }
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -95,12 +84,9 @@ export default function AdminPage() {
     });
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('toj-admin-auth');
-    sessionStorage.removeItem('toj-admin-password');
-    localStorage.removeItem('toj-admin-auth');
-    localStorage.removeItem('toj-admin-password');
-    setIsAuth(false);
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth/sign-out', { method: 'POST' });
+    window.location.replace('/admin/login');
   };
 
   if (!mounted) return null;
