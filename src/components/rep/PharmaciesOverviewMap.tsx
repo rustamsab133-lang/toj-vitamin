@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { Map as LeafletMap } from 'leaflet';
 import { Pharmacy } from '@/lib/types';
+import { startBackgroundTracker, stopBackgroundTracker, isNativeApp } from '@/lib/backgroundTracker';
 
 interface PharmaciesOverviewMapProps {
   pharmacies: Pharmacy[];
@@ -103,10 +104,45 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     return () => clearInterval(interval);
   }, [activeShift?.started_at]);
 
-  // Keep trail recording and screen wake lock synchronized with activeShift
+  // Keep trail recording, background GPS tracker, and screen wake lock synchronized with activeShift
   useEffect(() => {
     if (activeShift) {
       setIsRecordingTrail(true);
+
+      // Start background tracker (native Foreground Service on Android APK, or browser fallback)
+      startBackgroundTracker(
+        (point) => {
+          setTrailPoints(prev => {
+            const last = prev[prev.length - 1];
+            if (last) {
+              const d = calculateDistanceMeters(last[0], last[1], point.latitude, point.longitude);
+              if (d < 15) return prev;
+            }
+            const updated: Array<[number, number]> = [...prev, [point.latitude, point.longitude]];
+            try {
+              localStorage.setItem('toj_rep_trail_points', JSON.stringify(updated));
+            } catch (e) {}
+
+            // Save to server every 5 points
+            if (updated.length % 5 === 0 && repId) {
+              fetch('/api/rep', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'save_track_points',
+                  rep_id: repId,
+                  shift_id: activeShift.id,
+                  points: [{ lat: point.latitude, lng: point.longitude }]
+                })
+              }).catch(() => {});
+            }
+
+            return updated;
+          });
+        },
+        (err) => console.warn('Background tracker update error:', err)
+      );
+
       if ('wakeLock' in navigator && !wakeLockRef.current) {
         (navigator as any).wakeLock.request('screen').then((lock: any) => {
           wakeLockRef.current = lock;
@@ -114,6 +150,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
       }
     } else {
       setIsRecordingTrail(false);
+      stopBackgroundTracker();
       if (wakeLockRef.current) {
         try {
           wakeLockRef.current.release();
@@ -121,7 +158,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         } catch (e) {}
       }
     }
-  }, [activeShift]);
+  }, [activeShift, repId]);
 
   // Filtered pharmacies with coordinates
   const validPharmacies = useMemo(() => {
@@ -514,7 +551,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
                 <div className="text-[10px] text-emerald-200/80 flex items-center gap-1.5 truncate">
                   <span>👟 {totalDistanceKm} км</span>
                   <span>•</span>
-                  <span>📍 Маршрут пишется в базу</span>
+                  <span>{isNativeApp() ? '📱 Фоновый GPS (в кармане)' : '📍 Маршрут пишется в базу'}</span>
                 </div>
               </div>
             </div>

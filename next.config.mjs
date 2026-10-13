@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep the development server usable while a production build runs.
+  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   reactStrictMode: true,
   eslint: {
     // ignoreDuringBuilds: true,
@@ -7,6 +9,7 @@ const nextConfig = {
   typescript: {
     // ignoreBuildErrors: true,
   },
+  staticPageGenerationTimeout: 180,
   swcMinify: true,
   images: {
     unoptimized: true,

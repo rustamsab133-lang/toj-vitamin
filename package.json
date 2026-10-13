@@ -8,12 +8,19 @@
     "start": "next start",
     "lint": "next lint",
     "export:meta": "node scripts/export_instagram_safe_catalog.js",
-    "export:catalog": "node scripts/export_catalog_html.js"
+    "export:catalog": "node scripts/export_catalog_html.js",
+    "test:auth": "node --test tests/auth-policy.test.cjs",
+    "test:auth:integration": "node scripts/test-auth-integration.cjs"
   },
   "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.26",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "@google-analytics/data": "^5.2.2",
     "@google/generative-ai": "^0.24.1",
-    "@supabase/supabase-js": "^2.105.1",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.105.1",
     "@types/leaflet": "^1.9.22",
     "dotenv": "^17.4.2",
     "facebook-nodejs-business-sdk": "^24.0.1",

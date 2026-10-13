@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Toj-Vitamin Представитель</string>
+    <string name="title_activity_main">Toj-Vitamin Представитель</string>
+    <string name="package_name">tj.tojvitamin.rep</string>
+    <string name="custom_url_scheme">tj.tojvitamin.rep</string>
+</resources>
