@@ -1,0 +1,17 @@
+{
+	"appId": "tj.tojvitamin.rep",
+	"appName": "Toj-Vitamin Представитель",
+	"webDir": "public",
+	"server": {
+		"url": "https://www.toj-vitamin.tj/rep",
+		"cleartext": false,
+		"allowNavigation": [
+			"www.toj-vitamin.tj",
+			"toj-vitamin.tj"
+		]
+	},
+	"android": {
+		"allowMixedContent": true,
+		"webContentsDebuggingEnabled": true
+	}
+}

@@ -6,6 +6,7 @@ on:
     paths:
       - 'android/**'
       - 'capacitor.config.ts'
+      - '.github/workflows/build-apk.yml'
 
 jobs:
   build-apk:
@@ -30,6 +31,11 @@ jobs:
       - name: Install npm dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Ensure Assets Directory Exists
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          mkdir -p public
+
       - name: Sync Capacitor Android
         run: npx cap sync android
 
@@ -39,7 +45,7 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
