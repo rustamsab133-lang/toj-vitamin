@@ -28,7 +28,14 @@ jobs:
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22.x'
+          check-latest: true
+
+      - name: Verify Node version
+        run: |
+          echo "Node: $(node -v)"
+          echo "npm: $(npm -v)"
+          which node
 
       - name: Install npm dependencies
         run: npm install --legacy-peer-deps
