@@ -85,7 +85,7 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    await fetch('/api/admin/auth/sign-out', { method: 'POST' });
+    await fetch('/api/admin/auth/sign-in', { method: 'DELETE' });
     window.location.replace('/admin/login');
   };
 
