@@ -5,28 +5,39 @@ import { Printer, X } from 'lucide-react';
 
 interface PrintLayoutProps {
   title: string;
+  documentTitle?: string;
   onClose?: () => void;
   children: React.ReactNode;
   actions?: React.ReactNode;
   subtitle?: string;
 }
 
-export default function PrintLayout({ title, onClose, children, actions, subtitle }: PrintLayoutProps) {
+export default function PrintLayout({ title, documentTitle, onClose, children, actions, subtitle }: PrintLayoutProps) {
   useEffect(() => {
+    const originalTitle = document.title;
+    const targetTitle = documentTitle || title;
+    if (targetTitle) {
+      document.title = targetTitle;
+    }
+
     const handleBeforePrint = () => {
       document.body.style.overflow = 'visible';
+      if (targetTitle) {
+        document.title = targetTitle;
+      }
     };
     const handleAfterPrint = () => {
-      // Handled by parent modal if needed
+      // Keep target title while modal is active
     };
 
     window.addEventListener('beforeprint', handleBeforePrint);
     window.addEventListener('afterprint', handleAfterPrint);
     return () => {
+      document.title = originalTitle;
       window.removeEventListener('beforeprint', handleBeforePrint);
       window.removeEventListener('afterprint', handleAfterPrint);
     };
-  }, []);
+  }, [documentTitle, title]);
 
   return (
     <div className="print-wrapper-root fixed inset-0 z-[100] bg-slate-100 print:bg-white overflow-y-auto">

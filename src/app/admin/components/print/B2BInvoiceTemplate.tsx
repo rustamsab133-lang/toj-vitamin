@@ -133,10 +133,14 @@ export default function B2BInvoiceTemplate({
     </>
   );
 
+  const pharmacyName = (pharmacy.name || 'Оптовый покупатель').trim();
+  const pdfFileName = `Накладная ${docNumber} — ${pharmacyName}`;
+
   return (
     <PrintLayout
       title={`Товарная накладная № ${docNumber}`}
       subtitle={`Заказ № ${shortId} от ${formattedDate}`}
+      documentTitle={pdfFileName}
       onClose={onClose}
       actions={customActions}
     >
