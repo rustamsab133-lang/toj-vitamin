@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { signOut } from '@/app/auth/actions';
+import { AdminLogin } from './components/AdminLogin';
 import { ProductEditor } from './components/ProductEditor';
 import { QuizEditor } from './components/QuizEditor';
 import { ComplexEditor } from './components/ComplexEditor';
@@ -47,6 +47,7 @@ const MODULES: Array<{ id: AdminView; title: string; desc: string; icon: React.R
 ];
 
 export default function AdminPage() {
+  const [isAuth, setIsAuth] = useState(false);
   const [view, setView] = useState<AdminView>('dashboard');
   const [stats, setStats] = useState({ products: 0, orders: 0, newOrders: 0 });
   const [selectedFeedProductId, setSelectedFeedProductId] = useState<string | undefined>(undefined);
@@ -58,6 +59,18 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
+    const sessionSaved = sessionStorage.getItem('toj-admin-auth');
+    const localSaved = localStorage.getItem('toj-admin-auth');
+    const localPass = localStorage.getItem('toj-admin-password');
+
+    if (sessionSaved === 'true') {
+      setIsAuth(true);
+    } else if (localSaved === 'true' && localPass) {
+      sessionStorage.setItem('toj-admin-auth', 'true');
+      sessionStorage.setItem('toj-admin-password', localPass);
+      setIsAuth(true);
+    }
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlView = (params.get('view') || params.get('tab')) as AdminView;
@@ -68,8 +81,8 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    void loadStats();
-  }, []);
+    if (isAuth) loadStats();
+  }, [isAuth]);
 
   const loadStats = async () => {
     const [{ count: pCount }, { data: oData }] = await Promise.all([
@@ -83,9 +96,16 @@ export default function AdminPage() {
     });
   };
 
-  const handleLogout = () => { void signOut(); };
+  const handleLogout = () => {
+    sessionStorage.removeItem('toj-admin-auth');
+    sessionStorage.removeItem('toj-admin-password');
+    localStorage.removeItem('toj-admin-auth');
+    localStorage.removeItem('toj-admin-password');
+    setIsAuth(false);
+  };
 
   if (!mounted) return null;
+  if (!isAuth) return <AdminLogin onAuth={() => setIsAuth(true)} />;
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg))]">
