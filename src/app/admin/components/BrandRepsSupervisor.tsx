@@ -29,8 +29,14 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
   const [selectedRepFilter, setSelectedRepFilter] = useState<string>('ALL');
   const [freshnessFilter, setFreshnessFilter] = useState<'ALL' | 'green' | 'yellow' | 'red'>('ALL');
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [hasExplicitlyPickedDate, setHasExplicitlyPickedDate] = useState<boolean>(false);
+  const [availableTrackDates, setAvailableTrackDates] = useState<Array<{ date: string; pointsCount: number }>>([]);
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Reverse-geocoded street names per track: Record<rep_id, Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }>>
+  const [streetTimelines, setStreetTimelines] = useState<Record<string, Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }>>>({});
+  const [loadingStreets, setLoadingStreets] = useState<boolean>(false);
 
   // Leaflet Refs
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -59,10 +65,12 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
     status: 'active'
   });
 
-  const loadSupervisorData = async () => {
+  const loadSupervisorData = async (dateToLoad?: string, explicit?: boolean) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/rep?action=supervisor_overview&date=${selectedDate}`);
+      const d = dateToLoad ?? selectedDate;
+      const expFlag = (explicit ?? hasExplicitlyPickedDate) ? '&explicit_date=1' : '';
+      const res = await fetch(`/api/rep?action=supervisor_overview&date=${d}${expFlag}`);
       const data = await res.json();
       if (data.success) {
         setReps(data.reps || []);
@@ -70,6 +78,12 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         setVisits(data.visits || []);
         setTracks(data.tracks || []);
         setActiveShifts(data.activeShifts || {});
+        if (Array.isArray(data.availableTrackDates)) {
+          setAvailableTrackDates(data.availableTrackDates);
+        }
+        if (data.effectiveDate && data.effectiveDate !== selectedDate && !(explicit ?? hasExplicitlyPickedDate)) {
+          setSelectedDate(data.effectiveDate);
+        }
       }
     } catch (err) {
       console.error('Supervisor load error:', err);
@@ -79,8 +93,116 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
   };
 
   useEffect(() => {
-    loadSupervisorData();
+    loadSupervisorData(selectedDate, hasExplicitlyPickedDate);
   }, [selectedDate]);
+
+  // Resolve GPS track coordinates into human-readable street names (Nominatim + localStorage cache)
+  useEffect(() => {
+    let cancelled = false;
+    async function resolveTrackStreets() {
+      if (!tracks || tracks.length === 0) {
+        setStreetTimelines({});
+        return;
+      }
+      setLoadingStreets(true);
+      const cacheKey = 'toj_supervisor_street_cache_v1';
+      let geoCache: Record<string, string> = {};
+      try {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) geoCache = JSON.parse(raw);
+      } catch (e) {}
+
+      const nextTimelines: Record<string, Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }>> = {};
+
+      for (const tr of tracks) {
+        const pts = Array.isArray(tr.points) ? tr.points : [];
+        if (pts.length === 0) continue;
+
+        // Sample up to 8 key points along the route (Start, intermediate street turns, End)
+        const sampleIndices: number[] = [0];
+        const step = Math.max(1, Math.floor((pts.length - 1) / 6));
+        for (let i = step; i < pts.length - 1; i += step) {
+          sampleIndices.push(i);
+        }
+        if (pts.length > 1 && sampleIndices[sampleIndices.length - 1] !== pts.length - 1) {
+          sampleIndices.push(pts.length - 1);
+        }
+
+        const repSteps: Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }> = [];
+
+        for (let idx = 0; idx < sampleIndices.length; idx++) {
+          if (cancelled) return;
+          const ptIndex = sampleIndices[idx];
+          const pt = pts[ptIndex];
+          const lat = Number(pt.lat);
+          const lng = Number(pt.lng);
+          const roundedKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+
+          let streetName = geoCache[roundedKey];
+          if (!streetName) {
+            try {
+              const r = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                { headers: { 'Accept-Language': 'ru,tg,en' } }
+              );
+              if (r.ok) {
+                const g = await r.json();
+                const a = g.address || {};
+                const road = a.road || a.street || a.pedestrian || a.residential || a.suburb || a.neighbourhood || '';
+                const house = a.house_number ? `, д. ${a.house_number}` : '';
+                const poi = a.amenity || a.shop || a.building || '';
+                const district = a.city_district || a.suburb || '';
+                streetName = road
+                  ? `${road}${house}${district && district !== road ? ` (${district})` : ''}`
+                  : poi || g.display_name?.split(',').slice(0, 2).join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                geoCache[roundedKey] = streetName;
+                try {
+                  localStorage.setItem(cacheKey, JSON.stringify(geoCache));
+                } catch (e) {}
+              }
+            } catch (e) {}
+          }
+
+          if (!streetName) {
+            streetName = `Координаты ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          }
+
+          const timeStr = pt.recorded_at
+            ? new Date(pt.recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            : '';
+
+          // Deduplicate consecutive identical street names unless it's start or end
+          const isStart = idx === 0;
+          const isEnd = idx === sampleIndices.length - 1 && sampleIndices.length > 1;
+          const prevStep = repSteps[repSteps.length - 1];
+          if (!isStart && !isEnd && prevStep && prevStep.street === streetName) {
+            continue;
+          }
+
+          repSteps.push({
+            time: timeStr,
+            street: streetName,
+            lat,
+            lng,
+            isStart,
+            isEnd
+          });
+        }
+
+        nextTimelines[tr.rep_id] = repSteps;
+      }
+
+      if (!cancelled) {
+        setStreetTimelines(nextTimelines);
+        setLoadingStreets(false);
+      }
+    }
+
+    resolveTrackStreets();
+    return () => {
+      cancelled = true;
+    };
+  }, [tracks]);
 
   // Compute last visit date per pharmacy & freshness status
   const pharmacyFreshnessMap = useMemo(() => {
@@ -191,22 +313,139 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
       markersLayerRef.current.clearLayers();
       tracksLayerRef.current.clearLayers();
 
-      // 1. Render GPS Tracks per Rep
+      const allTrackBounds: Array<[number, number]> = [];
+
+      // 1. Render GPS Tracks per Rep with Start, Checkpoints, and Finish pins
       const filteredTracks = tracks.filter(t => selectedRepFilter === 'ALL' || t.rep_id === selectedRepFilter);
       filteredTracks.forEach((tr, idx) => {
-        if (!Array.isArray(tr.points) || tr.points.length < 2) return;
+        if (!Array.isArray(tr.points) || tr.points.length === 0) return;
         const repObj = reps.find(r => r.id === tr.rep_id);
         const color = REP_COLORS[idx % REP_COLORS.length];
         const latlngs = tr.points.map((pt: any) => [Number(pt.lat), Number(pt.lng)] as [number, number]);
+        latlngs.forEach((ll: [number, number]) => allTrackBounds.push(ll));
 
-        const poly = L.polyline(latlngs, {
-          color,
-          weight: 4,
-          opacity: 0.85
-        }).addTo(tracksLayerRef.current);
+        if (latlngs.length >= 2) {
+          // White outer casing for street contrast
+          L.polyline(latlngs, {
+            color: '#ffffff',
+            weight: 9,
+            opacity: 0.9,
+            lineJoin: 'round'
+          }).addTo(tracksLayerRef.current);
 
-        poly.bindTooltip(`Маршрут: ${repObj?.name || 'Медпред'} (${tr.total_km || 0} км)`, { sticky: true });
+          // Colored route line
+          const poly = L.polyline(latlngs, {
+            color,
+            weight: 5,
+            opacity: 0.95,
+            lineJoin: 'round'
+          }).addTo(tracksLayerRef.current);
+
+          poly.bindTooltip(`Маршрут: ${repObj?.name || 'Медпред'} (${tr.total_km || 0} км, точек: ${tr.points.length})`, { sticky: true });
+        }
+
+        // Start Marker
+        const firstPt = tr.points[0];
+        const firstTime = firstPt.recorded_at
+          ? new Date(firstPt.recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const startIcon = L.divIcon({
+          className: 'supervisor-track-start',
+          html: `
+            <div style="
+              background: #10b981;
+              color: white;
+              padding: 3px 8px;
+              border-radius: 999px;
+              font-size: 10px;
+              font-weight: 800;
+              border: 2px solid white;
+              box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+              white-space: nowrap;
+              transform: translate(-50%, -50%);
+            ">
+              🟢 Старт ${firstTime} (${repObj?.name?.split(' ')[0] || 'Медпред'})
+            </div>
+          `,
+          iconSize: [110, 24],
+          iconAnchor: [55, 12]
+        });
+        L.marker([Number(firstPt.lat), Number(firstPt.lng)], { icon: startIcon, zIndexOffset: 900 }).addTo(tracksLayerRef.current);
+
+        // Intermediate Direction / Time Dots along the streets
+        tr.points.forEach((pt: any, ptIdx: number) => {
+          if (ptIdx === 0 || ptIdx === tr.points.length - 1) return;
+          const tStr = pt.recorded_at
+            ? new Date(pt.recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            : '';
+          const dotIcon = L.divIcon({
+            className: 'supervisor-track-dot',
+            html: `
+              <div style="
+                background: ${color};
+                color: white;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                font-size: 9px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid white;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+                transform: translate(-50%, -50%);
+              " title="${tStr}">
+                ${ptIdx}
+              </div>
+            `,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+          });
+          L.marker([Number(pt.lat), Number(pt.lng)], { icon: dotIcon, zIndexOffset: 700 })
+            .bindTooltip(`${repObj?.name || 'Медпред'} • Точка #${ptIdx} в ${tStr}`)
+            .addTo(tracksLayerRef.current);
+        });
+
+        // Finish Marker (if more than 1 point)
+        if (tr.points.length > 1) {
+          const lastPt = tr.points[tr.points.length - 1];
+          const lastTime = lastPt.recorded_at
+            ? new Date(lastPt.recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            : '';
+          const endIcon = L.divIcon({
+            className: 'supervisor-track-end',
+            html: `
+              <div style="
+                background: #0f172a;
+                color: white;
+                padding: 3px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                font-weight: 800;
+                border: 2px solid white;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+                white-space: nowrap;
+                transform: translate(-50%, -50%);
+              ">
+                🏁 Финиш ${lastTime} (${tr.total_km || 0} км)
+              </div>
+            `,
+            iconSize: [120, 24],
+            iconAnchor: [60, 12]
+          });
+          L.marker([Number(lastPt.lat), Number(lastPt.lng)], { icon: endIcon, zIndexOffset: 950 }).addTo(tracksLayerRef.current);
+        }
       });
+
+      // Automatically fit map bounds to the employee's street route so the supervisor sees the streets immediately
+      if (allTrackBounds.length >= 2) {
+        try {
+          mapInstanceRef.current.fitBounds(allTrackBounds, { padding: [50, 50], maxZoom: 16 });
+        } catch (e) {}
+      } else if (allTrackBounds.length === 1) {
+        mapInstanceRef.current.setView(allTrackBounds[0], 16);
+      }
 
       // 2. Render Pharmacies colored by visit freshness
       pharmacies.forEach(pharm => {
@@ -377,7 +616,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             Добавить сотрудника
           </button>
           <button
-            onClick={loadSupervisorData}
+            onClick={() => loadSupervisorData()}
             className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center"
             title="Обновить сводку"
           >
@@ -508,17 +747,50 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
                 <span className="text-slate-500">Треки за:</span>
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    setHasExplicitlyPickedDate(true);
+                    setSelectedDate(e.target.value);
+                  }}
                   className="font-semibold text-slate-800 focus:outline-none"
                 />
               </div>
+
+              {availableTrackDates.length > 0 && (
+                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200 text-[11px]">
+                  <span className="text-slate-500 px-1.5 font-medium">Записи GPS:</span>
+                  {availableTrackDates.slice(0, 4).map((d) => {
+                    const isSelected = selectedDate === d.date;
+                    const label = new Date(d.date + 'T00:00:00').toLocaleDateString('ru-RU', {
+                      day: '2-digit',
+                      month: '2-digit',
+                    });
+                    return (
+                      <button
+                        key={d.date}
+                        onClick={() => {
+                          setHasExplicitlyPickedDate(true);
+                          setSelectedDate(d.date);
+                        }}
+                        className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+                        }`}
+                        title={`Записано GPS-точек: ${d.pointsCount}`}
+                      >
+                        {label} ({d.pointsCount})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
@@ -618,6 +890,165 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Street-by-Street Walked Route Breakdown */}
+          <div className="p-4 border-t border-slate-200 bg-slate-50/70 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Footprints className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  По каким улицам проходили сотрудники ({new Date(selectedDate + 'T00:00:00').toLocaleDateString('ru-RU')})
+                </h3>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                Нажмите на любую улицу в цепочке, чтобы приблизить этот участок на карте
+              </span>
+            </div>
+
+            {(() => {
+              const activeTracks = tracks.filter(
+                (tr) =>
+                  (selectedRepFilter === 'ALL' || selectedRepFilter === tr.rep_id) &&
+                  Array.isArray(tr.points) &&
+                  tr.points.length > 0
+              );
+
+              if (activeTracks.length === 0) {
+                return (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-4 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      За выбранную дату ({new Date(selectedDate + 'T00:00:00').toLocaleDateString('ru-RU')}) записанных GPS-точек маршрута нет.
+                    </div>
+                    {availableTrackDates.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-700">Перейти к дате с маршрутом:</span>
+                        {availableTrackDates.slice(0, 3).map((d) => (
+                          <button
+                            key={d.date}
+                            onClick={() => {
+                              setHasExplicitlyPickedDate(true);
+                              setSelectedDate(d.date);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                          >
+                            {new Date(d.date + 'T00:00:00').toLocaleDateString('ru-RU')} ({d.pointsCount} тчк)
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 gap-3">
+                  {activeTracks.map((tr, idx) => {
+                    const repId = tr.rep_id;
+                    const rep = reps.find((r) => r.id === repId);
+                    const rawPts = Array.isArray(tr.points) ? tr.points : [];
+                    const distKm = Number(tr.total_km || 0);
+                    const steps = streetTimelines[repId] || [];
+                    const color = REP_COLORS[idx % REP_COLORS.length];
+                    const firstTime = rawPts[0]?.recorded_at
+                      ? new Date(rawPts[0].recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                      : '';
+                    const lastTime = rawPts[rawPts.length - 1]?.recorded_at
+                      ? new Date(rawPts[rawPts.length - 1].recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                      : '';
+
+                    return (
+                      <div
+                        key={tr.id || repId}
+                        className="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-sm space-y-2.5"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full shrink-0"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="font-bold text-xs text-slate-900">
+                              {rep?.name || 'Сотрудник'}
+                            </span>
+                            {rep?.territory && (
+                              <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium">
+                                {rep.territory}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                              👣 Пройдено: {distKm.toFixed(2)} км ({rawPts.length} GPS-точек)
+                            </span>
+                            {firstTime && lastTime && (
+                              <span className="text-slate-500 font-medium">
+                                🕒 {firstTime} — {lastTime}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {loadingStreets && steps.length === 0 ? (
+                          <div className="text-xs text-slate-400 flex items-center gap-2 py-1">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                            Определяем названия улиц по GPS-координатам...
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            {steps.map((step, sIdx) => {
+                              const isStart = sIdx === 0;
+                              const isEnd = sIdx === steps.length - 1 && steps.length > 1;
+                              return (
+                                <React.Fragment key={`${step.lat}-${step.lng}-${sIdx}`}>
+                                  <button
+                                    onClick={() => {
+                                      if (mapInstanceRef.current) {
+                                        mapInstanceRef.current.setView([step.lat, step.lng], 17, {
+                                          animate: true,
+                                        });
+                                      }
+                                    }}
+                                    className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs transition-all text-left ${
+                                      isStart
+                                        ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900 font-bold hover:bg-emerald-100'
+                                        : isEnd
+                                        ? 'bg-slate-900 border-slate-900 text-white font-bold hover:bg-slate-800'
+                                        : 'bg-slate-50 hover:bg-indigo-50 border-slate-200 hover:border-indigo-200 text-slate-800 font-medium'
+                                    }`}
+                                    title="Нажмите, чтобы показать эту улицу крупно на карте"
+                                  >
+                                    <span>
+                                      {isStart ? '🟢 Старт:' : isEnd ? '🏁 Финиш:' : `${sIdx}.`}
+                                    </span>
+                                    <span>{step.street}</span>
+                                    {step.time && (
+                                      <span
+                                        className={`text-[10px] px-1.5 py-0.5 rounded-md ${
+                                          isEnd
+                                            ? 'bg-slate-700 text-slate-200'
+                                            : 'bg-white/80 text-slate-500 border border-slate-200/60'
+                                        }`}
+                                      >
+                                        {step.time}
+                                      </span>
+                                    )}
+                                  </button>
+                                  {sIdx < steps.length - 1 && (
+                                    <span className="text-slate-300 font-bold text-xs select-none">→</span>
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

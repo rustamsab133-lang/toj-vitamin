@@ -115,19 +115,14 @@ export async function GET(request: Request) {
     }
 
     if (action === 'supervisor_overview') {
-      // Determine date range for tracks (default: today)
-      const targetDate = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date();
-      const dayStart = new Date(targetDate);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(targetDate);
-      dayEnd.setHours(23, 59, 59, 999);
+      const explicitDate = searchParams.get('explicit_date') === '1';
 
       const [
         { data: reps },
         hrMap,
         { data: pharmacies },
         { data: rawVisits },
-        { data: rawTracks },
+        { data: allRecentTracks },
         { data: rawActiveShifts }
       ] = await Promise.all([
         supabaseAdmin.from('brand_reps').select('*').order('name'),
@@ -141,14 +136,38 @@ export async function GET(request: Request) {
         supabaseAdmin
           .from('rep_tracks')
           .select('*')
-          .gte('recorded_at', dayStart.toISOString())
-          .lte('recorded_at', dayEnd.toISOString())
-          .order('recorded_at', { ascending: true }),
+          .order('recorded_at', { ascending: true })
+          .limit(2000),
         supabaseAdmin
           .from('rep_shifts')
           .select('*')
           .eq('status', 'active')
       ]);
+
+      // Compute available dates that have GPS tracks
+      const dateCountsMap: Record<string, number> = {};
+      (allRecentTracks || []).forEach((pt: any) => {
+        if (pt.recorded_at) {
+          const dStr = String(pt.recorded_at).slice(0, 10);
+          dateCountsMap[dStr] = (dateCountsMap[dStr] || 0) + 1;
+        }
+      });
+
+      const availableTrackDates = Object.entries(dateCountsMap)
+        .map(([date, pointsCount]) => ({ date, pointsCount }))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let effectiveDate = dateParam || todayStr;
+
+      // If not explicitly locked by user and requested date has 0 tracks, automatically show latest date with tracks
+      if (!explicitDate && !dateCountsMap[effectiveDate] && availableTrackDates.length > 0) {
+        effectiveDate = availableTrackDates[0].date;
+      }
+
+      const rawTracks = (allRecentTracks || []).filter((pt: any) =>
+        pt.recorded_at && String(pt.recorded_at).startsWith(effectiveDate)
+      );
 
       const mergedReps = (reps || []).map(r => mergeRepWithHr(r, hrMap));
       const repNameById: Record<string, string> = {};
@@ -164,7 +183,7 @@ export async function GET(request: Request) {
 
       // Group raw track points by rep_id into polyline objects with total_km
       const tracksByRep: Record<string, { rep_id: string; points: Array<{ lat: number; lng: number; recorded_at?: string }>; distMeters: number }> = {};
-      (rawTracks || []).forEach((pt: any) => {
+      rawTracks.forEach((pt: any) => {
         if (!pt.rep_id || pt.latitude == null || pt.longitude == null) return;
         const lat = Number(pt.latitude);
         const lng = Number(pt.longitude);
@@ -201,6 +220,8 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         success: true,
+        effectiveDate,
+        availableTrackDates,
         reps: mergedReps,
         pharmacies: pharmacies || [],
         visits,

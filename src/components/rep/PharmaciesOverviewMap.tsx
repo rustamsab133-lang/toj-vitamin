@@ -126,13 +126,19 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               localStorage.setItem('toj_rep_trail_points', JSON.stringify(updated));
             } catch (e) {}
 
-            // Save to server every 5 points
-            if (updated.length % 5 === 0 && repId) {
+            // Save every accepted point (every 15m moved) to server for street-accurate route
+            if (repId) {
               const trackPayload = {
                 action: 'save_track_points',
                 rep_id: repId,
                 shift_id: activeShift.id,
-                points: [{ lat: point.latitude, lng: point.longitude }]
+                points: [{
+                  lat: point.latitude,
+                  lng: point.longitude,
+                  accuracy: point.accuracy,
+                  speed: point.speed,
+                  recorded_at: new Date().toISOString()
+                }]
               };
               fetch('/api/rep', {
                 method: 'POST',
