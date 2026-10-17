@@ -58,7 +58,56 @@ async function saveHrProfileForRep(repId: string, hrData: Record<string, any>): 
   }
 }
 
-function mergeRepWithHr(rep: any, hrMap: Record<string, any>) {
+const DEFAULT_REP_COLORS = [
+  '#2563eb', // Ярко-синий
+  '#7c3aed', // Фиолетовый
+  '#ea580c', // Оранжевый
+  '#db2777', // Малиновый
+  '#0d9488', // Бирюзовый
+  '#4f46e5', // Индиго
+  '#ca8a04', // Золотой
+  '#0284c7', // Голубой
+  '#9333ea', // Пурпурный
+  '#dc2626', // Алый
+];
+
+function getDeterministicRepColor(repId: string, index?: number): string {
+  if (typeof index === 'number' && index >= 0) {
+    return DEFAULT_REP_COLORS[index % DEFAULT_REP_COLORS.length];
+  }
+  let hash = 0;
+  const str = String(repId || '');
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return DEFAULT_REP_COLORS[hash % DEFAULT_REP_COLORS.length];
+}
+
+// Fetch all GPS points from rep_tracks across PostgREST 1000-row pages
+async function fetchAllTrackPointsPaginated(maxPages = 15): Promise<any[]> {
+  const pageSize = 1000;
+  const allRows: any[] = [];
+  for (let page = 0; page < maxPages; page++) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error } = await supabaseAdmin
+      .from('rep_tracks')
+      .select('id, rep_id, latitude, longitude, accuracy, speed, recorded_at')
+      .order('recorded_at', { ascending: true })
+      .range(from, to);
+
+    if (error || !data || data.length === 0) {
+      break;
+    }
+    allRows.push(...data);
+    if (data.length < pageSize) {
+      break;
+    }
+  }
+  return allRows;
+}
+
+function mergeRepWithHr(rep: any, hrMap: Record<string, any>, repIndex?: number) {
   const hr = hrMap[rep.id] || {};
   return {
     ...rep,
@@ -68,7 +117,8 @@ function mergeRepWithHr(rep: any, hrMap: Record<string, any>) {
     passport_info: hr.passport_info || '',
     transport_type: hr.transport_type || 'foot',
     bio_notes: hr.bio_notes || '',
-    experience_years: hr.experience_years || ''
+    experience_years: hr.experience_years || '',
+    track_color: hr.track_color || getDeterministicRepColor(rep.id, repIndex)
   };
 }
 
@@ -82,7 +132,7 @@ export async function GET(request: Request) {
     const action = searchParams.get('action') || 'list_pharmacies';
     const repId = searchParams.get('rep_id');
     const phone = searchParams.get('phone');
-    const dateParam = searchParams.get('date'); // YYYY-MM-DD for track filtering
+    const dateParam = searchParams.get('date'); // YYYY-MM-DD or 'ALL' for all-time tracks
 
     if (action === 'get_profile') {
       if (!repId && !phone) {
@@ -110,7 +160,7 @@ export async function GET(request: Request) {
         getHrProfilesMap()
       ]);
 
-      const merged = (reps || []).map(r => mergeRepWithHr(r, hrMap));
+      const merged = (reps || []).map((r, idx) => mergeRepWithHr(r, hrMap, idx));
       return NextResponse.json({ success: true, reps: merged });
     }
 
@@ -122,7 +172,7 @@ export async function GET(request: Request) {
         hrMap,
         { data: pharmacies },
         { data: rawVisits },
-        { data: allRecentTracks },
+        allHistoricalTracks,
         { data: rawActiveShifts }
       ] = await Promise.all([
         supabaseAdmin.from('brand_reps').select('*').order('name'),
@@ -132,12 +182,8 @@ export async function GET(request: Request) {
           .from('rep_visits')
           .select('*, pharmacies(name, address, latitude, longitude, phone, contact_person, token, category)')
           .order('created_at', { ascending: false })
-          .limit(400),
-        supabaseAdmin
-          .from('rep_tracks')
-          .select('*')
-          .order('recorded_at', { ascending: true })
-          .limit(2000),
+          .limit(500),
+        fetchAllTrackPointsPaginated(15),
         supabaseAdmin
           .from('rep_shifts')
           .select('*')
@@ -146,7 +192,7 @@ export async function GET(request: Request) {
 
       // Compute available dates that have GPS tracks
       const dateCountsMap: Record<string, number> = {};
-      (allRecentTracks || []).forEach((pt: any) => {
+      (allHistoricalTracks || []).forEach((pt: any) => {
         if (pt.recorded_at) {
           const dStr = String(pt.recorded_at).slice(0, 10);
           dateCountsMap[dStr] = (dateCountsMap[dStr] || 0) + 1;
@@ -157,19 +203,22 @@ export async function GET(request: Request) {
         .map(([date, pointsCount]) => ({ date, pointsCount }))
         .sort((a, b) => b.date.localeCompare(a.date));
 
+      const isAllTime = dateParam === 'ALL';
       const todayStr = new Date().toISOString().slice(0, 10);
-      let effectiveDate = dateParam || todayStr;
+      let effectiveDate = isAllTime ? 'ALL' : (dateParam || todayStr);
 
       // If not explicitly locked by user and requested date has 0 tracks, automatically show latest date with tracks
-      if (!explicitDate && !dateCountsMap[effectiveDate] && availableTrackDates.length > 0) {
+      if (!isAllTime && !explicitDate && !dateCountsMap[effectiveDate] && availableTrackDates.length > 0) {
         effectiveDate = availableTrackDates[0].date;
       }
 
-      const rawTracks = (allRecentTracks || []).filter((pt: any) =>
-        pt.recorded_at && String(pt.recorded_at).startsWith(effectiveDate)
-      );
+      const rawTracks = isAllTime
+        ? (allHistoricalTracks || [])
+        : (allHistoricalTracks || []).filter((pt: any) =>
+            pt.recorded_at && String(pt.recorded_at).startsWith(effectiveDate)
+          );
 
-      const mergedReps = (reps || []).map(r => mergeRepWithHr(r, hrMap));
+      const mergedReps = (reps || []).map((r, idx) => mergeRepWithHr(r, hrMap, idx));
       const repNameById: Record<string, string> = {};
       mergedReps.forEach(r => {
         repNameById[r.id] = r.name;
@@ -181,34 +230,75 @@ export async function GET(request: Request) {
         brand_reps: v.brand_reps || { name: repNameById[v.rep_id] || 'Медпредставитель' }
       }));
 
-      // Group raw track points by rep_id into polyline objects with total_km
-      const tracksByRep: Record<string, { rep_id: string; points: Array<{ lat: number; lng: number; recorded_at?: string }>; distMeters: number }> = {};
+      // Group raw track points by (rep_id + track_date) so different days never connect with fake straight lines
+      const tracksBySegment: Record<
+        string,
+        {
+          id: string;
+          rep_id: string;
+          track_date: string;
+          rawPoints: Array<{ lat: number; lng: number; recorded_at?: string }>;
+          distMeters: number;
+        }
+      > = {};
+
       rawTracks.forEach((pt: any) => {
         if (!pt.rep_id || pt.latitude == null || pt.longitude == null) return;
         const lat = Number(pt.latitude);
         const lng = Number(pt.longitude);
         if (isNaN(lat) || isNaN(lng)) return;
 
-        if (!tracksByRep[pt.rep_id]) {
-          tracksByRep[pt.rep_id] = { rep_id: pt.rep_id, points: [], distMeters: 0 };
+        const dayStr = pt.recorded_at ? String(pt.recorded_at).slice(0, 10) : todayStr;
+        const segmentKey = `${pt.rep_id}__${dayStr}`;
+
+        if (!tracksBySegment[segmentKey]) {
+          tracksBySegment[segmentKey] = {
+            id: segmentKey,
+            rep_id: pt.rep_id,
+            track_date: dayStr,
+            rawPoints: [],
+            distMeters: 0
+          };
         }
-        const group = tracksByRep[pt.rep_id];
-        if (group.points.length > 0) {
-          const prev = group.points[group.points.length - 1];
+        const group = tracksBySegment[segmentKey];
+        if (group.rawPoints.length > 0) {
+          const prev = group.rawPoints[group.rawPoints.length - 1];
           const d = calculateDistanceMeters(prev.lat, prev.lng, lat, lng);
           // Ignore unrealistic single jumps > 5km
           if (d <= 5000) {
             group.distMeters += d;
           }
         }
-        group.points.push({ lat, lng, recorded_at: pt.recorded_at });
+        group.rawPoints.push({ lat, lng, recorded_at: pt.recorded_at });
       });
 
-      const groupedTracks = Object.values(tracksByRep).map(g => ({
-        rep_id: g.rep_id,
-        points: g.points,
-        total_km: Number((g.distMeters / 1000).toFixed(2))
-      }));
+      const groupedTracks = Object.values(tracksBySegment)
+        .map(g => {
+          // In ALL-TIME mode, thin points within <18m of each other (keeping start & finish) so 1 year of tracks stays super fast
+          let finalPoints = g.rawPoints;
+          if (isAllTime && g.rawPoints.length > 3) {
+            const thinned: Array<{ lat: number; lng: number; recorded_at?: string }> = [g.rawPoints[0]];
+            for (let i = 1; i < g.rawPoints.length - 1; i++) {
+              const prevKept = thinned[thinned.length - 1];
+              const cur = g.rawPoints[i];
+              if (calculateDistanceMeters(prevKept.lat, prevKept.lng, cur.lat, cur.lng) >= 18) {
+                thinned.push(cur);
+              }
+            }
+            thinned.push(g.rawPoints[g.rawPoints.length - 1]);
+            finalPoints = thinned;
+          }
+
+          return {
+            id: g.id,
+            rep_id: g.rep_id,
+            track_date: g.track_date,
+            points: finalPoints,
+            raw_points_count: g.rawPoints.length,
+            total_km: Number((g.distMeters / 1000).toFixed(2))
+          };
+        })
+        .sort((a, b) => b.track_date.localeCompare(a.track_date));
 
       // Map active shifts by rep_id
       const activeShiftsMap: Record<string, any> = {};
@@ -222,6 +312,7 @@ export async function GET(request: Request) {
         success: true,
         effectiveDate,
         availableTrackDates,
+        totalHistoricalPoints: (allHistoricalTracks || []).length,
         reps: mergedReps,
         pharmacies: pharmacies || [],
         visits,
@@ -295,22 +386,38 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Не указан rep_id' }, { status: 400 });
       }
 
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+      const todayStr = new Date().toISOString().slice(0, 10);
 
       const { data: points, error } = await supabaseAdmin
         .from('rep_tracks')
         .select('latitude, longitude, recorded_at')
         .eq('rep_id', repId)
-        .gte('recorded_at', todayStart.toISOString())
-        .order('recorded_at', { ascending: true });
+        .order('recorded_at', { ascending: true })
+        .limit(1000);
 
       if (error) {
-        // Table might not exist yet if migration pending
-        return NextResponse.json({ success: true, points: [] });
+        return NextResponse.json({ success: true, points: [], historyByDate: {} });
       }
 
-      return NextResponse.json({ success: true, points: points || [] });
+      const todayPoints = (points || []).filter((p: any) =>
+        p.recorded_at && String(p.recorded_at).startsWith(todayStr)
+      );
+
+      // Group past days for optional history overlay on rep's own map
+      const historyByDate: Record<string, Array<[number, number]>> = {};
+      (points || []).forEach((p: any) => {
+        if (!p.recorded_at || p.latitude == null || p.longitude == null) return;
+        const dStr = String(p.recorded_at).slice(0, 10);
+        if (dStr === todayStr) return;
+        if (!historyByDate[dStr]) historyByDate[dStr] = [];
+        historyByDate[dStr].push([Number(p.latitude), Number(p.longitude)]);
+      });
+
+      return NextResponse.json({
+        success: true,
+        points: todayPoints,
+        historyByDate
+      });
     }
 
     return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 });
@@ -342,12 +449,14 @@ export async function POST(request: Request) {
       const { data: activeReps, error } = await supabaseAdmin
         .from('brand_reps')
         .select('*')
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .order('name');
 
-      const rep = (activeReps || []).find((r: any) => {
+      const repIdx = (activeReps || []).findIndex((r: any) => {
         const rDigits = String(r.phone || '').replace(/\D/g, '');
         return rDigits === inputDigits || (inputTail9.length === 9 && rDigits.slice(-9) === inputTail9);
       });
+      const rep = repIdx >= 0 ? (activeReps || [])[repIdx] : null;
 
       if (error || !rep) {
         return NextResponse.json({ error: 'Представитель с таким номером не найден' }, { status: 404 });
@@ -360,7 +469,7 @@ export async function POST(request: Request) {
       const hrMap = await getHrProfilesMap();
       return NextResponse.json({
         success: true,
-        rep: mergeRepWithHr(rep, hrMap)
+        rep: mergeRepWithHr(rep, hrMap, repIdx)
       });
     }
 
@@ -382,7 +491,8 @@ export async function POST(request: Request) {
         passport_info = '',
         transport_type = 'foot',
         bio_notes = '',
-        experience_years = ''
+        experience_years = '',
+        track_color = ''
       } = body;
 
       if (!name?.trim() || !phone?.trim() || !pin_code?.trim()) {
@@ -431,7 +541,8 @@ export async function POST(request: Request) {
         passport_info: passport_info.trim(),
         transport_type,
         bio_notes: bio_notes.trim(),
-        experience_years: experience_years.trim()
+        experience_years: experience_years.trim(),
+        ...(track_color ? { track_color: track_color.trim() } : {})
       });
 
       const hrMap = await getHrProfilesMap();
@@ -604,6 +715,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
+      // Also record check-in location into rep_tracks so visited pharmacies are always part of the street route
+      if (checkin_lat && checkin_lng && !isNaN(Number(checkin_lat)) && !isNaN(Number(checkin_lng))) {
+        await supabaseAdmin.from('rep_tracks').insert({
+          rep_id,
+          latitude: Number(checkin_lat),
+          longitude: Number(checkin_lng),
+          recorded_at: new Date().toISOString()
+        });
+      }
+
       return NextResponse.json({ success: true, visit, distanceMeters, isGpsVerified });
     }
 
@@ -614,10 +735,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Не указан rep_id' }, { status: 400 });
       }
 
+      const nowIso = new Date().toISOString();
+      if (start_lat && start_lng && !isNaN(Number(start_lat)) && !isNaN(Number(start_lng))) {
+        await supabaseAdmin.from('rep_tracks').insert({
+          rep_id,
+          latitude: Number(start_lat),
+          longitude: Number(start_lng),
+          recorded_at: nowIso
+        });
+      }
+
       const shiftPayload: any = {
         rep_id,
         status: 'active',
-        started_at: new Date().toISOString(),
+        started_at: nowIso,
         start_lat: start_lat ? Number(start_lat) : null,
         start_lng: start_lng ? Number(start_lng) : null,
         total_km: 0,
@@ -656,9 +787,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Не указан shift_id или rep_id' }, { status: 400 });
       }
 
+      const endedIso = new Date().toISOString();
+      if (rep_id && end_lat && end_lng && !isNaN(Number(end_lat)) && !isNaN(Number(end_lng))) {
+        await supabaseAdmin.from('rep_tracks').insert({
+          rep_id,
+          latitude: Number(end_lat),
+          longitude: Number(end_lng),
+          recorded_at: endedIso
+        });
+      }
+
       const updateData: any = {
         status: 'completed',
-        ended_at: new Date().toISOString()
+        ended_at: endedIso
       };
       if (end_lat !== undefined && end_lat !== null) updateData.end_lat = Number(end_lat);
       if (end_lng !== undefined && end_lng !== null) updateData.end_lng = Number(end_lng);

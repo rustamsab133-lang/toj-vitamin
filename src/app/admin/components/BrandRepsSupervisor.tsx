@@ -13,7 +13,18 @@ interface BrandRepsSupervisorProps {
   onBack: () => void;
 }
 
-const REP_COLORS = ['#0284c7', '#7c3aed', '#db2777', '#ea580c', '#059669', '#4f46e5'];
+const REP_PALETTE = [
+  { hex: '#2563eb', name: 'Синий' },
+  { hex: '#7c3aed', name: 'Фиолетовый' },
+  { hex: '#ea580c', name: 'Оранжевый' },
+  { hex: '#db2777', name: 'Малиновый' },
+  { hex: '#0d9488', name: 'Бирюзовый' },
+  { hex: '#4f46e5', name: 'Индиго' },
+  { hex: '#ca8a04', name: 'Золотой' },
+  { hex: '#0284c7', name: 'Голубой' },
+  { hex: '#9333ea', name: 'Пурпурный' },
+  { hex: '#dc2626', name: 'Алый' },
+];
 
 export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<'map' | 'staff' | 'audit'>('map');
@@ -25,18 +36,33 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
   const [tracks, setTracks] = useState<any[]>([]);
   const [activeShifts, setActiveShifts] = useState<Record<string, any>>({});
 
-  // Map & Filter states
+  // Map & Filter states ('ALL' = permanent all-time routes on map)
   const [selectedRepFilter, setSelectedRepFilter] = useState<string>('ALL');
   const [freshnessFilter, setFreshnessFilter] = useState<'ALL' | 'green' | 'yellow' | 'red'>('ALL');
-  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState<string>('ALL');
   const [hasExplicitlyPickedDate, setHasExplicitlyPickedDate] = useState<boolean>(false);
   const [availableTrackDates, setAvailableTrackDates] = useState<Array<{ date: string; pointsCount: number }>>([]);
+  const [totalHistoricalPoints, setTotalHistoricalPoints] = useState<number>(0);
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Reverse-geocoded street names per track: Record<rep_id, Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }>>
+  // Reverse-geocoded street names per track segment: Record<segmentId, Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }>>
   const [streetTimelines, setStreetTimelines] = useState<Record<string, Array<{ time: string; street: string; lat: number; lng: number; isStart?: boolean; isEnd?: boolean }>>>({});
   const [loadingStreets, setLoadingStreets] = useState<boolean>(false);
+
+  // Get permanent color for an employee
+  const getRepColor = (repId: string): string => {
+    const idx = reps.findIndex(r => r.id === repId);
+    const repObj = idx >= 0 ? reps[idx] : undefined;
+    if (repObj?.track_color) return repObj.track_color;
+    if (idx >= 0) return REP_PALETTE[idx % REP_PALETTE.length].hex;
+    let hash = 0;
+    const str = String(repId || '');
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return REP_PALETTE[hash % REP_PALETTE.length].hex;
+  };
 
   // Leaflet Refs
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -62,6 +88,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
     hire_date: new Date().toISOString().slice(0, 10),
     passport_info: '',
     bio_notes: '',
+    track_color: REP_PALETTE[0].hex,
     status: 'active'
   });
 
@@ -80,6 +107,9 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         setActiveShifts(data.activeShifts || {});
         if (Array.isArray(data.availableTrackDates)) {
           setAvailableTrackDates(data.availableTrackDates);
+        }
+        if (typeof data.totalHistoricalPoints === 'number') {
+          setTotalHistoricalPoints(data.totalHistoricalPoints);
         }
         if (data.effectiveDate && data.effectiveDate !== selectedDate && !(explicit ?? hasExplicitlyPickedDate)) {
           setSelectedDate(data.effectiveDate);
@@ -117,6 +147,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
       for (const tr of tracks) {
         const pts = Array.isArray(tr.points) ? tr.points : [];
         if (pts.length === 0) continue;
+        const segmentKey = tr.id || `${tr.rep_id}__${tr.track_date || 'day'}`;
 
         // Sample up to 8 key points along the route (Start, intermediate street turns, End)
         const sampleIndices: number[] = [0];
@@ -189,7 +220,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
           });
         }
 
-        nextTimelines[tr.rep_id] = repSteps;
+        nextTimelines[segmentKey] = repSteps;
       }
 
       if (!cancelled) {
@@ -317,10 +348,13 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
 
       // 1. Render GPS Tracks per Rep with Start, Checkpoints, and Finish pins
       const filteredTracks = tracks.filter(t => selectedRepFilter === 'ALL' || t.rep_id === selectedRepFilter);
-      filteredTracks.forEach((tr, idx) => {
+      filteredTracks.forEach((tr) => {
         if (!Array.isArray(tr.points) || tr.points.length === 0) return;
         const repObj = reps.find(r => r.id === tr.rep_id);
-        const color = REP_COLORS[idx % REP_COLORS.length];
+        const color = getRepColor(tr.rep_id);
+        const dateShort = tr.track_date
+          ? new Date(tr.track_date + 'T00:00:00').toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
+          : '';
         const latlngs = tr.points.map((pt: any) => [Number(pt.lat), Number(pt.lng)] as [number, number]);
         latlngs.forEach((ll: [number, number]) => allTrackBounds.push(ll));
 
@@ -333,7 +367,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             lineJoin: 'round'
           }).addTo(tracksLayerRef.current);
 
-          // Colored route line
+          // Colored route line in the employee's permanent personal color
           const poly = L.polyline(latlngs, {
             color,
             weight: 5,
@@ -341,10 +375,13 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             lineJoin: 'round'
           }).addTo(tracksLayerRef.current);
 
-          poly.bindTooltip(`Маршрут: ${repObj?.name || 'Медпред'} (${tr.total_km || 0} км, точек: ${tr.points.length})`, { sticky: true });
+          poly.bindTooltip(
+            `👤 ${repObj?.name || 'Медпред'} • 📅 ${dateShort || selectedDate} • 👣 ${tr.total_km || 0} км (точек: ${tr.raw_points_count || tr.points.length})`,
+            { sticky: true }
+          );
         }
 
-        // Start Marker
+        // Start Marker colored with employee's personal color
         const firstPt = tr.points[0];
         const firstTime = firstPt.recorded_at
           ? new Date(firstPt.recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -353,28 +390,30 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
           className: 'supervisor-track-start',
           html: `
             <div style="
-              background: #10b981;
+              background: ${color};
               color: white;
-              padding: 3px 8px;
+              padding: 3px 9px;
               border-radius: 999px;
               font-size: 10px;
               font-weight: 800;
               border: 2px solid white;
-              box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
               white-space: nowrap;
               transform: translate(-50%, -50%);
             ">
-              🟢 Старт ${firstTime} (${repObj?.name?.split(' ')[0] || 'Медпред'})
+              ▶ ${repObj?.name?.split(' ')[0] || 'Старт'} ${dateShort ? `(${dateShort})` : ''} ${firstTime}
             </div>
           `,
-          iconSize: [110, 24],
-          iconAnchor: [55, 12]
+          iconSize: [130, 24],
+          iconAnchor: [65, 12]
         });
         L.marker([Number(firstPt.lat), Number(firstPt.lng)], { icon: startIcon, zIndexOffset: 900 }).addTo(tracksLayerRef.current);
 
         // Intermediate Direction / Time Dots along the streets
         tr.points.forEach((pt: any, ptIdx: number) => {
           if (ptIdx === 0 || ptIdx === tr.points.length - 1) return;
+          // In ALL-TIME mode with many points, show every 2nd dot to keep streets clean
+          if (selectedDate === 'ALL' && tr.points.length > 15 && ptIdx % 2 !== 0) return;
           const tStr = pt.recorded_at
             ? new Date(pt.recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
             : '';
@@ -403,7 +442,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             iconAnchor: [9, 9]
           });
           L.marker([Number(pt.lat), Number(pt.lng)], { icon: dotIcon, zIndexOffset: 700 })
-            .bindTooltip(`${repObj?.name || 'Медпред'} • Точка #${ptIdx} в ${tStr}`)
+            .bindTooltip(`${repObj?.name || 'Медпред'} (${dateShort}) • Точка #${ptIdx} в ${tStr}`)
             .addTo(tracksLayerRef.current);
         });
 
@@ -419,20 +458,20 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
               <div style="
                 background: #0f172a;
                 color: white;
-                padding: 3px 8px;
+                padding: 3px 9px;
                 border-radius: 999px;
                 font-size: 10px;
                 font-weight: 800;
-                border: 2px solid white;
+                border: 2.5px solid ${color};
                 box-shadow: 0 3px 8px rgba(0,0,0,0.35);
                 white-space: nowrap;
                 transform: translate(-50%, -50%);
               ">
-                🏁 Финиш ${lastTime} (${tr.total_km || 0} км)
+                🏁 Финиш ${dateShort ? `${dateShort} ` : ''}${lastTime} (${tr.total_km || 0} км)
               </div>
             `,
-            iconSize: [120, 24],
-            iconAnchor: [60, 12]
+            iconSize: [140, 24],
+            iconAnchor: [70, 12]
           });
           L.marker([Number(lastPt.lat), Number(lastPt.lng)], { icon: endIcon, zIndexOffset: 950 }).addTo(tracksLayerRef.current);
         }
@@ -510,7 +549,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
     }
 
     renderSupervisorLayers();
-  }, [mapReady, pharmacies, tracks, reps, pharmacyFreshnessMap, selectedRepFilter, freshnessFilter, searchQuery]);
+  }, [mapReady, pharmacies, tracks, reps, pharmacyFreshnessMap, selectedRepFilter, freshnessFilter, searchQuery, selectedDate]);
 
   // Open Modal to Create or Edit Employee
   const handleOpenRepModal = (repToEdit?: BrandRep) => {
@@ -524,9 +563,11 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         transport_type: repToEdit.transport_type || 'foot',
         hire_date: repToEdit.hire_date || '2024-01-15',
         passport_info: repToEdit.passport_info || '',
-        bio_notes: repToEdit.bio_notes || ''
+        bio_notes: repToEdit.bio_notes || '',
+        track_color: repToEdit.track_color || getRepColor(repToEdit.id)
       });
     } else {
+      const nextColor = REP_PALETTE[reps.length % REP_PALETTE.length].hex;
       setEditingRep({
         name: '',
         phone: '+992',
@@ -541,6 +582,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         hire_date: new Date().toISOString().slice(0, 10),
         passport_info: '',
         bio_notes: '',
+        track_color: nextColor,
         status: 'active'
       });
     }
@@ -700,28 +742,76 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
       {/* TAB 1: SUPERVISOR LIVE MAP */}
       {activeTab === 'map' && (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          {/* Map Filters Bar */}
-          <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/60">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Filter by Rep */}
-              <select
-                value={selectedRepFilter}
-                onChange={(e) => setSelectedRepFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none"
+          {/* Top Employee Personal Color Legend & Filter Bar */}
+          <div className="px-4 py-3 border-b border-slate-200 bg-white flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+                Цвета сотрудников:
+              </span>
+              <button
+                onClick={() => setSelectedRepFilter('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  selectedRepFilter === 'ALL'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
               >
-                <option value="ALL">👥 Все сотрудники ({reps.length})</option>
-                {reps.map(r => (
-                  <option key={r.id} value={r.id}>{r.name} ({r.territory || 'Душанбе'})</option>
-                ))}
-              </select>
+                👥 Все сотрудники ({reps.length})
+              </button>
 
+              {reps.map((r) => {
+                const repColor = getRepColor(r.id);
+                const isSelected = selectedRepFilter === r.id;
+                const repKm = tracks
+                  .filter(t => t.rep_id === r.id)
+                  .reduce((sum, t) => sum + Number(t.total_km || 0), 0);
+
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setSelectedRepFilter(isSelected ? 'ALL' : r.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border ${
+                      isSelected
+                        ? 'text-white shadow-md scale-[1.02]'
+                        : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'
+                    }`}
+                    style={
+                      isSelected
+                        ? { backgroundColor: repColor, borderColor: repColor }
+                        : { borderLeftWidth: '4px', borderLeftColor: repColor }
+                    }
+                    title={`Нажмите, чтобы выделить маршрут: ${r.name}`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: isSelected ? '#ffffff' : repColor }}
+                    />
+                    <span>{r.name}</span>
+                    {repKm > 0 && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                          isSelected ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {repKm.toFixed(1)} км
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Map Mode & Date / Freshness Filters Bar */}
+          <div className="p-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Filter by Freshness */}
               <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs">
                 <button
                   onClick={() => setFreshnessFilter('ALL')}
                   className={`px-2.5 py-1 rounded-lg font-semibold ${freshnessFilter === 'ALL' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}
                 >
-                  Все ({pharmacies.length})
+                  Все аптеки ({pharmacies.length})
                 </button>
                 <button
                   onClick={() => setFreshnessFilter('green')}
@@ -748,49 +838,69 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {/* ALL-TIME PERMANENT ROUTES TOGGLE + QUICK DATES */}
+              <div className="flex flex-wrap items-center gap-1 bg-slate-200/70 p-1 rounded-xl border border-slate-200 text-[11px]">
+                <button
+                  onClick={() => {
+                    setHasExplicitlyPickedDate(true);
+                    setSelectedDate('ALL');
+                  }}
+                  className={`px-2.5 py-1 rounded-lg font-extrabold flex items-center gap-1 transition-all ${
+                    selectedDate === 'ALL'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white text-slate-700 hover:bg-indigo-50 hover:text-indigo-700'
+                  }`}
+                  title="Показать все когда-либо пройденные маршруты сотрудников на одной карте"
+                >
+                  <span>♾️ Все маршруты навсегда</span>
+                  {totalHistoricalPoints > 0 && (
+                    <span className={selectedDate === 'ALL' ? 'text-indigo-100' : 'text-slate-400'}>
+                      ({totalHistoricalPoints})
+                    </span>
+                  )}
+                </button>
+
+                {availableTrackDates.slice(0, 4).map((d) => {
+                  const isSelected = selectedDate === d.date;
+                  const label = new Date(d.date + 'T00:00:00').toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                  });
+                  return (
+                    <button
+                      key={d.date}
+                      onClick={() => {
+                        setHasExplicitlyPickedDate(true);
+                        setSelectedDate(d.date);
+                      }}
+                      className={`px-2 py-1 rounded-lg font-bold transition-all ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+                      }`}
+                      title={`Записано GPS-точек за ${label}: ${d.pointsCount}`}
+                    >
+                      📅 {label} ({d.pointsCount})
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-slate-500">Треки за:</span>
+                <span className="text-slate-500">Дата:</span>
                 <input
                   type="date"
-                  value={selectedDate}
+                  value={selectedDate === 'ALL' ? '' : selectedDate}
                   onChange={(e) => {
-                    setHasExplicitlyPickedDate(true);
-                    setSelectedDate(e.target.value);
+                    if (e.target.value) {
+                      setHasExplicitlyPickedDate(true);
+                      setSelectedDate(e.target.value);
+                    }
                   }}
                   className="font-semibold text-slate-800 focus:outline-none"
                 />
               </div>
-
-              {availableTrackDates.length > 0 && (
-                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200 text-[11px]">
-                  <span className="text-slate-500 px-1.5 font-medium">Записи GPS:</span>
-                  {availableTrackDates.slice(0, 4).map((d) => {
-                    const isSelected = selectedDate === d.date;
-                    const label = new Date(d.date + 'T00:00:00').toLocaleDateString('ru-RU', {
-                      day: '2-digit',
-                      month: '2-digit',
-                    });
-                    return (
-                      <button
-                        key={d.date}
-                        onClick={() => {
-                          setHasExplicitlyPickedDate(true);
-                          setSelectedDate(d.date);
-                        }}
-                        className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
-                          isSelected
-                            ? 'bg-emerald-600 text-white shadow-sm'
-                            : 'bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
-                        }`}
-                        title={`Записано GPS-точек: ${d.pointsCount}`}
-                      >
-                        {label} ({d.pointsCount})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
 
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
@@ -898,7 +1008,11 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
               <div className="flex items-center gap-2">
                 <Footprints className="w-4 h-4 text-emerald-600" />
                 <h3 className="text-sm font-bold text-slate-900">
-                  По каким улицам проходили сотрудники ({new Date(selectedDate + 'T00:00:00').toLocaleDateString('ru-RU')})
+                  По каким улицам проходили сотрудники (
+                  {selectedDate === 'ALL'
+                    ? '♾️ Вся история маршрутов навсегда'
+                    : new Date(selectedDate + 'T00:00:00').toLocaleDateString('ru-RU')}
+                  )
                 </h3>
               </div>
               <span className="text-[11px] text-slate-500">
@@ -918,11 +1032,24 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                 return (
                   <div className="bg-white rounded-2xl border border-slate-200 p-4 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      За выбранную дату ({new Date(selectedDate + 'T00:00:00').toLocaleDateString('ru-RU')}) записанных GPS-точек маршрута нет.
+                      За выбранный фильтр (
+                      {selectedDate === 'ALL'
+                        ? 'вся история'
+                        : new Date(selectedDate + 'T00:00:00').toLocaleDateString('ru-RU')}
+                      ) записанных GPS-точек маршрута нет.
                     </div>
                     {availableTrackDates.length > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-700">Перейти к дате с маршрутом:</span>
+                        <span className="font-semibold text-slate-700">Показать маршруты:</span>
+                        <button
+                          onClick={() => {
+                            setHasExplicitlyPickedDate(true);
+                            setSelectedDate('ALL');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors"
+                        >
+                          ♾️ Все маршруты навсегда
+                        </button>
                         {availableTrackDates.slice(0, 3).map((d) => (
                           <button
                             key={d.date}
@@ -943,13 +1070,17 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
 
               return (
                 <div className="grid grid-cols-1 gap-3">
-                  {activeTracks.map((tr, idx) => {
+                  {activeTracks.map((tr) => {
                     const repId = tr.rep_id;
+                    const segmentKey = tr.id || `${repId}__${tr.track_date || 'day'}`;
                     const rep = reps.find((r) => r.id === repId);
                     const rawPts = Array.isArray(tr.points) ? tr.points : [];
                     const distKm = Number(tr.total_km || 0);
-                    const steps = streetTimelines[repId] || [];
-                    const color = REP_COLORS[idx % REP_COLORS.length];
+                    const steps = streetTimelines[segmentKey] || [];
+                    const color = getRepColor(repId);
+                    const dateFormatted = tr.track_date
+                      ? new Date(tr.track_date + 'T00:00:00').toLocaleDateString('ru-RU')
+                      : '';
                     const firstTime = rawPts[0]?.recorded_at
                       ? new Date(rawPts[0].recorded_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
                       : '';
@@ -959,18 +1090,24 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
 
                     return (
                       <div
-                        key={tr.id || repId}
+                        key={segmentKey}
                         className="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-sm space-y-2.5"
+                        style={{ borderLeftWidth: '5px', borderLeftColor: color }}
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span
-                              className="w-3 h-3 rounded-full shrink-0"
+                              className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm"
                               style={{ backgroundColor: color }}
                             />
                             <span className="font-bold text-xs text-slate-900">
                               {rep?.name || 'Сотрудник'}
                             </span>
+                            {dateFormatted && (
+                              <span className="text-[11px] px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/60">
+                                📅 {dateFormatted}
+                              </span>
+                            )}
                             {rep?.territory && (
                               <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium">
                                 {rep.territory}
@@ -980,7 +1117,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
 
                           <div className="flex items-center gap-3 text-xs">
                             <span className="font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-                              👣 Пройдено: {distKm.toFixed(2)} км ({rawPts.length} GPS-точек)
+                              👣 Пройдено: {distKm.toFixed(2)} км ({tr.raw_points_count || rawPts.length} GPS-точек)
                             </span>
                             {firstTime && lastTime && (
                               <span className="text-slate-500 font-medium">
@@ -1012,21 +1149,28 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                                     }}
                                     className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs transition-all text-left ${
                                       isStart
-                                        ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900 font-bold hover:bg-emerald-100'
+                                        ? 'text-white font-bold shadow-sm'
                                         : isEnd
                                         ? 'bg-slate-900 border-slate-900 text-white font-bold hover:bg-slate-800'
                                         : 'bg-slate-50 hover:bg-indigo-50 border-slate-200 hover:border-indigo-200 text-slate-800 font-medium'
                                     }`}
+                                    style={
+                                      isStart
+                                        ? { backgroundColor: color, borderColor: color }
+                                        : undefined
+                                    }
                                     title="Нажмите, чтобы показать эту улицу крупно на карте"
                                   >
                                     <span>
-                                      {isStart ? '🟢 Старт:' : isEnd ? '🏁 Финиш:' : `${sIdx}.`}
+                                      {isStart ? '▶ Старт:' : isEnd ? '🏁 Финиш:' : `${sIdx}.`}
                                     </span>
                                     <span>{step.street}</span>
                                     {step.time && (
                                       <span
                                         className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-                                          isEnd
+                                          isStart
+                                            ? 'bg-black/20 text-white'
+                                            : isEnd
                                             ? 'bg-slate-700 text-slate-200'
                                             : 'bg-white/80 text-slate-500 border border-slate-200/60'
                                         }`}
@@ -1060,7 +1204,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             <div>
               <h2 className="text-base font-bold text-slate-900">Штат сотрудников и личные карточки (HR + KPI)</h2>
               <p className="text-xs text-slate-500">
-                Прикрепляйте данные о каждом сотруднике, назначайте территории, дневные нормы и отслеживайте выполнение
+                Прикрепляйте данные о каждом сотруднике, назначайте персональные цвета маршрутов, территории и дневные нормы
               </p>
             </div>
             <button
@@ -1083,17 +1227,22 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
               const dailyPct = Math.min(100, Math.round((repVisitsToday / Math.max(1, dailyTarget)) * 100));
               const monthlyPct = Math.min(100, Math.round((repVisits.length / Math.max(1, monthlyTarget)) * 100));
               const repWaPhone = formatWhatsAppPhone(r.phone);
+              const repColor = getRepColor(r.id);
 
               return (
                 <div
                   key={r.id}
                   className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm hover:border-emerald-300 transition-all space-y-4 flex flex-col justify-between"
+                  style={{ borderTopWidth: '5px', borderTopColor: repColor }}
                 >
                   <div className="space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-bold text-lg flex items-center justify-center shadow-sm">
+                        <div
+                          className="w-12 h-12 rounded-2xl text-white font-bold text-lg flex items-center justify-center shadow-sm"
+                          style={{ backgroundColor: repColor }}
+                        >
                           {r.name?.charAt(0) || 'М'}
                         </div>
                         <div>
@@ -1187,7 +1336,16 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                     <div className="text-xs text-slate-500 flex items-center gap-2">
                       <span>Аптек: <strong className="text-slate-800">{repPharmaciesCount}</strong></span>
                       <span>•</span>
-                      <span>Маршрут: <strong className="text-sky-700">{tracks.find(t => t.rep_id === r.id)?.total_km || 0} км</strong></span>
+                      <span>
+                        Маршрут:{' '}
+                        <strong style={{ color: repColor }}>
+                          {tracks
+                            .filter(t => t.rep_id === r.id)
+                            .reduce((sum, t) => sum + Number(t.total_km || 0), 0)
+                            .toFixed(2)}{' '}
+                          км
+                        </strong>
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1431,6 +1589,37 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                     onChange={(e) => setEditingRep({ ...editingRep, hire_date: e.target.value })}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
+                </div>
+              </div>
+
+              {/* Personal Route Color Picker */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  🎨 Персональный цвет маршрута сотрудника на карте (навсегда закрепляется за ним)
+                </label>
+                <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+                  {REP_PALETTE.map((c) => {
+                    const isPicked = (editingRep.track_color || REP_PALETTE[0].hex) === c.hex;
+                    return (
+                      <button
+                        key={c.hex}
+                        type="button"
+                        onClick={() => setEditingRep({ ...editingRep, track_color: c.hex })}
+                        className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all border ${
+                          isPicked
+                            ? 'text-white shadow-md scale-105'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                        style={isPicked ? { backgroundColor: c.hex, borderColor: c.hex } : undefined}
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0 border border-white/60"
+                          style={{ backgroundColor: isPicked ? '#ffffff' : c.hex }}
+                        />
+                        <span>{c.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

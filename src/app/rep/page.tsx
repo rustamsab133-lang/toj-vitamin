@@ -19,9 +19,10 @@ import {
   saveCachedVisits, 
   getCachedVisits, 
   getOfflineQueue, 
-  flushOfflineQueue 
+  flushOfflineQueue,
+  enqueueOfflineAction
 } from '@/lib/repOfflineQueue';
-import { detectPhoneVendorGuide } from '@/lib/backgroundTracker';
+import { detectPhoneVendorGuide, startBackgroundTracker, stopBackgroundTracker } from '@/lib/backgroundTracker';
 
 // Dynamically import Overview Map to prevent SSR errors
 const PharmaciesOverviewMap = dynamic(
@@ -208,6 +209,62 @@ export default function BrandRepPortalPage() {
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
+
+  // Keep background GPS route recording active even when user is on Route / History / Profile tab
+  useEffect(() => {
+    if (!activeShift) {
+      stopBackgroundTracker();
+      return;
+    }
+    if (activeTab === 'map' || !rep?.id) return;
+
+    startBackgroundTracker(
+      (point) => {
+        try {
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const savedDate = localStorage.getItem('toj_rep_trail_date');
+          let pts: Array<[number, number]> = [];
+          if (savedDate === todayStr) {
+            const raw = localStorage.getItem('toj_rep_trail_points');
+            if (raw) pts = JSON.parse(raw);
+          }
+          const last = pts[pts.length - 1];
+          if (last) {
+            const d = calculateDistance(last[0], last[1], point.latitude, point.longitude);
+            if (d < 15) return;
+          }
+          pts.push([point.latitude, point.longitude]);
+          localStorage.setItem('toj_rep_trail_date', todayStr);
+          localStorage.setItem('toj_rep_trail_points', JSON.stringify(pts));
+        } catch (e) {}
+
+        const trackPayload = {
+          action: 'save_track_points',
+          rep_id: rep.id,
+          shift_id: activeShift.id,
+          points: [{
+            lat: point.latitude,
+            lng: point.longitude,
+            accuracy: point.accuracy,
+            speed: point.speed,
+            recorded_at: new Date().toISOString()
+          }]
+        };
+        fetch('/api/rep', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(trackPayload)
+        })
+          .then(res => {
+            if (!res.ok) throw new Error('Track save failed');
+          })
+          .catch(() => {
+            enqueueOfflineAction('save_track_points', trackPayload);
+          });
+      },
+      (err) => console.warn('Background tracker error:', err)
+    );
+  }, [activeShift, activeTab, rep?.id]);
 
   // Load Pharmacies, Visits, and fresh Rep HR Profile
   const loadPortalData = async () => {
@@ -585,6 +642,7 @@ export default function BrandRepPortalPage() {
             pharmacies={pharmacies}
             repId={rep.id}
             repName={rep.name}
+            repColor={rep.track_color || '#2563eb'}
             userLat={userCoords?.lat}
             userLng={userCoords?.lng}
             activeShift={activeShift}

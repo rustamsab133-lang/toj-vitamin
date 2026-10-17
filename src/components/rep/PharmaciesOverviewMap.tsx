@@ -15,6 +15,7 @@ interface PharmaciesOverviewMapProps {
   pharmacies: Pharmacy[];
   repId?: string;
   repName?: string;
+  repColor?: string;
   userLat?: number | null;
   userLng?: number | null;
   activeShift?: any | null;
@@ -41,6 +42,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   pharmacies,
   repId,
   repName,
+  repColor = '#2563eb',
   userLat,
   userLng,
   activeShift,
@@ -55,6 +57,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const userMarkerRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
   const circlesLayerRef = useRef<any>(null);
+  const historyLayerRef = useRef<any>(null);
   const trailPolylineRef = useRef<any>(null);
   const wakeLockRef = useRef<any>(null);
 
@@ -64,22 +67,48 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
 
-  // New Features: Coverage Zones and GPS Breadcrumb Trail
+  // Coverage Zones, Active Trail & Permanent History Overlay
   const [showCoverageCircles, setShowCoverageCircles] = useState(true);
+  const [showHistoryRoutes, setShowHistoryRoutes] = useState(true);
   const [isRecordingTrail, setIsRecordingTrail] = useState(false);
   const [trailPoints, setTrailPoints] = useState<Array<[number, number]>>([]);
+  const [historyByDate, setHistoryByDate] = useState<Record<string, Array<[number, number]>>>({});
   const [shiftDurationStr, setShiftDurationStr] = useState<string>('00:00');
 
-  // Load saved trail from localStorage on mount
+  // Load saved trail from localStorage & sync with permanent DB tracks on mount
   useEffect(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
     try {
+      const savedDate = localStorage.getItem('toj_rep_trail_date');
       const savedTrail = localStorage.getItem('toj_rep_trail_points');
-      if (savedTrail) {
+      if (savedDate === todayStr && savedTrail) {
         const parsed = JSON.parse(savedTrail);
         if (Array.isArray(parsed)) setTrailPoints(parsed);
+      } else if (savedDate && savedDate !== todayStr) {
+        localStorage.removeItem('toj_rep_trail_points');
+        localStorage.setItem('toj_rep_trail_date', todayStr);
       }
     } catch (e) {}
-  }, []);
+
+    if (repId) {
+      fetch(`/api/rep?action=get_today_track&rep_id=${repId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            if (Array.isArray(data.points) && data.points.length > 0) {
+              const dbPts: Array<[number, number]> = data.points
+                .map((p: any) => [Number(p.latitude), Number(p.longitude)] as [number, number])
+                .filter(([la, ln]: [number, number]) => !isNaN(la) && !isNaN(ln));
+              setTrailPoints(prev => (dbPts.length > prev.length ? dbPts : prev));
+            }
+            if (data.historyByDate && typeof data.historyByDate === 'object') {
+              setHistoryByDate(data.historyByDate);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [repId]);
 
   // Compute shift elapsed time live
   useEffect(() => {
@@ -123,6 +152,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
             }
             const updated: Array<[number, number]> = [...prev, [point.latitude, point.longitude]];
             try {
+              localStorage.setItem('toj_rep_trail_date', new Date().toISOString().slice(0, 10));
               localStorage.setItem('toj_rep_trail_points', JSON.stringify(updated));
             } catch (e) {}
 
@@ -144,9 +174,13 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(trackPayload)
-              }).catch(() => {
-                enqueueOfflineAction('save_track_points', trackPayload);
-              });
+              })
+                .then(res => {
+                  if (!res.ok) throw new Error('Track save failed');
+                })
+                .catch(() => {
+                  enqueueOfflineAction('save_track_points', trackPayload);
+                });
             }
 
             return updated;
@@ -247,18 +281,20 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
 
         // Layers
         const circlesLayer = L.layerGroup().addTo(map);
+        const historyLayer = L.layerGroup().addTo(map);
         const markersLayer = L.layerGroup().addTo(map);
 
         // Polyline for GPS Breadcrumbs (Нить Ариадны)
         const polyline = L.polyline([], {
-          color: '#0284c7',
-          weight: 4,
-          opacity: 0.85,
+          color: repColor,
+          weight: 5,
+          opacity: 0.9,
           lineJoin: 'round',
           dashArray: undefined
         }).addTo(map);
 
         circlesLayerRef.current = circlesLayer;
+        historyLayerRef.current = historyLayer;
         markersLayerRef.current = markersLayer;
         trailPolylineRef.current = polyline;
         mapInstanceRef.current = map;
@@ -282,12 +318,36 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     };
   }, []);
 
-  // Update Polyline when trailPoints change
+  // Update Polyline when trailPoints or mapLoaded change
   useEffect(() => {
-    if (trailPolylineRef.current) {
+    if (trailPolylineRef.current && mapLoaded) {
+      trailPolylineRef.current.setStyle({ color: repColor });
       trailPolylineRef.current.setLatLngs(trailPoints);
     }
-  }, [trailPoints]);
+  }, [trailPoints, mapLoaded, repColor]);
+
+  // Render permanent historical routes on the rep's map
+  useEffect(() => {
+    async function renderHistoryOverlay() {
+      if (!mapLoaded || !historyLayerRef.current) return;
+      const L = (await import('leaflet')).default;
+      historyLayerRef.current.clearLayers();
+      if (!showHistoryRoutes) return;
+
+      Object.entries(historyByDate).forEach(([dateStr, pts]) => {
+        if (!Array.isArray(pts) || pts.length < 2) return;
+        const poly = L.polyline(pts, {
+          color: repColor,
+          weight: 3.5,
+          opacity: 0.55,
+          dashArray: '6, 6',
+          lineJoin: 'round'
+        }).addTo(historyLayerRef.current);
+        poly.bindTooltip(`Пройдено ${new Date(dateStr + 'T00:00:00').toLocaleDateString('ru-RU')}`, { sticky: true });
+      });
+    }
+    renderHistoryOverlay();
+  }, [historyByDate, showHistoryRoutes, mapLoaded, repColor]);
 
   // Screen Wake Lock API when Recording is active
   const toggleRecordingTrail = async () => {

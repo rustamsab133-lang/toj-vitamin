@@ -67,6 +67,9 @@ export function isValidGpsPoint(point: GeoLocationPoint): boolean {
   return true;
 }
 
+let currentUpdateCallback: ((point: GeoLocationPoint) => void) | null = null;
+let currentErrorCallback: ((err: any) => void) | null = null;
+
 /**
  * Start Background GPS Tracking
  * On Native Android/iOS: Launches Foreground Service with notification allowing screen to be locked.
@@ -76,7 +79,10 @@ export async function startBackgroundTracker(
   onLocationUpdate: (point: GeoLocationPoint) => void,
   onError?: (err: any) => void
 ): Promise<string | number | null> {
-  if (activeWatcherId || browserWatchId) {
+  currentUpdateCallback = onLocationUpdate;
+  currentErrorCallback = onError || null;
+
+  if (activeWatcherId || browserWatchId !== null) {
     return activeWatcherId || browserWatchId;
   }
 
@@ -95,7 +101,7 @@ export async function startBackgroundTracker(
         (location, error) => {
           if (error) {
             console.warn("BackgroundGeolocation error:", error);
-            if (onError) onError(error);
+            if (currentErrorCallback) currentErrorCallback(error);
             return;
           }
           if (location && location.latitude && location.longitude) {
@@ -106,8 +112,8 @@ export async function startBackgroundTracker(
               speed: location.speed,
               time: location.time
             };
-            if (isValidGpsPoint(candidate)) {
-              onLocationUpdate(candidate);
+            if (isValidGpsPoint(candidate) && currentUpdateCallback) {
+              currentUpdateCallback(candidate);
             }
           }
         }
@@ -131,13 +137,13 @@ export async function startBackgroundTracker(
           speed: pos.coords.speed,
           time: pos.timestamp
         };
-        if (isValidGpsPoint(candidate)) {
-          onLocationUpdate(candidate);
+        if (isValidGpsPoint(candidate) && currentUpdateCallback) {
+          currentUpdateCallback(candidate);
         }
       },
       (err) => {
         console.warn("Browser geolocation watch error:", err);
-        if (onError) onError(err);
+        if (currentErrorCallback) currentErrorCallback(err);
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
     );
@@ -153,6 +159,8 @@ export async function startBackgroundTracker(
  */
 export async function stopBackgroundTracker(): Promise<void> {
   lastAcceptedPoint = null;
+  currentUpdateCallback = null;
+  currentErrorCallback = null;
   if (activeWatcherId && BackgroundGeolocation) {
     try {
       await BackgroundGeolocation.removeWatcher({ id: activeWatcherId });

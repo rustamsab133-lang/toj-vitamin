@@ -234,6 +234,7 @@ export interface BrandRep {
   transport_type?: 'foot' | 'car' | 'public' | string;
   bio_notes?: string;
   experience_years?: string;
+  track_color?: string;
   created_at?: string;
 }
 
