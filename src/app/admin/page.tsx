@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { AdminLogin } from './components/AdminLogin';
+import { signOut } from '@/app/auth/actions';
 import { ProductEditor } from './components/ProductEditor';
 import { QuizEditor } from './components/QuizEditor';
 import { ComplexEditor } from './components/ComplexEditor';
@@ -18,6 +18,7 @@ import { ComboEditor } from './components/ComboEditor';
 import { DocumentsDashboard } from './components/DocumentsDashboard';
 import { ConsultantCopilot } from './components/ConsultantCopilot';
 import { VideoStudio } from './components/VideoStudio';
+import { BrandRepsSupervisor } from './components/BrandRepsSupervisor';
 import { supabase } from '@/lib/supabase';
 import { Package, Layers, Heart, ShoppingBag, Settings, LogOut, BarChart3, Bot, Instagram, Warehouse, FileWarning, Users, Building2, FileText, Sparkles, Film, ExternalLink, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,7 +47,6 @@ const MODULES: Array<{ id: AdminView; title: string; desc: string; icon: React.R
 ];
 
 export default function AdminPage() {
-  const [isAuth, setIsAuth] = useState(false);
   const [view, setView] = useState<AdminView>('dashboard');
   const [stats, setStats] = useState({ products: 0, orders: 0, newOrders: 0 });
   const [selectedFeedProductId, setSelectedFeedProductId] = useState<string | undefined>(undefined);
@@ -58,18 +58,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    const sessionSaved = sessionStorage.getItem('toj-admin-auth');
-    const localSaved = localStorage.getItem('toj-admin-auth');
-    const localPass = localStorage.getItem('toj-admin-password');
-
-    if (sessionSaved === 'true') {
-      setIsAuth(true);
-    } else if (localSaved === 'true' && localPass) {
-      sessionStorage.setItem('toj-admin-auth', 'true');
-      sessionStorage.setItem('toj-admin-password', localPass);
-      setIsAuth(true);
-    }
-
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlView = (params.get('view') || params.get('tab')) as AdminView;
@@ -80,8 +68,8 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (isAuth) loadStats();
-  }, [isAuth]);
+    void loadStats();
+  }, []);
 
   const loadStats = async () => {
     const [{ count: pCount }, { data: oData }] = await Promise.all([
@@ -95,16 +83,9 @@ export default function AdminPage() {
     });
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('toj-admin-auth');
-    sessionStorage.removeItem('toj-admin-password');
-    localStorage.removeItem('toj-admin-auth');
-    localStorage.removeItem('toj-admin-password');
-    setIsAuth(false);
-  };
+  const handleLogout = () => { void signOut(); };
 
   if (!mounted) return null;
-  if (!isAuth) return <AdminLogin onAuth={() => setIsAuth(true)} />;
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg))]">
@@ -316,6 +297,12 @@ export default function AdminPage() {
           {view === 'video-studio' && (
             <motion.div key="video-studio" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <VideoStudio onBack={() => setView('dashboard')} />
+            </motion.div>
+          )}
+
+          {view === 'brand-reps' && (
+            <motion.div key="brand-reps" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <BrandRepsSupervisor onBack={() => setView('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>

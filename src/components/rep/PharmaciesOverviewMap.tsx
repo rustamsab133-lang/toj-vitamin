@@ -9,10 +9,12 @@ import {
 import type { Map as LeafletMap } from 'leaflet';
 import { Pharmacy } from '@/lib/types';
 import { startBackgroundTracker, stopBackgroundTracker, isNativeApp } from '@/lib/backgroundTracker';
+import { buildPharmacyWhatsAppUrl, enqueueOfflineAction } from '@/lib/repOfflineQueue';
 
 interface PharmaciesOverviewMapProps {
   pharmacies: Pharmacy[];
   repId?: string;
+  repName?: string;
   userLat?: number | null;
   userLng?: number | null;
   activeShift?: any | null;
@@ -38,6 +40,7 @@ function calculateDistanceMeters(lat1: number, lon1: number, lat2: number, lon2:
 export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   pharmacies,
   repId,
+  repName,
   userLat,
   userLng,
   activeShift,
@@ -125,16 +128,19 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
 
             // Save to server every 5 points
             if (updated.length % 5 === 0 && repId) {
+              const trackPayload = {
+                action: 'save_track_points',
+                rep_id: repId,
+                shift_id: activeShift.id,
+                points: [{ lat: point.latitude, lng: point.longitude }]
+              };
               fetch('/api/rep', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  action: 'save_track_points',
-                  rep_id: repId,
-                  shift_id: activeShift.id,
-                  points: [{ lat: point.latitude, lng: point.longitude }]
-                })
-              }).catch(() => {});
+                body: JSON.stringify(trackPayload)
+              }).catch(() => {
+                enqueueOfflineAction('save_track_points', trackPayload);
+              });
             }
 
             return updated;
@@ -754,7 +760,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {selectedPharmacy.phone ? (
               <a
                 href={`tel:${selectedPharmacy.phone}`}
@@ -765,6 +771,20 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               </a>
             ) : (
               <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет тел.</div>
+            )}
+
+            {buildPharmacyWhatsAppUrl(selectedPharmacy, repName) ? (
+              <a
+                href={buildPharmacyWhatsAppUrl(selectedPharmacy, repName)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe57] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Написать в WhatsApp
+              </a>
+            ) : (
+              <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет WhatsApp</div>
             )}
 
             {/* Direct Navigator in 2GIS / Yandex */}

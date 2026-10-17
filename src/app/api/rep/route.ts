@@ -27,9 +27,54 @@ function calculateDistanceMeters(lat1: number, lon1: number, lat2: number, lon2:
   return Math.round(R * c);
 }
 
+// Helper to load extended employee HR profiles stored in site_settings
+async function getHrProfilesMap(): Promise<Record<string, any>> {
+  try {
+    const { data } = await supabaseAdmin
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'rep_hr_profiles')
+      .maybeSingle();
+    if (!data?.value) return {};
+    return typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+  } catch (e) {
+    return {};
+  }
+}
+
+async function saveHrProfileForRep(repId: string, hrData: Record<string, any>): Promise<void> {
+  try {
+    const current = await getHrProfilesMap();
+    current[repId] = {
+      ...(current[repId] || {}),
+      ...hrData,
+      updated_at: new Date().toISOString()
+    };
+    await supabaseAdmin
+      .from('site_settings')
+      .upsert({ key: 'rep_hr_profiles', value: JSON.stringify(current) }, { onConflict: 'key' });
+  } catch (e) {
+    console.warn('saveHrProfileForRep warning:', e);
+  }
+}
+
+function mergeRepWithHr(rep: any, hrMap: Record<string, any>) {
+  const hr = hrMap[rep.id] || {};
+  return {
+    ...rep,
+    position: hr.position || 'Медицинский представитель',
+    daily_visit_target: Number(hr.daily_visit_target) || 12,
+    hire_date: hr.hire_date || (rep.created_at ? rep.created_at.slice(0, 10) : '2026-01-15'),
+    passport_info: hr.passport_info || '',
+    transport_type: hr.transport_type || 'foot',
+    bio_notes: hr.bio_notes || '',
+    experience_years: hr.experience_years || ''
+  };
+}
+
 /**
  * GET /api/rep
- * Получение профиля представителя, списка аптек с координатами или истории визитов
+ * Получение профиля представителя, списка аптек с координатами, истории визитов или сводки руководителя
  */
 export async function GET(request: Request) {
   try {
@@ -37,6 +82,7 @@ export async function GET(request: Request) {
     const action = searchParams.get('action') || 'list_pharmacies';
     const repId = searchParams.get('rep_id');
     const phone = searchParams.get('phone');
+    const dateParam = searchParams.get('date'); // YYYY-MM-DD for track filtering
 
     if (action === 'get_profile') {
       if (!repId && !phone) {
@@ -47,21 +93,73 @@ export async function GET(request: Request) {
       if (repId) query = query.eq('id', repId);
       if (phone) query = query.eq('phone', phone);
 
-      const { data: rep, error } = await query.single();
+      const [{ data: rep, error }, hrMap] = await Promise.all([
+        query.single(),
+        getHrProfilesMap()
+      ]);
       if (error || !rep) {
         return NextResponse.json({ error: 'Представитель не найден' }, { status: 404 });
       }
 
-      return NextResponse.json({ success: true, rep });
+      return NextResponse.json({ success: true, rep: mergeRepWithHr(rep, hrMap) });
     }
 
     if (action === 'list_reps') {
-      const { data: reps, error } = await supabaseAdmin
-        .from('brand_reps')
-        .select('id, name, phone, territory, brand_name, status')
-        .order('name');
-      
-      return NextResponse.json({ success: true, reps: reps || [] });
+      const [{ data: reps }, hrMap] = await Promise.all([
+        supabaseAdmin.from('brand_reps').select('*').order('name'),
+        getHrProfilesMap()
+      ]);
+
+      const merged = (reps || []).map(r => mergeRepWithHr(r, hrMap));
+      return NextResponse.json({ success: true, reps: merged });
+    }
+
+    if (action === 'supervisor_overview') {
+      // Determine date range for tracks (default: today)
+      const targetDate = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date();
+      const dayStart = new Date(targetDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(targetDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const [
+        { data: reps },
+        hrMap,
+        { data: pharmacies },
+        { data: visits },
+        { data: tracks },
+        { data: activeShifts }
+      ] = await Promise.all([
+        supabaseAdmin.from('brand_reps').select('*').order('name'),
+        getHrProfilesMap(),
+        supabaseAdmin.from('pharmacies').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin
+          .from('rep_visits')
+          .select('*, pharmacies(name, address, latitude, longitude, phone, contact_person, token)')
+          .order('created_at', { ascending: false })
+          .limit(400),
+        supabaseAdmin
+          .from('rep_tracks')
+          .select('*')
+          .gte('recorded_at', dayStart.toISOString())
+          .lte('recorded_at', dayEnd.toISOString())
+          .order('recorded_at', { ascending: true }),
+        supabaseAdmin
+          .from('rep_shifts')
+          .select('*')
+          .eq('status', 'active')
+      ]);
+
+      const mergedReps = (reps || []).map(r => mergeRepWithHr(r, hrMap));
+
+      return NextResponse.json({
+        success: true,
+        reps: mergedReps,
+        pharmacies: pharmacies || [],
+        visits: visits || [],
+        tracks: tracks || [],
+        activeShifts: activeShifts || []
+      });
     }
 
     if (action === 'list_pharmacies') {
@@ -186,15 +284,87 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Неверный PIN-код доступа' }, { status: 401 });
       }
 
+      const hrMap = await getHrProfilesMap();
       return NextResponse.json({
         success: true,
-        rep: {
-          id: rep.id,
-          name: rep.name,
-          phone: rep.phone,
-          territory: rep.territory,
-          brand_name: rep.brand_name
+        rep: mergeRepWithHr(rep, hrMap)
+      });
+    }
+
+    // --- 1b. Создание или обновление карточки сотрудника (Руководитель / Кабинет) ---
+    if (action === 'save_rep') {
+      const {
+        id,
+        name,
+        phone,
+        pin_code,
+        territory,
+        brand_name = 'TOJ-VITAMIN',
+        target_monthly_visits = 60,
+        target_monthly_sales = 25000,
+        status = 'active',
+        position = 'Медицинский представитель',
+        daily_visit_target = 12,
+        hire_date = '',
+        passport_info = '',
+        transport_type = 'foot',
+        bio_notes = '',
+        experience_years = ''
+      } = body;
+
+      if (!name?.trim() || !phone?.trim() || !pin_code?.trim()) {
+        return NextResponse.json({ error: 'ФИО, телефон и PIN-код обязательны' }, { status: 400 });
+      }
+
+      const dbPayload: any = {
+        name: name.trim(),
+        phone: phone.trim(),
+        pin_code: pin_code.trim(),
+        territory: territory?.trim() || 'Душанбе',
+        brand_name: brand_name.trim(),
+        target_monthly_visits: Number(target_monthly_visits) || 60,
+        target_monthly_sales: Number(target_monthly_sales) || 25000,
+        status
+      };
+
+      let savedRep: any = null;
+      if (id) {
+        const { data, error } = await supabaseAdmin
+          .from('brand_reps')
+          .update(dbPayload)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 500 });
         }
+        savedRep = data;
+      } else {
+        const { data, error } = await supabaseAdmin
+          .from('brand_reps')
+          .insert(dbPayload)
+          .select()
+          .single();
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        savedRep = data;
+      }
+
+      await saveHrProfileForRep(savedRep.id, {
+        position: position.trim(),
+        daily_visit_target: Number(daily_visit_target) || 12,
+        hire_date,
+        passport_info: passport_info.trim(),
+        transport_type,
+        bio_notes: bio_notes.trim(),
+        experience_years: experience_years.trim()
+      });
+
+      const hrMap = await getHrProfilesMap();
+      return NextResponse.json({
+        success: true,
+        rep: mergeRepWithHr(savedRep, hrMap)
       });
     }
 

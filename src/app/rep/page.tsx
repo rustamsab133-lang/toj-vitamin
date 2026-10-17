@@ -3,14 +3,25 @@ import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { 
   MapPin, List, Clock, User, Phone, CheckCircle2, 
-  Plus, Compass, Search, Filter, ShieldCheck, Loader2, 
-  TrendingUp, Award, LogOut, RefreshCw, ChevronRight, 
-  Building2, MessageSquare, AlertTriangle, ArrowUpRight,
-  Play, Pause, Footprints 
+  Plus, Compass, Search, ShieldCheck, Loader2, 
+  Award, LogOut, RefreshCw, Building2, MessageSquare, 
+  ArrowUpRight, Play, Pause, Footprints, Wifi, WifiOff, 
+  UploadCloud, Smartphone, Briefcase, Calendar, Car, 
+  Target, FileText, BatteryCharging
 } from 'lucide-react';
 import { Pharmacy, BrandRep } from '@/lib/types';
 import { AddPharmacyModal } from '@/components/rep/AddPharmacyModal';
 import { ActiveVisitModal } from '@/components/rep/ActiveVisitModal';
+import { 
+  buildPharmacyWhatsAppUrl, 
+  saveCachedPharmacies, 
+  getCachedPharmacies, 
+  saveCachedVisits, 
+  getCachedVisits, 
+  getOfflineQueue, 
+  flushOfflineQueue 
+} from '@/lib/repOfflineQueue';
+import { detectPhoneVendorGuide } from '@/lib/backgroundTracker';
 
 // Dynamically import Overview Map to prevent SSR errors
 const PharmaciesOverviewMap = dynamic(
@@ -45,11 +56,16 @@ export default function BrandRepPortalPage() {
   const [pinInput, setPinInput] = useState('2024');
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Core Data
-  const [activeTab, setActiveTab] = useState<'map' | 'route' | 'history'>('map');
+  // Core Data & Tabs
+  const [activeTab, setActiveTab] = useState<'map' | 'route' | 'history' | 'profile'>('map');
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [visits, setVisits] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+
+  // Offline & Sync State
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [pendingOfflineCount, setPendingOfflineCount] = useState<number>(0);
+  const [isSyncingOffline, setIsSyncingOffline] = useState<boolean>(false);
 
   // User GPS
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -68,7 +84,10 @@ export default function BrandRepPortalPage() {
   const [isEndShiftModalOpen, setIsEndShiftModalOpen] = useState(false);
   const [isShiftActionLoading, setIsShiftActionLoading] = useState(false);
 
-  // Check saved session
+  // Vendor battery guide
+  const vendorGuide = useMemo(() => detectPhoneVendorGuide(), []);
+
+  // Check saved session & offline cache on mount
   useEffect(() => {
     const savedRep = localStorage.getItem('toj_brand_rep_session');
     if (savedRep) {
@@ -76,8 +95,65 @@ export default function BrandRepPortalPage() {
         setRep(JSON.parse(savedRep));
       } catch (e) {}
     }
+    const cachedPharms = getCachedPharmacies();
+    if (cachedPharms.length > 0) setPharmacies(cachedPharms);
+
+    const cachedVisits = getCachedVisits();
+    if (cachedVisits.length > 0) setVisits(cachedVisits);
+
+    setPendingOfflineCount(getOfflineQueue().length);
+    if (typeof navigator !== 'undefined') {
+      setIsOnline(navigator.onLine);
+    }
     setAuthLoading(false);
   }, []);
+
+  // Monitor Online / Offline & Auto-Flush Offline Queue
+  const handleSyncOfflineQueue = async () => {
+    const q = getOfflineQueue();
+    setPendingOfflineCount(q.length);
+    if (q.length === 0) return;
+
+    setIsSyncingOffline(true);
+    try {
+      const result = await flushOfflineQueue();
+      setPendingOfflineCount(result.remaining);
+      if (result.synced > 0) {
+        await loadPortalData();
+      }
+    } catch (e) {
+    } finally {
+      setIsSyncingOffline(false);
+    }
+  };
+
+  useEffect(() => {
+    const onOnline = () => {
+      setIsOnline(true);
+      handleSyncOfflineQueue();
+    };
+    const onOffline = () => {
+      setIsOnline(false);
+      setPendingOfflineCount(getOfflineQueue().length);
+    };
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
+    const syncInterval = setInterval(() => {
+      const qLen = getOfflineQueue().length;
+      setPendingOfflineCount(qLen);
+      if (navigator.onLine && qLen > 0) {
+        handleSyncOfflineQueue();
+      }
+    }, 20000);
+
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+      clearInterval(syncInterval);
+    };
+  }, [rep?.id]);
 
   // Sync Shift Session with localStorage and Supabase
   useEffect(() => {
@@ -133,7 +209,7 @@ export default function BrandRepPortalPage() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // Load Pharmacies and Visits
+  // Load Pharmacies, Visits, and fresh Rep HR Profile
   const loadPortalData = async () => {
     setLoadingData(true);
     try {
@@ -141,6 +217,7 @@ export default function BrandRepPortalPage() {
       const pharmData = await pharmRes.json();
       if (pharmData.success && pharmData.pharmacies) {
         setPharmacies(pharmData.pharmacies);
+        saveCachedPharmacies(pharmData.pharmacies);
       }
 
       if (rep?.id) {
@@ -148,12 +225,30 @@ export default function BrandRepPortalPage() {
         const visitData = await visitRes.json();
         if (visitData.success && visitData.visits) {
           setVisits(visitData.visits);
+          saveCachedVisits(visitData.visits);
+        }
+
+        // Refresh Rep profile (including HR fields updated by supervisor)
+        const repsRes = await fetch('/api/rep?action=list_reps');
+        const repsData = await repsRes.json();
+        if (repsData.success && Array.isArray(repsData.reps)) {
+          const freshMe = repsData.reps.find((r: any) => r.id === rep.id || r.phone === rep.phone);
+          if (freshMe) {
+            setRep(freshMe);
+            localStorage.setItem('toj_brand_rep_session', JSON.stringify(freshMe));
+          }
         }
       }
+      setIsOnline(true);
     } catch (err) {
-      console.error('Data load error:', err);
+      // Fallback to offline cache silently
+      const cachedPharms = getCachedPharmacies();
+      if (cachedPharms.length > 0 && pharmacies.length === 0) setPharmacies(cachedPharms);
+      const cachedVisits = getCachedVisits();
+      if (cachedVisits.length > 0 && visits.length === 0) setVisits(cachedVisits);
     } finally {
       setLoadingData(false);
+      setPendingOfflineCount(getOfflineQueue().length);
     }
   };
 
@@ -161,7 +256,7 @@ export default function BrandRepPortalPage() {
     if (rep) {
       loadPortalData();
     }
-  }, [rep]);
+  }, [rep?.id]);
 
   // Login handler
   const handleLogin = async (e: React.FormEvent) => {
@@ -238,7 +333,18 @@ export default function BrandRepPortalPage() {
         localStorage.setItem('toj_rep_active_shift', JSON.stringify(data.shift));
       }
     } catch (err) {
-      console.error('Failed to start shift:', err);
+      // Offline shift start fallback
+      const fallbackShift = {
+        id: `offline_shift_${Date.now()}`,
+        rep_id: rep.id,
+        status: 'active',
+        started_at: new Date().toISOString(),
+        start_lat: userCoords?.lat || null,
+        start_lng: userCoords?.lng || null,
+        is_fallback: true
+      };
+      setActiveShift(fallbackShift);
+      localStorage.setItem('toj_rep_active_shift', JSON.stringify(fallbackShift));
     } finally {
       setIsShiftActionLoading(false);
     }
@@ -288,7 +394,6 @@ export default function BrandRepPortalPage() {
       }
       return { ...p, distanceMeters };
     }).sort((a, b) => {
-      // Pharmacies with distance come first, sorted ascending
       return a.distanceMeters - b.distanceMeters;
     }).filter(p => {
       if (filterCategory !== 'ALL' && (p.category || 'B') !== filterCategory) return false;
@@ -304,6 +409,22 @@ export default function BrandRepPortalPage() {
       return true;
     });
   }, [pharmacies, userCoords, filterCategory, searchQuery]);
+
+  // Personal Cabinet KPI calculations
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const currentMonthPrefix = new Date().toISOString().slice(0, 7);
+  const visitsTodayCount = useMemo(
+    () => visits.filter(v => (v.created_at || '').startsWith(todayStr)).length,
+    [visits, todayStr]
+  );
+  const visitsMonthCount = useMemo(
+    () => visits.filter(v => (v.created_at || '').startsWith(currentMonthPrefix)).length,
+    [visits, currentMonthPrefix]
+  );
+  const dailyTarget = rep?.daily_visit_target || 12;
+  const monthlyTarget = rep?.target_monthly_visits || 120;
+  const dailyProgressPct = Math.min(100, Math.round((visitsTodayCount / Math.max(1, dailyTarget)) * 100));
+  const monthlyProgressPct = Math.min(100, Math.round((visitsMonthCount / Math.max(1, monthlyTarget)) * 100));
 
   // --- 0. AUTH LOADING SCREEN ---
   if (authLoading) {
@@ -325,7 +446,7 @@ export default function BrandRepPortalPage() {
               <MapPin className="w-8 h-8" />
             </div>
             <h1 className="text-xl font-bold text-slate-900">Терминал медпреда</h1>
-            <p className="text-xs text-slate-500">Полевой модуль визитов и картографирования</p>
+            <p className="text-xs text-slate-500">Полевой модуль визитов, личного кабинета и карт</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -387,8 +508,11 @@ export default function BrandRepPortalPage() {
   return (
     <div className="h-screen w-full flex flex-col bg-slate-50 overflow-hidden font-sans">
       {/* Top Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 shrink-0 flex items-center justify-between z-20">
-        <div className="flex items-center gap-3">
+      <header className="bg-white border-b border-slate-200 px-4 py-2.5 shrink-0 flex items-center justify-between z-20">
+        <div
+          onClick={() => setActiveTab('profile')}
+          className="flex items-center gap-2.5 cursor-pointer"
+        >
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-base shadow-sm">
             {rep?.name?.charAt(0) || 'P'}
           </div>
@@ -407,14 +531,32 @@ export default function BrandRepPortalPage() {
               )}
             </div>
             <div className="text-[11px] text-slate-500 flex items-center gap-1">
-              <span>{rep?.brand_name || 'TOJ-VITAMIN'}</span>
+              <span>{rep?.position || 'Медпредставитель'}</span>
               <span>•</span>
               <span>{rep?.territory || 'Душанбе'}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          {/* Offline / Queue Indicator */}
+          {!isOnline ? (
+            <div className="flex items-center gap-1 bg-amber-100 text-amber-800 px-2.5 py-1.5 rounded-xl text-[11px] font-bold">
+              <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+              <span>Оффлайн {pendingOfflineCount > 0 ? `(${pendingOfflineCount})` : ''}</span>
+            </div>
+          ) : pendingOfflineCount > 0 ? (
+            <button
+              onClick={handleSyncOfflineQueue}
+              disabled={isSyncingOffline}
+              className="flex items-center gap-1 bg-sky-100 hover:bg-sky-200 text-sky-800 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-colors"
+              title="Отправить сохраненные в подвале данные на сервер"
+            >
+              <UploadCloud className={`w-3.5 h-3.5 text-sky-600 ${isSyncingOffline ? 'animate-bounce' : ''}`} />
+              <span>Синхр. ({pendingOfflineCount})</span>
+            </button>
+          ) : null}
+
           {/* Refresh Data */}
           <button
             onClick={loadPortalData}
@@ -442,6 +584,7 @@ export default function BrandRepPortalPage() {
           <PharmaciesOverviewMap
             pharmacies={pharmacies}
             repId={rep.id}
+            repName={rep.name}
             userLat={userCoords?.lat}
             userLng={userCoords?.lng}
             activeShift={activeShift}
@@ -476,7 +619,7 @@ export default function BrandRepPortalPage() {
               <div>
                 <h2 className="text-base font-bold text-slate-800">Маршрутный лист</h2>
                 <p className="text-xs text-slate-500">
-                  {userCoords ? 'Аптеки отсортированы «Рядом со мной» по GPS' : 'Поиск по базе аптек'}
+                  {userCoords ? 'Аптеки отсортированы «Рядом со мной» по GPS' : 'Работает даже без интернета (из кэша)'}
                 </p>
               </div>
 
@@ -485,7 +628,7 @@ export default function BrandRepPortalPage() {
                 className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
               >
                 <Plus className="w-4 h-4" />
-                Добавить
+                Добавить аптеку
               </button>
             </div>
 
@@ -513,7 +656,7 @@ export default function BrandRepPortalPage() {
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  {cat === 'ALL' ? 'Все' : `Кат. ${cat}`}
+                  {cat === 'ALL' ? `Все (${pharmacies.length})` : `Кат. ${cat}`}
                 </button>
               ))}
             </div>
@@ -526,111 +669,138 @@ export default function BrandRepPortalPage() {
                   <p className="text-xs">Аптеки не найдены</p>
                 </div>
               ) : (
-                sortedPharmacies.map((pharm) => (
-                  <div
-                    key={pharm.id}
-                    className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-emerald-300 transition-all space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                            pharm.category === 'A' ? 'bg-amber-100 text-amber-800' :
-                            pharm.category === 'B' ? 'bg-emerald-100 text-emerald-800' :
-                            'bg-slate-100 text-slate-700'
-                          }`}>
-                            Категория {pharm.category || 'B'}
-                          </span>
-
-                          {pharm.distanceMeters && pharm.distanceMeters !== Infinity && (
-                            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                              📍 {pharm.distanceMeters > 1000 
-                                ? `${(pharm.distanceMeters / 1000).toFixed(1)} км` 
-                                : `${pharm.distanceMeters} м`}
+                sortedPharmacies.map((pharm) => {
+                  const waUrl = buildPharmacyWhatsAppUrl(pharm, rep.name);
+                  return (
+                    <div
+                      key={pharm.id}
+                      className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-emerald-300 transition-all space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                              pharm.category === 'A' ? 'bg-amber-100 text-amber-800' :
+                              pharm.category === 'B' ? 'bg-emerald-100 text-emerald-800' :
+                              'bg-slate-100 text-slate-700'
+                            }`}>
+                              Категория {pharm.category || 'B'}
                             </span>
+
+                            {pharm.distanceMeters && pharm.distanceMeters !== Infinity && (
+                              <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                                📍 {pharm.distanceMeters > 1000 
+                                  ? `${(pharm.distanceMeters / 1000).toFixed(1)} км` 
+                                  : `${pharm.distanceMeters} м`}
+                              </span>
+                            )}
+
+                            {(pharm as any).is_offline_queued && (
+                              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">
+                                ⏳ В оффлайн-очереди
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="font-bold text-sm text-slate-900">{pharm.name}</h3>
+                          <p className="text-xs text-slate-500 line-clamp-1">{pharm.address}</p>
+                          {pharm.landmark && (
+                            <p className="text-[11px] text-emerald-700 font-medium">
+                              Ориентир: {pharm.landmark}
+                            </p>
                           )}
                         </div>
 
-                        <h3 className="font-bold text-sm text-slate-900">{pharm.name}</h3>
-                        <p className="text-xs text-slate-500 line-clamp-1">{pharm.address}</p>
-                        {pharm.landmark && (
-                          <p className="text-[11px] text-emerald-700 font-medium">
-                            Ориентир: {pharm.landmark}
-                          </p>
+                        {/* B2B Link Quick Badge */}
+                        <a
+                          href={`/b2b/${pharm.token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg font-medium flex items-center gap-1 shrink-0"
+                          title="Открыть B2B витрину"
+                        >
+                          B2B <ArrowUpRight className="w-3 h-3" />
+                        </a>
+                      </div>
+
+                      {/* Contacts & Time */}
+                      <div className="text-xs text-slate-600 flex items-center justify-between pt-1 border-t border-slate-100">
+                        <div>
+                          <span className="text-slate-400">ЛПР: </span>
+                          <span className="font-medium text-slate-800">{pharm.contact_person || 'Заведующая'}</span>
+                        </div>
+                        {pharm.preferred_time && (
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            <span>{pharm.preferred_time}</span>
+                          </div>
                         )}
                       </div>
 
-                      {/* B2B Link Quick Badge */}
-                      <a
-                        href={`/b2b/${pharm.token}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg font-medium flex items-center gap-1"
-                        title="Открыть B2B витрину"
-                      >
-                        B2B <ArrowUpRight className="w-3 h-3" />
-                      </a>
-                    </div>
+                      {/* Action Buttons: 4-button row with direct WhatsApp */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        {pharm.phone ? (
+                          <a
+                            href={`tel:${pharm.phone}`}
+                            className="py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium flex items-center justify-center gap-1.5 border border-slate-200/60"
+                          >
+                            <Phone className="w-3.5 h-3.5 text-slate-500" />
+                            Звонок
+                          </a>
+                        ) : (
+                          <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
+                            Нет тел.
+                          </div>
+                        )}
 
-                    {/* Contacts & Time */}
-                    <div className="text-xs text-slate-600 flex items-center justify-between pt-1 border-t border-slate-100">
-                      <div>
-                        <span className="text-slate-400">ЛПР: </span>
-                        <span className="font-medium text-slate-800">{pharm.contact_person || 'Заведующая'}</span>
-                      </div>
-                      {pharm.preferred_time && (
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-400" />
-                          <span>{pharm.preferred_time}</span>
-                        </div>
-                      )}
-                    </div>
+                        {/* DIRECT WHATSAPP WITHOUT SAVING NUMBER */}
+                        {waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-emerald-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                            title="Открыть чат в WhatsApp сразу без сохранения номера в контакты"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-[#1da851]" />
+                            В WhatsApp
+                          </a>
+                        ) : (
+                          <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
+                            Нет WhatsApp
+                          </div>
+                        )}
 
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-3 gap-2 pt-1">
-                      {pharm.phone ? (
-                        <a
-                          href={`tel:${pharm.phone}`}
-                          className="py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium flex items-center justify-center gap-1"
-                        >
-                          <Phone className="w-3.5 h-3.5 text-slate-500" />
-                          Звонок
-                        </a>
-                      ) : (
-                        <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
-                          Нет тел.
-                        </div>
-                      )}
+                        {pharm.latitude && pharm.longitude ? (
+                          <a
+                            href={`https://yandex.ru/maps/?rtext=~${pharm.latitude},${pharm.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium flex items-center justify-center gap-1.5 border border-slate-200/60"
+                          >
+                            <Compass className="w-3.5 h-3.5 text-indigo-600" />
+                            Навигатор
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium"
+                          >
+                            + GPS
+                          </button>
+                        )}
 
-                      {pharm.latitude && pharm.longitude ? (
-                        <a
-                          href={`https://yandex.ru/maps/?rtext=~${pharm.latitude},${pharm.longitude}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium flex items-center justify-center gap-1"
-                        >
-                          <Compass className="w-3.5 h-3.5 text-indigo-600" />
-                          2GIS / Яндекс
-                        </a>
-                      ) : (
                         <button
-                          onClick={() => setIsAddModalOpen(true)}
-                          className="py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium"
+                          onClick={() => setActiveVisitPharmacy(pharm)}
+                          className="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
                         >
-                          + GPS
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Начать визит
                         </button>
-                      )}
-
-                      <button
-                        onClick={() => setActiveVisitPharmacy(pharm)}
-                        className="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-1 transition-all"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Визит
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -672,13 +842,20 @@ export default function BrandRepPortalPage() {
                         </p>
                       </div>
 
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        v.is_gps_verified 
-                          ? 'bg-emerald-100 text-emerald-800' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {v.is_gps_verified ? '✓ GPS в аптеке' : 'Удаленный'}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {v.is_offline_queued && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">
+                            ⏳ Оффлайн
+                          </span>
+                        )}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          v.is_gps_verified 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {v.is_gps_verified ? '✓ GPS в аптеке' : 'Удаленный'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
@@ -703,10 +880,186 @@ export default function BrandRepPortalPage() {
             </div>
           </div>
         )}
+
+        {/* 4. PERSONAL EMPLOYEE CABINET (Личный кабинет каждого сотрудника + HR данные + Шпаргалка Android) */}
+        {activeTab === 'profile' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+            {/* Employee Digital Badge */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-5 shadow-xl space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-2xl shadow-lg">
+                    {rep.name?.charAt(0) || 'М'}
+                  </div>
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-1">
+                      <Award className="w-3 h-3" /> Личный кабинет сотрудника
+                    </div>
+                    <h2 className="text-lg font-bold leading-tight">{rep.name}</h2>
+                    <p className="text-xs text-slate-300">
+                      {rep.position || 'Медицинский представитель'} • {rep.brand_name || 'TOJ-VITAMIN'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* HR Metadata Grid */}
+              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/10 text-xs">
+                <div className="bg-white/5 rounded-2xl p-2.5">
+                  <div className="text-slate-400 text-[10px] flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-emerald-400" /> Закрепленный район
+                  </div>
+                  <div className="font-bold text-white mt-0.5">{rep.territory || 'Душанбе'}</div>
+                </div>
+
+                <div className="bg-white/5 rounded-2xl p-2.5">
+                  <div className="text-slate-400 text-[10px] flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-emerald-400" /> Рабочий номер
+                  </div>
+                  <div className="font-bold text-white mt-0.5">{rep.phone}</div>
+                </div>
+
+                <div className="bg-white/5 rounded-2xl p-2.5">
+                  <div className="text-slate-400 text-[10px] flex items-center gap-1">
+                    <Car className="w-3 h-3 text-sky-400" /> Передвижение
+                  </div>
+                  <div className="font-bold text-white mt-0.5">
+                    {rep.transport_type === 'car' ? '🚗 Личный авто' : rep.transport_type === 'public' ? '🚌 Обществ. транспорт' : '👟 Пеший маршрут'}
+                  </div>
+                </div>
+
+                <div className="bg-white/5 rounded-2xl p-2.5">
+                  <div className="text-slate-400 text-[10px] flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-amber-400" /> В компании с
+                  </div>
+                  <div className="font-bold text-white mt-0.5">
+                    {rep.hire_date ? new Date(rep.hire_date).toLocaleDateString('ru-RU') : '2024 г.'}
+                  </div>
+                </div>
+              </div>
+
+              {rep.bio_notes && (
+                <div className="bg-white/5 rounded-2xl p-3 text-xs text-slate-200 border border-white/10">
+                  <span className="text-emerald-400 font-semibold">Фокус и задачи от руководителя: </span>
+                  {rep.bio_notes}
+                </div>
+              )}
+            </div>
+
+            {/* Live KPI & Plan Progress */}
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <Target className="w-4 h-4 text-emerald-600" />
+                  Выполнение плана KPI
+                </h3>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  План продаж: {(rep.target_monthly_sales || 15000).toLocaleString()} с.
+                </span>
+              </div>
+
+              {/* Daily Visits Progress */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium text-slate-700">План визитов на сегодня</span>
+                  <span className="font-bold text-emerald-700">{visitsTodayCount} из {dailyTarget} аптек ({dailyProgressPct}%)</span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                    style={{ width: `${dailyProgressPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Monthly Visits Progress */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium text-slate-700">План визитов за месяц</span>
+                  <span className="font-bold text-indigo-700">{visitsMonthCount} из {monthlyTarget} визитов ({monthlyProgressPct}%)</span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full transition-all duration-500"
+                    style={{ width: `${monthlyProgressPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Quick Personal Stats */}
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                  <div className="text-lg font-bold text-slate-900">{calculateShiftKm()} км</div>
+                  <div className="text-[10px] text-slate-500">Пройдено сегодня</div>
+                </div>
+                <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                  <div className="text-lg font-bold text-emerald-600">
+                    {pharmacies.filter(p => p.rep_id === rep.id).length}
+                  </div>
+                  <div className="text-[10px] text-slate-500">Моих аптек в базе</div>
+                </div>
+                <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                  <div className="text-lg font-bold text-indigo-600">
+                    {visits.filter(v => v.result_type === 'order' || v.result_type === 'agreement').length}
+                  </div>
+                  <div className="text-[10px] text-slate-500">Заказов / Договоров</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Offline Queue & Basement Mode Card */}
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                  }`}>
+                    {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      Оффлайн-режим (Работа в подвальных аптеках)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      В кэше телефона: {pharmacies.length} аптек • В очереди отправки: {pendingOfflineCount}
+                    </p>
+                  </div>
+                </div>
+                {pendingOfflineCount > 0 && (
+                  <button
+                    onClick={handleSyncOfflineQueue}
+                    disabled={isSyncingOffline}
+                    className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm"
+                  >
+                    {isSyncingOffline ? 'Отправка...' : 'Синхронизировать'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Android Pocket Mode Instructions (Xiaomi, Samsung, Tecno) */}
+            <div className="bg-amber-50/70 rounded-3xl p-4 border border-amber-200/80 space-y-2.5">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <BatteryCharging className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Настройка для работы в кармане: {vendorGuide.title}</span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Чтобы система Android не отключала GPS-трекер через 15 минут после блокировки экрана в кармане, выполните 3 шага:
+              </p>
+              <div className="space-y-1.5 pt-1">
+                {vendorGuide.steps.map((step, idx) => (
+                  <div key={idx} className="text-[11px] text-amber-950 bg-white/80 px-3 py-2 rounded-xl border border-amber-200/50 font-medium">
+                    {step}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Bottom Mobile Tab Bar */}
-      <nav className="bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2 flex items-center justify-around shrink-0 z-30 shadow-lg">
+      {/* Bottom Mobile Tab Bar (4 Tabs) */}
+      <nav className="bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2 flex items-center justify-around shrink-0 z-30 shadow-lg">
         <button
           onClick={() => setActiveTab('map')}
           className={`flex flex-col items-center gap-1 text-xs font-semibold transition-all ${
@@ -736,6 +1089,19 @@ export default function BrandRepPortalPage() {
           <Clock className="w-5 h-5" />
           <span>Визиты</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex flex-col items-center gap-1 text-xs font-semibold transition-all relative ${
+            activeTab === 'profile' ? 'text-emerald-600 scale-105' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <User className="w-5 h-5" />
+          <span>Кабинет</span>
+          {pendingOfflineCount > 0 && (
+            <span className="absolute -top-1 right-1 w-2 h-2 rounded-full bg-amber-500"></span>
+          )}
+        </button>
       </nav>
 
       {/* Modals */}
@@ -746,7 +1112,12 @@ export default function BrandRepPortalPage() {
           repId={rep.id}
           existingPharmacies={pharmacies}
           onPharmacyAdded={(newPharm) => {
-            setPharmacies(prev => [newPharm, ...prev]);
+            setPharmacies(prev => {
+              const next = [newPharm, ...prev];
+              saveCachedPharmacies(next);
+              return next;
+            });
+            setPendingOfflineCount(getOfflineQueue().length);
           }}
         />
       )}
@@ -757,10 +1128,16 @@ export default function BrandRepPortalPage() {
           onClose={() => setActiveVisitPharmacy(null)}
           pharmacy={activeVisitPharmacy}
           repId={rep.id}
+          repName={rep.name}
           userLat={userCoords?.lat}
           userLng={userCoords?.lng}
           onVisitCompleted={(visit) => {
-            setVisits(prev => [visit, ...prev]);
+            setVisits(prev => {
+              const next = [visit, ...prev];
+              saveCachedVisits(next);
+              return next;
+            });
+            setPendingOfflineCount(getOfflineQueue().length);
           }}
         />
       )}

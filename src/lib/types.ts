@@ -227,6 +227,13 @@ export interface BrandRep {
   target_monthly_sales: number;
   status: 'active' | 'inactive';
   avatar_url?: string | null;
+  position?: string;
+  daily_visit_target?: number;
+  hire_date?: string;
+  passport_info?: string;
+  transport_type?: 'foot' | 'car' | 'public' | string;
+  bio_notes?: string;
+  experience_years?: string;
   created_at?: string;
 }
 

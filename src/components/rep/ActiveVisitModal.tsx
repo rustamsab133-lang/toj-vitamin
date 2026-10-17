@@ -7,12 +7,14 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Pharmacy } from '@/lib/types';
+import { buildPharmacyWhatsAppUrl, enqueueOfflineAction } from '@/lib/repOfflineQueue';
 
 interface ActiveVisitModalProps {
   isOpen: boolean;
   onClose: () => void;
   pharmacy: Pharmacy;
   repId: string;
+  repName?: string;
   userLat?: number | null;
   userLng?: number | null;
   onVisitCompleted: (visit: any) => void;
@@ -35,6 +37,7 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
   onClose,
   pharmacy,
   repId,
+  repName,
   userLat,
   userLng,
   onVisitCompleted
@@ -72,21 +75,23 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
     setSubmitting(true);
     setError(null);
 
+    const payload = {
+      action: 'record_visit',
+      rep_id: repId,
+      pharmacy_id: pharmacy.id,
+      checkin_lat: userLat,
+      checkin_lng: userLng,
+      result_type: resultType,
+      notes: notes.trim() || null,
+      next_visit_date: nextVisitDate || null,
+      duration_minutes: Math.max(1, Math.round(secondsElapsed / 60))
+    };
+
     try {
       const response = await fetch('/api/rep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'record_visit',
-          rep_id: repId,
-          pharmacy_id: pharmacy.id,
-          checkin_lat: userLat,
-          checkin_lng: userLng,
-          result_type: resultType,
-          notes: notes.trim() || null,
-          next_visit_date: nextVisitDate || null,
-          duration_minutes: Math.max(1, Math.round(secondsElapsed / 60))
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -94,16 +99,41 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
         throw new Error(data.error || 'Ошибка при сохранении визита');
       }
 
-      onVisitCompleted(data.visit);
+      onVisitCompleted({
+        ...data.visit,
+        pharmacies: {
+          name: pharmacy.name,
+          address: pharmacy.address,
+          category: pharmacy.category
+        }
+      });
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Ошибка сети');
+      // Offline fallback: save visit in local queue so rep in basement pharmacy doesn't lose report
+      enqueueOfflineAction('record_visit', payload);
+      const offlineVisit = {
+        id: `offline_visit_${Date.now()}`,
+        ...payload,
+        distance_meters: distanceMeters,
+        is_gps_verified: isGpsVerified,
+        is_offline_queued: true,
+        created_at: new Date().toISOString(),
+        pharmacies: {
+          name: pharmacy.name,
+          address: pharmacy.address,
+          category: pharmacy.category
+        }
+      };
+      onVisitCompleted(offlineVisit);
+      onClose();
     } finally {
       setSubmitting(false);
     }
   };
 
   if (!isOpen) return null;
+
+  const waUrl = buildPharmacyWhatsAppUrl(pharmacy, repName);
 
   return (
     <div className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
@@ -210,15 +240,15 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
               B2B Заказ на месте
             </a>
 
-            {pharmacy.phone ? (
+            {waUrl ? (
               <a
-                href={`https://wa.me/${pharmacy.phone.replace(/[\+\s\-\(\)]/g, '')}?text=${encodeURIComponent('Здравствуйте! Это представитель брендов TOJ-VITAMIN.')}`}
+                href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-2.5 px-3 rounded-xl bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                className="py-2.5 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/40 hover:bg-[#25D366]/20 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
               >
-                <MessageSquare className="w-4 h-4 text-emerald-600" />
-                Чат в WhatsApp
+                <MessageSquare className="w-4 h-4 text-[#1da851]" />
+                Написать в WhatsApp
               </a>
             ) : (
               <div className="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 text-xs text-center flex items-center justify-center">

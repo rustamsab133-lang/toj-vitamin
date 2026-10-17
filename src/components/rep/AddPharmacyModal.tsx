@@ -4,9 +4,11 @@ import dynamic from 'next/dynamic';
 import { 
   X, MapPin, Building2, Phone, User, Clock, 
   Tag, FileText, CheckCircle2, Loader2, Sparkles, 
-  ExternalLink, Copy, Check, ArrowRight, Compass, Plus 
+  ExternalLink, Copy, Check, ArrowRight, Compass, Plus,
+  MessageCircle, WifiOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildPharmacyWhatsAppUrl, enqueueOfflineAction } from '@/lib/repOfflineQueue';
 
 // Dynamic import of Leaflet map to prevent SSR issues
 const PharmacyMapPicker = dynamic(
@@ -26,6 +28,7 @@ interface AddPharmacyModalProps {
   isOpen: boolean;
   onClose: () => void;
   repId?: string;
+  repName?: string;
   existingPharmacies?: Array<{
     id: string;
     name: string;
@@ -52,6 +55,7 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
   isOpen,
   onClose,
   repId,
+  repName,
   existingPharmacies = [],
   onPharmacyAdded
 }) => {
@@ -128,25 +132,27 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
     setLoading(true);
     setError(null);
 
+    const payload = {
+      action: 'create_pharmacy',
+      name: name.trim(),
+      address: address.trim() || 'Указан по GPS на карте',
+      latitude,
+      longitude,
+      district: district.trim() || null,
+      landmark: landmark.trim() || null,
+      contact_person: contactPerson.trim() || null,
+      phone: phone.trim() || null,
+      preferred_time: preferredTime.trim() || null,
+      category,
+      rep_notes: repNotes.trim() || null,
+      rep_id: repId || null
+    };
+
     try {
       const response = await fetch('/api/rep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'create_pharmacy',
-          name: name.trim(),
-          address: address.trim() || 'Указан по GPS на карте',
-          latitude,
-          longitude,
-          district: district.trim() || null,
-          landmark: landmark.trim() || null,
-          contact_person: contactPerson.trim() || null,
-          phone: phone.trim() || null,
-          preferred_time: preferredTime.trim() || null,
-          category,
-          rep_notes: repNotes.trim() || null,
-          rep_id: repId || null
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -157,7 +163,20 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
       setCreatedPharmacy(data.pharmacy);
       onPharmacyAdded(data.pharmacy);
     } catch (err: any) {
-      setError(err.message || 'Сбой сети при отправке данных');
+      // Offline-First Fallback: Save to phone queue if network is down in basement pharmacy
+      enqueueOfflineAction(payload, `Добавление аптеки «${name.trim()}»`);
+      const offlinePharmacy = {
+        id: `offline_pharm_${Date.now()}`,
+        ...payload,
+        discount_percent: 15,
+        credit_limit: 5000,
+        balance: 0,
+        token: `pending-sync`,
+        is_offline_queued: true,
+        created_at: new Date().toISOString()
+      };
+      setCreatedPharmacy(offlinePharmacy);
+      onPharmacyAdded(offlinePharmacy);
     } finally {
       setLoading(false);
     }
@@ -170,6 +189,8 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  const whatsappDirectUrl = createdPharmacy ? buildPharmacyWhatsAppUrl(createdPharmacy, repName) : null;
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
@@ -202,41 +223,66 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
         <div className="overflow-y-auto p-5 space-y-5">
           {createdPharmacy ? (
             /* Success State */
-            <div className="py-6 text-center space-y-4">
+            <div className="py-5 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Аптека успешно добавлена!</h3>
+                <h3 className="text-xl font-bold text-slate-800">
+                  {createdPharmacy.is_offline_queued ? 'Сохранено в оффлайн-память!' : 'Аптека успешно добавлена!'}
+                </h3>
                 <p className="text-sm text-slate-600 mt-1">
-                  «{createdPharmacy.name}» теперь зафиксирована на карте с точными координатами.
+                  «{createdPharmacy.name}» зафиксирована на вашей карте.
                 </p>
+                {createdPharmacy.is_offline_queued && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
+                    <WifiOff className="w-3.5 h-3.5" />
+                    Связь слабая — точка автоматически улетит в базу при появлении 4G
+                  </div>
+                )}
               </div>
 
-              {/* B2B Access Box */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left max-w-md mx-auto space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>Персональный B2B-кабинет аптеки:</span>
-                  <span className="font-semibold text-emerald-600">Скидка: {createdPharmacy.discount_percent}%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    readOnly
-                    value={typeof window !== 'undefined' ? `${window.location.origin}/b2b/${createdPharmacy.token}` : ''}
-                    className="flex-1 bg-white border border-slate-200 text-xs text-slate-700 px-3 py-2 rounded-lg truncate font-mono"
-                  />
-                  <button
-                    onClick={handleCopyB2bLink}
-                    className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-95 text-xs font-medium flex items-center gap-1 transition-all"
+              {/* 1-CLICK WHATSAPP DIRECT BUTTON (WITHOUT SAVING TO PHONE CONTACTS) */}
+              {whatsappDirectUrl && (
+                <div className="max-w-md mx-auto">
+                  <a
+                    href={whatsappDirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 px-5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm shadow-lg shadow-green-500/30 flex items-center justify-center gap-2.5 active:scale-95 transition-all"
                   >
-                    {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copiedLink ? 'Скопировано' : 'Копировать'}
-                  </button>
+                    <MessageCircle className="w-5 h-5 fill-white" />
+                    Написать в WhatsApp (без сохранения номера)
+                  </a>
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    Откроет чат напрямую с {createdPharmacy.phone} и вставит готовую визитку с B2B-ссылкой!
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Эту ссылку можно отправить заведующей в WhatsApp — она сразу сможет делать заказы по вашей спеццене.
-                </p>
-              </div>
+              )}
+
+              {/* B2B Access Box */}
+              {!createdPharmacy.is_offline_queued && (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left max-w-md mx-auto space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>Персональный B2B-кабинет аптеки:</span>
+                    <span className="font-semibold text-emerald-600">Скидка: {createdPharmacy.discount_percent}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={typeof window !== 'undefined' ? `${window.location.origin}/b2b/${createdPharmacy.token}` : ''}
+                      className="flex-1 bg-white border border-slate-200 text-xs text-slate-700 px-3 py-2 rounded-lg truncate font-mono"
+                    />
+                    <button
+                      onClick={handleCopyB2bLink}
+                      className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-95 text-xs font-medium flex items-center gap-1 transition-all"
+                    >
+                      {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copiedLink ? 'Скопировано' : 'Копировать'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-3 flex flex-col sm:flex-row gap-2.5 justify-center">
                 <button
