@@ -160,10 +160,12 @@ async function main() {
   const [
     { data: rawProducts, error: prodErr },
     { data: hiddenData },
+    { data: retailOnlyData },
     { data: settingsData }
   ] = await Promise.all([
     supabase.from('products').select('*').order('name'),
     supabase.from('site_settings').select('value').eq('key', 'hidden_product_ids').maybeSingle(),
+    supabase.from('site_settings').select('value').eq('key', 'retail_only_product_ids').maybeSingle(),
     supabase.from('site_settings').select('key, value')
   ]);
 
@@ -180,13 +182,22 @@ async function main() {
     } catch (e) {}
   }
 
+  let retailOnlyIds = new Set();
+  if (retailOnlyData?.value) {
+    try {
+      const parsed = JSON.parse(retailOnlyData.value);
+      if (Array.isArray(parsed)) retailOnlyIds = new Set(parsed.map(String));
+    } catch (e) {}
+  }
+
   const percentSetting = settingsData?.find(s => s.key === 'price_markup_percent');
   const flatSetting = settingsData?.find(s => s.key === 'price_markup_flat');
   const markupPercent = parseFloat(percentSetting?.value || '0') || 0;
   const markupFlat = parseFloat(flatSetting?.value || '0') || 0;
 
-  const activeProducts = rawProducts.filter(p => !hiddenIds.has(String(p.id)));
-  console.log(`📦 Всего активных товаров: ${activeProducts.length}`);
+  // Оставляем только товары: Оптом И В наличии (не скрытые и не "только розница")
+  const activeProducts = rawProducts.filter(p => !hiddenIds.has(String(p.id)) && !retailOnlyIds.has(String(p.id)));
+  console.log(`📦 Всего товаров для каталога (Опт и в наличии): ${activeProducts.length}`);
 
   let enriched = {};
   const enrichedPath = path.join(__dirname, '../src/data/enriched_gls_products.json');

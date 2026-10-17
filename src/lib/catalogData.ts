@@ -218,12 +218,10 @@ export async function getCatalogData(priceType: 'retail' | 'wholesale' | 'none' 
     };
   }
 
-  // Filter visible
+  // Filter visible (в наличии)
   let visible = filterVisibleProducts(rawProducts, hiddenIds);
-  // Если запрашивается оптовый каталог — исключаем товары "Только для розницы"
-  if (priceType === 'wholesale') {
-    visible = visible.filter(p => !retailOnlyIds.includes(String(p.id)));
-  }
+  // В каталоге генерируются только товары, которые доступны оптом и есть в наличии (исключаем товары "Только для розницы")
+  visible = visible.filter(p => !retailOnlyIds.includes(String(p.id)));
   const enriched = loadEnrichedData();
 
   // Sort alphabetically
