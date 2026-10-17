@@ -54,8 +54,20 @@ export const PharmacyMapPicker: React.FC<PharmacyMapPickerProps> = ({
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Perform reverse geocoding via OpenStreetMap Nominatim
-  const fetchReverseGeocode = useCallback(async (lat: number, lng: number) => {
+  // Perform reverse geocoding via OpenStreetMap Nominatim (with immediate offline coordinate callback)
+  const fetchReverseGeocode = useCallback(async (lat: number, lng: number, accuracyOverride?: number) => {
+    // 1. Immediately pass coordinates to parent form so offline mode never loses GPS!
+    onLocationSelect({
+      lat,
+      lng,
+      accuracyMeters: accuracyOverride ?? (gpsAccuracy || undefined)
+    });
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setReverseAddress('Координаты GPS сохранены (Оффлайн-режим)');
+      return;
+    }
+
     setIsReverseGeocoding(true);
     try {
       const response = await fetch(
@@ -83,11 +95,11 @@ export const PharmacyMapPicker: React.FC<PharmacyMapPickerProps> = ({
           lng,
           suggestedAddress: finalAddress,
           district,
-          accuracyMeters: gpsAccuracy || undefined
+          accuracyMeters: accuracyOverride ?? (gpsAccuracy || undefined)
         });
       }
     } catch (err) {
-      console.warn('Reverse geocoding error:', err);
+      setReverseAddress('Точка GPS зафиксирована на карте');
     } finally {
       setIsReverseGeocoding(false);
     }

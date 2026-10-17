@@ -1110,6 +1110,9 @@ export default function BrandRepPortalPage() {
           isOpen={true}
           onClose={() => setIsAddModalOpen(false)}
           repId={rep.id}
+          repName={rep.name}
+          initialLat={userCoords?.lat}
+          initialLng={userCoords?.lng}
           existingPharmacies={pharmacies}
           onPharmacyAdded={(newPharm) => {
             setPharmacies(prev => {

@@ -752,9 +752,11 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                   </div>
 
                   {/* Card Footer Actions */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <div className="text-xs text-slate-500">
-                      Аптек подключено: <strong className="text-slate-800">{repPharmaciesCount}</strong>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="text-xs text-slate-500 flex items-center gap-2">
+                      <span>Аптек: <strong className="text-slate-800">{repPharmaciesCount}</strong></span>
+                      <span>•</span>
+                      <span>Маршрут: <strong className="text-sky-700">{tracks.find(t => t.rep_id === r.id)?.total_km || 0} км</strong></span>
                     </div>
 
                     <div className="flex items-center gap-2">

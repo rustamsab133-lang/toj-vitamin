@@ -29,6 +29,8 @@ interface AddPharmacyModalProps {
   onClose: () => void;
   repId?: string;
   repName?: string;
+  initialLat?: number | null;
+  initialLng?: number | null;
   existingPharmacies?: Array<{
     id: string;
     name: string;
@@ -56,14 +58,16 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
   onClose,
   repId,
   repName,
+  initialLat,
+  initialLng,
   existingPharmacies = [],
   onPharmacyAdded
 }) => {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [landmark, setLandmark] = useState('');
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(initialLat ?? null);
+  const [longitude, setLongitude] = useState<number | null>(initialLng ?? null);
   const [district, setDistrict] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
@@ -80,8 +84,8 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
     setName('');
     setAddress('');
     setLandmark('');
-    setLatitude(null);
-    setLongitude(null);
+    setLatitude(initialLat ?? null);
+    setLongitude(initialLng ?? null);
     setDistrict('');
     setContactPerson('');
     setPhone('');
@@ -164,9 +168,10 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
       onPharmacyAdded(data.pharmacy);
     } catch (err: any) {
       // Offline-First Fallback: Save to phone queue if network is down in basement pharmacy
-      enqueueOfflineAction(payload, `Добавление аптеки «${name.trim()}»`);
+      const tempId = `offline_pharm_${Date.now()}`;
+      enqueueOfflineAction({ ...payload, temp_id: tempId }, `Добавление аптеки «${name.trim()}»`);
       const offlinePharmacy = {
-        id: `offline_pharm_${Date.now()}`,
+        id: tempId,
         ...payload,
         discount_percent: 15,
         credit_limit: 5000,

@@ -283,42 +283,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     }
   }, [trailPoints]);
 
-  // Handle Recording GPS Points (Breadcrumbs)
-  useEffect(() => {
-    // Only record GPS trail points if on active work shift and coordinates exist
-    if (!isRecordingTrail || !activeShift || !userLat || !userLng) return;
-
-    setTrailPoints(prev => {
-      const lastPoint = prev[prev.length - 1];
-      if (lastPoint) {
-        const d = calculateDistanceMeters(lastPoint[0], lastPoint[1], userLat, userLng);
-        // Only append if moved more than 15 meters to prevent jitter
-        if (d < 15) return prev;
-      }
-
-      const nextPoints: Array<[number, number]> = [...prev, [userLat, userLng]];
-      try {
-        localStorage.setItem('toj_rep_trail_points', JSON.stringify(nextPoints));
-      } catch (e) {}
-
-      // Batch sync to server every 5 points strictly under active shift
-      if (nextPoints.length % 5 === 0 && repId) {
-        fetch('/api/rep', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'save_track_points',
-            rep_id: repId,
-            shift_id: activeShift.id,
-            points: [{ lat: userLat, lng: userLng }]
-          })
-        }).catch(() => {});
-      }
-
-      return nextPoints;
-    });
-  }, [isRecordingTrail, activeShift, userLat, userLng, repId]);
-
   // Screen Wake Lock API when Recording is active
   const toggleRecordingTrail = async () => {
     if (!activeShift) {

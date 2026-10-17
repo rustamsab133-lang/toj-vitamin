@@ -176,16 +176,32 @@ export async function flushOfflineQueue(): Promise<{ synced: number; remaining: 
 
   isFlushing = true;
   let syncedCount = 0;
+  const resolvedPharmacyIds: Record<string, string> = {};
 
   try {
     for (const item of queue) {
       try {
+        const bodyPayload = { ...item.payload };
+
+        // If this is a visit to a pharmacy that was created offline in the same queue, substitute its real UUID
+        if (
+          bodyPayload.pharmacy_id &&
+          typeof bodyPayload.pharmacy_id === 'string' &&
+          resolvedPharmacyIds[bodyPayload.pharmacy_id]
+        ) {
+          bodyPayload.pharmacy_id = resolvedPharmacyIds[bodyPayload.pharmacy_id];
+        }
+
         const res = await fetch('/api/rep', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item.payload)
+          body: JSON.stringify(bodyPayload)
         });
         if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (bodyPayload.action === 'create_pharmacy' && bodyPayload.temp_id && data?.pharmacy?.id) {
+            resolvedPharmacyIds[bodyPayload.temp_id] = data.pharmacy.id;
+          }
           removeOfflineQueueItem(item.id);
           syncedCount++;
         }

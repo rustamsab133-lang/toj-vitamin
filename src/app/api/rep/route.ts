@@ -126,16 +126,16 @@ export async function GET(request: Request) {
         { data: reps },
         hrMap,
         { data: pharmacies },
-        { data: visits },
-        { data: tracks },
-        { data: activeShifts }
+        { data: rawVisits },
+        { data: rawTracks },
+        { data: rawActiveShifts }
       ] = await Promise.all([
         supabaseAdmin.from('brand_reps').select('*').order('name'),
         getHrProfilesMap(),
         supabaseAdmin.from('pharmacies').select('*').order('created_at', { ascending: false }),
         supabaseAdmin
           .from('rep_visits')
-          .select('*, pharmacies(name, address, latitude, longitude, phone, contact_person, token)')
+          .select('*, pharmacies(name, address, latitude, longitude, phone, contact_person, token, category)')
           .order('created_at', { ascending: false })
           .limit(400),
         supabaseAdmin
@@ -151,14 +151,61 @@ export async function GET(request: Request) {
       ]);
 
       const mergedReps = (reps || []).map(r => mergeRepWithHr(r, hrMap));
+      const repNameById: Record<string, string> = {};
+      mergedReps.forEach(r => {
+        repNameById[r.id] = r.name;
+      });
+
+      // Enrich visits with brand_reps: { name } so supervisor UI always shows the rep's name
+      const visits = (rawVisits || []).map((v: any) => ({
+        ...v,
+        brand_reps: v.brand_reps || { name: repNameById[v.rep_id] || 'Медпредставитель' }
+      }));
+
+      // Group raw track points by rep_id into polyline objects with total_km
+      const tracksByRep: Record<string, { rep_id: string; points: Array<{ lat: number; lng: number; recorded_at?: string }>; distMeters: number }> = {};
+      (rawTracks || []).forEach((pt: any) => {
+        if (!pt.rep_id || pt.latitude == null || pt.longitude == null) return;
+        const lat = Number(pt.latitude);
+        const lng = Number(pt.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        if (!tracksByRep[pt.rep_id]) {
+          tracksByRep[pt.rep_id] = { rep_id: pt.rep_id, points: [], distMeters: 0 };
+        }
+        const group = tracksByRep[pt.rep_id];
+        if (group.points.length > 0) {
+          const prev = group.points[group.points.length - 1];
+          const d = calculateDistanceMeters(prev.lat, prev.lng, lat, lng);
+          // Ignore unrealistic single jumps > 5km
+          if (d <= 5000) {
+            group.distMeters += d;
+          }
+        }
+        group.points.push({ lat, lng, recorded_at: pt.recorded_at });
+      });
+
+      const groupedTracks = Object.values(tracksByRep).map(g => ({
+        rep_id: g.rep_id,
+        points: g.points,
+        total_km: Number((g.distMeters / 1000).toFixed(2))
+      }));
+
+      // Map active shifts by rep_id
+      const activeShiftsMap: Record<string, any> = {};
+      (rawActiveShifts || []).forEach((sh: any) => {
+        if (sh.rep_id && !activeShiftsMap[sh.rep_id]) {
+          activeShiftsMap[sh.rep_id] = sh;
+        }
+      });
 
       return NextResponse.json({
         success: true,
         reps: mergedReps,
         pharmacies: pharmacies || [],
-        visits: visits || [],
-        tracks: tracks || [],
-        activeShifts: activeShifts || []
+        visits,
+        tracks: groupedTracks,
+        activeShifts: activeShiftsMap
       });
     }
 
@@ -268,19 +315,24 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Введите номер телефона и PIN-код' }, { status: 400 });
       }
 
-      const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-      const { data: rep, error } = await supabaseAdmin
+      const inputDigits = String(phone).replace(/\D/g, '');
+      const inputTail9 = inputDigits.slice(-9);
+
+      const { data: activeReps, error } = await supabaseAdmin
         .from('brand_reps')
         .select('*')
-        .or(`phone.eq.${cleanPhone},phone.eq.${phone}`)
-        .eq('status', 'active')
-        .single();
+        .eq('status', 'active');
+
+      const rep = (activeReps || []).find((r: any) => {
+        const rDigits = String(r.phone || '').replace(/\D/g, '');
+        return rDigits === inputDigits || (inputTail9.length === 9 && rDigits.slice(-9) === inputTail9);
+      });
 
       if (error || !rep) {
         return NextResponse.json({ error: 'Представитель с таким номером не найден' }, { status: 404 });
       }
 
-      if (rep.pin_code !== pin_code) {
+      if (String(rep.pin_code).trim() !== String(pin_code).trim()) {
         return NextResponse.json({ error: 'Неверный PIN-код доступа' }, { status: 401 });
       }
 
