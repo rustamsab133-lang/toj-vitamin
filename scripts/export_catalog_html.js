@@ -51,9 +51,32 @@ function cleanSearchQuery(name) {
     .trim();
 }
 
-function findEnrichedProduct(name, enrichedData) {
+function findEnrichedProduct(name, enrichedData, productId) {
+  if (productId && enrichedData.by_product_id && enrichedData.by_product_id[String(productId)]) {
+    return enrichedData.by_product_id[String(productId)];
+  }
+
   const lower = (name || '').toLowerCase().trim();
   if (enrichedData[lower]) return enrichedData[lower];
+
+  // Specific overrides and disambiguation
+  if (lower.includes('хлорофилл') && (lower.includes('капс') || lower.includes('капсул'))) {
+    if (enrichedData['хлорофилл капсулы']) return enrichedData['хлорофилл капсулы'];
+    if (enrichedData['хлорофилл']) return enrichedData['хлорофилл'];
+    if (enrichedData.by_product_id?.['98']) return enrichedData.by_product_id['98'];
+  }
+  if (lower.includes('коллаген') && (lower.includes('порошок') || lower.includes('пор.'))) {
+    if (enrichedData['коллаген порошок']) return enrichedData['коллаген порошок'];
+    if (enrichedData.by_product_id?.['53']) return enrichedData.by_product_id['53'];
+  }
+  if (lower.includes('b12') || lower.includes('в12')) {
+    if (enrichedData['витамин b12']) return enrichedData['витамин b12'];
+    if (enrichedData.by_product_id?.['12']) return enrichedData.by_product_id['12'];
+  }
+  if (lower.includes('таурин')) {
+    if (enrichedData['таурин']) return enrichedData['таурин'];
+    if (enrichedData.by_product_id?.['92']) return enrichedData.by_product_id['92'];
+  }
 
   const cleaned = cleanSearchQuery(name).toLowerCase();
   if (enrichedData[cleaned]) return enrichedData[cleaned];
@@ -68,6 +91,7 @@ function findEnrichedProduct(name, enrichedData) {
   }
 
   for (const [k, v] of Object.entries(enrichedData)) {
+    if (k === 'by_product_id') continue;
     if (lower.includes(k) || k.includes(cleaned) || (cleaned.length > 4 && cleaned.includes(k))) {
       return v;
     }
@@ -81,27 +105,37 @@ function findEnrichedProduct(name, enrichedData) {
   return null;
 }
 
-function parseInstructionDetails(rawUsage, fullText) {
+function parseInstructionDetails(rawUsage, fullText, prodName) {
   let usage = rawUsage || 'Взрослым по 1-2 капсулы в день во время еды';
-  let timing = 'Во время еды';
+  let timing = 'Во время приема пищи';
   let course = 'Курс 1 месяц (1 упаковка)';
 
-  const lower = (rawUsage + ' ' + (fullText || '')).toLowerCase();
+  const lower = (rawUsage + ' ' + (fullText || '') + ' ' + (prodName || '')).toLowerCase();
 
-  if (lower.includes('в первой половине дня') || lower.includes('утром')) {
+  // Timing
+  if (lower.includes('во второй половине дня')) {
+    timing = 'Во второй половине дня во время еды';
+  } else if (lower.includes('после еды')) {
+    timing = 'После приема пищи';
+  } else if (lower.includes('3 раза в день')) {
+    timing = '3 раза в день во время еды';
+  } else if (lower.includes('2 раза в день')) {
+    timing = 'Утром и вечером во время еды';
+  } else if (lower.includes('в первой половине дня') || lower.includes('утром')) {
     timing = 'Утром / в первой половине дня';
   } else if (lower.includes('вечером') || lower.includes('перед сном')) {
     timing = 'Вечером за 30-40 мин до сна';
   } else if (lower.includes('до еды')) {
     timing = 'За 30 мин до еды';
   } else {
-    timing = 'Во время приема пищи';
+    timing = '1 раз в день во время еды';
   }
 
-  if (lower.includes('2-3 недели') || lower.includes('2–3 недели')) {
+  // Course
+  if (lower.includes('1-2 месяца') || lower.includes('1–2 месяца') || (lower.includes('№60') && lower.includes('по 1 капсуле в день'))) {
+    course = '1–2 месяца (1 упаковка)';
+  } else if (lower.includes('2-3 недели') || lower.includes('2–3 недели')) {
     course = '2–3 недели';
-  } else if (lower.includes('1-2 месяца') || lower.includes('1–2 месяца')) {
-    course = '1–2 месяца (1-2 упаковки)';
   } else if (lower.includes('3 месяца')) {
     course = 'Курс 3 месяца';
   } else {
@@ -174,11 +208,11 @@ async function main() {
     const basePrice = Number(p.price) || 0;
     const retailPrice = Math.round(basePrice * (1 + markupPercent / 100) + markupFlat);
 
-    const enrichObj = findEnrichedProduct(p.name, enriched);
+    const enrichObj = findEnrichedProduct(p.name, enriched, p.id);
     const rawUsage = enrichObj?.instructions?.usage || 'Взрослым по 1-2 капсулы в день во время еды';
     const rawCourse = enrichObj?.instructions?.course || '1 месяц';
     const fullText = enrichObj?.instructions?.full_text || '';
-    const { usage, timing, course } = parseInstructionDetails(rawUsage, fullText);
+    const { usage, timing, course } = parseInstructionDetails(rawUsage, fullText, p.name);
 
     const properties = (enrichObj?.properties && enrichObj.properties.length > 0)
       ? enrichObj.properties.slice(0, 2)
