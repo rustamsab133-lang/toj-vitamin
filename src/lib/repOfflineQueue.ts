@@ -33,11 +33,14 @@ export function formatWhatsAppPhone(rawPhone?: string | null): string | null {
 }
 
 /**
- * Builds a direct 1-click WhatsApp chat URL with pre-filled B2B message
+ * Builds a direct 1-click WhatsApp chat URL.
+ * If includeB2bLink is true, includes the wholesale B2B link & discount.
+ * If includeB2bLink is false, only greets and introduces the representative without the wholesale link.
  */
 export function buildPharmacyWhatsAppUrl(
   pharmacy: Partial<Pharmacy>,
-  repName?: string
+  repName?: string,
+  includeB2bLink: boolean = true
 ): string | null {
   const cleanPhone = formatWhatsAppPhone(pharmacy.phone);
   if (!cleanPhone) return null;
@@ -45,15 +48,23 @@ export function buildPharmacyWhatsAppUrl(
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.toj-vitamin.tj';
   const b2bLink = pharmacy.token ? `${origin}/b2b/${pharmacy.token}` : `${origin}/b2b`;
   const greetingName = pharmacy.contact_person ? `, ${pharmacy.contact_person}` : '';
-  const senderInfo = repName ? `Это ${repName}, медицинский представитель` : 'Это представительство';
+  const senderInfo = repName ? `Это ${repName}, медицинский представитель` : 'Это представитель';
 
-  const message =
-    `Ассалому алейкум${greetingName}! 👋\n` +
-    `${senderInfo} компании *TOJ-VITAMIN (GLS Pharmaceuticals)*.\n\n` +
-    `Для вашей аптеки *«${pharmacy.name || 'Аптека'}»* активирован персональный оптовый B2B-кабинет` +
-    (pharmacy.discount_percent ? ` со специальной скидкой *${pharmacy.discount_percent}%*` : '') +
-    `:\n👉 ${b2bLink}\n\n` +
-    `По этой ссылке вы можете в любой момент смотреть актуальное наличие, оптовые цены и оформлять заказ в 1 клик без звонков. Если будут вопросы — пишите мне прямо сюда!`;
+  let message = '';
+  if (includeB2bLink) {
+    message =
+      `Ассалому алейкум${greetingName}! 👋\n` +
+      `${senderInfo} компании *TOJ-VITAMIN (GLS Pharmaceuticals)*.\n\n` +
+      `Для вашей аптеки *«${pharmacy.name || 'Аптека'}»* активирован персональный оптовый B2B-кабинет` +
+      (pharmacy.discount_percent ? ` со специальной скидкой *${pharmacy.discount_percent}%*` : '') +
+      `:\n👉 ${b2bLink}\n\n` +
+      `По этой ссылке вы можете в любой момент смотреть актуальное наличие, оптовые цены и оформлять заказ в 1 клик без звонков. Если будут вопросы — пишите мне прямо сюда!`;
+  } else {
+    message =
+      `Ассалому алейкум${greetingName}! 👋\n` +
+      `${senderInfo} компании *TOJ-VITAMIN (GLS Pharmaceuticals)*.\n\n` +
+      `Рад знакомству с аптекой *«${pharmacy.name || 'Аптека'}»*! Сохраняю ваш контакт для оперативной связи, консультаций по витаминам GLS и уточнения поставок. Если понадобится прайс или консультация — пишите мне прямо сюда!`;
+  }
 
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }

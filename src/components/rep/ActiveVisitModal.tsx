@@ -135,7 +135,7 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
 
   if (!isOpen) return null;
 
-  const waUrl = buildPharmacyWhatsAppUrl(pharmacy, repName);
+  const waUrl = buildPharmacyWhatsAppUrl(pharmacy, repName, canSendB2bLinks);
 
   return (
     <div className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
@@ -230,9 +230,9 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
             )}
           </div>
 
-          {/* Quick Actions During Visit (Gated by Supervisor Permission) */}
-          {canSendB2bLinks ? (
-            <div className="grid grid-cols-2 gap-2">
+          {/* Quick Actions During Visit */}
+          <div className="grid grid-cols-2 gap-2">
+            {canSendB2bLinks ? (
               <a
                 href={`/b2b/${pharmacy.token}`}
                 target="_blank"
@@ -242,28 +242,32 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
                 <ShoppingCart className="w-4 h-4" />
                 B2B Заказ на месте
               </a>
+            ) : (
+              <div
+                className="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 font-medium text-xs flex items-center justify-center gap-1.5 cursor-not-allowed"
+                title="Оптовая ссылка закрыта до одобрения руководителем"
+              >
+                🔒 B2B закрыт
+              </div>
+            )}
 
-              {waUrl ? (
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2.5 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/40 hover:bg-[#25D366]/20 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <MessageSquare className="w-4 h-4 text-[#1da851]" />
-                  Написать в WhatsApp
-                </a>
-              ) : (
-                <div className="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 text-xs text-center flex items-center justify-center">
-                  Нет WhatsApp
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-500 flex items-center justify-between gap-2">
-              <span>🔒 Персональная B2B-ссылка (/b2b/...) и отправка в WhatsApp доступны после разрешения руководителя</span>
-            </div>
-          )}
+            {waUrl ? (
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2.5 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/40 hover:bg-[#25D366]/20 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                title={canSendB2bLinks ? "Написать в WhatsApp с B2B-ссылкой" : "Написать в WhatsApp (без оптовой ссылки)"}
+              >
+                <MessageSquare className="w-4 h-4 text-[#1da851]" />
+                Написать в WhatsApp
+              </a>
+            ) : (
+              <div className="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 text-xs text-center flex items-center justify-center">
+                Нет WhatsApp
+              </div>
+            )}
+          </div>
 
           {/* Completion Form */}
           <div className="pt-2 space-y-3">

@@ -900,27 +900,19 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет тел.</div>
             )}
 
-            {canSendB2bLinks ? (
-              buildPharmacyWhatsAppUrl(selectedPharmacy, repName) ? (
-                <a
-                  href={buildPharmacyWhatsAppUrl(selectedPharmacy, repName)!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe57] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  Написать в WhatsApp
-                </a>
-              ) : (
-                <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет WhatsApp</div>
-              )
-            ) : (
-              <div
-                className="py-2.5 px-2 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-medium flex items-center justify-center gap-1 text-center"
-                title="Доступно после разрешения руководителя"
+            {buildPharmacyWhatsAppUrl(selectedPharmacy, repName, canSendB2bLinks) ? (
+              <a
+                href={buildPharmacyWhatsAppUrl(selectedPharmacy, repName, canSendB2bLinks)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe57] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                title={canSendB2bLinks ? "Написать в WhatsApp с B2B-ссылкой" : "Написать в WhatsApp (без оптовой ссылки)"}
               >
-                🔒 B2B в WhatsApp
-              </div>
+                <MessageSquare className="w-3.5 h-3.5" />
+                Написать в WhatsApp
+              </a>
+            ) : (
+              <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет WhatsApp</div>
             )}
 
             {/* Direct Navigator in 2GIS / Yandex */}

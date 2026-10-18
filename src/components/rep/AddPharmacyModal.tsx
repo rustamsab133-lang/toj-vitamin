@@ -197,7 +197,7 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const whatsappDirectUrl = createdPharmacy ? buildPharmacyWhatsAppUrl(createdPharmacy, repName) : null;
+  const whatsappDirectUrl = createdPharmacy ? buildPharmacyWhatsAppUrl(createdPharmacy, repName, canSendB2bLinks) : null;
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
@@ -249,58 +249,58 @@ export const AddPharmacyModal: React.FC<AddPharmacyModalProps> = ({
                 )}
               </div>
 
-              {canSendB2bLinks ? (
-                <>
-                  {/* 1-CLICK WHATSAPP DIRECT BUTTON (WITHOUT SAVING TO PHONE CONTACTS) */}
-                  {whatsappDirectUrl && (
-                    <div className="max-w-md mx-auto">
-                      <a
-                        href={whatsappDirectUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-3.5 px-5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm shadow-lg shadow-green-500/30 flex items-center justify-center gap-2.5 active:scale-95 transition-all"
-                      >
-                        <MessageCircle className="w-5 h-5 fill-white" />
-                        Написать в WhatsApp (без сохранения номера)
-                      </a>
-                      <p className="text-[11px] text-slate-500 mt-1.5">
-                        Откроет чат напрямую с {createdPharmacy.phone} и вставит готовую визитку с B2B-ссылкой!
-                      </p>
-                    </div>
-                  )}
+              {/* 1-CLICK WHATSAPP DIRECT BUTTON (WITHOUT SAVING TO PHONE CONTACTS) */}
+              {whatsappDirectUrl && (
+                <div className="max-w-md mx-auto">
+                  <a
+                    href={whatsappDirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 px-5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm shadow-lg shadow-green-500/30 flex items-center justify-center gap-2.5 active:scale-95 transition-all"
+                  >
+                    <MessageCircle className="w-5 h-5 fill-white" />
+                    Написать заведующей в WhatsApp
+                  </a>
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    {canSendB2bLinks
+                      ? `Откроет чат напрямую с ${createdPharmacy.phone} и вставит визитку с вашей B2B-ссылкой!`
+                      : `Откроет чат напрямую с ${createdPharmacy.phone} без сохранения в контакты (оптовая ссылка скрыта до одобрения)`}
+                  </p>
+                </div>
+              )}
 
-                  {/* B2B Access Box */}
-                  {!createdPharmacy.is_offline_queued && (
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left max-w-md mx-auto space-y-3">
-                      <div className="flex items-center justify-between text-xs text-slate-500">
-                        <span>Персональный B2B-кабинет аптеки:</span>
-                        <span className="font-semibold text-emerald-600">Скидка: {createdPharmacy.discount_percent}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          readOnly
-                          value={typeof window !== 'undefined' ? `${window.location.origin}/b2b/${createdPharmacy.token}` : ''}
-                          className="flex-1 bg-white border border-slate-200 text-xs text-slate-700 px-3 py-2 rounded-lg truncate font-mono"
-                        />
-                        <button
-                          onClick={handleCopyB2bLink}
-                          className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-95 text-xs font-medium flex items-center gap-1 transition-all"
-                        >
-                          {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                          {copiedLink ? 'Скопировано' : 'Копировать'}
-                        </button>
-                      </div>
+              {/* B2B Wholesale Link Box (Only when supervisor gave permission) */}
+              {canSendB2bLinks ? (
+                !createdPharmacy.is_offline_queued && (
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left max-w-md mx-auto space-y-3">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>Персональный B2B-кабинет аптеки:</span>
+                      <span className="font-semibold text-emerald-600">Скидка: {createdPharmacy.discount_percent}%</span>
                     </div>
-                  )}
-                </>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={typeof window !== 'undefined' ? `${window.location.origin}/b2b/${createdPharmacy.token}` : ''}
+                        className="flex-1 bg-white border border-slate-200 text-xs text-slate-700 px-3 py-2 rounded-lg truncate font-mono"
+                      />
+                      <button
+                        onClick={handleCopyB2bLink}
+                        className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-95 text-xs font-medium flex items-center gap-1 transition-all"
+                      >
+                        {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {copiedLink ? 'Скопировано' : 'Копировать'}
+                      </button>
+                    </div>
+                  </div>
+                )
               ) : (
-                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-left max-w-md mx-auto space-y-1.5">
+                <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-left max-w-md mx-auto space-y-1">
                   <div className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
                     <span>🔒</span>
-                    <span>Отправка оптовой ссылки (/b2b/...) закрыта</span>
+                    <span>Персональная оптовая ссылка (/b2b/...)</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-relaxed">
-                    Аптека сохранена на карте и в базе руководителя. Персональная оптовая ссылка и кнопка отправки визитки заведующей в WhatsApp станут доступны после разрешения руководителя.
+                    Доступ к персональной оптовой ссылке для аптеки откроется после подтверждения руководителем. В WhatsApp отправлено приветствие представителя.
                   </p>
                 </div>
               )}

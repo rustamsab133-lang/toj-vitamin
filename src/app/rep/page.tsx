@@ -1086,7 +1086,7 @@ export default function BrandRepPortalPage() {
                 </div>
               ) : (
                 sortedPharmacies.map((pharm) => {
-                  const waUrl = buildPharmacyWhatsAppUrl(pharm, rep.name);
+                  const waUrl = buildPharmacyWhatsAppUrl(pharm, rep.name, Boolean(rep.can_send_b2b_links));
                   const coveredBy = pharm.last_visited_by_name || pharm.added_by_rep_name || null;
                   const isColleaguePharm = coveredBy && pharm.rep_id !== rep.id && pharm.last_visited_by_id !== rep.id;
                   return (
@@ -1192,30 +1192,21 @@ export default function BrandRepPortalPage() {
                           </div>
                         )}
 
-                        {/* DIRECT WHATSAPP WITH B2B LINK (GATED BY SUPERVISOR PERMISSION) */}
-                        {rep.can_send_b2b_links ? (
-                          waUrl ? (
-                            <a
-                              href={waUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-emerald-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                              title="Открыть чат в WhatsApp сразу без сохранения номера в контакты"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5 text-[#1da851]" />
-                              В WhatsApp
-                            </a>
-                          ) : (
-                            <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
-                              Нет WhatsApp
-                            </div>
-                          )
-                        ) : (
-                          <div
-                            className="py-2 px-1.5 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-medium flex items-center justify-center gap-1 text-center"
-                            title="Отправка B2B-ссылки в WhatsApp доступна после разрешения руководителя"
+                        {/* DIRECT WHATSAPP BUTTON (ALWAYS AVAILABLE; INCLUDES B2B LINK ONLY IF SUPERVISOR PERMITTED) */}
+                        {waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-emerald-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                            title={rep.can_send_b2b_links ? "Открыть чат в WhatsApp с готовой B2B-ссылкой" : "Написать в WhatsApp без сохранения контакта (оптовая ссылка скрыта)"}
                           >
-                            🔒 WhatsApp
+                            <MessageSquare className="w-3.5 h-3.5 text-[#1da851]" />
+                            В WhatsApp
+                          </a>
+                        ) : (
+                          <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
+                            Нет WhatsApp
                           </div>
                         )}
 
@@ -1503,9 +1494,17 @@ export default function BrandRepPortalPage() {
                 </div>
               </div>
               <a
-                href="/toj-vitamin-rep.apk"
-                download="Toj-Vitamin-Rep.apk"
-                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 shadow-sm transition-all"
+                href="/api/rep/download-apk"
+                download="toj-vitamin-rep.apk"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  // Fallback for native Capacitor WebViews / Chrome mobile
+                  setTimeout(() => {
+                    window.location.href = '/api/rep/download-apk';
+                  }, 150);
+                }}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 shadow-sm transition-all cursor-pointer"
               >
                 Скачать APK
               </a>

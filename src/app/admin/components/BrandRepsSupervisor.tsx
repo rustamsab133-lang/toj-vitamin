@@ -721,9 +721,16 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             Терминал медпреда
           </a>
           <a
-            href="/toj-vitamin-rep.apk"
-            download="Toj-Vitamin-Rep.apk"
-            className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            href="/api/rep/download-apk"
+            download="toj-vitamin-rep.apk"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              setTimeout(() => {
+                window.location.href = '/api/rep/download-apk';
+              }, 150);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Скачать установочный файл Android приложения с новым логотипом и фоновым GPS"
           >
             📲 Скачать APK (Android)
