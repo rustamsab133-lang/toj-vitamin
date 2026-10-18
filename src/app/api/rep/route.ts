@@ -613,6 +613,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message || 'Не удалось сохранить аптеку' }, { status: 500 });
       }
 
+      // Также фиксируем координаты добавленной аптеки в rep_tracks, чтобы точка гарантированно легла на маршрут сотрудника
+      if (rep_id && latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
+        try {
+          const nowIso = new Date().toISOString();
+          await supabaseAdmin.from('rep_tracks').insert({
+            rep_id,
+            lat: Number(latitude),
+            lng: Number(longitude),
+            accuracy: 10,
+            recorded_at: nowIso,
+            track_date: nowIso.slice(0, 10)
+          });
+        } catch (trackErr) {
+          // ignore if rep_tracks insert fails
+        }
+      }
+
       return NextResponse.json({
         success: true,
         pharmacy: newPharmacy,

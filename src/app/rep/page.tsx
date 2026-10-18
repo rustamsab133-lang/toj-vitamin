@@ -84,6 +84,10 @@ export default function BrandRepPortalPage() {
   const [activeShift, setActiveShift] = useState<any | null>(null);
   const [isEndShiftModalOpen, setIsEndShiftModalOpen] = useState(false);
   const [isShiftActionLoading, setIsShiftActionLoading] = useState(false);
+  const [shiftRequiredPrompt, setShiftRequiredPrompt] = useState<{
+    type: 'add_pharmacy' | 'start_visit';
+    pharmacy?: Pharmacy;
+  } | null>(null);
 
   // Vendor battery guide
   const vendorGuide = useMemo(() => detectPhoneVendorGuide(), []);
@@ -407,6 +411,34 @@ export default function BrandRepPortalPage() {
     }
   };
 
+  // Strict Shift Guard: Require active shift before adding pharmacy or starting visit
+  const handleRequestAddPharmacy = () => {
+    if (!activeShift) {
+      setShiftRequiredPrompt({ type: 'add_pharmacy' });
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
+
+  const handleRequestStartVisit = (pharm: Pharmacy) => {
+    if (!activeShift) {
+      setShiftRequiredPrompt({ type: 'start_visit', pharmacy: pharm });
+      return;
+    }
+    setActiveVisitPharmacy(pharm);
+  };
+
+  const handleStartShiftAndProceed = async () => {
+    const pending = shiftRequiredPrompt;
+    await handleStartShift();
+    setShiftRequiredPrompt(null);
+    if (pending?.type === 'add_pharmacy') {
+      setIsAddModalOpen(true);
+    } else if (pending?.type === 'start_visit' && pending.pharmacy) {
+      setActiveVisitPharmacy(pending.pharmacy);
+    }
+  };
+
   // End Work Shift
   const handleEndShift = async () => {
     if (!rep?.id || !activeShift) return;
@@ -648,8 +680,8 @@ export default function BrandRepPortalPage() {
             activeShift={activeShift}
             onStartShift={handleStartShift}
             onRequestEndShift={() => setIsEndShiftModalOpen(true)}
-            onStartVisit={(pharm) => setActiveVisitPharmacy(pharm)}
-            onAddNewPharmacy={() => setIsAddModalOpen(true)}
+            onStartVisit={(pharm) => handleRequestStartVisit(pharm)}
+            onAddNewPharmacy={handleRequestAddPharmacy}
           />
         )}
 
@@ -682,11 +714,15 @@ export default function BrandRepPortalPage() {
               </div>
 
               <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+                onClick={handleRequestAddPharmacy}
+                className={`px-3 py-1.5 rounded-xl text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all ${
+                  activeShift
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-slate-800 hover:bg-slate-900 border border-amber-400/50'
+                }`}
               >
                 <Plus className="w-4 h-4" />
-                Добавить аптеку
+                {activeShift ? 'Добавить аптеку' : '🔒 Добавить аптеку'}
               </button>
             </div>
 
@@ -841,7 +877,7 @@ export default function BrandRepPortalPage() {
                           </a>
                         ) : (
                           <button
-                            onClick={() => setIsAddModalOpen(true)}
+                            onClick={handleRequestAddPharmacy}
                             className="py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium"
                           >
                             + GPS
@@ -849,7 +885,7 @@ export default function BrandRepPortalPage() {
                         )}
 
                         <button
-                          onClick={() => setActiveVisitPharmacy(pharm)}
+                          onClick={() => handleRequestStartVisit(pharm)}
                           className="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1283,6 +1319,60 @@ export default function BrandRepPortalPage() {
                 className="py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-600/30 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
               >
                 {isShiftActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Завершить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Strict Shift Required Guard Modal (Вариант 1) */}
+      {shiftRequiredPrompt && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+                <Play className="w-7 h-7 fill-amber-500 ml-0.5" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">Сначала начните работу</h2>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {shiftRequiredPrompt.type === 'add_pharmacy'
+                  ? 'Добавление новых аптек заблокировано вне смены. Включите рабочий день, чтобы ваш маршрут по улице и новая точка зафиксировались на карте руководителя и в дневном отчёте.'
+                  : `Оформление визита в аптеку «${shiftRequiredPrompt.pharmacy?.name || ''}» доступно только во время активной смены для записи GPS-маршрута и отчёта дня.`}
+              </p>
+            </div>
+
+            <div className="bg-emerald-50/80 rounded-2xl p-3.5 border border-emerald-200/80 flex items-start gap-2.5 text-[11px] text-emerald-900">
+              <Footprints className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>
+                При нажатии кнопки ниже смена откроется автоматически, включится запись маршрута, и сразу откроется нужная форма.
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                disabled={isShiftActionLoading}
+                onClick={handleStartShiftAndProceed}
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                {isShiftActionLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-white" />
+                    {shiftRequiredPrompt.type === 'add_pharmacy'
+                      ? 'Начать работу и добавить аптеку'
+                      : 'Начать работу и открыть визит'}
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShiftRequiredPrompt(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition-colors"
+              >
+                Отмена
               </button>
             </div>
           </div>

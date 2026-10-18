@@ -734,10 +734,14 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         {!selectedPharmacy && (
           <button
             onClick={onAddNewPharmacy}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 active:scale-98 transition-all"
+            className={`w-full py-3.5 rounded-2xl text-white font-bold text-sm shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all ${
+              activeShift
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/30'
+                : 'bg-slate-800/95 hover:bg-slate-900 border border-amber-400/50 shadow-slate-900/30'
+            }`}
           >
-            <MapPin className="w-5 h-5" />
-            + Добавить новую аптеку на карту
+            <MapPin className={`w-5 h-5 ${activeShift ? 'text-white' : 'text-amber-400'}`} />
+            {activeShift ? '+ Добавить новую аптеку на карту' : '🔒 Добавить аптеку (начните работу)'}
           </button>
         )}
       </div>
