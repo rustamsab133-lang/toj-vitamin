@@ -616,6 +616,52 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
     }
   };
 
+  const handleUpdateRepStatus = async (repId: string, newStatus: 'active' | 'inactive' | 'pending') => {
+    try {
+      const res = await fetch('/api/rep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_rep_status',
+          id: repId,
+          status: newStatus
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await loadSupervisorData();
+      } else {
+        alert(data.error || 'Не удалось обновить статус сотрудника');
+      }
+    } catch (e) {
+      alert('Ошибка соединения с сервером');
+    }
+  };
+
+  const handleDeleteRep = async (repId: string, repName: string) => {
+    if (!confirm(`Удалить заявку / карточку сотрудника «${repName}»?`)) return;
+    try {
+      const res = await fetch('/api/rep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_rep',
+          id: repId
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await loadSupervisorData();
+      } else {
+        alert(data.error || 'Не удалось удалить сотрудника');
+      }
+    } catch (e) {
+      alert('Ошибка соединения с сервером');
+    }
+  };
+
+  const pendingReps = reps.filter(r => r.status === 'pending');
+
   return (
     <div className="space-y-6">
       {/* Top Bar */}
@@ -680,7 +726,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Штат / На смене</div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{reps.length}</span>
+            <span className="text-2xl font-bold text-slate-900">{reps.filter(r => r.status !== 'pending').length}</span>
             <span className="text-xs font-semibold text-emerald-600">
               • {Object.keys(activeShifts).length} сейчас в поле
             </span>
@@ -714,6 +760,90 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         </div>
       </div>
 
+      {/* Pending Employee Registration Requests Banner */}
+      {pendingReps.length > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 shadow-md space-y-3.5 animate-in fade-in">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-amber-500 text-white font-bold text-sm flex items-center justify-center shadow-sm">
+                {pendingReps.length}
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-amber-950">
+                  🔔 Новые заявки на доступ к приложению от сотрудников ({pendingReps.length})
+                </h3>
+                <p className="text-xs text-amber-800">
+                  Сотрудник заполнил анкету в мобильном приложении и ждёт вашего подтверждения для входа в базу аптек
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {pendingReps.map((pr) => (
+              <div
+                key={pr.id}
+                className="bg-white rounded-2xl p-4 border border-amber-200 shadow-sm flex flex-col justify-between gap-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: getRepColor(pr.id) }}
+                      />
+                      <span className="font-bold text-sm text-slate-900">{pr.name}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                        ⏳ Ждёт подтверждения
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1 space-y-0.5">
+                      <div>
+                        📞 Телефон: <strong className="text-slate-900">{pr.phone}</strong> • Пароль:{' '}
+                        <code className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-bold">
+                          {pr.pin_code}
+                        </code>
+                      </div>
+                      <div>
+                        📍 Территория: <strong>{pr.territory || 'Душанбе'}</strong> •{' '}
+                        {pr.transport_type === 'car'
+                          ? '🚗 Авто'
+                          : pr.transport_type === 'public'
+                          ? '🚌 Общ. транспорт'
+                          : '🚶 Пешком'}
+                        {pr.experience_years ? ` • Опыт: ${pr.experience_years}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                  <button
+                    onClick={() => handleUpdateRepStatus(pr.id, 'active')}
+                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Подтвердить доступ
+                  </button>
+                  <button
+                    onClick={() => handleOpenRepModal(pr)}
+                    className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                  >
+                    ✏️ Анкета
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRep(pr.id, pr.name)}
+                    className="py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition-colors"
+                  >
+                    ✕ Отклонить
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
         <button
@@ -734,6 +864,11 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         >
           <Users className="w-4 h-4 text-indigo-600" />
           👥 Личные кабинеты сотрудников ({reps.length})
+          {pendingReps.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+              +{pendingReps.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -1254,16 +1389,24 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                           {r.name?.charAt(0) || 'М'}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-bold text-base text-slate-900">{r.name}</h3>
-                            {shift ? (
+                            {r.status === 'pending' ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                ⏳ Ожидает подтверждения
+                              </span>
+                            ) : r.status === 'inactive' || r.status === 'rejected' ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">
+                                ⛔ Доступ закрыт
+                              </span>
+                            ) : shift ? (
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                                 На смене
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">
-                                Вне смены
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
+                                🟢 Активен (вне смены)
                               </span>
                             )}
                           </div>
@@ -1273,21 +1416,47 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleOpenRepModal(r)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        Данные
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {r.status === 'pending' ? (
+                          <button
+                            onClick={() => handleUpdateRepStatus(r.id, 'active')}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Подтвердить
+                          </button>
+                        ) : r.status === 'inactive' ? (
+                          <button
+                            onClick={() => handleUpdateRepStatus(r.id, 'active')}
+                            className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold transition-colors"
+                          >
+                            Включить доступ
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleUpdateRepStatus(r.id, 'inactive')}
+                            className="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold transition-colors"
+                            title="Приостановить доступ сотрудника к приложению"
+                          >
+                            Блок
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenRepModal(r)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Данные
+                        </button>
+                      </div>
                     </div>
 
                     {/* HR Dossier Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Телефон / PIN</span>
+                        <span className="text-[10px] text-slate-400 block">Телефон / Пароль</span>
                         <span className="font-semibold text-slate-800">{r.phone}</span>
-                        <span className="text-[10px] text-slate-400 ml-1">(PIN: {r.pin_code || '2024'})</span>
+                        <span className="text-[10px] text-slate-500 ml-1 font-mono">(Код: {r.pin_code || '—'})</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block">Транспорт</span>
@@ -1298,7 +1467,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                       <div>
                         <span className="text-[10px] text-slate-400 block">Дата приема</span>
                         <span className="font-semibold text-slate-800">
-                          {r.hire_date ? new Date(r.hire_date).toLocaleDateString('ru-RU') : '2024'}
+                          {r.hire_date ? new Date(r.hire_date).toLocaleDateString('ru-RU') : '2026'}
                         </span>
                       </div>
                     </div>
@@ -1523,16 +1692,29 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">PIN-код для входа *</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Пароль / PIN-код для входа *</label>
                   <input
                     type="text"
                     required
-                    maxLength={6}
+                    maxLength={32}
                     value={editingRep.pin_code || ''}
                     onChange={(e) => setEditingRep({ ...editingRep, pin_code: e.target.value })}
-                    placeholder="2024"
+                    placeholder="Личный пароль сотрудника"
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Статус доступа к приложению</label>
+                  <select
+                    value={editingRep.status || 'active'}
+                    onChange={(e) => setEditingRep({ ...editingRep, status: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="active">🟢 Доступ открыт (Подтверждён)</option>
+                    <option value="pending">⏳ Ожидает подтверждения</option>
+                    <option value="inactive">⛔ Доступ закрыт (Заблокирован)</option>
+                  </select>
                 </div>
 
                 <div>

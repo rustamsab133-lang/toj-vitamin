@@ -52,10 +52,21 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export default function BrandRepPortalPage() {
   const [rep, setRep] = useState<BrandRep | null>(null);
+  const [pendingRep, setPendingRep] = useState<BrandRep | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [phoneInput, setPhoneInput] = useState('+992900000001');
-  const [pinInput, setPinInput] = useState('2024');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [pinInput, setPinInput] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Registration Form State
+  const [regName, setRegName] = useState('');
+  const [regPhone, setRegPhone] = useState('+992 ');
+  const [regPassword, setRegPassword] = useState('');
+  const [regTerritory, setRegTerritory] = useState('Душанбе');
+  const [regTransport, setRegTransport] = useState<'foot' | 'car' | 'public'>('foot');
+  const [regExperience, setRegExperience] = useState('');
+  const [checkingPendingStatus, setCheckingPendingStatus] = useState(false);
 
   // Core Data & Tabs
   const [activeTab, setActiveTab] = useState<'map' | 'route' | 'history' | 'profile'>('map');
@@ -99,6 +110,13 @@ export default function BrandRepPortalPage() {
       try {
         setRep(JSON.parse(savedRep));
       } catch (e) {}
+    } else {
+      const savedPending = localStorage.getItem('toj_brand_rep_pending');
+      if (savedPending) {
+        try {
+          setPendingRep(JSON.parse(savedPending));
+        } catch (e) {}
+      }
     }
     const cachedPharms = getCachedPharmacies();
     if (cachedPharms.length > 0) setPharmacies(cachedPharms);
@@ -289,14 +307,25 @@ export default function BrandRepPortalPage() {
           saveCachedVisits(visitData.visits);
         }
 
-        // Refresh Rep profile (including HR fields updated by supervisor)
+        // Refresh Rep profile (including HR fields and approval status updated by supervisor)
         const repsRes = await fetch('/api/rep?action=list_reps');
         const repsData = await repsRes.json();
         if (repsData.success && Array.isArray(repsData.reps)) {
           const freshMe = repsData.reps.find((r: any) => r.id === rep.id || r.phone === rep.phone);
           if (freshMe) {
-            setRep(freshMe);
-            localStorage.setItem('toj_brand_rep_session', JSON.stringify(freshMe));
+            if (freshMe.status === 'pending') {
+              setRep(null);
+              localStorage.removeItem('toj_brand_rep_session');
+              setPendingRep(freshMe);
+              localStorage.setItem('toj_brand_rep_pending', JSON.stringify(freshMe));
+            } else if (freshMe.status === 'inactive' || freshMe.status === 'rejected') {
+              setRep(null);
+              localStorage.removeItem('toj_brand_rep_session');
+              setLoginError('⛔ Ваш доступ к приложению приостановлен руководителем.');
+            } else {
+              setRep(freshMe);
+              localStorage.setItem('toj_brand_rep_session', JSON.stringify(freshMe));
+            }
           }
         }
       }
@@ -319,6 +348,43 @@ export default function BrandRepPortalPage() {
     }
   }, [rep?.id]);
 
+  // Poll pending approval status automatically every 10s when on Pending Screen
+  const handleCheckPendingStatus = async (silent = false) => {
+    if (!pendingRep?.id) return;
+    if (!silent) setCheckingPendingStatus(true);
+    try {
+      const res = await fetch(`/api/rep?action=get_profile&rep_id=${pendingRep.id}`);
+      const data = await res.json();
+      if (data.success && data.rep) {
+        if (data.rep.status === 'active') {
+          localStorage.removeItem('toj_brand_rep_pending');
+          setPendingRep(null);
+          setRep(data.rep);
+          localStorage.setItem('toj_brand_rep_session', JSON.stringify(data.rep));
+        } else if (data.rep.status === 'inactive' || data.rep.status === 'rejected') {
+          localStorage.removeItem('toj_brand_rep_pending');
+          setPendingRep(null);
+          setLoginError('⛔ Ваша заявка была отклонена руководителем.');
+        }
+      } else if (res.status === 404) {
+        localStorage.removeItem('toj_brand_rep_pending');
+        setPendingRep(null);
+        setLoginError('Заявка не найдена или была удалена.');
+      }
+    } catch (e) {
+    } finally {
+      if (!silent) setCheckingPendingStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!pendingRep?.id || rep) return;
+    const interval = setInterval(() => {
+      handleCheckPendingStatus(true);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [pendingRep?.id, rep]);
+
   // Login handler
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,10 +403,17 @@ export default function BrandRepPortalPage() {
       });
 
       const data = await res.json();
+      if (data.status === 'pending' && data.pendingRep) {
+        setPendingRep(data.pendingRep);
+        localStorage.setItem('toj_brand_rep_pending', JSON.stringify(data.pendingRep));
+        return;
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Ошибка входа');
       }
 
+      localStorage.removeItem('toj_brand_rep_pending');
+      setPendingRep(null);
       setRep(data.rep);
       localStorage.setItem('toj_brand_rep_session', JSON.stringify(data.rep));
     } catch (err: any) {
@@ -350,8 +423,47 @@ export default function BrandRepPortalPage() {
     }
   };
 
+  // Self-Registration handler (status: 'pending' -> requires Supervisor approval)
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setAuthLoading(true);
+
+    try {
+      const res = await fetch('/api/rep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register_rep',
+          name: regName.trim(),
+          phone: regPhone.trim(),
+          pin_code: regPassword.trim(),
+          territory: regTerritory,
+          transport_type: regTransport,
+          experience_years: regExperience.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Не удалось отправить заявку');
+      }
+
+      if (data.pendingRep) {
+        setPendingRep(data.pendingRep);
+        localStorage.setItem('toj_brand_rep_pending', JSON.stringify(data.pendingRep));
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'Ошибка подключения');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('toj_brand_rep_session');
+    localStorage.removeItem('toj_brand_rep_pending');
+    setPendingRep(null);
     setRep(null);
   };
 
@@ -525,11 +637,79 @@ export default function BrandRepPortalPage() {
     );
   }
 
-  // --- 1. LOGIN SCREEN ---
+  // --- 1. LOGIN & SELF-REGISTRATION SCREEN ---
   if (!rep) {
+    // 1a. Pending Supervisor Approval Screen
+    if (pendingRep) {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-5 text-center">
+            <img
+              src="/rep-logo.png"
+              alt="Toj-Vitamin"
+              className="w-20 h-20 rounded-2xl object-contain bg-white border border-slate-100 shadow-md mx-auto p-1"
+            />
+
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+              <Clock className="w-6 h-6 animate-pulse" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h1 className="text-lg font-bold text-slate-900">Ожидание подтверждения</h1>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Ваша заявка отправлена руководителю. Как только руководитель подтвердит ваш аккаунт в админ-панели, доступ к карте и аптекам откроется автоматически.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 text-left space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Сотрудник:</span>
+                <span className="font-bold text-slate-800">{pendingRep.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Телефон:</span>
+                <span className="font-mono font-semibold text-slate-700">{pendingRep.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Территория:</span>
+                <span className="font-semibold text-slate-700">{pendingRep.territory || 'Душанбе'}</span>
+              </div>
+              <div className="flex justify-between items-center pt-1 border-t border-slate-200/70">
+                <span className="text-slate-400">Статус:</span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                  ⏳ На проверке у руководителя
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                disabled={checkingPendingStatus}
+                onClick={() => handleCheckPendingStatus(false)}
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${checkingPendingStatus ? 'animate-spin' : ''}`} />
+                {checkingPendingStatus ? 'Проверка статуса...' : 'Проверить подтверждение'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition-colors"
+              >
+                Вернуться ко входу
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 1b. Standard Login & Self-Registration Tabs
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
-        <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-6">
+        <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-5">
           <div className="text-center space-y-2">
             <img
               src="/rep-logo.png"
@@ -540,56 +720,193 @@ export default function BrandRepPortalPage() {
             <p className="text-xs text-slate-500">Полевой модуль визитов, личного кабинета и карт</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            {loginError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
-                {loginError}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Номер телефона
-              </label>
-              <input
-                type="tel"
-                required
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="+992 900 00 00 01"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                PIN-код доступа
-              </label>
-              <input
-                type="password"
-                required
-                maxLength={6}
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="2024"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-widest text-center"
-              />
-            </div>
-
+          {/* Mode Switcher: Login vs Register */}
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl">
             <button
-              type="submit"
-              disabled={authLoading}
-              className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              type="button"
+              onClick={() => {
+                setAuthMode('login');
+                setLoginError(null);
+              }}
+              className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                authMode === 'login'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
             >
-              Войти в терминал
+              🔑 Вход
             </button>
-          </form>
-
-          <div className="pt-2 border-t border-slate-100 text-center">
-            <span className="text-[11px] text-slate-400">
-              Тестовый доступ: тел <code className="text-slate-600">+992900000001</code>, PIN: <code className="text-slate-600">2024</code>
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('register');
+                setLoginError(null);
+              }}
+              className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                authMode === 'register'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              📝 Регистрация
+            </button>
           </div>
+
+          {loginError && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+              {loginError}
+            </div>
+          )}
+
+          {authMode === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Ваш номер телефона
+                </label>
+                <input
+                  type="tel"
+                  required
+                  autoComplete="tel"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="+992 900 00 00 00"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Пароль / PIN-код доступа
+                </label>
+                <input
+                  type="password"
+                  required
+                  maxLength={32}
+                  autoComplete="current-password"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  placeholder="Введите ваш пароль"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                Войти в терминал
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Ваше ФИО полностью *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  placeholder="Например: Алишер Рахимов"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Номер телефона (WhatsApp) *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={regPhone}
+                  onChange={(e) => setRegPhone(e.target.value)}
+                  placeholder="+992 900 00 00 00"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Придумайте пароль или PIN-код (мин. 4 символа) *
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={4}
+                  maxLength={32}
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  placeholder="Придумайте личный пароль"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Город / Район
+                  </label>
+                  <select
+                    value={regTerritory}
+                    onChange={(e) => setRegTerritory(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="Душанбе">Душанбе</option>
+                    <option value="Худжанд">Худжанд</option>
+                    <option value="Бохтар">Бохтар</option>
+                    <option value="Куляб">Куляб</option>
+                    <option value="Гиссар">Гиссар</option>
+                    <option value="Турсунзаде">Турсунзаде</option>
+                    <option value="Вахдат">Вахдат</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Передвижение
+                  </label>
+                  <select
+                    value={regTransport}
+                    onChange={(e) => setRegTransport(e.target.value as any)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="foot">🚶 Пешком</option>
+                    <option value="car">🚗 Личное авто</option>
+                    <option value="public">🚌 Общ. транспорт</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Опыт работы (необязательно)
+                </label>
+                <input
+                  type="text"
+                  value={regExperience}
+                  onChange={(e) => setRegExperience(e.target.value)}
+                  placeholder="Например: 2 года в фарме"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900">
+                🔒 После отправки анкеты руководитель получит уведомление и подтвердит ваш доступ к базе аптек.
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                Отправить заявку руководителю
+              </button>
+            </form>
+          )}
         </div>
       </div>
     );

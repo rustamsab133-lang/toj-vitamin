@@ -225,7 +225,7 @@ export interface BrandRep {
   brand_name: string;
   target_monthly_visits: number;
   target_monthly_sales: number;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'pending' | 'rejected' | string;
   avatar_url?: string | null;
   position?: string;
   daily_visit_target?: number;

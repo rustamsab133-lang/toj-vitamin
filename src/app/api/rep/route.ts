@@ -436,41 +436,204 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action } = body;
 
-    // --- 1. Авторизация представителя по индивидуальному PIN ---
+    // --- 1. Авторизация представителя по индивидуальному паролю / PIN ---
     if (action === 'login') {
       const { phone, pin_code } = body;
       if (!phone || !pin_code) {
-        return NextResponse.json({ error: 'Введите номер телефона и PIN-код' }, { status: 400 });
+        return NextResponse.json({ error: 'Введите номер телефона и пароль (PIN-код)' }, { status: 400 });
       }
 
       const inputDigits = String(phone).replace(/\D/g, '');
       const inputTail9 = inputDigits.slice(-9);
 
-      const { data: activeReps, error } = await supabaseAdmin
+      const { data: allReps, error } = await supabaseAdmin
         .from('brand_reps')
         .select('*')
-        .eq('status', 'active')
         .order('name');
 
-      const repIdx = (activeReps || []).findIndex((r: any) => {
+      const repIdx = (allReps || []).findIndex((r: any) => {
         const rDigits = String(r.phone || '').replace(/\D/g, '');
         return rDigits === inputDigits || (inputTail9.length === 9 && rDigits.slice(-9) === inputTail9);
       });
-      const rep = repIdx >= 0 ? (activeReps || [])[repIdx] : null;
+      const rep = repIdx >= 0 ? (allReps || [])[repIdx] : null;
 
       if (error || !rep) {
-        return NextResponse.json({ error: 'Представитель с таким номером не найден' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Сотрудник с таким номером не найден. Подайте заявку во вкладке «Регистрация».' },
+          { status: 404 }
+        );
       }
 
       if (String(rep.pin_code).trim() !== String(pin_code).trim()) {
-        return NextResponse.json({ error: 'Неверный PIN-код доступа' }, { status: 401 });
+        return NextResponse.json({ error: 'Неверный пароль / PIN-код доступа' }, { status: 401 });
+      }
+
+      const hrMap = await getHrProfilesMap();
+      const mergedRep = mergeRepWithHr(rep, hrMap, repIdx);
+
+      if (rep.status === 'pending') {
+        return NextResponse.json({
+          success: false,
+          status: 'pending',
+          pendingRep: mergedRep,
+          error: '⏳ Ваша заявка отправлена и находится на проверке у руководителя.'
+        });
+      }
+
+      if (rep.status === 'inactive' || rep.status === 'rejected') {
+        return NextResponse.json(
+          {
+            success: false,
+            status: rep.status,
+            error: '⛔ Доступ к приложению приостановлен или отклонён руководителем.'
+          },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        rep: mergedRep
+      });
+    }
+
+    // --- 1a. Самостоятельная регистрация сотрудника (Подача заявки на доступ -> status: 'pending') ---
+    if (action === 'register_rep') {
+      const {
+        name,
+        phone,
+        pin_code,
+        territory = 'Душанбе',
+        transport_type = 'foot',
+        experience_years = '',
+        bio_notes = ''
+      } = body;
+
+      if (!name?.trim() || !phone?.trim() || !pin_code?.trim()) {
+        return NextResponse.json(
+          { error: 'Пожалуйста, заполните ФИО, номер телефона и придумайте пароль' },
+          { status: 400 }
+        );
+      }
+
+      if (String(pin_code).trim().length < 4) {
+        return NextResponse.json(
+          { error: 'Пароль / PIN-код должен содержать минимум 4 символа' },
+          { status: 400 }
+        );
+      }
+
+      const inputDigits = String(phone).replace(/\D/g, '');
+      const inputTail9 = inputDigits.slice(-9);
+      if (inputTail9.length < 9) {
+        return NextResponse.json(
+          { error: 'Введите корректный 9-значный номер телефона (+992...)' },
+          { status: 400 }
+        );
+      }
+
+      const { data: existingReps } = await supabaseAdmin
+        .from('brand_reps')
+        .select('*')
+        .order('name');
+
+      const existing = (existingReps || []).find((r: any) => {
+        const rDigits = String(r.phone || '').replace(/\D/g, '');
+        return rDigits === inputDigits || rDigits.slice(-9) === inputTail9;
+      });
+
+      if (existing) {
+        if (existing.status === 'pending') {
+          return NextResponse.json(
+            { error: 'Заявка с этим номером телефона уже отправлена и ожидает подтверждения руководителя.' },
+            { status: 400 }
+          );
+        }
+        return NextResponse.json(
+          { error: 'Сотрудник с этим номером уже зарегистрирован. Перейдите во вкладку «Вход».' },
+          { status: 400 }
+        );
+      }
+
+      const normalizedPhone = `+992${inputTail9}`;
+      const newColor = getDeterministicRepColor(normalizedPhone, (existingReps || []).length);
+
+      const { data: createdRep, error: createErr } = await supabaseAdmin
+        .from('brand_reps')
+        .insert({
+          name: name.trim(),
+          phone: normalizedPhone,
+          pin_code: String(pin_code).trim(),
+          territory: territory?.trim() || 'Душанбе',
+          brand_name: 'TOJ-VITAMIN',
+          target_monthly_visits: 120,
+          target_monthly_sales: 25000,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (createErr || !createdRep) {
+        return NextResponse.json(
+          { error: createErr?.message || 'Ошибка при отправке заявки' },
+          { status: 500 }
+        );
+      }
+
+      await saveHrProfileForRep(createdRep.id, {
+        position: 'Медицинский представитель',
+        daily_visit_target: 12,
+        hire_date: new Date().toISOString().slice(0, 10),
+        passport_info: '',
+        transport_type,
+        bio_notes: bio_notes?.trim() || 'Самостоятельная заявка через приложение',
+        experience_years: experience_years?.trim() || '',
+        track_color: newColor
+      });
+
+      const hrMap = await getHrProfilesMap();
+      return NextResponse.json({
+        success: true,
+        status: 'pending',
+        pendingRep: mergeRepWithHr(createdRep, hrMap, (existingReps || []).length)
+      });
+    }
+
+    // --- 1a-2. Одобрение / блокировка / удаление заявки руководителем ---
+    if (action === 'update_rep_status') {
+      const { id, status } = body;
+      if (!id || !status) {
+        return NextResponse.json({ error: 'Не указан ID сотрудника или статус' }, { status: 400 });
+      }
+
+      const { data: updated, error } = await supabaseAdmin
+        .from('brand_reps')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
       const hrMap = await getHrProfilesMap();
       return NextResponse.json({
         success: true,
-        rep: mergeRepWithHr(rep, hrMap, repIdx)
+        rep: mergeRepWithHr(updated, hrMap)
       });
+    }
+
+    if (action === 'delete_rep') {
+      const { id } = body;
+      if (!id) {
+        return NextResponse.json({ error: 'Не указан ID сотрудника' }, { status: 400 });
+      }
+      const { error } = await supabaseAdmin.from('brand_reps').delete().eq('id', id);
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
     }
 
     // --- 1b. Создание или обновление карточки сотрудника (Руководитель / Кабинет) ---
