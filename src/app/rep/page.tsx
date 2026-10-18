@@ -531,9 +531,11 @@ export default function BrandRepPortalPage() {
       <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
-              <MapPin className="w-8 h-8" />
-            </div>
+            <img
+              src="/rep-logo.png"
+              alt="Toj-Vitamin"
+              className="w-20 h-20 rounded-2xl object-contain bg-white border border-slate-100 shadow-md mx-auto p-1"
+            />
             <h1 className="text-xl font-bold text-slate-900">Терминал медпреда</h1>
             <p className="text-xs text-slate-500">Полевой модуль визитов, личного кабинета и карт</p>
           </div>
@@ -602,9 +604,11 @@ export default function BrandRepPortalPage() {
           onClick={() => setActiveTab('profile')}
           className="flex items-center gap-2.5 cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-base shadow-sm">
-            {rep?.name?.charAt(0) || 'P'}
-          </div>
+          <img
+            src="/rep-logo.png"
+            alt="Toj-Vitamin"
+            className="w-10 h-10 rounded-2xl object-contain bg-white border border-slate-200 p-0.5 shadow-sm shrink-0"
+          />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-sm text-slate-900 leading-tight">{rep?.name}</span>
@@ -1129,6 +1133,32 @@ export default function BrandRepPortalPage() {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Download Updated Native Android APK (with new Logo & Background GPS) */}
+            <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/rep-logo.png"
+                  alt="Toj-Vitamin APK"
+                  className="w-11 h-11 rounded-2xl object-contain bg-white border border-slate-200 p-0.5 shadow-sm shrink-0"
+                />
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">
+                    Мобильное приложение Android (APK)
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Обновлённая версия с фирменным логотипом и фоновым GPS в кармане (6.7 МБ)
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/toj-vitamin-rep.apk"
+                download="Toj-Vitamin-Rep.apk"
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 shadow-sm transition-all"
+              >
+                Скачать APK
+              </a>
             </div>
 
             {/* Android Pocket Mode Instructions (Xiaomi, Samsung, Tecno) */}

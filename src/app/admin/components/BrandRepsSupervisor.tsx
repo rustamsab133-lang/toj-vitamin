@@ -650,6 +650,14 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
             <ExternalLink className="w-3.5 h-3.5" />
             Терминал медпреда
           </a>
+          <a
+            href="/toj-vitamin-rep.apk"
+            download="Toj-Vitamin-Rep.apk"
+            className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            title="Скачать установочный файл Android приложения с новым логотипом и фоновым GPS"
+          >
+            📲 Скачать APK (Android)
+          </a>
           <button
             onClick={() => handleOpenRepModal()}
             className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
