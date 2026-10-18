@@ -523,12 +523,8 @@ export default function BrandRepPortalPage() {
     }
   };
 
-  // Strict Shift Guard: Require active shift before adding pharmacy or starting visit
+  // Dedicated Add Pharmacy Action (cleanly separated from shift status)
   const handleRequestAddPharmacy = () => {
-    if (!activeShift) {
-      setShiftRequiredPrompt({ type: 'add_pharmacy' });
-      return;
-    }
     setIsAddModalOpen(true);
   };
 
@@ -1037,14 +1033,10 @@ export default function BrandRepPortalPage() {
 
               <button
                 onClick={handleRequestAddPharmacy}
-                className={`px-3 py-1.5 rounded-xl text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all ${
-                  activeShift
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-slate-800 hover:bg-slate-900 border border-amber-400/50'
-                }`}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                {activeShift ? 'Добавить аптеку' : '🔒 Добавить аптеку'}
+                Добавить аптеку
               </button>
             </div>
 
@@ -1631,7 +1623,7 @@ export default function BrandRepPortalPage() {
 
       {/* End Shift Summary Modal */}
       {isEndShiftModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-[2000] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
             <div className="text-center space-y-2">
               <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
@@ -1715,9 +1707,9 @@ export default function BrandRepPortalPage() {
         </div>
       )}
 
-      {/* Strict Shift Required Guard Modal (Вариант 1) */}
+      {/* Strict Shift Required Guard Modal (For Visits) */}
       {shiftRequiredPrompt && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-[2000] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
             <div className="text-center space-y-2">
               <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
@@ -1725,16 +1717,14 @@ export default function BrandRepPortalPage() {
               </div>
               <h2 className="text-lg font-bold text-slate-900">Сначала начните работу</h2>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {shiftRequiredPrompt.type === 'add_pharmacy'
-                  ? 'Добавление новых аптек заблокировано вне смены. Включите рабочий день, чтобы ваш маршрут по улице и новая точка зафиксировались на карте руководителя и в дневном отчёте.'
-                  : `Оформление визита в аптеку «${shiftRequiredPrompt.pharmacy?.name || ''}» доступно только во время активной смены для записи GPS-маршрута и отчёта дня.`}
+                {`Оформление визита в аптеку «${shiftRequiredPrompt.pharmacy?.name || ''}» доступно во время активной смены для точной фиксации GPS-маршрута и дневного отчёта.`}
               </p>
             </div>
 
             <div className="bg-emerald-50/80 rounded-2xl p-3.5 border border-emerald-200/80 flex items-start gap-2.5 text-[11px] text-emerald-900">
               <Footprints className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                При нажатии кнопки ниже смена откроется автоматически, включится запись маршрута, и сразу откроется нужная форма.
+                При нажатии кнопки ниже смена откроется автоматически, включится запись маршрута, и сразу откроется анкета визита.
               </span>
             </div>
 
@@ -1750,9 +1740,7 @@ export default function BrandRepPortalPage() {
                 ) : (
                   <>
                     <Play className="w-4 h-4 fill-white" />
-                    {shiftRequiredPrompt.type === 'add_pharmacy'
-                      ? 'Начать работу и добавить аптеку'
-                      : 'Начать работу и открыть визит'}
+                    Начать работу и открыть визит
                   </>
                 )}
               </button>

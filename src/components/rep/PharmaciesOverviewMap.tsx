@@ -4,7 +4,7 @@ import {
   Navigation, Layers, Phone, MessageSquare, Compass, 
   Clock, MapPin, Building2, ExternalLink, ShoppingCart, 
   CheckCircle2, AlertTriangle, Search, Filter, Route, 
-  Radio, Play, Pause, CircleDot, Footprints, ShieldCheck 
+  Radio, Play, Pause, CircleDot, Footprints, ShieldCheck, Plus 
 } from 'lucide-react';
 import type { Map as LeafletMap } from 'leaflet';
 import { Pharmacy } from '@/lib/types';
@@ -321,6 +321,12 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         markersLayerRef.current = markersLayer;
         trailPolylineRef.current = polyline;
         mapInstanceRef.current = map;
+
+        // Dismiss selected pharmacy bottom sheet when tapping anywhere on map
+        map.on('click', () => {
+          setSelectedPharmacy(null);
+        });
+
         setMapLoaded(true);
       } catch (err) {
         console.error('Map init error:', err);
@@ -661,7 +667,10 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               )}
               {onRequestEndShift && (
                 <button
-                  onClick={onRequestEndShift}
+                  onClick={() => {
+                    setSelectedPharmacy(null);
+                    onRequestEndShift();
+                  }}
                   className="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition-all"
                 >
                   <Pause className="w-3 h-3 fill-white" />
@@ -819,15 +828,14 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
       <div className="absolute left-4 right-4 bottom-4 z-[400]">
         {!selectedPharmacy && (
           <button
-            onClick={onAddNewPharmacy}
-            className={`w-full py-3.5 rounded-2xl text-white font-bold text-sm shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all ${
-              activeShift
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/30'
-                : 'bg-slate-800/95 hover:bg-slate-900 border border-amber-400/50 shadow-slate-900/30'
-            }`}
+            onClick={() => {
+              setSelectedPharmacy(null);
+              onAddNewPharmacy();
+            }}
+            className="w-full py-3.5 rounded-2xl text-white font-bold text-sm shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/30"
           >
-            <MapPin className={`w-5 h-5 ${activeShift ? 'text-white' : 'text-amber-400'}`} />
-            {activeShift ? '+ Добавить новую аптеку на карту' : '🔒 Добавить аптеку (начните работу)'}
+            <Plus className="w-5 h-5 text-white" />
+            + Добавить новую аптеку на карту
           </button>
         )}
       </div>

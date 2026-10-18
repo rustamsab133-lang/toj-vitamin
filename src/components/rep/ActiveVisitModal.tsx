@@ -138,7 +138,7 @@ export const ActiveVisitModal: React.FC<ActiveVisitModalProps> = ({
   const waUrl = buildPharmacyWhatsAppUrl(pharmacy, repName, canSendB2bLinks);
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md">
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
