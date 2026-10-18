@@ -996,6 +996,7 @@ export default function BrandRepPortalPage() {
             repId={rep.id}
             repName={rep.name}
             repColor={rep.track_color || '#2563eb'}
+            canSendB2bLinks={Boolean(rep.can_send_b2b_links)}
             userLat={userCoords?.lat}
             userLng={userCoords?.lng}
             activeShift={activeShift}
@@ -1086,6 +1087,8 @@ export default function BrandRepPortalPage() {
               ) : (
                 sortedPharmacies.map((pharm) => {
                   const waUrl = buildPharmacyWhatsAppUrl(pharm, rep.name);
+                  const coveredBy = pharm.last_visited_by_name || pharm.added_by_rep_name || null;
+                  const isColleaguePharm = coveredBy && pharm.rep_id !== rep.id && pharm.last_visited_by_id !== rep.id;
                   return (
                     <div
                       key={pharm.id}
@@ -1110,6 +1113,18 @@ export default function BrandRepPortalPage() {
                               </span>
                             )}
 
+                            {coveredBy && (
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                  isColleaguePharm
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-indigo-50 text-indigo-700 border-indigo-200/70'
+                                }`}
+                              >
+                                👤 {pharm.last_visited_by_name ? `Был: ${pharm.last_visited_by_name}` : `Добавил: ${pharm.added_by_rep_name}`}
+                              </span>
+                            )}
+
                             {(pharm as any).is_offline_queued && (
                               <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">
                                 ⏳ В оффлайн-очереди
@@ -1126,16 +1141,25 @@ export default function BrandRepPortalPage() {
                           )}
                         </div>
 
-                        {/* B2B Link Quick Badge */}
-                        <a
-                          href={`/b2b/${pharm.token}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg font-medium flex items-center gap-1 shrink-0"
-                          title="Открыть B2B витрину"
-                        >
-                          B2B <ArrowUpRight className="w-3 h-3" />
-                        </a>
+                        {/* B2B Link Quick Badge (Gated by Supervisor Permission) */}
+                        {rep.can_send_b2b_links ? (
+                          <a
+                            href={`/b2b/${pharm.token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg font-medium flex items-center gap-1 shrink-0"
+                            title="Открыть B2B витрину"
+                          >
+                            B2B <ArrowUpRight className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span
+                            className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded-lg font-medium shrink-0"
+                            title="Доступ к персональной B2B-ссылке открывается руководителем"
+                          >
+                            🔒 B2B
+                          </span>
+                        )}
                       </div>
 
                       {/* Contacts & Time */}
@@ -1168,21 +1192,30 @@ export default function BrandRepPortalPage() {
                           </div>
                         )}
 
-                        {/* DIRECT WHATSAPP WITHOUT SAVING NUMBER */}
-                        {waUrl ? (
-                          <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-emerald-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                            title="Открыть чат в WhatsApp сразу без сохранения номера в контакты"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5 text-[#1da851]" />
-                            В WhatsApp
-                          </a>
+                        {/* DIRECT WHATSAPP WITH B2B LINK (GATED BY SUPERVISOR PERMISSION) */}
+                        {rep.can_send_b2b_links ? (
+                          waUrl ? (
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-emerald-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                              title="Открыть чат в WhatsApp сразу без сохранения номера в контакты"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 text-[#1da851]" />
+                              В WhatsApp
+                            </a>
+                          ) : (
+                            <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
+                              Нет WhatsApp
+                            </div>
+                          )
                         ) : (
-                          <div className="py-2 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">
-                            Нет WhatsApp
+                          <div
+                            className="py-2 px-1.5 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-medium flex items-center justify-center gap-1 text-center"
+                            title="Отправка B2B-ссылки в WhatsApp доступна после разрешения руководителя"
+                          >
+                            🔒 WhatsApp
                           </div>
                         )}
 
@@ -1552,12 +1585,13 @@ export default function BrandRepPortalPage() {
           onClose={() => setIsAddModalOpen(false)}
           repId={rep.id}
           repName={rep.name}
+          canSendB2bLinks={Boolean(rep.can_send_b2b_links)}
           initialLat={userCoords?.lat}
           initialLng={userCoords?.lng}
           existingPharmacies={pharmacies}
           onPharmacyAdded={(newPharm) => {
             setPharmacies(prev => {
-              const next = [newPharm, ...prev];
+              const next = [{ ...newPharm, added_by_rep_name: rep.name, added_by_rep_color: rep.track_color }, ...prev];
               saveCachedPharmacies(next);
               return next;
             });
@@ -1573,12 +1607,22 @@ export default function BrandRepPortalPage() {
           pharmacy={activeVisitPharmacy}
           repId={rep.id}
           repName={rep.name}
+          canSendB2bLinks={Boolean(rep.can_send_b2b_links)}
           userLat={userCoords?.lat}
           userLng={userCoords?.lng}
           onVisitCompleted={(visit) => {
             setVisits(prev => {
               const next = [visit, ...prev];
               saveCachedVisits(next);
+              return next;
+            });
+            setPharmacies(prev => {
+              const next = prev.map(p =>
+                p.id === activeVisitPharmacy.id
+                  ? { ...p, last_visited_by_name: rep.name, last_visited_by_id: rep.id, last_visited_at: new Date().toISOString() }
+                  : p
+              );
+              saveCachedPharmacies(next);
               return next;
             });
             setPendingOfflineCount(getOfflineQueue().length);

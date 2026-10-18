@@ -118,7 +118,8 @@ function mergeRepWithHr(rep: any, hrMap: Record<string, any>, repIndex?: number)
     transport_type: hr.transport_type || 'foot',
     bio_notes: hr.bio_notes || '',
     experience_years: hr.experience_years || '',
-    track_color: hr.track_color || getDeterministicRepColor(rep.id, repIndex)
+    track_color: hr.track_color || getDeterministicRepColor(rep.id, repIndex),
+    can_send_b2b_links: Boolean(hr.can_send_b2b_links)
   };
 }
 
@@ -322,23 +323,64 @@ export async function GET(request: Request) {
     }
 
     if (action === 'list_pharmacies') {
-      let query = supabaseAdmin
-        .from('pharmacies')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [
+        { data: pharmacies, error },
+        { data: allReps },
+        hrMap,
+        { data: latestVisits }
+      ] = await Promise.all([
+        supabaseAdmin
+          .from('pharmacies')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabaseAdmin.from('brand_reps').select('*').order('name'),
+        getHrProfilesMap(),
+        supabaseAdmin
+          .from('rep_visits')
+          .select('pharmacy_id, rep_id, created_at')
+          .order('created_at', { ascending: false })
+          .limit(1000)
+      ]);
 
-      if (repId) {
-        // Показываем аптеки этого представителя или общие
-        query = query.or(`rep_id.eq.${repId},rep_id.is.null`);
-      }
-
-      const { data: pharmacies, error } = await query;
       if (error) {
         console.error('Ошибка загрузки аптек:', error);
         return NextResponse.json({ error: 'Ошибка загрузки аптек' }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, pharmacies: pharmacies || [] });
+      const repMetaById: Record<string, { name: string; color: string }> = {};
+      (allReps || []).forEach((r: any, idx: number) => {
+        const merged = mergeRepWithHr(r, hrMap, idx);
+        repMetaById[r.id] = {
+          name: merged.name,
+          color: merged.track_color
+        };
+      });
+
+      const lastVisitByPharmacy: Record<string, { rep_id: string; rep_name: string; visited_at: string }> = {};
+      (latestVisits || []).forEach((v: any) => {
+        if (v.pharmacy_id && !lastVisitByPharmacy[v.pharmacy_id]) {
+          lastVisitByPharmacy[v.pharmacy_id] = {
+            rep_id: v.rep_id,
+            rep_name: repMetaById[v.rep_id]?.name || 'Медпредставитель',
+            visited_at: v.created_at
+          };
+        }
+      });
+
+      const enrichedPharmacies = (pharmacies || []).map((p: any) => {
+        const addedMeta = p.rep_id ? repMetaById[p.rep_id] : null;
+        const lastVisit = lastVisitByPharmacy[p.id];
+        return {
+          ...p,
+          added_by_rep_name: addedMeta?.name || null,
+          added_by_rep_color: addedMeta?.color || null,
+          last_visited_by_name: lastVisit?.rep_name || addedMeta?.name || null,
+          last_visited_by_id: lastVisit?.rep_id || p.rep_id || null,
+          last_visited_at: lastVisit?.visited_at || p.created_at || null
+        };
+      });
+
+      return NextResponse.json({ success: true, pharmacies: enrichedPharmacies });
     }
 
     if (action === 'list_visits') {
@@ -388,24 +430,30 @@ export async function GET(request: Request) {
 
       const todayStr = new Date().toISOString().slice(0, 10);
 
-      const { data: points, error } = await supabaseAdmin
-        .from('rep_tracks')
-        .select('latitude, longitude, recorded_at')
-        .eq('rep_id', repId)
-        .order('recorded_at', { ascending: true })
-        .limit(1000);
+      const [{ data: allReps }, hrMap, allPoints] = await Promise.all([
+        supabaseAdmin.from('brand_reps').select('*').order('name'),
+        getHrProfilesMap(),
+        fetchAllTrackPointsPaginated(10)
+      ]);
 
-      if (error) {
-        return NextResponse.json({ success: true, points: [], historyByDate: {} });
-      }
+      const repMetaById: Record<string, { id: string; name: string; track_color: string }> = {};
+      (allReps || []).forEach((r: any, idx: number) => {
+        const merged = mergeRepWithHr(r, hrMap, idx);
+        repMetaById[r.id] = {
+          id: r.id,
+          name: merged.name,
+          track_color: merged.track_color
+        };
+      });
 
-      const todayPoints = (points || []).filter((p: any) =>
+      const myPoints = (allPoints || []).filter((p: any) => p.rep_id === repId);
+      const todayPoints = myPoints.filter((p: any) =>
         p.recorded_at && String(p.recorded_at).startsWith(todayStr)
       );
 
-      // Group past days for optional history overlay on rep's own map
+      // Group past days for the current rep
       const historyByDate: Record<string, Array<[number, number]>> = {};
-      (points || []).forEach((p: any) => {
+      myPoints.forEach((p: any) => {
         if (!p.recorded_at || p.latitude == null || p.longitude == null) return;
         const dStr = String(p.recorded_at).slice(0, 10);
         if (dStr === todayStr) return;
@@ -413,10 +461,76 @@ export async function GET(request: Request) {
         historyByDate[dStr].push([Number(p.latitude), Number(p.longitude)]);
       });
 
+      // Group ALL team routes by (rep_id + track_date) so every manager can see both their own and other managers' walked streets
+      const segmentsMap: Record<
+        string,
+        {
+          id: string;
+          rep_id: string;
+          rep_name: string;
+          track_color: string;
+          track_date: string;
+          is_me: boolean;
+          rawPoints: Array<[number, number]>;
+        }
+      > = {};
+
+      (allPoints || []).forEach((p: any) => {
+        if (!p.rep_id || p.latitude == null || p.longitude == null) return;
+        const lat = Number(p.latitude);
+        const lng = Number(p.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const dStr = p.recorded_at ? String(p.recorded_at).slice(0, 10) : todayStr;
+
+        // Skip current rep's today points from historical overlay since they are already drawn on the live active polyline
+        if (p.rep_id === repId && dStr === todayStr) return;
+
+        const segKey = `${p.rep_id}__${dStr}`;
+        if (!segmentsMap[segKey]) {
+          const meta = repMetaById[p.rep_id];
+          segmentsMap[segKey] = {
+            id: segKey,
+            rep_id: p.rep_id,
+            rep_name: meta?.name || 'Медпредставитель',
+            track_color: meta?.track_color || getDeterministicRepColor(p.rep_id),
+            track_date: dStr,
+            is_me: p.rep_id === repId,
+            rawPoints: []
+          };
+        }
+        segmentsMap[segKey].rawPoints.push([lat, lng]);
+      });
+
+      const allTeamTracks = Object.values(segmentsMap).map((seg) => {
+        const thinned: Array<[number, number]> = [];
+        for (let i = 0; i < seg.rawPoints.length; i++) {
+          const pt = seg.rawPoints[i];
+          if (i === 0 || i === seg.rawPoints.length - 1) {
+            thinned.push(pt);
+          } else {
+            const lastKept = thinned[thinned.length - 1];
+            if (calculateDistanceMeters(lastKept[0], lastKept[1], pt[0], pt[1]) >= 15) {
+              thinned.push(pt);
+            }
+          }
+        }
+        return {
+          id: seg.id,
+          rep_id: seg.rep_id,
+          rep_name: seg.rep_name,
+          track_color: seg.track_color,
+          track_date: seg.track_date,
+          is_me: seg.is_me,
+          points: thinned
+        };
+      });
+
       return NextResponse.json({
         success: true,
         points: todayPoints,
-        historyByDate
+        historyByDate,
+        allTeamTracks,
+        teamMembers: Object.values(repMetaById)
       });
     }
 
@@ -624,6 +738,26 @@ export async function POST(request: Request) {
       });
     }
 
+    if (action === 'toggle_b2b_permission') {
+      const { id, can_send_b2b_links } = body;
+      if (!id) {
+        return NextResponse.json({ error: 'Не указан ID сотрудника' }, { status: 400 });
+      }
+      await saveHrProfileForRep(id, {
+        can_send_b2b_links: Boolean(can_send_b2b_links)
+      });
+      const hrMap = await getHrProfilesMap();
+      const { data: rep } = await supabaseAdmin
+        .from('brand_reps')
+        .select('*')
+        .eq('id', id)
+        .single();
+      return NextResponse.json({
+        success: true,
+        rep: rep ? mergeRepWithHr(rep, hrMap) : null
+      });
+    }
+
     if (action === 'delete_rep') {
       const { id } = body;
       if (!id) {
@@ -655,7 +789,8 @@ export async function POST(request: Request) {
         transport_type = 'foot',
         bio_notes = '',
         experience_years = '',
-        track_color = ''
+        track_color = '',
+        can_send_b2b_links = false
       } = body;
 
       if (!name?.trim() || !phone?.trim() || !pin_code?.trim()) {
@@ -705,6 +840,7 @@ export async function POST(request: Request) {
         transport_type,
         bio_notes: bio_notes.trim(),
         experience_years: experience_years.trim(),
+        can_send_b2b_links: Boolean(can_send_b2b_links),
         ...(track_color ? { track_color: track_color.trim() } : {})
       });
 

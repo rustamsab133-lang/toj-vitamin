@@ -16,6 +16,7 @@ interface PharmaciesOverviewMapProps {
   repId?: string;
   repName?: string;
   repColor?: string;
+  canSendB2bLinks?: boolean;
   userLat?: number | null;
   userLng?: number | null;
   activeShift?: any | null;
@@ -43,6 +44,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   repId,
   repName,
   repColor = '#2563eb',
+  canSendB2bLinks = false,
   userLat,
   userLng,
   activeShift,
@@ -67,15 +69,25 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
 
-  // Coverage Zones, Active Trail & Permanent History Overlay
+  // Coverage Zones, Active Trail & Permanent History Overlay (Own + All Team Managers)
   const [showCoverageCircles, setShowCoverageCircles] = useState(true);
   const [showHistoryRoutes, setShowHistoryRoutes] = useState(true);
   const [isRecordingTrail, setIsRecordingTrail] = useState(false);
   const [trailPoints, setTrailPoints] = useState<Array<[number, number]>>([]);
   const [historyByDate, setHistoryByDate] = useState<Record<string, Array<[number, number]>>>({});
+  const [allTeamTracks, setAllTeamTracks] = useState<Array<{
+    id: string;
+    rep_id: string;
+    rep_name: string;
+    track_color: string;
+    track_date: string;
+    is_me: boolean;
+    points: Array<[number, number]>;
+  }>>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; track_color: string }>>([]);
   const [shiftDurationStr, setShiftDurationStr] = useState<string>('00:00');
 
-  // Load saved trail from localStorage & sync with permanent DB tracks on mount
+  // Load saved trail from localStorage & sync with permanent DB tracks (own + colleagues)
   useEffect(() => {
     const todayStr = new Date().toISOString().slice(0, 10);
     try {
@@ -90,7 +102,8 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
       }
     } catch (e) {}
 
-    if (repId) {
+    const fetchTeamAndMyTracks = () => {
+      if (!repId) return;
       fetch(`/api/rep?action=get_today_track&rep_id=${repId}`)
         .then(r => r.json())
         .then(data => {
@@ -104,10 +117,20 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
             if (data.historyByDate && typeof data.historyByDate === 'object') {
               setHistoryByDate(data.historyByDate);
             }
+            if (Array.isArray(data.allTeamTracks)) {
+              setAllTeamTracks(data.allTeamTracks);
+            }
+            if (Array.isArray(data.teamMembers)) {
+              setTeamMembers(data.teamMembers);
+            }
           }
         })
         .catch(() => {});
-    }
+    };
+
+    fetchTeamAndMyTracks();
+    const interval = setInterval(fetchTeamAndMyTracks, 30000);
+    return () => clearInterval(interval);
   }, [repId]);
 
   // Compute shift elapsed time live
@@ -326,7 +349,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     }
   }, [trailPoints, mapLoaded, repColor]);
 
-  // Render permanent historical routes on the rep's map
+  // Render permanent historical routes (BOTH own routes AND all colleagues' walked routes)
   useEffect(() => {
     async function renderHistoryOverlay() {
       if (!mapLoaded || !historyLayerRef.current) return;
@@ -334,20 +357,51 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
       historyLayerRef.current.clearLayers();
       if (!showHistoryRoutes) return;
 
-      Object.entries(historyByDate).forEach(([dateStr, pts]) => {
-        if (!Array.isArray(pts) || pts.length < 2) return;
-        const poly = L.polyline(pts, {
-          color: repColor,
-          weight: 3.5,
-          opacity: 0.55,
-          dashArray: '6, 6',
-          lineJoin: 'round'
-        }).addTo(historyLayerRef.current);
-        poly.bindTooltip(`Пройдено ${new Date(dateStr + 'T00:00:00').toLocaleDateString('ru-RU')}`, { sticky: true });
-      });
+      if (allTeamTracks.length > 0) {
+        allTeamTracks.forEach((seg) => {
+          if (!Array.isArray(seg.points) || seg.points.length < 2) return;
+          const color = seg.track_color || (seg.is_me ? repColor : '#7c3aed');
+          const dateLabel = seg.track_date
+            ? new Date(seg.track_date + 'T00:00:00').toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
+            : '';
+
+          // White outer casing so colored routes stand out clearly on streets
+          L.polyline(seg.points, {
+            color: '#ffffff',
+            weight: 6.5,
+            opacity: 0.75,
+            lineJoin: 'round'
+          }).addTo(historyLayerRef.current);
+
+          const poly = L.polyline(seg.points, {
+            color,
+            weight: 4,
+            opacity: seg.is_me ? 0.85 : 0.8,
+            dashArray: seg.is_me ? undefined : '7, 5',
+            lineJoin: 'round'
+          }).addTo(historyLayerRef.current);
+
+          poly.bindTooltip(
+            `👤 ${seg.rep_name}${seg.is_me ? ' (Вы)' : ' (Коллега)'}${dateLabel ? ` • 📅 ${dateLabel}` : ''}`,
+            { sticky: true }
+          );
+        });
+      } else {
+        Object.entries(historyByDate).forEach(([dateStr, pts]) => {
+          if (!Array.isArray(pts) || pts.length < 2) return;
+          const poly = L.polyline(pts, {
+            color: repColor,
+            weight: 3.5,
+            opacity: 0.65,
+            dashArray: '6, 6',
+            lineJoin: 'round'
+          }).addTo(historyLayerRef.current);
+          poly.bindTooltip(`Пройдено ${new Date(dateStr + 'T00:00:00').toLocaleDateString('ru-RU')}`, { sticky: true });
+        });
+      }
     }
     renderHistoryOverlay();
-  }, [historyByDate, showHistoryRoutes, mapLoaded, repColor]);
+  }, [allTeamTracks, historyByDate, showHistoryRoutes, mapLoaded, repColor]);
 
   // Screen Wake Lock API when Recording is active
   const toggleRecordingTrail = async () => {
@@ -450,6 +504,9 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
 
         const cat = pharm.category || 'B';
         const color = cat === 'A' ? '#f59e0b' : cat === 'B' ? '#10b981' : '#64748b';
+        const coveredByName = pharm.last_visited_by_name || pharm.added_by_rep_name || null;
+        const coveredShort = coveredByName ? coveredByName.split(' ')[0] : null;
+        const isCoveredByColleague = coveredByName && pharm.rep_id !== repId && pharm.last_visited_by_id !== repId;
 
         // 1. Coverage Circle (250m radius)
         if (showCoverageCircles) {
@@ -463,7 +520,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           }).addTo(circlesLayerRef.current);
         }
 
-        // 2. Pharmacy Marker Pin
+        // 2. Pharmacy Marker Pin (with colleague indicator if already visited/added by another manager)
         const icon = L.divIcon({
           className: 'pharmacy-map-pin',
           html: `
@@ -476,7 +533,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               align-items: center;
               gap: 4px;
               box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-              border: 2px solid white;
+              border: 2px solid ${isCoveredByColleague ? (pharm.added_by_rep_color || '#f43f5e') : 'white'};
               font-family: sans-serif;
               font-size: 11px;
               font-weight: 700;
@@ -485,11 +542,12 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               cursor: pointer;
             ">
               <span>🏥</span>
-              <span>${pharm.name.length > 15 ? pharm.name.substring(0, 15) + '…' : pharm.name}</span>
+              <span>${pharm.name.length > 14 ? pharm.name.substring(0, 14) + '…' : pharm.name}</span>
+              ${coveredShort ? `<span style="background: rgba(0,0,0,0.25); padding: 1px 4px; border-radius: 6px; font-size: 9px;">👤${coveredShort}</span>` : ''}
             </div>
           `,
-          iconSize: [80, 30],
-          iconAnchor: [40, 30]
+          iconSize: [96, 30],
+          iconAnchor: [48, 30]
         });
 
         const marker = L.marker([lat, lng], { icon });
@@ -506,7 +564,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     if (mapLoaded) {
       renderPinsAndCircles();
     }
-  }, [validPharmacies, showCoverageCircles, mapLoaded]);
+  }, [validPharmacies, showCoverageCircles, mapLoaded, repId]);
 
   // Toggle Streets / Satellite
   const toggleMapLayer = async () => {
@@ -659,7 +717,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           )}
         </div>
 
-        {/* Category Filter Pills */}
+        {/* Category Filter Pills & Team Routes Toggle */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
           {(['ALL', 'A', 'B', 'C'] as const).map((cat) => (
             <button
@@ -674,7 +732,35 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               {cat === 'ALL' ? `Все (${pharmacies.filter(p => p.latitude).length})` : `Кат. ${cat}`}
             </button>
           ))}
+
+          <button
+            onClick={() => setShowHistoryRoutes(prev => !prev)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm backdrop-blur-md transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              showHistoryRoutes
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white/90 text-slate-600 hover:bg-white border border-slate-200/60'
+            }`}
+          >
+            <Footprints className="w-3.5 h-3.5" />
+            <span>Маршруты команды ({allTeamTracks.length || Object.keys(historyByDate).length})</span>
+          </button>
         </div>
+
+        {/* Team Route Colors Legend (so managers see who walked which street) */}
+        {showHistoryRoutes && teamMembers.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-sm border border-slate-200/80 text-[11px]">
+            <span className="text-slate-400 font-semibold shrink-0">Маршруты:</span>
+            {teamMembers.map((tm) => (
+              <span key={tm.id} className="inline-flex items-center gap-1 font-semibold text-slate-700 shrink-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: tm.track_color }}
+                />
+                <span>{tm.name.split(' ')[0]}{tm.id === repId ? ' (Вы)' : ''}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Map Viewport */}
@@ -751,7 +837,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         <div className="absolute left-3 right-3 bottom-3 z-[500] bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 space-y-3 animate-in fade-in slide-in-from-bottom-6">
           <div className="flex items-start justify-between">
             <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                   selectedPharmacy.category === 'A' ? 'bg-amber-100 text-amber-800' :
                   selectedPharmacy.category === 'B' ? 'bg-emerald-100 text-emerald-800' :
@@ -760,6 +846,13 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
                   Кат. {selectedPharmacy.category || 'B'}
                 </span>
                 <span className="text-xs text-slate-400">Скидка {selectedPharmacy.discount_percent}%</span>
+                {(selectedPharmacy.last_visited_by_name || selectedPharmacy.added_by_rep_name) && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                    👤 {selectedPharmacy.last_visited_by_name
+                      ? `Был: ${selectedPharmacy.last_visited_by_name}`
+                      : `Добавил: ${selectedPharmacy.added_by_rep_name}`}
+                  </span>
+                )}
               </div>
               <h3 className="font-bold text-sm text-slate-900">{selectedPharmacy.name}</h3>
               <p className="text-xs text-slate-500 line-clamp-1">{selectedPharmacy.address}</p>
@@ -807,18 +900,27 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет тел.</div>
             )}
 
-            {buildPharmacyWhatsAppUrl(selectedPharmacy, repName) ? (
-              <a
-                href={buildPharmacyWhatsAppUrl(selectedPharmacy, repName)!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe57] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Написать в WhatsApp
-              </a>
+            {canSendB2bLinks ? (
+              buildPharmacyWhatsAppUrl(selectedPharmacy, repName) ? (
+                <a
+                  href={buildPharmacyWhatsAppUrl(selectedPharmacy, repName)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe57] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Написать в WhatsApp
+                </a>
+              ) : (
+                <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет WhatsApp</div>
+              )
             ) : (
-              <div className="py-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs text-center">Нет WhatsApp</div>
+              <div
+                className="py-2.5 px-2 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-medium flex items-center justify-center gap-1 text-center"
+                title="Доступно после разрешения руководителя"
+              >
+                🔒 B2B в WhatsApp
+              </div>
             )}
 
             {/* Direct Navigator in 2GIS / Yandex */}

@@ -213,6 +213,11 @@ export interface Pharmacy {
   rep_notes?: string | null;
   landmark?: string | null;
   storefront_photo_url?: string | null;
+  added_by_rep_name?: string | null;
+  added_by_rep_color?: string | null;
+  last_visited_by_name?: string | null;
+  last_visited_by_id?: string | null;
+  last_visited_at?: string | null;
   created_at?: string;
 }
 
@@ -235,6 +240,7 @@ export interface BrandRep {
   bio_notes?: string;
   experience_years?: string;
   track_color?: string;
+  can_send_b2b_links?: boolean;
   created_at?: string;
 }
 

@@ -564,7 +564,8 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         hire_date: repToEdit.hire_date || '2024-01-15',
         passport_info: repToEdit.passport_info || '',
         bio_notes: repToEdit.bio_notes || '',
-        track_color: repToEdit.track_color || getRepColor(repToEdit.id)
+        track_color: repToEdit.track_color || getRepColor(repToEdit.id),
+        can_send_b2b_links: Boolean(repToEdit.can_send_b2b_links)
       });
     } else {
       const nextColor = REP_PALETTE[reps.length % REP_PALETTE.length].hex;
@@ -583,6 +584,7 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         passport_info: '',
         bio_notes: '',
         track_color: nextColor,
+        can_send_b2b_links: false,
         status: 'active'
       });
     }
@@ -632,6 +634,28 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
         await loadSupervisorData();
       } else {
         alert(data.error || 'Не удалось обновить статус сотрудника');
+      }
+    } catch (e) {
+      alert('Ошибка соединения с сервером');
+    }
+  };
+
+  const handleToggleB2bPermission = async (repId: string, nextAllowed: boolean) => {
+    try {
+      const res = await fetch('/api/rep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'toggle_b2b_permission',
+          id: repId,
+          can_send_b2b_links: nextAllowed
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await loadSupervisorData();
+      } else {
+        alert(data.error || 'Не удалось изменить доступ к B2B-ссылкам');
       }
     } catch (e) {
       alert('Ошибка соединения с сервером');
@@ -1472,6 +1496,36 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                       </div>
                     </div>
 
+                    {/* Supervisor Permission Toggle: B2B Link (/b2b/...) & WhatsApp Sending */}
+                    <div className={`p-3 rounded-2xl border flex items-center justify-between gap-3 text-xs ${
+                      r.can_send_b2b_links
+                        ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                        : 'bg-amber-50/70 border-amber-200 text-amber-950'
+                    }`}>
+                      <div className="min-w-0">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <span>{r.can_send_b2b_links ? '🔓' : '🔒'}</span>
+                          <span>Оптовая ссылка (/b2b/...) и WhatsApp аптекам:</span>
+                        </div>
+                        <div className="text-[11px] opacity-80 mt-0.5">
+                          {r.can_send_b2b_links
+                            ? 'Разрешено: менеджер видит ссылку /b2b/... и кнопку отправки в WhatsApp'
+                            : 'Закрыто по умолчанию: менеджер не может копировать или отправлять ссылку /b2b/...'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleB2bPermission(r.id, !r.can_send_b2b_links)}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs shrink-0 transition-all shadow-sm ${
+                          r.can_send_b2b_links
+                            ? 'bg-white hover:bg-red-50 text-red-600 border border-red-200'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        }`}
+                      >
+                        {r.can_send_b2b_links ? 'Закрыть доступ' : 'Разрешить B2B'}
+                      </button>
+                    </div>
+
                     {r.passport_info && (
                       <div className="text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                         <strong className="text-slate-700">Паспорт / Документы:</strong> {r.passport_info}
@@ -1714,6 +1768,18 @@ export const BrandRepsSupervisor: React.FC<BrandRepsSupervisorProps> = ({ onBack
                     <option value="active">🟢 Доступ открыт (Подтверждён)</option>
                     <option value="pending">⏳ Ожидает подтверждения</option>
                     <option value="inactive">⛔ Доступ закрыт (Заблокирован)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Оптовая ссылка (/b2b/...) и WhatsApp</label>
+                  <select
+                    value={editingRep.can_send_b2b_links ? 'yes' : 'no'}
+                    onChange={(e) => setEditingRep({ ...editingRep, can_send_b2b_links: e.target.value === 'yes' })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="no">🔒 Закрыто (без отправки /b2b/...)</option>
+                    <option value="yes">🔓 Разрешено (может отправлять /b2b/...)</option>
                   </select>
                 </div>
 
