@@ -3,8 +3,8 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { 
   Navigation, Layers, Phone, MessageSquare, Compass, 
   Clock, MapPin, Building2, ExternalLink, ShoppingCart, 
-  CheckCircle2, AlertTriangle, Search, Filter, Route, 
-  Radio, Play, Pause, CircleDot, Footprints, ShieldCheck, Plus 
+  CheckCircle2, AlertTriangle, Search, Filter, 
+  Play, Pause, CircleDot, Footprints, ShieldCheck, Plus 
 } from 'lucide-react';
 import type { Map as LeafletMap } from 'leaflet';
 import { Pharmacy } from '@/lib/types';
@@ -58,7 +58,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const userMarkerRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
-  const circlesLayerRef = useRef<any>(null);
   const historyLayerRef = useRef<any>(null);
   const trailPolylineRef = useRef<any>(null);
   const wakeLockRef = useRef<any>(null);
@@ -69,10 +68,8 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'A' | 'B' | 'C'>('ALL');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
 
-  // Coverage Zones, Active Trail & Permanent History Overlay (Own + All Team Managers)
-  const [showCoverageCircles, setShowCoverageCircles] = useState(true);
+  // Active Trail & Permanent History Overlay (Own + All Team Managers)
   const [showHistoryRoutes, setShowHistoryRoutes] = useState(true);
-  const [isRecordingTrail, setIsRecordingTrail] = useState(false);
   const [trailPoints, setTrailPoints] = useState<Array<[number, number]>>([]);
   const [historyByDate, setHistoryByDate] = useState<Record<string, Array<[number, number]>>>({});
   const [allTeamTracks, setAllTeamTracks] = useState<Array<{
@@ -162,8 +159,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
   // Keep trail recording, background GPS tracker, and screen wake lock synchronized with activeShift
   useEffect(() => {
     if (activeShift) {
-      setIsRecordingTrail(true);
-
       // Start background tracker (native Foreground Service on Android APK, or browser fallback)
       startBackgroundTracker(
         (point) => {
@@ -218,7 +213,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         }).catch(() => {});
       }
     } else {
-      setIsRecordingTrail(false);
       stopBackgroundTracker();
       if (wakeLockRef.current) {
         try {
@@ -303,7 +297,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         }).addTo(map);
 
         // Layers
-        const circlesLayer = L.layerGroup().addTo(map);
         const historyLayer = L.layerGroup().addTo(map);
         const markersLayer = L.layerGroup().addTo(map);
 
@@ -316,7 +309,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
           dashArray: undefined
         }).addTo(map);
 
-        circlesLayerRef.current = circlesLayer;
         historyLayerRef.current = historyLayer;
         markersLayerRef.current = markersLayer;
         trailPolylineRef.current = polyline;
@@ -409,60 +401,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     renderHistoryOverlay();
   }, [allTeamTracks, historyByDate, showHistoryRoutes, mapLoaded, repColor]);
 
-  // Screen Wake Lock API when Recording is active
-  const toggleRecordingTrail = async () => {
-    if (!activeShift) {
-      const wantStart = confirm('Для записи маршрута необходимо начать рабочий день.\n\nНачать смену прямо сейчас?');
-      if (wantStart && onStartShift) {
-        onStartShift();
-      }
-      return;
-    }
-
-    const nextState = !isRecordingTrail;
-    setIsRecordingTrail(nextState);
-
-    if (nextState) {
-      if ('wakeLock' in navigator) {
-        try {
-          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-        } catch (err) {
-          console.warn('Wake lock error:', err);
-        }
-      }
-      if (userLat && userLng) {
-        setTrailPoints(prev => {
-          const updated: Array<[number, number]> = [...prev, [userLat, userLng]];
-          try {
-            localStorage.setItem('toj_rep_trail_points', JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
-        });
-      }
-    } else {
-      if (wakeLockRef.current) {
-        try {
-          await wakeLockRef.current.release();
-          wakeLockRef.current = null;
-        } catch (e) {}
-      }
-    }
-  };
-
-  const handleClearTrail = () => {
-    const confirmed = confirm(
-      "Скрыть линию маршрута с экрана смартфона?\n\n" +
-      "ℹ️ ОБРАТИТЕ ВНИМАНИЕ:\n" +
-      "Это действие очистит только синюю линию с дисплея вашего телефона (чтобы карта была чище при обходе нового квартала).\n\n" +
-      "✅ Все пройденные точки, время и километраж НАДЕЖНО СОХРАНЕНЫ в базе данных руководителя!"
-    );
-    if (confirmed) {
-      setTrailPoints([]);
-      try {
-        localStorage.removeItem('toj_rep_trail_points');
-      } catch (e) {}
-    }
-  };
 
   // Update User Marker
   useEffect(() => {
@@ -494,14 +432,13 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     }
   }, [userLat, userLng, mapLoaded]);
 
-  // Update Pharmacy Markers and Coverage Radiuses (250m)
+  // Update Pharmacy Markers
   useEffect(() => {
-    async function renderPinsAndCircles() {
-      if (!mapInstanceRef.current || !markersLayerRef.current || !circlesLayerRef.current) return;
+    async function renderPins() {
+      if (!mapInstanceRef.current || !markersLayerRef.current) return;
       const L = (await import('leaflet')).default;
 
       markersLayerRef.current.clearLayers();
-      circlesLayerRef.current.clearLayers();
 
       validPharmacies.forEach(pharm => {
         if (!pharm.latitude || !pharm.longitude) return;
@@ -514,19 +451,7 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
         const coveredShort = coveredByName ? coveredByName.split(' ')[0] : null;
         const isCoveredByColleague = coveredByName && pharm.rep_id !== repId && pharm.last_visited_by_id !== repId;
 
-        // 1. Coverage Circle (250m radius)
-        if (showCoverageCircles) {
-          L.circle([lat, lng], {
-            radius: 250,
-            color,
-            fillColor: color,
-            fillOpacity: 0.08,
-            weight: 1.5,
-            dashArray: '3, 4'
-          }).addTo(circlesLayerRef.current);
-        }
-
-        // 2. Pharmacy Marker Pin (with colleague indicator if already visited/added by another manager)
+        // Pharmacy Marker Pin (with colleague indicator if already visited/added by another manager)
         const icon = L.divIcon({
           className: 'pharmacy-map-pin',
           html: `
@@ -568,9 +493,9 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
     }
 
     if (mapLoaded) {
-      renderPinsAndCircles();
+      renderPins();
     }
-  }, [validPharmacies, showCoverageCircles, mapLoaded, repId]);
+  }, [validPharmacies, mapLoaded, repId]);
 
   // Toggle Streets / Satellite
   const toggleMapLayer = async () => {
@@ -655,29 +580,18 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {trailPoints.length > 0 && (
-                <button
-                  onClick={handleClearTrail}
-                  className="text-[10px] bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 px-2 py-1.5 rounded-xl border border-emerald-700/60 transition-colors"
-                  title="Очищает линию только с дисплея телефона. В базе данных всё надежно сохранено"
-                >
-                  Скрыть с экрана
-                </button>
-              )}
-              {onRequestEndShift && (
-                <button
-                  onClick={() => {
-                    setSelectedPharmacy(null);
-                    onRequestEndShift();
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition-all"
-                >
-                  <Pause className="w-3 h-3 fill-white" />
-                  Завершить
-                </button>
-              )}
-            </div>
+            {onRequestEndShift && (
+              <button
+                onClick={() => {
+                  setSelectedPharmacy(null);
+                  onRequestEndShift();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition-all shrink-0"
+              >
+                <Pause className="w-3 h-3 fill-white" />
+                Завершить
+              </button>
+            )}
           </div>
         )}
 
@@ -714,16 +628,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
               Всего аптек: {validPharmacies.length}
             </span>
           </div>
-
-          {trailPoints.length > 0 && !activeShift && (
-            <button
-              onClick={handleClearTrail}
-              className="text-[10px] text-slate-400 hover:text-slate-200 underline shrink-0"
-              title="Скрыть линию с карты (в базе сохранено)"
-            >
-              Сброс линии
-            </button>
-          )}
         </div>
 
         {/* Category Filter Pills & Team Routes Toggle */}
@@ -777,31 +681,6 @@ export const PharmaciesOverviewMap: React.FC<PharmaciesOverviewMapProps> = ({
 
       {/* Floating Controls Right */}
       <div className="absolute right-3 bottom-24 sm:bottom-28 z-[400] flex flex-col gap-2">
-        {/* Toggle Live Trail Recording ("Нить Ариадны") */}
-        <button
-          onClick={toggleRecordingTrail}
-          className={`w-11 h-11 rounded-2xl shadow-lg border flex items-center justify-center transition-all active:scale-95 ${
-            isRecordingTrail
-              ? 'bg-emerald-600 text-white border-emerald-500 animate-pulse'
-              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-          }`}
-          title={isRecordingTrail ? 'Остановить запись пути' : 'Включить запись пути (Нить Ариадны)'}
-        >
-          {isRecordingTrail ? <Pause className="w-5 h-5" /> : <Route className="w-5 h-5 text-emerald-600" />}
-        </button>
-
-        {/* Toggle Coverage Circles (250m) */}
-        <button
-          onClick={() => setShowCoverageCircles(prev => !prev)}
-          className={`w-11 h-11 rounded-2xl shadow-lg border flex items-center justify-center transition-all active:scale-95 ${
-            showCoverageCircles
-              ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-              : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
-          }`}
-          title="Показать/скрыть зоны охвата (250м)"
-        >
-          <Radio className="w-5 h-5" />
-        </button>
 
         {/* Center on GPS */}
         {userLat && userLng && (
