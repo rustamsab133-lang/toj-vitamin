@@ -29,7 +29,6 @@ import {
   FileText,
   History,
   LayoutGrid,
-  List,
   Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -89,7 +88,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
   const [products, setProducts] = useState<B2BProduct[]>([]);
   const [orders, setOrders] = useState<PharmacyOrder[]>([]);
   const [activeTab, setActiveTab] = useState<'catalog' | 'orders'>('catalog');
-  const [catalogViewMode, setCatalogViewMode] = useState<'grid' | 'table'>('table');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [onlySelectedInCart, setOnlySelectedInCart] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -113,22 +111,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
   const [notes, setNotes] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [isCartMobileOpen, setIsCartMobileOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedMode = localStorage.getItem('toj_b2b_view_mode') as 'grid' | 'table';
-      if (savedMode === 'grid' || savedMode === 'table') {
-        setCatalogViewMode(savedMode);
-      }
-    }
-  }, []);
-
-  const handleToggleViewMode = (mode: 'grid' | 'table') => {
-    setCatalogViewMode(mode);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('toj_b2b_view_mode', mode);
-    }
-  };
 
   useEffect(() => {
     loadB2BData();
@@ -706,37 +688,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                       </button>
                     )}
                   </div>
-
-                  {/* View Mode Toggle: Сетка карточек ↔ Табличный бланк */}
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0 self-end sm:self-auto border border-slate-200/60">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all ${
-                        catalogViewMode === 'grid'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                      title="Отображение плиткой с фотографиями"
-                    >
-                      <LayoutGrid size={14} />
-                      <span>Сетка карточек</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleToggleViewMode('table')}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all ${
-                        catalogViewMode === 'table'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                      title="Табличный матричный бланк для быстрого оптового заказа"
-                    >
-                      <List size={14} />
-                      <span>Табличный бланк</span>
-                    </button>
-                  </div>
                 </div>
 
                 {/* Brand Filter Pills & "Только выбранные" toggle */}
@@ -791,204 +742,8 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                 </div>
               </div>
 
-              {/* VIEW MODE: TABLE (MATRIX BULK ORDER) */}
-              {catalogViewMode === 'table' ? (
-                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                          <th className="py-3.5 px-3 w-10 text-center">№</th>
-                          <th className="py-3.5 px-2 w-12 text-center">Фото</th>
-                          <th className="py-3.5 px-3 min-w-[120px]">Бренд</th>
-                          <th className="py-3.5 px-3 min-w-[220px]">Название товара</th>
-                          <th className="py-3.5 px-2 text-center min-w-[90px]">Наличие</th>
-                          <th className="py-3.5 px-3 text-right min-w-[100px]">Ваша цена</th>
-                          <th className="py-3.5 px-3 text-center min-w-[150px]">Ввод количества</th>
-                          <th className="py-3.5 px-3 text-right min-w-[100px]">Сумма</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {filteredProducts.map((p, index) => {
-                          const qty = cart[p.id] || 0;
-                          const isOutOfStock = Boolean(p.is_hidden || p.in_stock === false);
-                          const brandName = getProductBrand(p);
-                          const isSelected = qty > 0;
-                          const rowTotal = p.price * qty;
-
-                          return (
-                            <tr
-                              key={p.id}
-                              className={`transition-colors group ${
-                                isSelected 
-                                  ? 'bg-emerald-50/70 hover:bg-emerald-100/60 font-medium' 
-                                  : isOutOfStock 
-                                    ? 'bg-slate-50/30 opacity-70 hover:bg-slate-50/60' 
-                                    : 'hover:bg-slate-50/80'
-                              }`}
-                            >
-                              {/* № */}
-                              <td className="py-2.5 px-3 text-center text-slate-400 font-bold text-[11px]">
-                                {index + 1}
-                              </td>
-
-                              {/* Thumbnail */}
-                              <td className="py-2.5 px-2 text-center">
-                                <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden mx-auto">
-                                  {p.image_url ? (
-                                    <img 
-                                      src={p.image_url} 
-                                      alt={p.name} 
-                                      className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform" 
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <ShoppingCart size={14} className="text-slate-300" />
-                                  )}
-                                </div>
-                              </td>
-
-                              {/* Brand */}
-                              <td className="py-2.5 px-3">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200/80 whitespace-nowrap">
-                                  {brandName}
-                                </span>
-                              </td>
-
-                              {/* Product Name */}
-                              <td className="py-2.5 px-3">
-                                <div>
-                                  <span className={`text-xs leading-snug line-clamp-2 ${isSelected ? 'font-extrabold text-slate-900' : 'font-bold text-slate-800'}`}>
-                                    {p.name}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
-                                    Код: {p.id}
-                                  </span>
-                                </div>
-                              </td>
-
-                              {/* Stock status */}
-                              <td className="py-2.5 px-2 text-center whitespace-nowrap">
-                                {isOutOfStock ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                                    Нет на складе
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    В наличии
-                                  </span>
-                                )}
-                              </td>
-
-                              {/* Pharmacy Price */}
-                              <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                                <div>
-                                  {!isOutOfStock && pharmacy.discount_percent > 0 && (
-                                    <span className="text-[10px] text-slate-400 line-through leading-none block">
-                                      {p.retail_price} смн
-                                    </span>
-                                  )}
-                                  <span className={`text-xs sm:text-sm font-extrabold ${isOutOfStock ? 'text-slate-400' : 'text-emerald-700'}`}>
-                                    {p.price} <span className="text-[10px] font-bold uppercase text-slate-400">смн</span>
-                                  </span>
-                                </div>
-                              </td>
-
-                              {/* Quantity Input (Matrix input) */}
-                              <td className="py-2.5 px-3 whitespace-nowrap">
-                                {isOutOfStock ? (
-                                  <div className="text-center text-slate-400 text-xs italic">—</div>
-                                ) : (
-                                  <div className="flex items-center justify-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => updateCartQty(p.id, -1)}
-                                      disabled={qty <= 0}
-                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-25 disabled:hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors active:scale-95"
-                                      title="Уменьшить на 1"
-                                    >
-                                      <Minus size={11} />
-                                    </button>
-                                    
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      max="9999"
-                                      value={qty > 0 ? qty : ''}
-                                      placeholder="0"
-                                      onChange={e => {
-                                        const raw = e.target.value;
-                                        const val = raw === '' ? 0 : parseInt(raw, 10);
-                                        setCartDirectQty(p.id, isNaN(val) ? 0 : val);
-                                      }}
-                                      className={`w-14 text-center font-extrabold text-xs sm:text-sm py-1 rounded-lg border outline-none transition-all ${
-                                        qty > 0 
-                                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm focus:ring-2 focus:ring-emerald-400' 
-                                          : 'bg-slate-50 text-slate-700 border-slate-200 focus:bg-white focus:border-slate-400'
-                                      }`}
-                                    />
-
-                                    <button
-                                      type="button"
-                                      onClick={() => updateCartQty(p.id, 1)}
-                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-colors active:scale-95"
-                                      title="Увеличить на 1"
-                                    >
-                                      <Plus size={11} />
-                                    </button>
-                                  </div>
-                                )}
-                              </td>
-
-                              {/* Subtotal */}
-                              <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                                {qty > 0 ? (
-                                  <span className="font-extrabold text-xs sm:text-sm text-slate-900">
-                                    {rowTotal.toLocaleString()} <span className="text-[10px] uppercase font-bold text-slate-400">смн</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-300 font-bold">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-
-                        {filteredProducts.length === 0 && (
-                          <tr>
-                            <td colSpan={8} className="py-12 text-center text-slate-400 text-xs">
-                              Товары не найдены. Попробуйте изменить параметры поиска или фильтр брендов.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-
-                      {/* Table Summary Footer */}
-                      {filteredProducts.length > 0 && (
-                        <tfoot>
-                          <tr className="bg-slate-50/90 border-t border-slate-200 text-xs font-bold text-slate-700">
-                            <td colSpan={4} className="py-3 px-4">
-                              Показано товаров: <span className="text-slate-900">{filteredProducts.length}</span> из {products.length}
-                            </td>
-                            <td colSpan={2} className="py-3 px-3 text-right">
-                              Выбрано позиций в чек:
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              <span className="text-emerald-700 font-extrabold text-sm">{totalQty} шт</span>
-                            </td>
-                            <td className="py-3 px-3 text-right">
-                              <span className="text-emerald-700 font-extrabold text-sm">{totalAmount.toLocaleString()} смн</span>
-                            </td>
-                          </tr>
-                        </tfoot>
-                      )}
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                /* VIEW MODE: GRID (PRODUCT CARDS) */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {/* Product Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {filteredProducts.map(p => {
                     const qtyInCart = cart[p.id] || 0;
                     const isOutOfStock = Boolean(p.is_hidden || p.in_stock === false);
@@ -1102,7 +857,6 @@ export default function B2BOrderPage({ params }: { params: { token: string } }) 
                     </div>
                   )}
                 </div>
-              )}
             </>
           ) : (
             /* Orders History View */
